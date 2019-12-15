@@ -6,7 +6,7 @@ Torch-Pruning is dedicated to automatically detect and maintain the layer depend
 
 This toolkit has the following features:
 
-* Basic pruning functions for Convolution Neural Networks
+* Basic pruning functions for Convolutional Neural Networks
 * Layer dependency management
 * Dependency customization for complex modules
 
