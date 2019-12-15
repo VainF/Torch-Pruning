@@ -16,7 +16,7 @@ This toolkit has the following features:
 
 <img src="examples/images/dep1.png" width="100%">
 
-### Complicated Cases
+### More Complicated Cases
 
 the layer dependency becomes much more complicated when the model contains skip connections or concatenations (Denseblock). 
 
