@@ -78,6 +78,11 @@ You have to manually handle the dependencies between layers without DependencyGr
 
 ```python
 pruning.prune_conv( model.conv1, idxs=[2,6,9] )
+
+# fix the broken dependencies
+pruning.prune_batchnorm( model.bn1, idxs=[2,6,9] )
+pruning.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
+...
 ```
 
 ## Example: ResNet18 on Cifar10
