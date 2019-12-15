@@ -37,7 +37,7 @@ During pruning, `DependencyGraph.get_pruning_plan` detects the affected layers f
 
 ## Quickstart
 
-### prune with DependencyGraph 
+### Prune with DependencyGraph 
 
 ```python
 import torch
