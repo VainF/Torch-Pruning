@@ -77,7 +77,7 @@ Pruning the resnet.conv1 will affect several modules. The pruning plan:
 You have to manually handle the dependencies between layers without DependencyGraph.
 
 ```python
-pruning.prune_conv( model.conv1, idxs=[2,6,9] )
+pruning.prune_conv( model.conv1, pruning.prune_conv, idxs=[2,6,9] )
 ```
 
 ## Example: ResNet18 on Cifar10
