@@ -37,7 +37,7 @@ During pruning, `DependencyGraph.get_pruning_plan` detects the affected layers f
 
 ## Quickstart
 
-### Prune with DependencyGraph 
+### Pruning with DependencyGraph 
 
 ```python
 import torch
@@ -72,9 +72,9 @@ Pruning the resnet.conv1 will affect several modules. The pruning plan:
 -------------
 ```
 
-### Prune with basic pruning functions
+### Pruning with low-level pruning functions
 
-You must manually handle the dependencies between layers without DependencyGraph.
+You have to manually handle the dependencies between layers without DependencyGraph.
 
 ```python
 pruning.prune_conv( model.conv1, idxs=[2,6,9] )
