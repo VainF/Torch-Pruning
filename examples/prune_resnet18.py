@@ -89,7 +89,7 @@ def prune_model(model):
         out_channels = weight.shape[0]
         L1_norm = np.sum(weight, axis=(1,2,3))
         num_pruned = int(out_channels * pruned_prob)
-        prune_indexs = np.argsort(L1_norm)[-num_pruned:].tolist()
+        prune_indexs = np.argsort(L1_norm)[:num_pruned].tolist() # remove filters with small L1-Norm
 
         plan = DG.get_pruning_plan(conv, pruning.prune_conv, prune_indexs)
         plan.exec()
