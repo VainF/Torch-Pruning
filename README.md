@@ -36,10 +36,9 @@ See paper [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08
 
 ## How It Works
 
-Torch-Pruning provide a `DependencyGraph` class to manage the dependencies between layers. 
+Torch-Pruning provide a `DependencyGraph` to detect and manage the dependencies between layers. 
 It requires a fake input to run the model and collect layer infomation from the dynamic computational graph.
-During pruning, `DependencyGraph.get_pruning_plan` detects the affected layers for the specified user operation and return a `PruningPlan`.
-
+`DependencyGraph.get_pruning_plan` will detect the broken dependencies according to your pruning operation, and prepare a executable `PruningPlan` which contains all the required pruning operations. 
 
 ## Quickstart
 
