@@ -10,7 +10,7 @@ This toolkit has the following features:
 * Layer dependency management
 * Dependency customization for complex modules
 
-## Install
+## Installation
 
 ```bash
 pip install torch_pruning
