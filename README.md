@@ -26,7 +26,7 @@ the layer dependency becomes much more complicated when the model contains skip 
 #### Concatenation: 
 <img src="examples/images/dep3.png" width="100%">
 
-See paper [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710) for more detials.
+See paper [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710) for more details.
 
 ## How It Works
 
