@@ -24,7 +24,7 @@ pip install torch_pruning
 
 ### More Complicated Cases
 
-the layer dependency becomes much more complicated when the model contains skip connections or concatenations (Denseblock). 
+the layer dependency becomes much more complicated when the model contains skip connections or concatenations. 
 
 #### Residual Block: 
 <img src="examples/images/dep2.png" width="100%">
