@@ -2,7 +2,7 @@
 
 A pytorch toolkit for neural network pruning and layer dependency maintaining.
 
-Torch-Pruning is dedicated to automatically detect and maintain the layer dependencies for structured pruning and provide reusable implementations. You can pay more attention to the design of pruning algorithms with the help of the dependency management.
+Torch-Pruning is dedicated to automatically detecting and maintaining the layer dependencies for structured pruning and providing reusable implementations. You can pay more attention to the design of pruning algorithms with the help of the dependency management.
 
 This toolkit has the following features:
 
@@ -24,7 +24,7 @@ pip install torch_pruning
 
 ### More Complicated Cases
 
-the layer dependency becomes much more complicated when the model contains skip connections or concatenations (Denseblock). 
+the layer dependency becomes much more complicated when the model contains skip connections or concatenations. 
 
 #### Residual Block: 
 <img src="examples/images/dep2.png" width="80%">
@@ -36,10 +36,9 @@ See paper [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08
 
 ## How It Works
 
-Torch-Pruning provide a `DependencyGraph` class to manage the dependencies between layers. 
+Torch-Pruning provide a `DependencyGraph` to detect and manage the dependencies between layers. 
 It requires a fake input to run the model and collect layer infomation from the dynamic computational graph.
-During pruning, `DependencyGraph.get_pruning_plan` detects the affected layers for the specified user operation and return a `PruningPlan`.
-
+`DependencyGraph.get_pruning_plan` will detect the broken dependencies according to your pruning operation, and prepare a executable `PruningPlan` which contains all the required pruning operations. 
 
 ## Quickstart
 
