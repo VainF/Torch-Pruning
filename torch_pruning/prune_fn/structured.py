@@ -8,12 +8,12 @@ from operator import mul
 
 __all__=['prune_conv', 'prune_related_conv', 'prune_linear', 'prune_related_linear', 'prune_batchnorm', 'prune_prelu']
 
-def prune_conv(layer: nn.modules.conv._ConvNd, idxs: Sequence[int], inplace: bool =True, dry_run: bool = False):
-    """Prune specified ``filters`` of the convolution layer.
+def prune_conv(layer, idxs, inplace=True, dry_run=False):
+    """Prune `filters` for the convolutional layer, e.g. [256 x 128 x 3 x 3] => [192 x 128 x 3 x 3]
 
-    **Parameters:
+    Args:
         - layer: a convolution layer.
-        - idxs: index of pruned filters.
+        - idxs: pruning index.
     """
     num_pruned_parameters = len(idxs) * reduce(mul ,layer.weight.shape[1:]) + (len(idxs) if layer.bias else 0)
     if dry_run: 
@@ -30,12 +30,12 @@ def prune_conv(layer: nn.modules.conv._ConvNd, idxs: Sequence[int], inplace: boo
         layer.bias = torch.nn.Parameter(layer.bias.data.clone()[keep_idxs])
     return layer, num_pruned_parameters
 
-def prune_related_conv(layer: nn.modules.conv._ConvNd, idxs: Sequence[int], inplace: bool=True, dry_run: bool = False):
-    """Prune specified ``kernels`` of the related convolution layer.
+def prune_related_conv(layer, idxs, inplace=True, dry_run=False):
+    """Prune `kernels` for the related (affected) convolutional layer, e.g. [256 x 128 x 3 x 3] => [256 x 96 x 3 x 3]
 
-    **Parameters:
-        - layer: a convolution layer.
-        - idxs: index of pruned kernels.
+    Args:
+        layer: a convolutional layer.
+        idxs: pruning index.
     """
     num_pruned_parameters = len(idxs) *  layer.weight.shape[0] * reduce(mul ,layer.weight.shape[2:])
     if dry_run: 
@@ -50,12 +50,12 @@ def prune_related_conv(layer: nn.modules.conv._ConvNd, idxs: Sequence[int], inpl
     # no bias pruning because it does not change the output size
     return layer, num_pruned_parameters
 
-def prune_linear(layer: nn.Linear, idxs: Sequence[int], inplace: bool=True, dry_run: bool = False):
-    """Prune specified neurons of a linear layer.
+def prune_linear(layer, idxs, inplace=True, dry_run=False):
+    """Prune neurons for the fully-connected layer, e.g. [256 x 128] => [192 x 128]
     
-    **Parameters:
-        - layer: a convolution layer.
-        - idxs: index of pruned kernels.
+    Args:
+        layer: a fully-connected layer.
+        idxs: pruning index.
     """
     
     num_pruned_parameters = len(idxs)*layer.weight.shape[1] + (len(idxs) if layer.bias is not None else 0)
@@ -73,12 +73,12 @@ def prune_linear(layer: nn.Linear, idxs: Sequence[int], inplace: bool=True, dry_
         layer.bias = torch.nn.Parameter(layer.bias.data.clone()[keep_idxs])
     return layer, num_pruned_parameters
 
-def prune_related_linear(layer: nn.Linear, idxs: Sequence[int], inplace: bool=True, dry_run: bool = False):
-    """Prune specified weights of the related fully-connected layer.
+def prune_related_linear(layer, idxs, inplace=True, dry_run=False):
+    """Prune weights for the related (affected) fully-connected layer, e.g. [256 x 128] => [256 x 96]
     
-    **Parameters:
-        - layer: a convolution layer.
-        - idxs: index of pruned kernels.
+    Args:
+        layer: a fully-connected layer.
+        idxs: pruning index.
     """
     num_pruned_parameters = len(idxs) *  layer.weight.shape[0]
     if dry_run:
@@ -93,12 +93,12 @@ def prune_related_linear(layer: nn.Linear, idxs: Sequence[int], inplace: bool=Tr
     layer.weight = torch.nn.Parameter(layer.weight.data.clone()[:, keep_idxs])
     return layer, num_pruned_parameters
 
-def prune_batchnorm(layer: nn.modules.batchnorm._BatchNorm, idxs: Sequence[int], inplace: bool=True, dry_run: bool = False ):
-    """Prune batch normalization layers
+def prune_batchnorm(layer, idxs, inplace=True, dry_run=False ):
+    """Prune batch normalization layers, e.g. [128] => [64]
     
-    **Parameters:**
-        - **layer**: a batch normalization layer.
-        - **idxs**: indexs of pruned weights.
+    Args:
+        layer: a batch normalization layer.
+        idxs: pruning index.
     """
     num_pruned_parameters = len(idxs)* ( 2 if layer.affine else 1)
     if dry_run:
@@ -117,7 +117,13 @@ def prune_batchnorm(layer: nn.modules.batchnorm._BatchNorm, idxs: Sequence[int],
         layer.bias = torch.nn.Parameter(layer.bias.data.clone()[keep_idxs])
     return layer, num_pruned_parameters
 
-def prune_prelu(layer: nn.PReLU, idxs: Sequence[int], inplace: bool=True, dry_run: bool = False):
+def prune_prelu(layer, idxs, inplace=True, dry_run=False):
+    """Prune PReLU layers, e.g. [128] => [64] or [1] => [1] (no pruning if prelu has only 1 parameter)
+    
+    Args:
+        layer: a PReLU layer.
+        idxs: pruning index.
+    """
     num_pruned_parameters = 0 if layer.num_parameters==1 else len(idxs)
     if dry_run:
         return layer, num_pruned_parameters

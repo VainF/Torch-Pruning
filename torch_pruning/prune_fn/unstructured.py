@@ -14,12 +14,12 @@ def _mask_bias_hook(module, input):
     if module.bias is not None and hasattr(module, 'bias_mask'):
         module.bias.data *= module.bias_mask
 
-def mask_weight(layer, mask, inplace: bool=True):
-    """unstructed pruning for convolution layer
+def mask_weight(layer, mask, inplace=True):
+    """Unstructed pruning for convolution layer
 
-    **Parameters:
-        - layer: a convolution layer.
-        - mask: 0-1 mask.
+    Args:
+        layer: a convolution layer.
+        mask: 0-1 mask.
     """
     if not inplace:
         layer = deepcopy(layer)
@@ -36,12 +36,12 @@ def mask_weight(layer, mask, inplace: bool=True):
     layer.register_forward_pre_hook( _mask_weight_hook )
     return layer
 
-def mask_bias(layer, mask, inplace: bool=True):
-    """unstructed pruning for convolution layer
+def mask_bias(layer, mask, inplace=True):
+    """Unstructed pruning for convolution layer
 
-    **Parameters:
-        - layer: a convolution layer.
-        - mask: 0-1 mask.
+    Args:
+        layer: a convolution layer.
+        mask: 0-1 mask.
     """
     if not inplace:
         layer = deepcopy(layer)

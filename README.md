@@ -20,17 +20,17 @@ pip install torch_pruning
 
 ### A Simple Dependency
 
-<img src="examples/images/dep1.png" width="100%">
+<img src="examples/images/dep1.png" width="80%">
 
 ### More Complicated Cases
 
 the layer dependency becomes much more complicated when the model contains skip connections or concatenations (Denseblock). 
 
 #### Residual Block: 
-<img src="examples/images/dep2.png" width="100%">
+<img src="examples/images/dep2.png" width="80%">
 
 #### Concatenation: 
-<img src="examples/images/dep3.png" width="100%">
+<img src="examples/images/dep3.png" width="80%">
 
 See paper [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710) for more details.
 
@@ -80,7 +80,8 @@ Pruning the resnet.conv1 will affect several modules. The pruning plan:
 
 ### Pruning with low-level pruning functions
 
-You have to manually handle the dependencies between layers without DependencyGraph.
+You have to manually handle the dependencies between layers without DependencyGraph. 
+See [examples/example_pruning_fn.py]() for more details about pruning functions.
 
 ```python
 pruning.prune_conv( model.conv1, idxs=[2,6,9] )
@@ -96,17 +97,16 @@ pruning.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
 ### 1. Train the model
 ```bash
 cd examples
-python prune_resnet18.py --mode train # 11.1M, Acc=0.9281
+python prune_resnet18.py --mode train # 11.1M, Acc=0.9248
 ```
 
 ### 2. Pruning and fintuning
 ```bash
-python prune_resnet18.py --mode prune --round 1 --total_epochs 30 --step_size 20 # 4.5M, Acc=0.9228
-python prune_resnet18.py --mode prune --round 2 --total_epochs 30 --step_size 20 # 1.9M, Acc=0.9237
-python prune_resnet18.py --mode prune --round 3 --total_epochs 30 --step_size 20 # 0.8M, Acc=0.9199
-python prune_resnet18.py --mode prune --round 4 --total_epochs 30 --step_size 20 # 0.4M, Acc=0.9125
-python prune_resnet18.py --mode prune --round 5 --total_epochs 30 --step_size 20 # 0.2M, Acc=0.9040
-python prune_resnet18.py --mode prune --round 6 --total_epochs 30 --step_size 20 # 0.1M, Acc=0.8905
+python prune_resnet18.py --mode prune --round 1 --total_epochs 30 --step_size 20 # 4.5M, Acc=0.9229
+python prune_resnet18.py --mode prune --round 2 --total_epochs 30 --step_size 20 # 1.9M, Acc=0.9207
+python prune_resnet18.py --mode prune --round 3 --total_epochs 30 --step_size 20 # 0.8M, Acc=0.9176
+python prune_resnet18.py --mode prune --round 4 --total_epochs 30 --step_size 20 # 0.4M, Acc=0.9102
+python prune_resnet18.py --mode prune --round 5 --total_epochs 30 --step_size 20 # 0.2M, Acc=0.9011
 ...
 ```
 

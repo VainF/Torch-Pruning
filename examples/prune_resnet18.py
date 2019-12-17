@@ -74,7 +74,6 @@ def train_model(model, train_loader, test_loader):
         acc = eval(model, test_loader)
         print("Epoch %d/%d, Acc=%.4f\n"%(epoch, args.total_epochs, acc))
         if best_acc<acc:
-            #torch.save( model.state_dict(), 'resnet18-round%d.pth'%(args.round) )
             torch.save( model, 'resnet18-round%d.pth'%(args.round) )
             best_acc=acc
         scheduler.step()
@@ -89,9 +88,9 @@ def prune_model(model):
         out_channels = weight.shape[0]
         L1_norm = np.sum(weight, axis=(1,2,3))
         num_pruned = int(out_channels * pruned_prob)
-        prune_indexs = np.argsort(L1_norm)[:num_pruned].tolist() # remove filters with small L1-Norm
+        prune_index = np.argsort(L1_norm)[:num_pruned].tolist() # remove filters with small L1-Norm
 
-        plan = DG.get_pruning_plan(conv, pruning.prune_conv, prune_indexs)
+        plan = DG.get_pruning_plan(conv, pruning.prune_conv, prune_index)
         plan.exec()
     
     block_prune_probs = [0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.3, 0.3]
@@ -104,11 +103,11 @@ def prune_model(model):
     return model    
 
 def main():
-    model = ResNet18(num_classes=10)
     train_loader, test_loader = get_dataloader()
 
     if args.mode=='train':
         args.round=0
+        model = ResNet18(num_classes=10)
         train_model(model, train_loader, test_loader)
     elif args.mode=='prune':
         previous_ckpt = 'resnet18-round%d.pth'%(args.round-1)
