@@ -80,7 +80,7 @@ Pruning the resnet.conv1 will affect several modules. The pruning plan:
 ### Pruning with low-level pruning functions
 
 You have to manually handle the dependencies between layers without DependencyGraph. 
-See [examples/example_pruning_fn.py]() for more details about pruning functions.
+See [examples/example_pruning_fn.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/example_pruning_fn.py) for more details about pruning functions.
 
 ```python
 pruning.prune_conv( model.conv1, idxs=[2,6,9] )
