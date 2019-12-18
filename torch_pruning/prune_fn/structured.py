@@ -13,7 +13,7 @@ def prune_conv(layer, idxs, inplace=True, dry_run=False):
         - layer: a convolution layer.
         - idxs: pruning index.
     """
-    num_pruned_parameters = len(idxs) * reduce(mul ,layer.weight.shape[1:]) + (len(idxs) if layer.bias else 0)
+    num_pruned_parameters = len(idxs) * reduce(mul ,layer.weight.shape[1:]) + (len(idxs) if layer.bias is not None else 0)
     if dry_run: 
         return layer, num_pruned_parameters
 
