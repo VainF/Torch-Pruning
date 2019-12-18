@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 import torch
 import torch.nn as nn
 from typing import Callable
@@ -231,13 +230,13 @@ class DependencyGraph(object):
                 print("\n-------------")
                 print("%s (%s):" % (self._get_module_name(source), source))
                 for dep in deps:
-                    print("[ %s => %s on %s (%s)]" % (dep.condition.__name__, dep.handler.__name__, self._get_module_name(dep.target), dep.target))
+                    print("[ %s => %s on %s (%s) ]" % (dep.condition.__name__, dep.handler.__name__, self._get_module_name(dep.target), dep.target))
                 print("-------------")
             else:
                 print("\n-------------")
                 print("%s:" % self._get_module_name(source))
                 for dep in deps:
-                    print("[ %s => %s on %s]" % (dep.condition.__name__, dep.handler.__name__, self._get_module_name(dep.target)))
+                    print("[ %s => %s on %s ]" % (dep.condition.__name__, dep.handler.__name__, self._get_module_name(dep.target)))
                 print("-------------")
 
         if source is not None:
@@ -289,11 +288,8 @@ class DependencyGraph(object):
 
         grad_fn_to_module = {}
         extractor_feature_shape = None
-        has_global_pooling = False
         fc_after_conv = False
         self.conv_fc_stride = {}
-        self.grad_fn_to_cat_size = {}
-
         def record_grad_fn(module, input, output):
             nonlocal extractor_feature_shape, fc_after_conv
             grad_fn_to_module[output.grad_fn] = module
@@ -314,8 +310,6 @@ class DependencyGraph(object):
                     self.conv_fc_stride[module] = -1
                     print(
                         "Warning: Unrecognized Conv-FC Dependency. Please handle the dependency manually")
-
-            # print(output.grad_fn.name())
         hooks = []
         for m in model.modules():
             if isinstance(m, self.PRUNABLE_MODULES):

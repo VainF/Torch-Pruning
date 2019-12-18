@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from typing import Sequence
 from copy import deepcopy
 from functools import reduce
 from operator import mul

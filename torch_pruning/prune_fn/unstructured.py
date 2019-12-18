@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from copy import deepcopy
 
 __all__=['mask_weight', 'mask_bias']
-
 
 def _mask_weight_hook(module, input):
     if hasattr(module, 'weight_mask'):
