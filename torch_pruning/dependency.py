@@ -268,8 +268,7 @@ class DependencyGraph(object):
         if not reverse:
             dep_prune_fn = self.RULES.get(source_fn_name+target_fn_name)
         else:
-            dep_prune_fn = self.REVERSE_RULES.get(
-                source_fn_name+target_fn_name)
+            dep_prune_fn = self.REVERSE_RULES.get(source_fn_name+target_fn_name)
 
         if dep_prune_fn:
             return Dependency(*dep_prune_fn, target=None)
@@ -292,7 +291,9 @@ class DependencyGraph(object):
         self.conv_fc_stride = {}
         def record_grad_fn(module, input, output):
             nonlocal extractor_feature_shape, fc_after_conv
-            grad_fn_to_module[output.grad_fn] = module
+            if isinstance(module, self.PRUNABLE_MODULES):
+                grad_fn_to_module[output.grad_fn] = module
+            
             if len(output.shape) > 2:
                 extractor_feature_shape = output.shape
                 fc_after_conv = True
@@ -300,22 +301,18 @@ class DependencyGraph(object):
             if isinstance(module, TORCH_LINEAR) and fc_after_conv == True:
                 fc_after_conv = False
                 # reshape
-                if reduce(mul, extractor_feature_shape) == reduce(mul, input[0].shape):
-                    self.conv_fc_stride[module] = reduce(
-                        mul, extractor_feature_shape[2:])
+                if reduce(mul, extractor_feature_shape[1:])==input[0].shape[1]:
+                    self.conv_fc_stride[module] = reduce(mul, extractor_feature_shape[2:])
                 # global pooling
-                elif reduce(mul, extractor_feature_shape[:2]) == reduce(mul, input[0].shape):
+                if extractor_feature_shape[1] == input[0].shape[1]:
                     self.conv_fc_stride[module] = 1
                 else:
                     self.conv_fc_stride[module] = -1
-                    print(
-                        "Warning: Unrecognized Conv-FC Dependency. Please handle the dependency manually")
+                    print("Warning: Unrecognized Conv-FC Dependency. Please handle the dependency manually")
         hooks = []
         for m in model.modules():
-            if isinstance(m, self.PRUNABLE_MODULES):
-                hooks.append(m.register_forward_hook(record_grad_fn))
+            hooks.append(m.register_forward_hook(record_grad_fn))
         out = model(fake_input)
-
         for hook in hooks:
             hook.remove()
 
@@ -404,13 +401,11 @@ class DependencyGraph(object):
                 begin_node_name = self._get_grad_fn_name(begin_node)
                 node_name = self._get_grad_fn_name(node)
                 if node_name and begin_node_name:
-                    rev_dep = self._get_dependency(
-                        node_name, begin_node_name, reverse=True)
+                    rev_dep = self._get_dependency(node_name, begin_node_name, reverse=True)
                     if rev_dep is not None:
                         node_module = self.grad_fn_to_module[node]
                         begin_node_module = self.grad_fn_to_module[begin_node]
-                        self.add_dependency(
-                            begin_node_module, node_module, rev_dep)
+                        self.add_dependency(begin_node_module, node_module, rev_dep)
 
                     dep = self._get_dependency(node_name, begin_node_name)
                     if dep is not None:
@@ -422,13 +417,11 @@ class DependencyGraph(object):
                             if self.ignore_conv_fc_dep or stride < 0:
                                 return
                             elif self.conv_fc_stride[begin_node_module] > 1:
-                                dep.index_mapping = _FalttenIndexMapping(
-                                    stride=stride)
+                                dep.index_mapping = _FalttenIndexMapping(stride=stride)
                         if isinstance(begin_node_module, _ConcatOp):
                             dep.offset = begin_node_module.offset[path_id]
 
-                        self.add_dependency(
-                            node_module, begin_node_module, dep)
+                        self.add_dependency(node_module, begin_node_module, dep)
                     if dep or rev_dep:
                         return
 
