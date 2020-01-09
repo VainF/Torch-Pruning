@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="torch-pruning",
-    version="0.1.2",
+    version="0.1.4",
     author="Gongfan Fang",
     author_email="fgf@zju.edu.cn",
     description="A pytorch toolkit for neural network pruning and layer dependency maintaining.",
