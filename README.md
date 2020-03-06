@@ -34,7 +34,7 @@ the layer dependency becomes much more complicated when the model contains skip 
 
 See paper [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710) for more details.
 
-## How It Works
+## How does it works
 
 Torch-Pruning provide a `DependencyGraph` to detect and manage the dependencies between layers. 
 It requires a fake input to run the model and collect layer infomation from the dynamic computational graph.
@@ -77,7 +77,7 @@ Pruning the resnet.conv1 will affect several modules. The pruning plan:
 -------------
 ```
 
-### Pruning with low-level pruning functions
+### Pruning with low-level functions
 
 Without DependencyGraph, you need to manually handle the broken dependencies between layers. 
 See [examples/example_pruning_fn.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/example_pruning_fn.py) for more details about pruning functions.
