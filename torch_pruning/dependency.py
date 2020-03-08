@@ -289,6 +289,7 @@ class DependencyGraph(object):
         extractor_feature_shape = None
         fc_after_conv = False
         self.conv_fc_stride = {}
+
         def record_grad_fn(module, input, output):
             nonlocal extractor_feature_shape, fc_after_conv
             if isinstance(module, self.PRUNABLE_MODULES):
@@ -304,7 +305,7 @@ class DependencyGraph(object):
                 if reduce(mul, extractor_feature_shape[1:])==input[0].shape[1]:
                     self.conv_fc_stride[module] = reduce(mul, extractor_feature_shape[2:])
                 # global pooling
-                if extractor_feature_shape[1] == input[0].shape[1]:
+                elif extractor_feature_shape[1] == input[0].shape[1]:
                     self.conv_fc_stride[module] = 1
                 else:
                     self.conv_fc_stride[module] = -1
