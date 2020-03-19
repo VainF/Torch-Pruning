@@ -1,6 +1,6 @@
 # Torch-Pruning
 
-A pytorch toolkit for neural network pruning and layer dependency maintaining.
+A pytorch toolkit (with bugs \_(:3」∠)\_ ) for structured neural network pruning and layer dependency maintaining.
 
 Torch-Pruning is dedicated to automatically detecting and maintaining the layer dependencies for structured pruning and providing reusable implementations. You can pay more attention to the design of pruning algorithms with the help of the dependency management.
 
