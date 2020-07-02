@@ -1,9 +1,10 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-from resnet import ResNet18
-import resnet
-import torch_pruning as pruning
+from cifar_resnet import ResNet18
+import cifar_resnet as resnet
+
+import torch_pruning as tp
 import argparse
 import torch
 from torchvision.datasets import CIFAR10
@@ -72,7 +73,7 @@ def train_model(model, train_loader, test_loader):
                 print("Epoch %d/%d, iter %d/%d, loss=%.4f"%(epoch, args.total_epochs, i, len(train_loader), loss.item()))
         model.eval()
         acc = eval(model, test_loader)
-        print("Epoch %d/%d, Acc=%.4f\n"%(epoch, args.total_epochs, acc))
+        print("Epoch %d/%d, Acc=%.4f"%(epoch, args.total_epochs, acc))
         if best_acc<acc:
             torch.save( model, 'resnet18-round%d.pth'%(args.round) )
             best_acc=acc
@@ -81,16 +82,14 @@ def train_model(model, train_loader, test_loader):
 
 def prune_model(model):
     model.cpu()
-    DG = pruning.DependencyGraph( model, fake_input=torch.randn(1,3,32,32) )
-    
+    DG = tp.DependencyGraph().build_dependency( model, torch.randn(1, 3, 32, 32) )
     def prune_conv(conv, pruned_prob):
         weight = conv.weight.detach().cpu().numpy()
         out_channels = weight.shape[0]
         L1_norm = np.sum(weight, axis=(1,2,3))
         num_pruned = int(out_channels * pruned_prob)
         prune_index = np.argsort(L1_norm)[:num_pruned].tolist() # remove filters with small L1-Norm
-
-        plan = DG.get_pruning_plan(conv, pruning.prune_conv, prune_index)
+        plan = DG.get_pruning_plan(conv, tp.prune_conv, prune_index)
         plan.exec()
     
     block_prune_probs = [0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.3, 0.3]
@@ -104,7 +103,6 @@ def prune_model(model):
 
 def main():
     train_loader, test_loader = get_dataloader()
-
     if args.mode=='train':
         args.round=0
         model = ResNet18(num_classes=10)

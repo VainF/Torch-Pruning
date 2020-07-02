@@ -10,8 +10,26 @@ def count_prunable_params(module):
         num_params = module.running_mean.numel() + module.running_var.numel()
         if module.affine:
             num_params+= module.weight.numel() + module.bias.numel()
+        return num_params
     elif isinstance( module, TORCH_PRELU ):
         if len( module.weight )==1:
             return 0
         else:
             return module.weight.numel
+    else:
+        return 0
+
+def count_prunable_channels(module):
+    if isinstance( module, TORCH_CONV ):
+        return module.out_channels
+    elif isinstance( module, TORCH_LINEAR ):
+        return module.out_features
+    elif isinstance( module, TORCH_BATCHNORM ):
+        return module.num_features
+    elif isinstance( module, TORCH_PRELU ):
+        if len( module.weight )==1:
+            return 0
+        else:
+            return len(module.weight)
+    else:
+        return 0

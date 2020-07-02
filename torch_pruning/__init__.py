@@ -1,3 +1,3 @@
 from .dependency import *
-from .prune_fn import *
+from .prune import *
 from . import utils
