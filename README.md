@@ -7,7 +7,7 @@ This tool will automatically detect and handle layer dependencies (channel consi
 **Known Issues**: 
 
 * Only depthwise conv is supported when group>1, i.e. `group`=`in_channels`=`out_channels`. 
-* Customized operations will be treated as element-wise op, e.g. `subclass of torch.autograd.Function`. 
+* Customized operations will be treated as element-wise op, e.g. subclass of `torch.autograd.Function`. 
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
