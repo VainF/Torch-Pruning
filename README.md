@@ -2,10 +2,9 @@
 
 A pytorch toolkit for structured neural network pruning and layer dependency maintaining
 
-This tool will automatically detect and handle layer dependencies during pruning. It is able to handle various network architectures such as DenseNet, ResNet, and Inception. See [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more details. 
+This tool will automatically detect and handle layer dependencies during pruning. It is able to handle various network architectures such as DenseNet, ResNet, and Inception. See [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more supported models. 
 
-
-**Known Issues**: Conv with group>1 is not supported yet.
+**Known Issues**: only depthwise conv is supported when group>1, i.e. `group`=`in_channels`=`out_channels`. 
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
@@ -13,6 +12,7 @@ This tool will automatically detect and handle layer dependencies during pruning
 |    Conv-FC (Global Pooling or Flatten) |  <img src="examples/docs/conv-fc.png" width="80%">   | ResNet, VGG    |  
 |    Skip Connection    | <img src="examples/docs/residual.png" width="80%">   | ResNet
 |    Concatenation      | <img src="examples/docs/concat.png" width="80%">     | DenseNet, ASPP |
+|    Split              | <img src="examples/docs/split.png" width="80%">      | torch.chunk |
 
 
 ## Installation

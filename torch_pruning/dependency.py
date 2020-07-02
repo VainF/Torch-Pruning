@@ -410,7 +410,7 @@ class DependencyGraph(object):
 
             if hasattr(grad_fn, 'next_functions'):
                 for f in grad_fn.next_functions:
-                    if f[0] is not None and ('accumulategrad' not in f[0].name().lower() or not hasattr( f[0], 'name' )):
+                    if f[0] is not None and ( not hasattr( f[0], 'name' ) or 'accumulategrad' not in f[0].name().lower() ):
                         input_node = _build_graph(f[0])
                         # connect nodes
                         node.add_input( input_node )
