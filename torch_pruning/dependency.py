@@ -18,14 +18,18 @@ class OPTYPE(IntEnum):
     BN = 1
     LINEAR = 2
     PRELU = 3
+    GROUP_CONV=4
 
-    CONCAT=4
-    ELEMENTWISE=5
-
+    CONCAT=5
+    SPLIT=6
+    ELEMENTWISE=7
 
 def _get_module_type(module):
     if isinstance( module, TORCH_CONV ):
-        return OPTYPE.CONV
+        if module.groups>1:
+            return OPTYPE.GROUP_CONV
+        else:
+            return OPTYPE.CONV
     elif isinstance( module, TORCH_BATCHNORM ):
         return OPTYPE.BN
     elif isinstance( module, TORCH_PRELU ):
@@ -34,11 +38,13 @@ def _get_module_type(module):
         return OPTYPE.LINEAR
     elif isinstance( module, _ConcatOp ):
         return OPTYPE.CONCAT
+    elif isinstance( module, _SplitOP):
+        return OPTYPE.SPLIT
     else:
         return OPTYPE.ELEMENTWISE
 
-def _get_node_channel(node):
-    if node.type==OPTYPE.CONV:
+def _get_node_out_channel(node):
+    if node.type==OPTYPE.CONV or node.type==OPTYPE.GROUP_CONV:
         return node.module.out_channels
     elif node.type==OPTYPE.BN:
         return node.module.num_features
@@ -52,8 +58,26 @@ def _get_node_channel(node):
     else:
         return None
 
+def _get_node_in_channel(node):
+    if node.type==OPTYPE.CONV or node.type==OPTYPE.GROUP_CONV:
+        return node.module.in_channels
+    elif node.type==OPTYPE.BN:
+        return node.module.num_features
+    elif node.type==OPTYPE.LINEAR:
+        return node.module.in_features
+    elif node.type==OPTYPE.PRELU:
+        if node.module.num_parameters==1:
+            return None
+        else:
+            return node.module.num_parameters
+    else:
+        return None
+
 # Dummy Pruning fn
 def _prune_concat(layer, *args, **kargs):
+    return layer, 0
+
+def _prune_split(layer, *args, **kargs):
     return layer, 0
 
 def _prune_elementwise_op(layer, *args, **kargs):
@@ -68,6 +92,14 @@ class _ConcatOp(nn.Module):
     def __repr__(self):
         return "_ConcatOp(%s)"%(self.offsets)
 
+class _SplitOP(nn.Module):
+    def __init__(self):
+        super(_SplitOP, self).__init__()
+        self.offsets = None
+        
+    def __repr__(self):
+        return "_SplitOP(%s)"%(self.offsets)
+
 class _ElementWiseOp(nn.Module):
     def __init__(self):
         super(_ElementWiseOp, self).__init__()
@@ -75,11 +107,9 @@ class _ElementWiseOp(nn.Module):
     def __repr__(self):
         return "_ElementWiseOp()"
 
-class _Inputs(nn.Module):
-    def __init__(self):
-        super(_Inputs, self).__init__()
 
-class _StrideIndexTransform(object):
+
+class _FlattenIndexTransform(object):
     def __init__(self, stride=1, reverse=False):
         self._stride = stride
         self.reverse = reverse
@@ -95,7 +125,7 @@ class _StrideIndexTransform(object):
                 new_idxs.extend(list( range(i*self._stride, (i+1)*self._stride)))
         return new_idxs
 
-class _OffsetIndexTransform(object):
+class _ConcatIndexTransform(object):
     def __init__(self, offset, reverse=False):
         self.offset = offset
         self.reverse = reverse
@@ -105,6 +135,18 @@ class _OffsetIndexTransform(object):
             new_idxs = [i-self.offset[0] for i in idxs if (i>=self.offset[0] and i<self.offset[1])]
         else:
             new_idxs = [i+self.offset[0] for i in idxs]
+        return new_idxs
+
+class _SplitIndexTransform(object):
+    def __init__(self, offset, reverse=False):
+        self.offset = offset
+        self.reverse = reverse
+
+    def __call__(self, idxs):
+        if self.reverse==True:
+            new_idxs = [i+self.offset[0] for i in idxs ]
+        else:
+            new_idxs = [i-self.offset[0] for i in idxs if (i>=self.offset[0] and i<self.offset[1])]
         return new_idxs
         
 class Node(object):
@@ -239,15 +281,15 @@ class PruningPlan(object):
 class DependencyGraph(object):
 
     PRUNABLE_MODULES = ( nn.modules.conv._ConvNd, nn.modules.batchnorm._BatchNorm, nn.Linear, nn.PReLU )
-    ELEMENTWISE_GRAD_FN = ('AddBackward', 'SubBackward', 'MulBackward', 'DivBackward', 'PowBackward', )
-    CONCAT_GRAD_FN = ('CatBackward',)
     
     HANDLER = {                         # prune in_channel          # prune out_channel
                 OPTYPE.CONV          :  (prune.prune_related_conv,   prune.prune_conv),
                 OPTYPE.BN            :  (prune.prune_batchnorm,      prune.prune_batchnorm),
                 OPTYPE.PRELU         :  (prune.prune_prelu,          prune.prune_prelu),
                 OPTYPE.LINEAR        :  (prune.prune_related_linear, prune.prune_linear),
+                OPTYPE.GROUP_CONV    :  (prune.prune_group_conv,     prune.prune_group_conv),
                 OPTYPE.CONCAT        :  (_prune_concat,              _prune_concat),
+                OPTYPE.SPLIT         :  (_prune_split,               _prune_split),
                 OPTYPE.ELEMENTWISE   :  (_prune_elementwise_op,      _prune_elementwise_op),
                }
     OUTPUT_NODE_RULES = {}
@@ -257,7 +299,8 @@ class DependencyGraph(object):
             OUTPUT_NODE_RULES[ (t1, t2) ] = (HANDLER[t1][1], HANDLER[t2][0]) # change in_channels of output layer
             INPUT_NODE_RULES[ (t1, t2) ] = (HANDLER[t1][0], HANDLER[t2][1]) # change out_channels of input layer
 
-    def build_dependency( self, model, example_inputs, get_output_fn=None ):
+    def build_dependency( self, model:torch.nn.Module, example_inputs:torch.Tensor, get_output_fn:callable=None, verbose:bool=True ):
+        self.verbose = verbose
         # get module name
         self._module_to_name = { module: name for (name, module) in model.named_modules() }
         # build dependency graph
@@ -272,8 +315,13 @@ class DependencyGraph(object):
                 self._set_fc_index_transform( node )
             if node.type==OPTYPE.CONCAT:
                 self._set_concat_index_transform(node)
+            if node.type==OPTYPE.SPLIT:
+                self._set_split_index_transform(node)
 
     def get_pruning_plan(self, module, pruning_fn, idxs): 
+        if isinstance(module, TORCH_CONV) and module.groups>1:
+            pruning_fn = prune.prune_group_conv
+            
         self.update_index()
         plan = PruningPlan()
         #  the user pruning operation
@@ -283,7 +331,6 @@ class DependencyGraph(object):
         visited = set()
         def _fix_denpendency_graph(node, fn, indices):
             visited.add( node )
-
             for dep in node.dependencies:
                 if dep.is_triggered_by(fn): #and dep.broken_node not in visited:
                     if dep.index_transform is not None:
@@ -346,8 +393,14 @@ class DependencyGraph(object):
             if grad_fn in grad_fn_from_prunable_module: # prunable ops
                 module = grad_fn_to_module[ grad_fn ]
             else: # create dummy modules
-                if 'catbackward' in grad_fn.name().lower(): # concat op
+                if not hasattr(grad_fn, 'name'):
+                    module = _ElementWiseOp() # skip customized modules
+                    if self.verbose:
+                        print("[Warning] Unrecognized operation: %s. It will be treated as element-wise op"%( str(grad_fn) ))
+                elif 'catbackward' in grad_fn.name().lower(): # concat op
                     module = _ConcatOp()
+                elif 'splitbackward' in grad_fn.name().lower():
+                    module = _SplitOP()
                 else:
                     module = _ElementWiseOp()   # All other ops are treated as element-wise ops
                 grad_fn_to_module[ grad_fn ] = module # record grad_fn
@@ -357,7 +410,7 @@ class DependencyGraph(object):
 
             if hasattr(grad_fn, 'next_functions'):
                 for f in grad_fn.next_functions:
-                    if f[0] is not None and 'accumulategrad' not in f[0].name().lower():
+                    if f[0] is not None and ('accumulategrad' not in f[0].name().lower() or not hasattr( f[0], 'name' )):
                         input_node = _build_graph(f[0])
                         # connect nodes
                         node.add_input( input_node )
@@ -381,17 +434,17 @@ class DependencyGraph(object):
         
         visited = set()
         fc_in_features = fc_node.module.in_features
-        feature_channels = _get_input_channels(fc_node.inputs[0])
+        feature_channels = _get_in_node_out_channels(fc_node.inputs[0])
         stride = fc_in_features // feature_channels
         if stride>1:
             for in_node in fc_node.inputs:
                 for dep in fc_node.dependencies:
                     if dep.broken_node==in_node:
-                        dep.index_transform = _StrideIndexTransform( stride=stride, reverse=True )
+                        dep.index_transform = _FlattenIndexTransform( stride=stride, reverse=True )
                 
                 for dep in in_node.dependencies:
                     if dep.broken_node == fc_node:
-                        dep.index_transform = _StrideIndexTransform( stride=stride, reverse=False )
+                        dep.index_transform = _FlattenIndexTransform( stride=stride, reverse=False )
 
     def _set_concat_index_transform(self, cat_node: Node):
         if cat_node.type != OPTYPE.CONCAT:
@@ -399,7 +452,7 @@ class DependencyGraph(object):
         
         chs = []
         for n in cat_node.inputs:
-            chs.append( _get_input_channels(n) )
+            chs.append( _get_in_node_out_channels(n) )
 
         offsets = [0]
         for ch in chs:
@@ -409,19 +462,51 @@ class DependencyGraph(object):
         for i, in_node in enumerate(cat_node.inputs):
             for dep in cat_node.dependencies:
                 if dep.broken_node == in_node:
-                    dep.index_transform = _OffsetIndexTransform( offset=offsets[i:i+2], reverse=True )
+                    dep.index_transform = _ConcatIndexTransform( offset=offsets[i:i+2], reverse=True )
 
             for dep in in_node.dependencies:
                 if dep.broken_node == cat_node:
-                    dep.index_transform = _OffsetIndexTransform( offset=offsets[i:i+2], reverse=False )
+                    dep.index_transform = _ConcatIndexTransform( offset=offsets[i:i+2], reverse=False )
 
-def _get_input_channels(node):
-    ch = _get_node_channel(node)
+    def _set_split_index_transform(self, split_node: Node):
+        if split_node.type != OPTYPE.SPLIT:
+            return
+        
+        chs = []
+        for n in split_node.outputs:
+            chs.append( _get_out_node_in_channels(n) )
+
+        offsets = [0]
+        for ch in chs:
+            offsets.append( offsets[-1]+ch )
+        split_node.module.offsets = offsets
+        for i, out_node in enumerate(split_node.outputs):
+            for dep in split_node.dependencies:
+                if dep.broken_node == out_node:
+                    dep.index_transform = _SplitIndexTransform( offset=offsets[i:i+2], reverse=False )
+
+            for dep in out_node.dependencies:
+                if dep.broken_node == split_node:
+                    dep.index_transform = _SplitIndexTransform( offset=offsets[i:i+2], reverse=True )
+
+def _get_in_node_out_channels(node):
+    ch = _get_node_out_channel(node)
     if ch is None:
         ch = 0
         for in_node in node.inputs:
             if node.type==OPTYPE.CONCAT:
-                ch+=_get_input_channels( in_node )
+                ch+=_get_in_node_out_channels( in_node )
             else:
-                ch=_get_input_channels( in_node )
+                ch=_get_in_node_out_channels( in_node )
+    return ch
+
+def _get_out_node_in_channels(node):
+    ch = _get_node_in_channel(node)
+    if ch is None:
+        ch = 0
+        for out_node in node.outputs:
+            if node.type==OPTYPE.SPLIT:
+                ch+=_get_out_node_in_channels( out_node )
+            else:
+                ch=_get_out_node_in_channels( out_node )
     return ch

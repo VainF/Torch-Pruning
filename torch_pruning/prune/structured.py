@@ -4,7 +4,32 @@ from copy import deepcopy
 from functools import reduce
 from operator import mul
 
-__all__=['prune_conv', 'prune_related_conv', 'prune_linear', 'prune_related_linear', 'prune_batchnorm', 'prune_prelu']
+__all__=['prune_conv', 'prune_related_conv', 'prune_linear', 'prune_related_linear', 'prune_batchnorm', 'prune_prelu', 'prune_group_conv']
+
+def prune_group_conv(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False):
+    """Prune `filters` for the convolutional layer, e.g. [256 x 128 x 3 x 3] => [192 x 128 x 3 x 3]
+
+    Args:
+        - layer: a convolution layer.
+        - idxs: pruning index.
+    """
+    if layer.groups>1:
+         assert layer.groups==layer.in_channels and layer.groups==layer.out_channels, "only group conv with in_channel==groups==out_channels is supported"
+    
+    idxs = list(set(idxs))
+    num_pruned = len(idxs) * reduce(mul, layer.weight.shape[1:]) + (len(idxs) if layer.bias is not None else 0)
+    if dry_run: 
+        return layer, num_pruned
+    if not inplace:
+        layer = deepcopy(layer)
+    keep_idxs = [idx for idx in range(layer.out_channels) if idx not in idxs]
+    layer.out_channels = layer.out_channels-len(idxs)
+    layer.in_channels = layer.in_channels-len(idxs)
+    layer.groups = layer.groups-len(idxs)
+    layer.weight = torch.nn.Parameter(layer.weight.data.clone()[keep_idxs])
+    if layer.bias is not None:
+        layer.bias = torch.nn.Parameter(layer.bias.data.clone()[keep_idxs])
+    return layer, num_pruned
 
 def prune_conv(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False):
     """Prune `filters` for the convolutional layer, e.g. [256 x 128 x 3 x 3] => [192 x 128 x 3 x 3]
