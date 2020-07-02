@@ -30,16 +30,15 @@ if __name__=='__main__':
     import torch_pruning as tp
     import random
 
-    def random_prune(model, n_prune, example_inputs, get_output_fn):
+    def random_prune(model, example_inputs, get_output_fn):
         model.cpu().eval()
         prunable_module_type = ( nn.Conv2d, nn.BatchNorm2d )
         prunable_modules = [ m for m in model.modules() if isinstance(m, prunable_module_type) ]
 
         DG = tp.DependencyGraph().build_dependency( model, example_inputs=example_inputs, get_output_fn=get_output_fn )
-        for n in range(n_prune):
+        for layer_to_prune in prunable_modules:
             # select a layer
-            layer_to_prune = random.choice( prunable_modules )
-
+    
             if isinstance( layer_to_prune, nn.Conv2d ):
                 prune_fn = tp.prune_conv
             elif isinstance(layer_to_prune, nn.BatchNorm2d):
@@ -47,7 +46,7 @@ if __name__=='__main__':
 
             ch = tp.utils.count_prunable_channels( layer_to_prune )
             if ch>4:
-                rand_idx = random.sample( list(range(ch)), ch//4)
+                rand_idx = random.sample( list(range(ch)), 2)
                 plan = DG.get_pruning_plan( layer_to_prune, prune_fn, rand_idx)
                 plan.exec()
             
@@ -79,4 +78,4 @@ if __name__=='__main__':
         else:
             get_output_fn = None
 
-        random_prune(model , n_prune=50, example_inputs=example_inputs, get_output_fn=get_output_fn)
+        random_prune(model, example_inputs=example_inputs, get_output_fn=get_output_fn)
