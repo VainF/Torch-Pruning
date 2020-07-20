@@ -2,9 +2,12 @@
 
 A pytorch toolkit for structured neural network pruning and layer dependency maintaining
 
-This tool will automatically detect and handle layer dependencies during pruning. It is able to handle various network architectures such as DenseNet, ResNet, and Inception. See [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more supported models. 
+This tool will automatically detect and handle layer dependencies (channel consistency) during pruning. It is able to handle various network architectures such as DenseNet, ResNet, and Inception. See [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more supported models. 
 
-**Known Issues**: only depthwise conv is supported when group>1, i.e. `group`=`in_channels`=`out_channels`. 
+**Known Issues**: 
+
+* Only depthwise conv is supported when groups>1, i.e. `groups`=`in_channels`=`out_channels`. 
+* Customized operations will be treated as element-wise op, e.g. subclass of `torch.autograd.Function`. 
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
@@ -68,8 +71,6 @@ Pruning the resnet.conv1 will affect several layers. If we print the pruning pla
 
 You have to manually handle the broken dependencies without DependencyGraph.
 
-See [examples/example_pruning_fn.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/example_pruning_fn.py) for more details about pruning functions.
-
 ```python
 pruning.prune_conv( model.conv1, idxs=[2,6,9] )
 
@@ -79,8 +80,9 @@ pruning.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
 
-
 ## Layer Dependency
+
+During structured pruning, we need to maintain the channel consistency between different layers. 
 
 ### A Simple Case
 
