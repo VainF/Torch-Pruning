@@ -374,18 +374,27 @@ class DependencyGraph(object):
         model.eval().cpu()
         # Get grad_fn from prunable modules
         grad_fn_to_module = {}
-        def _record_module_grad_fn(module, inputs, outputs):
-            grad_fn_to_module[outputs.grad_fn] = module
-        hooks = [m.register_forward_hook(_record_module_grad_fn) for m in model.modules() if isinstance( m, self.PRUNABLE_MODULES ) ]
 
+        visited = {}
+        def _record_module_grad_fn(module, inputs, outputs):
+            if module not in visited:
+                visited[module] = 1
+            else:
+                visited[module] += 1
+            grad_fn_to_module[outputs.grad_fn] = module
+        
+        hooks = [m.register_forward_hook(_record_module_grad_fn) for m in model.modules() if isinstance( m, self.PRUNABLE_MODULES ) ]
         out = model(example_inputs)
         for hook in hooks:
             hook.remove()
-
+        reused = [ m for (m, count) in visited.items() if count>1 ]
         # create nodes and dummy modules
         module_to_node = {}
         def _build_graph(grad_fn):
-            module = grad_fn_to_module.get( grad_fn, None )            
+            module = grad_fn_to_module.get( grad_fn, None )   
+            if module is not None and module in module_to_node and module not in reused:
+                return module_to_node[module]
+
             if module is None:
                 if not hasattr(grad_fn, 'name'):
                     module = _ElementWiseOp() # skip customized modules
@@ -398,13 +407,13 @@ class DependencyGraph(object):
                 else:
                     module = _ElementWiseOp()   # All other ops are treated as element-wise ops
                 grad_fn_to_module[ grad_fn ] = module # record grad_fn
+
+            if module not in module_to_node:
                 node = Node( module, grad_fn, self._module_to_name.get( module, None ) )
                 module_to_node[ module ] = node
-            elif module in module_to_node:
-                node = module_to_node[module]
             else:
-                node = Node( module, grad_fn, self._module_to_name.get( module, None ) )
-                module_to_node[ module ] = node
+                node = module_to_node[module]
+
             if hasattr(grad_fn, 'next_functions'):
                 for f in grad_fn.next_functions:
                     if f[0] is not None:

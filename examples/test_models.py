@@ -47,7 +47,6 @@ if __name__=='__main__':
             ch = tp.utils.count_prunable_channels( layer_to_prune )
             rand_idx = random.sample( list(range(ch)), min( ch//2, 10 ) )
             plan = DG.get_pruning_plan( layer_to_prune, prune_fn, rand_idx)
-            print(plan)
             plan.exec()
 
         print(model)
@@ -79,5 +78,5 @@ if __name__=='__main__':
             output_transform = lambda x: x['out']
         else:
             output_transform = None
-
+        print(model_name)
         random_prune(model, example_inputs=example_inputs, output_transform=output_transform)
