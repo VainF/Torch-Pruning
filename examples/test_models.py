@@ -30,12 +30,12 @@ if __name__=='__main__':
     import torch_pruning as tp
     import random
 
-    def random_prune(model, example_inputs, get_output_fn):
+    def random_prune(model, example_inputs, output_transform):
         model.cpu().eval()
         prunable_module_type = ( nn.Conv2d, nn.BatchNorm2d )
         prunable_modules = [ m for m in model.modules() if isinstance(m, prunable_module_type) ]
         ori_size = tp.utils.count_params( model )
-        DG = tp.DependencyGraph().build_dependency( model, example_inputs=example_inputs, get_output_fn=get_output_fn )
+        DG = tp.DependencyGraph().build_dependency( model, example_inputs=example_inputs, output_transform=output_transform )
         for layer_to_prune in prunable_modules:
             # select a layer
     
@@ -47,13 +47,14 @@ if __name__=='__main__':
             ch = tp.utils.count_prunable_channels( layer_to_prune )
             rand_idx = random.sample( list(range(ch)), min( ch//2, 10 ) )
             plan = DG.get_pruning_plan( layer_to_prune, prune_fn, rand_idx)
+            print(plan)
             plan.exec()
 
         print(model)
         with torch.no_grad():
             out = model( example_inputs )
-            if get_output_fn:
-                out = get_output_fn(out)
+            if output_transform:
+                out = output_transform(out)
             print(model_name)
             print( "  Params: %s => %s"%( ori_size, tp.utils.count_params(model) ) )
             print( "  Output: ", out.shape )
@@ -75,8 +76,8 @@ if __name__=='__main__':
             model = entry() 
         
         if 'fcn' in model_name or 'deeplabv3' in model_name:
-            get_output_fn = lambda x: x['out']
+            output_transform = lambda x: x['out']
         else:
-            get_output_fn = None
+            output_transform = None
 
-        random_prune(model, example_inputs=example_inputs, get_output_fn=get_output_fn)
+        random_prune(model, example_inputs=example_inputs, output_transform=output_transform)

@@ -164,10 +164,12 @@ class Node(object):
         return "%s (%s)"%(self._node_name, str(self.module)) if self._node_name is not None else str(self.module)
 
     def add_input(self, node):
-        self.inputs.append( node )
+        if node not in self.inputs:
+            self.inputs.append( node )
     
     def add_output(self, node):
-        self.outputs.append( node )
+        if node not in self.outputs:
+            self.outputs.append( node )
 
     def __repr__(self):
         return "<Node: (%s, %s)>"%( self.node_name, self.grad_fn )
@@ -299,12 +301,12 @@ class DependencyGraph(object):
             OUTPUT_NODE_RULES[ (t1, t2) ] = (HANDLER[t1][1], HANDLER[t2][0]) # change in_channels of output layer
             INPUT_NODE_RULES[ (t1, t2) ] = (HANDLER[t1][0], HANDLER[t2][1]) # change out_channels of input layer
 
-    def build_dependency( self, model:torch.nn.Module, example_inputs:torch.Tensor, get_output_fn:callable=None, verbose:bool=True ):
+    def build_dependency( self, model:torch.nn.Module, example_inputs:torch.Tensor, output_transform:callable=None, verbose:bool=True ):
         self.verbose = verbose
         # get module name
         self._module_to_name = { module: name for (name, module) in model.named_modules() }
         # build dependency graph
-        self.module_to_node = self._obtain_forward_graph( model, example_inputs, get_output_fn=get_output_fn )
+        self.module_to_node = self._obtain_forward_graph( model, example_inputs, output_transform=output_transform )
         self._build_dependency(self.module_to_node)
         self.update_index()
         return self
@@ -367,32 +369,24 @@ class DependencyGraph(object):
                     dep = Dependency( trigger=out_node_rule[0], handler=out_node_rule[1], broken_node=out_node)
                     node.dependencies.append( dep )
     
-    def _obtain_forward_graph(self, model, example_inputs, get_output_fn):
+    def _obtain_forward_graph(self, model, example_inputs, output_transform):
         #module_to_node = { m: Node( m ) for m in model.modules() if isinstance( m, self.PRUNABLE_MODULES ) }
         model.eval().cpu()
         # Get grad_fn from prunable modules
         grad_fn_to_module = {}
         def _record_module_grad_fn(module, inputs, outputs):
             grad_fn_to_module[outputs.grad_fn] = module
-
         hooks = [m.register_forward_hook(_record_module_grad_fn) for m in model.modules() if isinstance( m, self.PRUNABLE_MODULES ) ]
+
         out = model(example_inputs)
         for hook in hooks:
             hook.remove()
-        grad_fn_from_prunable_module = list( grad_fn_to_module.keys() )
 
         # create nodes and dummy modules
-        visited = set()
         module_to_node = {}
-
         def _build_graph(grad_fn):
-            module = grad_fn_to_module.get( grad_fn, None )
-            if module is not None and module in module_to_node:
-                return module_to_node[module]
-            
-            if grad_fn in grad_fn_from_prunable_module: # prunable ops
-                module = grad_fn_to_module[ grad_fn ]
-            else: # create dummy modules
+            module = grad_fn_to_module.get( grad_fn, None )            
+            if module is None:
                 if not hasattr(grad_fn, 'name'):
                     module = _ElementWiseOp() # skip customized modules
                     if self.verbose:
@@ -404,22 +398,25 @@ class DependencyGraph(object):
                 else:
                     module = _ElementWiseOp()   # All other ops are treated as element-wise ops
                 grad_fn_to_module[ grad_fn ] = module # record grad_fn
-
-            node = Node( module, grad_fn, self._module_to_name.get( module, None ) )
-            module_to_node[ module ] = node
-
+                node = Node( module, grad_fn, self._module_to_name.get( module, None ) )
+                module_to_node[ module ] = node
+            elif module in module_to_node:
+                node = module_to_node[module]
+            else:
+                node = Node( module, grad_fn, self._module_to_name.get( module, None ) )
+                module_to_node[ module ] = node
             if hasattr(grad_fn, 'next_functions'):
                 for f in grad_fn.next_functions:
-                    if f[0] is not None and ( not hasattr( f[0], 'name' ) or 'accumulategrad' not in f[0].name().lower() ):
+                    if f[0] is not None:
+                        if hasattr( f[0], 'name' ) and 'accumulategrad' in f[0].name().lower(): # skip leaf variables
+                            continue
                         input_node = _build_graph(f[0])
-                        # connect nodes
                         node.add_input( input_node )
                         input_node.add_output( node )
-            #print(grad_fn, node)
             return node
         
-        if get_output_fn is not None:
-            out = get_output_fn(out)
+        if output_transform is not None:
+            out = output_transform(out)
             
         if isinstance(out, (list, tuple) ):
             for o in out:
@@ -431,7 +428,6 @@ class DependencyGraph(object):
     def _set_fc_index_transform(self, fc_node: Node):
         if fc_node.type != OPTYPE.LINEAR:
             return
-        
         visited = set()
         fc_in_features = fc_node.module.in_features
         feature_channels = _get_in_node_out_channels(fc_node.inputs[0])
