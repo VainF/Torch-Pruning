@@ -69,7 +69,7 @@ Pruning the resnet.conv1 will affect several layers. If we print the pruning pla
 
 ## Low-level pruning functions
 
-You have to manually handle the broken dependencies without DependencyGraph.
+We have to manually handle the broken dependencies without DependencyGraph.
 
 ```python
 pruning.prune_conv( model.conv1, idxs=[2,6,9] )
