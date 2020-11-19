@@ -24,6 +24,10 @@ This tool will automatically detect and handle layer dependencies (channel consi
 pip install torch_pruning
 ```
 
+## How it works
+
+This package will run your model with fake inputs and collect layer information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When you apply a pruning function (e.g. torch_pruning.prune_conv ) on certain layer through ``DependencyGraph.get_pruning_plan``, the package will traverse the whole graph to fix inconsistent modules. The pruning index will be automatically mapped to correct position if there are ``torch.split`` and ``torch.concat`` in your model.
+
 ## Quickstart
 
 ### Pruning with DependencyGraph 
