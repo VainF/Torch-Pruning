@@ -4,10 +4,17 @@ A pytorch toolkit for structured neural network pruning and layer dependency mai
 
 This tool will automatically detect and handle layer dependencies (channel consistency) during pruning. It is able to handle various network architectures such as DenseNet, ResNet, and Inception. See [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more supported models. 
 
-**Known Issues**: 
+Note!!!: please remember to save the whole model object (weights+architecture) rather than only model weights:
 
-* Only depthwise conv is supported when groups>1, i.e. `groups`=`in_channels`=`out_channels`. 
-* Customized operations will be treated as element-wise op, e.g. subclass of `torch.autograd.Function`. 
+```python
+# torch.save(model.state_dict(), 'model.pth') # the model has been pruned and can not be loaded using the original model definition.
+torch.save(model, 'model.pth') # this will save the architecture together with model weights
+```
+
+
+## How it works
+
+This package will run your model with fake inputs and collect layer information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When you apply a pruning function (e.g. torch_pruning.prune_conv ) on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
@@ -17,6 +24,10 @@ This tool will automatically detect and handle layer dependencies (channel consi
 |    Concatenation      | <img src="examples/docs/concat.png" width="80%">     | DenseNet, ASPP |
 |    Split              | <img src="examples/docs/split.png" width="80%">      | torch.chunk |
 
+**Known Issues**: 
+
+* Only depthwise conv is supported when groups>1, i.e. `groups`=`in_channels`=`out_channels`. 
+* Customized operations will be treated as element-wise op, e.g. subclass of `torch.autograd.Function`. 
 
 ## Installation
 
@@ -24,9 +35,6 @@ This tool will automatically detect and handle layer dependencies (channel consi
 pip install torch_pruning
 ```
 
-## How it works
-
-This package will run your model with fake inputs and collect layer information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When you apply a pruning function (e.g. torch_pruning.prune_conv ) on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
 
 ## Quickstart
 
