@@ -14,7 +14,7 @@ torch.save(model, 'model.pth') # this will save the architecture together with m
 
 ## How it works
 
-This package will run your model with fake inputs and collect layer information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When you apply a pruning function (e.g. torch_pruning.prune_conv ) on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
+This package will run your model with fake inputs and collect layer information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When a pruning function (e.g. torch_pruning.prune_conv ) is applied on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
