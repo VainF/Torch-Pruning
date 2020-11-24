@@ -48,7 +48,10 @@ def prune_conv(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, d
     
     keep_idxs = [idx for idx in range(layer.out_channels) if idx not in idxs]
     layer.out_channels = layer.out_channels-len(idxs)
-    layer.weight = torch.nn.Parameter(layer.weight.data.clone()[keep_idxs])
+    if not layer.transposed:
+        layer.weight = torch.nn.Parameter(layer.weight.data.clone()[keep_idxs])
+    else:
+        layer.weight = torch.nn.Parameter(layer.weight.data.clone()[:, keep_idxs])
     if layer.bias is not None:
         layer.bias = torch.nn.Parameter(layer.bias.data.clone()[keep_idxs])
     return layer, num_pruned
@@ -68,7 +71,10 @@ def prune_related_conv(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool
         layer = deepcopy(layer)
     keep_idxs = [i for i in range(layer.in_channels) if i not in idxs]
     layer.in_channels = layer.in_channels - len(idxs)
-    layer.weight = torch.nn.Parameter(layer.weight.data.clone()[:, keep_idxs]) 
+    if not layer.transposed:
+        layer.weight = torch.nn.Parameter(layer.weight.data.clone()[:, keep_idxs]) 
+    else:
+        layer.weight = torch.nn.Parameter(layer.weight.data.clone()[keep_idxs])
     # no bias pruning because it does not change the output size
     return layer, num_pruned
 
