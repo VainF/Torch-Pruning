@@ -119,7 +119,7 @@ def main():
     elif args.mode=='test':
         ckpt = 'resnet18-round%d.pth'%(args.round)
         print("Load model from %s"%( ckpt ))
-        model = torch.load( previous_ckpt )
+        model = torch.load( ckpt )
         params = sum([np.prod(p.size()) for p in model.parameters()])
         print("Number of Parameters: %.1fM"%(params/1e6))
         acc = eval(model, test_loader)
