@@ -92,11 +92,11 @@ Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning p
 We have to manually handle the broken dependencies without DependencyGraph.
 
 ```python
-pruning.prune_conv( model.conv1, idxs=[2,6,9] )
+tp.prune_conv( model.conv1, idxs=[2,6,9] )
 
 # fix the broken dependencies manually
-pruning.prune_batchnorm( model.bn1, idxs=[2,6,9] )
-pruning.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
+tp.prune_batchnorm( model.bn1, idxs=[2,6,9] )
+tp.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
 
