@@ -54,7 +54,7 @@ strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
-# 3. get a pruning plan from to the dependency graph.
+# 3. get a pruning plan from the dependency graph.
 pruning_idxs = strategy(model.conv1.weight, amount=0.4) # or manually selected pruning_idxs=[2, 6, 9]
 pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv, idxs=pruning_idxs )
 print(pruning_plan)
