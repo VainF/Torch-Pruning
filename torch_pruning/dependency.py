@@ -107,8 +107,6 @@ class _ElementWiseOp(nn.Module):
     def __repr__(self):
         return "_ElementWiseOp()"
 
-
-
 class _FlattenIndexTransform(object):
     def __init__(self, stride=1, reverse=False):
         self._stride = stride
@@ -125,6 +123,7 @@ class _FlattenIndexTransform(object):
                 new_idxs.extend(list( range(i*self._stride, (i+1)*self._stride)))
         return new_idxs
 
+
 class _ConcatIndexTransform(object):
     def __init__(self, offset, reverse=False):
         self.offset = offset
@@ -136,6 +135,7 @@ class _ConcatIndexTransform(object):
         else:
             new_idxs = [i+self.offset[0] for i in idxs]
         return new_idxs
+
 
 class _SplitIndexTransform(object):
     def __init__(self, offset, reverse=False):
@@ -284,22 +284,22 @@ class DependencyGraph(object):
 
     PRUNABLE_MODULES = ( nn.modules.conv._ConvNd, nn.modules.batchnorm._BatchNorm, nn.Linear, nn.PReLU )
     
-    HANDLER = {                         # prune in_channel          # prune out_channel
-                OPTYPE.CONV          :  (prune.prune_related_conv,   prune.prune_conv),
-                OPTYPE.BN            :  (prune.prune_batchnorm,      prune.prune_batchnorm),
-                OPTYPE.PRELU         :  (prune.prune_prelu,          prune.prune_prelu),
-                OPTYPE.LINEAR        :  (prune.prune_related_linear, prune.prune_linear),
-                OPTYPE.GROUP_CONV    :  (prune.prune_group_conv,     prune.prune_group_conv),
-                OPTYPE.CONCAT        :  (_prune_concat,              _prune_concat),
-                OPTYPE.SPLIT         :  (_prune_split,               _prune_split),
-                OPTYPE.ELEMENTWISE   :  (_prune_elementwise_op,      _prune_elementwise_op),
-               }
+    HANDLER = {    # pruning function that changes 1. in_channel           2. out_channel
+                OPTYPE.CONV                 :  (prune.prune_related_conv,   prune.prune_conv),
+                OPTYPE.BN                   :  (prune.prune_batchnorm,      prune.prune_batchnorm),
+                OPTYPE.PRELU                :  (prune.prune_prelu,          prune.prune_prelu),
+                OPTYPE.LINEAR               :  (prune.prune_related_linear, prune.prune_linear),
+                OPTYPE.GROUP_CONV           :  (prune.prune_group_conv,     prune.prune_group_conv),
+                OPTYPE.CONCAT               :  (_prune_concat,              _prune_concat),
+                OPTYPE.SPLIT                :  (_prune_split,               _prune_split),
+                OPTYPE.ELEMENTWISE          :  (_prune_elementwise_op,      _prune_elementwise_op),
+            }
     OUTPUT_NODE_RULES = {}
     INPUT_NODE_RULES = {}
     for t1 in HANDLER.keys():
         for t2 in HANDLER.keys():
             OUTPUT_NODE_RULES[ (t1, t2) ] = (HANDLER[t1][1], HANDLER[t2][0]) # change in_channels of output layer
-            INPUT_NODE_RULES[ (t1, t2) ] = (HANDLER[t1][0], HANDLER[t2][1]) # change out_channels of input layer
+            INPUT_NODE_RULES[ (t1, t2) ] = (HANDLER[t1][0], HANDLER[t2][1])  # change out_channels of input layer
 
     def build_dependency( self, model:torch.nn.Module, example_inputs:torch.Tensor, output_transform:callable=None, verbose:bool=True ):
         self.verbose = verbose
@@ -354,7 +354,7 @@ class DependencyGraph(object):
         for dep, idxs in plan.plan:
             merged_plan.add_plan_and_merge( dep, idxs )
         return merged_plan
-    
+
     def _build_dependency(self, module_to_node):
         for module, node in module_to_node.items():
             for in_node in node.inputs:
@@ -439,7 +439,9 @@ class DependencyGraph(object):
             return
         visited = set()
         fc_in_features = fc_node.module.in_features
-        feature_channels = _get_in_node_out_channels(fc_node.inputs[0])
+        feature_channels = _get_out_channels_of_in_node(fc_node.inputs[0])
+        if feature_channels<=0: # the first layer: https://github.com/VainF/Torch-Pruning/issues/21
+            return
         stride = fc_in_features // feature_channels
         if stride>1:
             for in_node in fc_node.inputs:
@@ -457,7 +459,7 @@ class DependencyGraph(object):
         
         chs = []
         for n in cat_node.inputs:
-            chs.append( _get_in_node_out_channels(n) )
+            chs.append( _get_out_channels_of_in_node(n) )
 
         offsets = [0]
         for ch in chs:
@@ -479,7 +481,7 @@ class DependencyGraph(object):
         
         chs = []
         for n in split_node.outputs:
-            chs.append( _get_out_node_in_channels(n) )
+            chs.append( _get_in_channels_of_out_node(n) )
 
         offsets = [0]
         for ch in chs:
@@ -494,24 +496,24 @@ class DependencyGraph(object):
                 if dep.broken_node == split_node:
                     dep.index_transform = _SplitIndexTransform( offset=offsets[i:i+2], reverse=True )
 
-def _get_in_node_out_channels(node):
+def _get_out_channels_of_in_node(node):
     ch = _get_node_out_channel(node)
     if ch is None:
         ch = 0
         for in_node in node.inputs:
             if node.type==OPTYPE.CONCAT:
-                ch+=_get_in_node_out_channels( in_node )
+                ch+=_get_out_channels_of_in_node( in_node )
             else:
-                ch=_get_in_node_out_channels( in_node )
+                ch=_get_out_channels_of_in_node( in_node )
     return ch
 
-def _get_out_node_in_channels(node):
+def _get_in_channels_of_out_node(node):
     ch = _get_node_in_channel(node)
     if ch is None:
         ch = 0
         for out_node in node.outputs:
             if node.type==OPTYPE.SPLIT:
-                ch+=_get_out_node_in_channels( out_node )
+                ch+=_get_in_channels_of_out_node( out_node )
             else:
-                ch=_get_out_node_in_channels( out_node )
+                ch=_get_in_channels_of_out_node( out_node )
     return ch
