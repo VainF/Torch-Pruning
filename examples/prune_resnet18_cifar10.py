@@ -83,13 +83,15 @@ def train_model(model, train_loader, test_loader):
 def prune_model(model):
     model.cpu()
     DG = tp.DependencyGraph().build_dependency( model, torch.randn(1, 3, 32, 32) )
-    def prune_conv(conv, pruned_prob):
-        weight = conv.weight.detach().cpu().numpy()
-        out_channels = weight.shape[0]
-        L1_norm = np.sum( np.abs(weight), axis=(1,2,3))
-        num_pruned = int(out_channels * pruned_prob)
-        prune_index = np.argsort(L1_norm)[:num_pruned].tolist() # remove filters with small L1-Norm
-        plan = DG.get_pruning_plan(conv, tp.prune_conv, prune_index)
+    def prune_conv(conv, amount=0.2):
+        #weight = conv.weight.detach().cpu().numpy()
+        #out_channels = weight.shape[0]
+        #L1_norm = np.sum( np.abs(weight), axis=(1,2,3))
+        #num_pruned = int(out_channels * pruned_prob)
+        #pruning_index = np.argsort(L1_norm)[:num_pruned].tolist() # remove filters with small L1-Norm
+        strategy = tp.strategy.L1Strategy()
+        pruning_index = strategy(conv.weight, amount=amount)
+        plan = DG.get_pruning_plan(conv, tp.prune_conv, pruning_index)
         plan.exec()
     
     block_prune_probs = [0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.3, 0.3]
