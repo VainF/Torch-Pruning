@@ -30,7 +30,7 @@ model = torch.load('model.pth') # no load_state_dict
 
 **Known Issues**: 
 
-* Only depthwise conv is supported when groups>1, i.e. `groups`=`in_channels`=`out_channels`. 
+* When groups>1, only depthwise conv is supported, i.e. `groups`=`in_channels`=`out_channels`. 
 * Customized operations will be treated as element-wise op, e.g. subclass of `torch.autograd.Function`. 
 
 ## Installation
