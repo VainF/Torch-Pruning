@@ -6,7 +6,7 @@ This tool will automatically detect and handle layer dependencies (channel consi
 
 ## How it works
 
-This package will run your model with fake inputs and collect layer information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When a pruning function (e.g. torch_pruning.prune_conv ) is applied on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
+This package will run your model with fake inputs and collect forward information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When a pruning function (e.g. torch_pruning.prune_conv ) is applied on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
 
 
 Tip: please remember to save the whole model object (weights+architecture) rather than only model weights:
@@ -38,24 +38,28 @@ pip install torch_pruning
 
 ## Quickstart
 
-### Pruning with DependencyGraph 
+### A minimal example 
 
 ```python
 import torch
 from torchvision.models import resnet18
 import torch_pruning as tp
+
 model = resnet18(pretrained=True)
 
-# pruning according to L1 Norm
+# 1. setup strategy (L1 Norm)
 strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
-# build layer dependency for resnet18
+
+# 2. build layer dependency for resnet18
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
-# get a pruning plan from to the dependency graph.
+
+# 3. get a pruning plan from to the dependency graph.
 pruning_idxs = strategy(model.conv1.weight, amount=0.4) # or manually selected pruning_idxs=[0, 2, 6]
 pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv, idxs=pruning_idxs )
 print(pruning_plan)
-# execute this plan (prune the model)
+
+# 4. execute this plan (prune the model)
 pruning_plan.exec()
 ```
 
