@@ -59,7 +59,7 @@ print(pruning_plan)
 pruning_plan.exec()
 ```
 
-Pruning the resnet.conv1 will affect several layers. If we print the pruning plan:
+Pruning the resnet.conv1 will affect several layers. If we print the pruning plan (with pruning_idxs=[0, 2, 6]):
 
 ```
 -------------
