@@ -12,8 +12,12 @@ This package will run your model with fake inputs and collect forward informatio
 Tip: please remember to save the whole model object (weights+architecture) rather than only model weights:
 
 ```python
+# save a pruned model
 # torch.save(model.state_dict(), 'model.pth') # weights only
 torch.save(model, 'model.pth') # obj (arch) + weights
+
+# load a pruned model
+model = torch.load('model.pth') # no load_state_dict
 ```
 
 |  Dependency           |  Visualization  |  Example   |
