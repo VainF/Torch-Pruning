@@ -9,7 +9,7 @@ This tool will automatically detect and handle layer dependencies (channel consi
 This package will run your model with fake inputs and collect forward information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When a pruning function (e.g. torch_pruning.prune_conv ) is applied on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
 
 
-Tip: please remember to save the whole model object (weights+architecture) rather than only model weights:
+Tip: please remember to save the whole model object (weights+architecture) rather than model weights only:
 
 ```python
 # save a pruned model
