@@ -6,14 +6,18 @@ This tool will automatically detect and handle layer dependencies (channel consi
 
 ## How it works
 
-This package will run your model with fake inputs and collect layer information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When a pruning function (e.g. torch_pruning.prune_conv ) is applied on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
+This package will run your model with fake inputs and collect forward information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When a pruning function (e.g. torch_pruning.prune_conv ) is applied on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
 
 
-Tip: please remember to save the whole model object (weights+architecture) rather than only model weights:
+Tip: please remember to save the whole model object (weights+architecture) rather than model weights only:
 
 ```python
-# torch.save(model.state_dict(), 'model.pth') # the model has been pruned and can not be loaded using the original model definition.
-torch.save(model, 'model.pth') # this will save the architecture together with model weights
+# save a pruned model
+# torch.save(model.state_dict(), 'model.pth') # weights only
+torch.save(model, 'model.pth') # obj (arch) + weights
+
+# load a pruned model
+model = torch.load('model.pth') # no load_state_dict
 ```
 
 |  Dependency           |  Visualization  |  Example   |
@@ -26,7 +30,7 @@ torch.save(model, 'model.pth') # this will save the architecture together with m
 
 **Known Issues**: 
 
-* Only depthwise conv is supported when groups>1, i.e. `groups`=`in_channels`=`out_channels`. 
+* When groups>1, only depthwise conv is supported, i.e. `groups`=`in_channels`=`out_channels`. 
 * Customized operations will be treated as element-wise op, e.g. subclass of `torch.autograd.Function`. 
 
 ## Installation
@@ -38,28 +42,32 @@ pip install torch_pruning
 
 ## Quickstart
 
-### Pruning with DependencyGraph 
+### A minimal example 
 
 ```python
 import torch
 from torchvision.models import resnet18
 import torch_pruning as tp
+
 model = resnet18(pretrained=True)
 
-# pruning according to L1 Norm
+# 1. setup strategy (L1 Norm)
 strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
-# build layer dependency for resnet18
+
+# 2. build layer dependency for resnet18
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
-# get a pruning plan according to the dependency graph. idxs is the indices of pruned filters.
-pruning_idxs = strategy(model.conv1.weight, amount=0.4) # or manually selected [0, 2, 6]
+
+# 3. get a pruning plan from the dependency graph.
+pruning_idxs = strategy(model.conv1.weight, amount=0.4) # or manually selected pruning_idxs=[2, 6, 9]
 pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv, idxs=pruning_idxs )
 print(pruning_plan)
-# execute this plan (prune the model)
+
+# 4. execute this plan (prune the model)
 pruning_plan.exec()
 ```
 
-Pruning the resnet.conv1 will affect several layers. If we print the pruning plan (with pruning_idxs=[0, 2, 6]):
+Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning plan (with pruning_idxs=[2, 6, 9]):
 
 ```
 -------------
@@ -88,11 +96,11 @@ Pruning the resnet.conv1 will affect several layers. If we print the pruning pla
 We have to manually handle the broken dependencies without DependencyGraph.
 
 ```python
-pruning.prune_conv( model.conv1, idxs=[2,6,9] )
+tp.prune_conv( model.conv1, idxs=[2,6,9] )
 
 # fix the broken dependencies manually
-pruning.prune_batchnorm( model.bn1, idxs=[2,6,9] )
-pruning.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
+tp.prune_batchnorm( model.bn1, idxs=[2,6,9] )
+tp.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
 
