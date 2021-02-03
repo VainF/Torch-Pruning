@@ -22,7 +22,8 @@ class OPTYPE(IntEnum):
 
     CONCAT=5
     SPLIT=6
-    ELEMENTWISE=7
+    CUSTOMIZED=7
+    ELEMENTWISE=8
 
 def _get_module_type(module):
     if isinstance( module, TORCH_CONV ):
@@ -38,8 +39,10 @@ def _get_module_type(module):
         return OPTYPE.LINEAR
     elif isinstance( module, _ConcatOp ):
         return OPTYPE.CONCAT
-    elif isinstance( module, _SplitOP):
+    elif isinstance( module, _SplitOp):
         return OPTYPE.SPLIT
+    elif isinstance(module, _CustomizedOp):
+        return OPTYPE.CUSTOMIZED
     else:
         return OPTYPE.ELEMENTWISE
 
@@ -55,6 +58,8 @@ def _get_node_out_channel(node):
             return None
         else:
             return node.module.num_parameters
+    elif node.type==OPTYPE.CUSTOMIZED:
+        return node.customized_op_fn['get_out_ch_fn'](node.module)
     else:
         return None
 
@@ -70,6 +75,8 @@ def _get_node_in_channel(node):
             return None
         else:
             return node.module.num_parameters
+    elif node.type==OPTYPE.CUSTOMIZED:
+        return node.customized_op_fn['get_in_ch_fn'](node.module)
     else:
         return None
 
@@ -83,6 +90,13 @@ def _prune_split(layer, *args, **kargs):
 def _prune_elementwise_op(layer, *args, **kargs):
     return layer, 0
 
+class _CustomizedOp(nn.Module):
+    def __init__(self, op_class):
+        self.op_cls = op_class
+
+    def __repr__(self):
+        return "CustomizedOp(%s)"%(str(self.op_cls))
+
 # Dummy module
 class _ConcatOp(nn.Module):
     def __init__(self):
@@ -92,13 +106,13 @@ class _ConcatOp(nn.Module):
     def __repr__(self):
         return "_ConcatOp(%s)"%(self.offsets)
 
-class _SplitOP(nn.Module):
+class _SplitOp(nn.Module):
     def __init__(self):
-        super(_SplitOP, self).__init__()
+        super(_SplitOp, self).__init__()
         self.offsets = None
         
     def __repr__(self):
-        return "_SplitOP(%s)"%(self.offsets)
+        return "_SplitOp(%s)"%(self.offsets)
 
 class _ElementWiseOp(nn.Module):
     def __init__(self):
@@ -282,7 +296,7 @@ class PruningPlan(object):
 
 class DependencyGraph(object):
 
-    PRUNABLE_MODULES = ( nn.modules.conv._ConvNd, nn.modules.batchnorm._BatchNorm, nn.Linear, nn.PReLU )
+    PRUNABLE_MODULES = [ nn.modules.conv._ConvNd, nn.modules.batchnorm._BatchNorm, nn.Linear, nn.PReLU ]
     
     HANDLER = {    # pruning function that changes 1. in_channel           2. out_channel
                 OPTYPE.CONV                 :  (prune.prune_related_conv,   prune.prune_conv),
@@ -293,6 +307,7 @@ class DependencyGraph(object):
                 OPTYPE.CONCAT               :  (_prune_concat,              _prune_concat),
                 OPTYPE.SPLIT                :  (_prune_split,               _prune_split),
                 OPTYPE.ELEMENTWISE          :  (_prune_elementwise_op,      _prune_elementwise_op),
+                OPTYPE.CUSTOMIZED           :  (None, None), # placeholder
             }
     OUTPUT_NODE_RULES = {}
     INPUT_NODE_RULES = {}
@@ -300,6 +315,7 @@ class DependencyGraph(object):
         for t2 in HANDLER.keys():
             OUTPUT_NODE_RULES[ (t1, t2) ] = (HANDLER[t1][1], HANDLER[t2][0]) # change in_channels of output layer
             INPUT_NODE_RULES[ (t1, t2) ] = (HANDLER[t1][0], HANDLER[t2][1])  # change out_channels of input layer
+    CUSTOMIZED_OP_FN = {}
 
     def build_dependency( self, model:torch.nn.Module, example_inputs:torch.Tensor, output_transform:callable=None, verbose:bool=True ):
         self.verbose = verbose
@@ -311,6 +327,15 @@ class DependencyGraph(object):
         self.update_index()
         return self
 
+    def register_customized_layer(self, layer_type, in_ch_pruning_fn, out_ch_pruning_fn, get_in_ch_fn, get_out_ch_fn):
+        self.CUSTOMIZED_OP_FN[layer_type] = {
+            "in_ch_pruning_fn": in_ch_pruning_fn, 
+            "out_ch_pruning_fn": out_ch_pruning_fn, 
+            "get_in_ch_fn": get_in_ch_fn, 
+            "get_out_ch_fn": get_out_ch_fn,
+        }
+        self.PRUNABLE_MODULES.append( layer_type )
+ 
     def update_index( self ):
         for module, node in self.module_to_node.items():
             if node.type==OPTYPE.LINEAR:
@@ -360,13 +385,25 @@ class DependencyGraph(object):
             for in_node in node.inputs:
                 in_node_rule = self.INPUT_NODE_RULES.get( (node.type, in_node.type), None )
                 if in_node_rule is not None:
-                    dep = Dependency( trigger=in_node_rule[0], handler=in_node_rule[1], broken_node=in_node)
+                    trigger = in_node_rule[0]
+                    handler = in_node_rule[1]
+                    if trigger is None:
+                        trigger = self.CUSTOMIZED_OP_FN[type(node.module)]['in_ch_pruning_fn']
+                    if handler is None:
+                        handler = self.CUSTOMIZED_OP_FN[type(in_node.module)]['out_ch_pruning_fn']
+                    dep = Dependency( trigger=trigger, handler=handler, broken_node=in_node)
                     node.dependencies.append( dep )
 
             for out_node in node.outputs:
                 out_node_rule = self.OUTPUT_NODE_RULES.get( (node.type, out_node.type), None )
                 if out_node_rule is not None:
-                    dep = Dependency( trigger=out_node_rule[0], handler=out_node_rule[1], broken_node=out_node)
+                    trigger = out_node_rule[0]
+                    handler = out_node_rule[1]
+                    if trigger is None:
+                        trigger = self.CUSTOMIZED_OP_FN[type(node.module)]['out_ch_pruning_fn']
+                    if handler is None:
+                        handler = self.CUSTOMIZED_OP_FN[type(out_node.module)]['in_ch_pruning_fn']
+                    dep = Dependency( trigger=trigger, handler=handler, broken_node=out_node)
                     node.dependencies.append( dep )
     
     def _obtain_forward_graph(self, model, example_inputs, output_transform):
@@ -383,7 +420,7 @@ class DependencyGraph(object):
                 visited[module] += 1
             grad_fn_to_module[outputs.grad_fn] = module
         
-        hooks = [m.register_forward_hook(_record_module_grad_fn) for m in model.modules() if isinstance( m, self.PRUNABLE_MODULES ) ]
+        hooks = [m.register_forward_hook(_record_module_grad_fn) for m in model.modules() if isinstance( m, tuple(self.PRUNABLE_MODULES )) ]
         out = model(example_inputs)
         for hook in hooks:
             hook.remove()
@@ -394,7 +431,7 @@ class DependencyGraph(object):
             module = grad_fn_to_module.get( grad_fn, None )   
             if module is not None and module in module_to_node and module not in reused:
                 return module_to_node[module]
-
+            
             if module is None:
                 if not hasattr(grad_fn, 'name'):
                     module = _ElementWiseOp() # skip customized modules
@@ -403,13 +440,16 @@ class DependencyGraph(object):
                 elif 'catbackward' in grad_fn.name().lower(): # concat op
                     module = _ConcatOp()
                 elif 'splitbackward' in grad_fn.name().lower():
-                    module = _SplitOP()
+                    module = _SplitOp()
                 else:
                     module = _ElementWiseOp()   # All other ops are treated as element-wise ops
                 grad_fn_to_module[ grad_fn ] = module # record grad_fn
 
             if module not in module_to_node:
                 node = Node( module, grad_fn, self._module_to_name.get( module, None ) )
+                if type(module) in self.CUSTOMIZED_OP_FN.keys(): # mark it as a customized OP
+                    node.type = OPTYPE.CUSTOMIZED
+                    node.customized_op_fn = self.CUSTOMIZED_OP_FN[type(module)]
                 module_to_node[ module ] = node
             else:
                 node = module_to_node[module]

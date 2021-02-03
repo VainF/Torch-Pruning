@@ -6,7 +6,7 @@ from operator import mul
 from abc import ABC, abstractstaticmethod
 from typing import Sequence, Tuple
 
-__all__=['prune_conv', 'prune_related_conv', 'prune_linear', 'prune_related_linear', 'prune_batchnorm', 'prune_prelu', 'prune_group_conv']
+#__all__=['prune_conv', 'prune_related_conv', 'prune_linear', 'prune_related_linear', 'prune_batchnorm', 'prune_prelu', 'prune_group_conv']
 
 # Class
 class BasePruningFunction(ABC):

@@ -96,6 +96,10 @@ pruning.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
 
+### Customized Layers
+
+Please refer to 'examples/customize_layer.py' for pruning customized layers with this package. A detailed tutorial is on the way!
+
 ## Layer Dependency
 
 During structured pruning, we need to maintain the channel consistency between different layers. 
