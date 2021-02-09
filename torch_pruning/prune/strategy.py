@@ -30,7 +30,7 @@ class LNStrategy(BaseStrategy):
         l1_norm = torch.norm( weights.view(n, -1), p=self.p, dim=1 )
         n_to_prune = int(amount*n)
         threshold = torch.kthvalue(l1_norm, k=n_to_prune).values 
-        indices = torch.nonzero(l1_norm <= threshold).squeeze().tolist()
+        indices = torch.nonzero(l1_norm <= threshold).view(-1).tolist()
         return indices
 
 class L1Strategy(LNStrategy):
