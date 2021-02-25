@@ -91,7 +91,7 @@ Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning p
 -------------
 ```
 
-## Low-level pruning functions
+### Low-level pruning functions
 
 We have to manually handle the broken dependencies without DependencyGraph.
 
@@ -104,7 +104,7 @@ tp.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
 
-## Customized Layers
+### Customized Layers
 
 Please refer to 'examples/customize_layer.py' for pruning customized layers with this package. A detailed tutorial is on the way!
 
