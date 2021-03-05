@@ -36,7 +36,7 @@ model = torch.load('model.pth') # no load_state_dict
 ## Installation
 
 ```bash
-pip install torch_pruning
+pip install torch_pruning # v0.2.4
 ```
 
 
