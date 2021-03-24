@@ -4,7 +4,7 @@ A pytorch toolkit for structured neural network pruning and layer dependency mai
 
 This tool will automatically detect and handle layer dependencies (channel consistency) during pruning. It is able to handle various network architectures such as DenseNet, ResNet, and Inception. See [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more supported models. 
 
-**Feel free to open a pull request if you have a better idea!**
+**Feel free to open a pull request if you have some interesting idea!**
 
 ## How it works
 
