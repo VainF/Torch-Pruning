@@ -322,8 +322,7 @@ class DependencyGraph(object):
         example_inputs: typing.Union[torch.Tensor, typing.Sequence],
         output_transform:callable=None, 
         verbose:bool=True ):
-
-
+        
         self.verbose = verbose
         # get module name
         self._module_to_name = { module: name for (name, module) in model.named_modules() }
