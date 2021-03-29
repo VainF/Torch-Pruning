@@ -317,7 +317,13 @@ class DependencyGraph(object):
             INPUT_NODE_RULES[ (t1, t2) ] = (HANDLER[t1][0], HANDLER[t2][1])  # change out_channels of input layer
     CUSTOMIZED_OP_FN = {}
 
-    def build_dependency( self, model:torch.nn.Module, example_inputs:torch.Tensor, output_transform:callable=None, verbose:bool=True ):
+    def build_dependency( self, 
+        model:torch.nn.Module, 
+        example_inputs: typing.Union[torch.Tensor, typing.Sequence],
+        output_transform:callable=None, 
+        verbose:bool=True ):
+
+
         self.verbose = verbose
         # get module name
         self._module_to_name = { module: name for (name, module) in model.named_modules() }
@@ -421,7 +427,14 @@ class DependencyGraph(object):
             grad_fn_to_module[outputs.grad_fn] = module
         
         hooks = [m.register_forward_hook(_record_module_grad_fn) for m in model.modules() if isinstance( m, tuple(self.PRUNABLE_MODULES )) ]
-        out = model(example_inputs)
+        
+        if isinstance(example_inputs, (tuple, list)):
+            out = model(*example_inputs)
+        elif isinstance(example_inputs, dict):
+            out = model(**example_inputs)
+        elif isinstance(example_inputs, torch.Tensor):
+            out = model(example_inputs)
+
         for hook in hooks:
             hook.remove()
         reused = [ m for (m, count) in visited.items() if count>1 ]
