@@ -4,12 +4,13 @@ A pytorch toolkit for structured neural network pruning and layer dependency mai
 
 This tool will automatically detect and handle layer dependencies (channel consistency) during pruning. It is able to handle various network architectures such as DenseNet, ResNet, and Inception. See [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more supported models. 
 
-**Feel free to open a pull request if you have an interesting idea!**
+**Feel free to open a pull request if you have some interesting ideas!**
+
+Supported Modules: Conv, Linear, BatchNorm, Transposed Conv, PReLU
 
 ## How it works
 
 This package will run your model with fake inputs and collect forward information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When a pruning function (e.g. torch_pruning.prune_conv ) is applied on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
-
 
 Tip: please remember to save the whole model object (weights+architecture) rather than model weights only:
 
