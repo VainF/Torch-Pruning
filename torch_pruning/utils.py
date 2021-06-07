@@ -1,4 +1,5 @@
 from .dependency import TORCH_CONV, TORCH_BATCHNORM, TORCH_PRELU, TORCH_LINEAR
+import torch
 
 def count_prunable_params(module):
     if isinstance( module, ( TORCH_CONV, TORCH_LINEAR) ):
@@ -36,3 +37,4 @@ def count_prunable_channels(module):
 
 def count_params(module):
     return sum([ p.numel() for p in module.parameters() ])
+

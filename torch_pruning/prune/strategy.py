@@ -9,6 +9,12 @@ class BaseStrategy(ABC):
 
     @abstractclassmethod
     def apply(self, weights, amount=0.0)->  Sequence[int]:  # return index
+        """ Apply the strategy on weights with user specified pruning percentage.
+
+        Parameters:
+            weights (torch.Parameter): weights to be pruned.
+            amount (Callable): the percentage of weights to be pruned.
+        """
         raise NotImplementedError
 
 class RandomStrategy(BaseStrategy):

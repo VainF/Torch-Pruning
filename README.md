@@ -2,7 +2,7 @@
 
 A pytorch toolkit for structured neural network pruning and layer dependency maintaining
 
-<img src="examples/docs/intro.png" width="40%">
+<img src="assets/intro.png" width="50%">
 
 This tool will automatically detect and handle layer dependencies (channel consistency) during pruning. It is able to handle various network architectures such as DenseNet, ResNet, and Inception. See [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more supported models. 
 
@@ -27,11 +27,11 @@ model = torch.load('model.pth') # no load_state_dict
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
-|    Conv-Conv          |  <img src="examples/docs/conv-conv.png" width="80%"> | AlexNet  |
-|    Conv-FC (Global Pooling or Flatten) |  <img src="examples/docs/conv-fc.png" width="80%">   | ResNet, VGG    |  
-|    Skip Connection    | <img src="examples/docs/residual.png" width="80%">   | ResNet
-|    Concatenation      | <img src="examples/docs/concat.png" width="80%">     | DenseNet, ASPP |
-|    Split              | <img src="examples/docs/split.png" width="80%">      | torch.chunk |
+|    Conv-Conv          |  <img src="assets/conv-conv.png" width="80%"> | AlexNet  |
+|    Conv-FC (Global Pooling or Flatten) |  <img src="assets/conv-fc.png" width="80%">   | ResNet, VGG    |  
+|    Skip Connection    | <img src="assets/residual.png" width="80%">   | ResNet
+|    Concatenation      | <img src="assets/concat.png" width="80%">     | DenseNet, ASPP |
+|    Split              | <img src="assets/split.png" width="80%">      | torch.chunk |
 
 **Known Issues**: 
 
@@ -119,17 +119,17 @@ During structured pruning, we need to maintain the channel consistency between d
 
 ### A Simple Case
 
-<img src="examples/docs/dep1.png" width="80%">
+<img src="assets/dep1.png" width="80%">
 
 ### More Complicated Cases
 
 the layer dependency becomes much more complicated when the model contains skip connections or concatenations. 
 
 #### Residual Block: 
-<img src="examples/docs/dep2.png" width="80%">
+<img src="assets/dep2.png" width="80%">
 
 #### Concatenation: 
-<img src="examples/docs/dep3.png" width="80%">
+<img src="assets/dep3.png" width="80%">
 
 See paper [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710) for more details.
 

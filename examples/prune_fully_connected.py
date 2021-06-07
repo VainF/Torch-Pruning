@@ -28,11 +28,10 @@ strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,128))
 
-# get a pruning plan according to the dependency graph. idxs is the indices of pruned filters.
+# get a pruning plan according to the dependency graph.
 pruning_plan = DG.get_pruning_plan( model.fc1, tp.prune_linear, idxs=strategy(model.fc1.weight, amount=0.4) )
 print(pruning_plan)
 
-# execute this plan (prune the model)
+# execute the plan (prune the model)
 pruning_plan.exec()
-
 print(model)

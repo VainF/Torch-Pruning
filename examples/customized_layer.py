@@ -11,7 +11,7 @@ from typing import Sequence
 ############
 # Customize your layer
 #
-class CustomizeLayer(nn.Module):
+class CustomizedLayer(nn.Module):
     def __init__(self, in_dim):
         super().__init__()
         self.in_dim = in_dim
@@ -31,7 +31,7 @@ class FullyConnectedNet(nn.Module):
     def __init__(self, input_size, num_classes, HIDDEN_UNITS):
         super().__init__()
         self.fc1 = nn.Linear(input_size, HIDDEN_UNITS)
-        self.customized_layer = CustomizeLayer(HIDDEN_UNITS)
+        self.customized_layer = CustomizedLayer(HIDDEN_UNITS)
         self.fc2 = nn.Linear(HIDDEN_UNITS, num_classes)
 
     def forward(self, x):
@@ -44,9 +44,8 @@ class FullyConnectedNet(nn.Module):
 # Implement your pruning function for the customized layer
 #
 class MyPruningFn(tp.prune.structured.BasePruningFunction):
-
     @staticmethod
-    def prune_params(layer: CustomizeLayer, idxs: Sequence[int]) -> nn.Module: 
+    def prune_params(layer: CustomizedLayer, idxs: Sequence[int]) -> nn.Module: 
         keep_idxs = list(set(range(layer.in_dim)) - set(idxs))
         layer.in_dim = layer.in_dim-len(idxs)
         layer.scale = torch.nn.Parameter(layer.scale.data.clone()[keep_idxs])
@@ -54,11 +53,12 @@ class MyPruningFn(tp.prune.structured.BasePruningFunction):
         return layer
     
     @staticmethod
-    def calc_nparams_to_prune(layer: CustomizeLayer, idxs: Sequence[int]) -> int: 
+    def calc_nparams_to_prune(layer: CustomizedLayer, idxs: Sequence[int]) -> int: 
         nparams_to_prune = len(idxs) * 2
         return nparams_to_prune
+
 # function wrapper
-def my_pruning_fn(layer: CustomizeLayer, idxs: list, inplace: bool=True, dry_run: bool=False):
+def my_pruning_fn(layer: CustomizedLayer, idxs: list, inplace: bool=True, dry_run: bool=False):
     return MyPruningFn.apply(layer, idxs, inplace, dry_run)
 
 model = FullyConnectedNet(128, 10, 256)
@@ -67,11 +67,12 @@ strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
 
 DG = tp.DependencyGraph()
 # Register your customized layer
-DG.register_customized_layer(CustomizeLayer, 
-    in_ch_pruning_fn=my_pruning_fn, # prune channels/dimensions of input tensor
-    out_ch_pruning_fn=my_pruning_fn, # prune channels/dimensions of output tensor
-    get_in_ch_fn=lambda l: l.in_dim,  # estimate the n_channel of input tensor. You can return None if the layer does not change tensor shape.
-    get_out_ch_fn=lambda l: l.in_dim) # estimate the n_channel of output tensor. You can return None if the layer does not change tensor shape.
+DG.register_customized_layer(
+    CustomizedLayer, 
+    in_ch_pruning_fn=my_pruning_fn, # A function to prune channels/dimensions of input tensor
+    out_ch_pruning_fn=my_pruning_fn, # A function to prune channels/dimensions of output tensor
+    get_in_ch_fn=lambda l: l.in_dim,  # estimate the n_channel of layer input. Return None if the layer does not change tensor shape.
+    get_out_ch_fn=lambda l: l.in_dim) # estimate the n_channel of layer output. Return None if the layer does not change tensor shape.
 
 # Build dependency graph
 DG.build_dependency(model, example_inputs=torch.randn(1,128))
@@ -81,5 +82,4 @@ print(pruning_plan)
 
 # execute this plan (prune the model)
 pruning_plan.exec()
-
 print(model)

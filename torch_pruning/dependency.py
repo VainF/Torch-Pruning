@@ -5,6 +5,7 @@ from functools import reduce
 from operator import mul
 from . import prune
 from enum import IntEnum
+from numbers import Number
 
 __all__ = ['PruningPlan', 'Dependency', 'DependencyGraph']
 
@@ -320,9 +321,17 @@ class DependencyGraph(object):
     def build_dependency( self, 
         model:torch.nn.Module, 
         example_inputs: typing.Union[torch.Tensor, typing.Sequence],
-        output_transform:callable=None, 
+        output_transform:typing.Callable=None, 
         verbose:bool=True ):
-        
+        """ Build a dependency graph through forwarding.
+
+        Parameters:
+            model (class): the model to be pruned.
+            example_inputs (torch.Tensor or List): dummy inputs for the model.
+            output_transform (Callable): A function to transform network outputs.
+            verbose (Callable): verbose mode.
+        """
+
         self.verbose = verbose
         # get module name
         self._module_to_name = { module: name for (name, module) in model.named_modules() }
@@ -333,6 +342,15 @@ class DependencyGraph(object):
         return self
 
     def register_customized_layer(self, layer_type, in_ch_pruning_fn, out_ch_pruning_fn, get_in_ch_fn, get_out_ch_fn):
+        """ Register a customized layer for pruning.
+
+        Parameters:
+            layer_type (class): the type of layer
+            in_ch_pruning_fn (Callable): A function to prune channels/dimensions of input tensor
+            out_ch_pruning_fn (Callable): A function to prune channels/dimensions of output tensor
+            get_in_ch_fn (Callable): estimate the n_channel of layer input. Return None if the layer does not change tensor shape.
+            get_out_ch_fn (Callable):estimate the n_channel of layer output. Return None if the layer does not change tensor shape.
+        """
         self.CUSTOMIZED_OP_FN[layer_type] = {
             "in_ch_pruning_fn": in_ch_pruning_fn, 
             "out_ch_pruning_fn": out_ch_pruning_fn, 
@@ -341,19 +359,19 @@ class DependencyGraph(object):
         }
         self.PRUNABLE_MODULES.append( layer_type )
  
-    def update_index( self ):
-        for module, node in self.module_to_node.items():
-            if node.type==OPTYPE.LINEAR:
-                self._set_fc_index_transform( node )
-            if node.type==OPTYPE.CONCAT:
-                self._set_concat_index_transform(node)
-            if node.type==OPTYPE.SPLIT:
-                self._set_split_index_transform(node)
+    def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]): 
+        """ Get a pruning plan from the dependency graph, according to user's pruning operations. 
 
-    def get_pruning_plan(self, module, pruning_fn, idxs): 
+        Parameters:
+            module (nn.Module): the module to be pruned.
+            pruning_fn (Callable): the pruning function.
+            idxs (list or tuple): the indices of paramters to be pruned.
+        """
         if isinstance(module, TORCH_CONV) and module.groups>1:
             pruning_fn = prune.prune_group_conv
-            
+        if isinstance(idxs, Number):
+            idxs = [idxs]
+
         self.update_index()
         plan = PruningPlan()
         #  the user pruning operation
@@ -478,13 +496,24 @@ class DependencyGraph(object):
         
         if output_transform is not None:
             out = output_transform(out)
-            
-        if isinstance(out, (list, tuple) ):
-            for o in out:
-                _build_graph( o.grad_fn )
-        else:
-            _build_graph( out.grad_fn )
+        
+        #if isinstance(out, (list, tuple) ):
+        #    for o in out:
+        #        _build_graph( o.grad_fn )
+        #else:
+        #    _build_graph( out.grad_fn )
+        for o in flatten_as_list(out):
+             _build_graph( o.grad_fn )
         return module_to_node
+
+    def update_index( self ):
+        for module, node in self.module_to_node.items():
+            if node.type==OPTYPE.LINEAR:
+                self._set_fc_index_transform( node )
+            if node.type==OPTYPE.CONCAT:
+                self._set_concat_index_transform(node)
+            if node.type==OPTYPE.SPLIT:
+                self._set_split_index_transform(node)
 
     def _set_fc_index_transform(self, fc_node: Node):
         if fc_node.type != OPTYPE.LINEAR:
@@ -569,3 +598,20 @@ def _get_in_channels_of_out_node(node):
             else:
                 ch=_get_in_channels_of_out_node( out_node )
     return ch
+
+def flatten_as_list(obj):
+    if isinstance(obj, torch.Tensor):
+        return [ obj ]
+    elif isinstance(obj, (list,tuple)):
+        flattened_list = []
+        for sub_obj in obj:
+            flattened_list.extend( flatten_as_list(sub_obj) )
+        return flattened_list
+    elif isinstance(obj, dict):
+        flattened_list = []
+        for sub_obj in obj.values():
+            flattened_list.extend( flatten_as_list(sub_obj) )
+        return flattened_list
+    else:
+        return obj
+    
