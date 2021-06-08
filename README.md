@@ -4,22 +4,26 @@ A pytorch toolkit for structured neural network pruning and layer dependency mai
 
 <img src="assets/intro.png" width="50%">
 
-This tool will automatically detect and handle layer dependencies (channel consistency) during pruning. It is able to handle various network architectures such as DenseNet, ResNet, and Inception. See [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more supported models. 
+This tool will automatically detect and handle layer dependencies, i.e., channel consistency of succeed layers, during pruning. It is able to handle various network architectures such as DenseNet, ResNet, and Inception. See [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more details about supported architectures. 
 
-Supported Modules: Conv, Linear, BatchNorm, Transposed Conv, PReLU
+**Features:**
 
-**Feel free to open a pull request if you have some interesting ideas!**
+* Automatic dependency maintaining.
+* Supported modules: Conv, Linear, BatchNorm, Transposed Conv, PReLU and [customized modules](https://github.com/VainF/Torch-Pruning/blob/master/examples/customized_layer.py).
+* Supported operations: split, concatenation, skip connection, flatten, etc.
+* Pruning strategies: Random, L1, L2, etc.
+
 
 ## How it works
 
-This package will run your model with fake inputs and collect forward information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When a pruning function (e.g. torch_pruning.prune_conv ) is applied on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BN. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
+This package will run your model with fake inputs and collect forward information just like ``torch.jit``. Then a dependency graph is established to describe the computational graph. When a pruning function (e.g. torch_pruning.prune_conv ) is applied on certain layer through ``DependencyGraph.get_pruning_plan``, this package will traverse the whole graph to fix inconsistent modules such as BatchNorm. The pruning index will be automatically mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your model.
 
 Tip: please remember to save the whole model object (weights+architecture) rather than model weights only:
 
 ```python
 # save a pruned model
 # torch.save(model.state_dict(), 'model.pth') # weights only
-torch.save(model, 'model.pth') # obj (arch) + weights
+torch.save(model, 'model.pth') # obj (arch + weights), recommended.
 
 # load a pruned model
 model = torch.load('model.pth') # no load_state_dict
@@ -44,10 +48,9 @@ model = torch.load('model.pth') # no load_state_dict
 pip install torch_pruning # v0.2.4
 ```
 
-
 ## Quickstart
 
-### A minimal example 
+### 1. A minimal example 
 
 ```python
 import torch
@@ -96,7 +99,7 @@ Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning p
 -------------
 ```
 
-### Low-level pruning functions
+### 2. Low-level pruning functions
 
 In absence of DependencyGraph, We have to manually handle the broken dependencies layer by layer.
 
@@ -109,9 +112,28 @@ tp.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
 
-### Customized Layers
+### 3. Customized Layers
 
-Please refer to 'examples/customize_layer.py' for pruning customized layers with this package. A detailed tutorial is on the way!
+Please refer to [examples/customize_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/customized_layer.py).
+
+
+## Example: Pruning ResNet18 on Cifar10
+
+### 1. Scratch training
+```bash
+cd examples
+python prune_resnet18_cifar10.py --mode train # 11.1M, Acc=0.9248
+```
+
+### 2. Pruning and fintuning
+```bash
+python prune_resnet18_cifar10.py --mode prune --round 1 --total_epochs 30 --step_size 20 # 4.5M, Acc=0.9229
+python prune_resnet18_cifar10.py --mode prune --round 2 --total_epochs 30 --step_size 20 # 1.9M, Acc=0.9207
+python prune_resnet18_cifar10.py --mode prune --round 3 --total_epochs 30 --step_size 20 # 0.8M, Acc=0.9176
+python prune_resnet18_cifar10.py --mode prune --round 4 --total_epochs 30 --step_size 20 # 0.4M, Acc=0.9102
+python prune_resnet18_cifar10.py --mode prune --round 5 --total_epochs 30 --step_size 20 # 0.2M, Acc=0.9011
+...
+```
 
 ## Layer Dependency
 
@@ -134,22 +156,3 @@ the layer dependency becomes much more complicated when the model contains skip 
 See paper [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710) for more details.
 
 
-
-
-## Example: ResNet18 on Cifar10
-
-### 1. Train the model
-```bash
-cd examples
-python prune_resnet18_cifar10.py --mode train # 11.1M, Acc=0.9248
-```
-
-### 2. Pruning and fintuning
-```bash
-python prune_resnet18_cifar10.py --mode prune --round 1 --total_epochs 30 --step_size 20 # 4.5M, Acc=0.9229
-python prune_resnet18_cifar10.py --mode prune --round 2 --total_epochs 30 --step_size 20 # 1.9M, Acc=0.9207
-python prune_resnet18_cifar10.py --mode prune --round 3 --total_epochs 30 --step_size 20 # 0.8M, Acc=0.9176
-python prune_resnet18_cifar10.py --mode prune --round 4 --total_epochs 30 --step_size 20 # 0.4M, Acc=0.9102
-python prune_resnet18_cifar10.py --mode prune --round 5 --total_epochs 30 --step_size 20 # 0.2M, Acc=0.9011
-...
-```
