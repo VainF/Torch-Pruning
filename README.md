@@ -112,7 +112,7 @@ tp.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
 
 ### 3. Customized Layers
 
-Please refer to [examples/customize_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/customized_layer.py).
+Please refer to [examples/customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/customized_layer.py).
 
 
 ## Example: Pruning ResNet18 on Cifar10
