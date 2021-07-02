@@ -1,4 +1,4 @@
-# Torch-Pruning: Pruning channels to accelerate your models
+# Torch-Pruning: Pruning channels for model acceleration
 
 <img src="assets/intro.png" width="45%">
 
