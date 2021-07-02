@@ -2,8 +2,7 @@
 <div align="center">
 <img src="assets/intro.png" width="45%">
 </div>
-Torch-Pruning is a pytorch toolbox for structured neural network pruning and automatic layer dependency maintaining. This tool will automatically detect and handle layer dependencies during pruning. Without too much human effort, Torch-Pruning is able to handle various network architectures such as DenseNet, ResNet, and Inception. Please refer to [examples/test_models.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/test_models.py) for more details about supported architectures.   
-
+Torch-Pruning is a pytorch toolbox for structured neural network pruning and automatic layer dependency maintaining. This tool will automatically detect and handle layer dependencies during pruning. Without too much human effort, Torch-Pruning is able to handle various network architectures such as DenseNet, ResNet, and Inception.
 
 ### **Features:**
 * Channel pruning for neurual networks.
