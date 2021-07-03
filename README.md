@@ -16,17 +16,6 @@ Torch-Pruning is a pytorch toolbox for neural network pruning. Different from th
 
 Torch-Pruning will forward your model with a fake inputs and collect layer information just like ``torch.jit``. A dependency graph is established to describe the computational graph and layer relations. As pruning a certain layer may affect several different layers (see Quick Start), the dependecy will propogate your pruning operation to other layers automatically and provide a `PruningPlan`. All pruning indices will be mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your models.
 
-Tip: please remember to save the whole model object (weights+architecture) rather than model weights only:
-
-```python
-# save a pruned model
-# torch.save(model.state_dict(), 'model.pth') # weights only
-torch.save(model, 'model.pth') # obj (arch + weights), recommended.
-
-# load a pruned model
-model = torch.load('model.pth') # no load_state_dict
-```
-
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
 |    Conv-Conv          |  <img src="assets/conv-conv.png" width="80%"> | AlexNet  |
@@ -95,6 +84,17 @@ Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning p
 [ <DEP: _prune_elementwise_op => prune_related_conv on layer2.0.downsample.0 (Conv2d(64, 128, kernel_size=(1, 1), stride=(2, 2), bias=False))>, Index=[2, 6, 9], NumPruned=384]
 11211 parameters will be pruned
 -------------
+```
+
+Tip: please remember to save the whole model object (weights+architecture) rather than model weights only:
+
+```python
+# save a pruned model
+# torch.save(model.state_dict(), 'model.pth') # weights only
+torch.save(model, 'model.pth') # obj (arch + weights), recommended.
+
+# load a pruned model
+model = torch.load('model.pth') # no load_state_dict
 ```
 
 ### 2. Low-level pruning functions
