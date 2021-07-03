@@ -2,7 +2,7 @@
 <div align="center">
 <img src="assets/intro.png" width="45%">
 </div>
-Torch-Pruning is a pytorch toolbox for neural network pruning. Different from the pruning-by-masking functions in pytorch (unstructured), this toolbox removes entire channels for acceleration. Torch-Pruning will automatically detect and handle layer dependencies during pruning. Without too much human effort, it is able to handle various network architectures such as DenseNet, ResNet, and Inception.
+Torch-Pruning is a pytorch toolbox for neural network pruning. Different from the pruning-by-masking functions in pytorch (unstructured), this toolbox removes entire channels from neural networks for acceleration. Torch-Pruning will automatically detect and handle layer dependencies during pruning. Without too much human effort, it is able to handle various network architectures such as DenseNet, ResNet, and Inception.
 
 ### **Features:**
 * Channel pruning for neurual networks.
