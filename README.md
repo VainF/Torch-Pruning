@@ -115,7 +115,7 @@ tp.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
 Please refer to [examples/customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/customized_layer.py).
 
 ### 4. Rounding channels for device-friendly network pruning
-You can round the channels by specifying `round_to` parameter of strategy. For example, the following script will make sure the channel number an integer multiple of 16 (e.g., 16, 32, 48, 64).
+You can round the channels by passing a `round_to` parameter to strategy. For example, the following script will round the number of channels to 16xN (e.g., 16, 32, 48, 64).
 ```python
 strategy = tp.strategy.L1Strategy()
 pruning_idxs = strategy(model.conv1.weight, amount=0.2, round_to=16)
