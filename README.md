@@ -124,13 +124,13 @@ pruning_idxs = strategy(model.conv1.weight, amount=0.2, round_to=16)
 
 ### 5. Example: pruning ResNet18 on Cifar10
 
-#### 1. Scratch training
+#### 5.1. Scratch training
 ```bash
 cd examples
 python prune_resnet18_cifar10.py --mode train # 11.1M, Acc=0.9248
 ```
 
-#### 2. Pruning and fintuning
+#### 5.2. Pruning and fintuning
 ```bash
 python prune_resnet18_cifar10.py --mode prune --round 1 --total_epochs 30 --step_size 20 # 4.5M, Acc=0.9229
 python prune_resnet18_cifar10.py --mode prune --round 2 --total_epochs 30 --step_size 20 # 1.9M, Acc=0.9207
