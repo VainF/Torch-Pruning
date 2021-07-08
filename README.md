@@ -11,6 +11,11 @@ Torch-Pruning is a pytorch toolbox for neural network pruning. Different from th
 * Supported operations: split, concatenation, skip connection, flatten, etc.
 * Pruning strategies: Random, L1, L2, etc.
 
+## Installation
+
+```bash
+pip install torch_pruning # v0.2.6
+```
 
 ## How it works
 
@@ -28,12 +33,6 @@ Torch-Pruning will forward your model with a fake inputs and collect layer infor
 
 * When groups>1, only depthwise conv is supported, i.e. `groups`=`in_channels`=`out_channels`. 
 * Customized operations will be treated as element-wise op, e.g. subclass of `torch.autograd.Function`. 
-
-## Installation
-
-```bash
-pip install torch_pruning # v0.2.4
-```
 
 ## Quickstart
 
