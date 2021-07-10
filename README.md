@@ -119,7 +119,7 @@ You can round the channels by passing a `round_to` parameter to strategy. For ex
 strategy = tp.strategy.L1Strategy()
 pruning_idxs = strategy(model.conv1.weight, amount=0.2, round_to=16)
 ```
-Please refer to [https://github.com/VainF/Torch-Pruning/issues/38] for more details.
+Please refer to [https://github.com/VainF/Torch-Pruning/issues/38](https://github.com/VainF/Torch-Pruning/issues/38) for more details.
 
 ### 5. Example: pruning ResNet18 on Cifar10
 
