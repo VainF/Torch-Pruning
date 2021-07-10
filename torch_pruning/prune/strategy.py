@@ -5,16 +5,16 @@ import random
 import warnings
 
 def round_pruning_amount(total_parameters, n_to_prune, round_to):
-    """round the purning amount to an integer multiple of `round_to`.
+    """round the parameter amount after pruning to an integer multiple of `round_to`.
     """
     round_to = int(round_to)
     if round_to<=1: return n_to_prune
     after_pruning = total_parameters - n_to_prune
     compensation = after_pruning % round_to
     if compensation < round_to // 2 and after_pruning > round_to: 
-        n_to_prune = n_to_prune + compensation # round to the floor
+        n_to_prune = n_to_prune + compensation # floor
     else:
-        n_to_prune = n_to_prune - round_to + compensation # round the ceiling
+        n_to_prune = n_to_prune - round_to + compensation # ceiling
     return n_to_prune
 
 class BaseStrategy(ABC):
