@@ -11,7 +11,7 @@ def round_pruning_amount(total_parameters, n_to_prune, round_to):
     if round_to<=1: return n_to_prune
     after_pruning = total_parameters - n_to_prune
     compensation = after_pruning % round_to
-    #   round to the nearest (round_to * N)                           # avoid negative results
+    #   round to the nearest (round_to * N)                           # avoid negative n_to_prune
     if (compensation < round_to // 2 and after_pruning > round_to) or round_to>n_to_prune: 
         n_to_prune = n_to_prune + compensation # floor
     else:
