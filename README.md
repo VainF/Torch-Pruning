@@ -14,7 +14,7 @@ Torch-Pruning is a pytorch toolbox for structured neural network pruning. Differ
 ## Installation
 
 ```bash
-pip install torch_pruning # v0.2.6
+pip install torch_pruning # v0.2.7
 ```
 
 ## How it works
