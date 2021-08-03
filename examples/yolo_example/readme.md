@@ -1,6 +1,6 @@
 # Pruning example for Yolo-v5 (In progress)
 
-### 1. Clone the yolo-v5 repository and copy the training script
+### 1. Copy the training script to yolo-v5 repository
 ```bash
 cd examples/yolo_example
 git clone https://github.com/ultralytics/yolov5.git
