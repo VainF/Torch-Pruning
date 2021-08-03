@@ -2,11 +2,11 @@
 <div align="center">
 <img src="assets/intro.jpg" width="45%">
 </div>
-Torch-Pruning is a pytorch toolbox for structured neural network pruning. Different from the pruning-by-masking functions in pytorch (unstructured), this toolbox removes entire channels from neural networks for acceleration. Torch-Pruning will automatically detect and handle layer dependencies during pruning. Without too much human effort, it is able to handle various network architectures such as DenseNet, ResNet, and Inception.
+Torch-Pruning is a pytorch toolbox for structured neural network pruning. Different from the pruning-by-masking functions in pytorch (unstructured), this toolbox removes entire channels from neural networks for acceleration. Torch-Pruning will automatically detect and handle layer dependencies during pruning. Without too much human effort, it is able to handle various network architectures like DenseNet, ResNet, and DeepLab.
 
 ### **Features:**
 * Channel pruning for neurual networks.
-* Automatic dependency maintaining.
+* Graph Tracing and automatic dependency maintaining.
 * Supported modules: Conv, Linear, BatchNorm, Transposed Conv, PReLU and [customized modules](https://github.com/VainF/Torch-Pruning/blob/master/examples/customized_layer.py).
 * Supported operations: split, concatenation, skip connection, flatten, etc.
 * Pruning strategies: Random, L1, L2, etc.
@@ -19,7 +19,7 @@ pip install torch_pruning # v0.2.7
 
 ## How it works
 
-Torch-Pruning will forward your model with a fake inputs and collect layer information just like ``torch.jit``. A dependency graph is established to describe the computational graph and layer relations. As pruning a certain layer may affect several different layers (see Quick Start), the dependecy will propogate your pruning operation to other layers automatically and provide a `PruningPlan`. All pruning indices will be mapped to correct position if there is ``torch.split`` or ``torch.cat`` in your models.
+Torch-Pruning will forward your model with a fake inputs and collect layer information just like ``torch.jit``. A dependency graph is established to describe the computational graph and layer relations. As pruning a certain layer may affect several different layers (see Quick Start), the dependecy will propogate your pruning operation to other layers automatically and provide a `PruningPlan`. All pruning indices will be correctly transformed if there is ``torch.split`` or ``torch.cat`` in your models.
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
