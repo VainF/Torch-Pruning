@@ -5,7 +5,7 @@
 Torch-Pruning is a pytorch toolbox for structured neural network pruning. Different from the pruning-by-masking functions in pytorch (unstructured), this toolbox removes entire channels from neural networks for acceleration. Torch-Pruning will automatically detect and handle layer dependencies during pruning. Without too much human effort, it is able to handle various network architectures like DenseNet, ResNet and DeepLab.
 
 ### **Features:**
-* Channel pruning for neurual networks.
+* Channel pruning for CNNs (ResNet, DenseNet, Deeplab, etc.) and Transformers (Bert, contributed by @horseee)
 * Graph Tracing and automatic dependency maintaining.
 * Supported modules: Conv, Linear, BatchNorm, Transposed Conv, PReLU and [customized modules](https://github.com/VainF/Torch-Pruning/blob/master/examples/customized_layer.py).
 * Supported operations: split, concatenation, skip connection, flatten, etc.
