@@ -13,16 +13,24 @@ class BasePruningFunction(ABC):
     """Base pruning function
     """
 
+    NEED_PRUNING_DIM_MODULES = [ nn.modules.normalization.LayerNorm, ]
+
     @classmethod
-    def apply(cls, layer: nn.Module, idxs: Sequence[int], inplace: bool=True, dry_run: bool=False) -> Tuple[nn.Module, int] : 
+    def apply(cls, layer: nn.Module, idxs: Sequence[int], inplace: bool=True, dry_run: bool=False, **kwargs) -> Tuple[nn.Module, int] : 
         idxs = list(set(idxs))
         cls.check(layer, idxs)
-        nparams_to_prune = cls.calc_nparams_to_prune(layer, idxs)
+        if any(isinstance(layer, submodule) for submodule in cls.NEED_PRUNING_DIM_MODULES):
+            nparams_to_prune = cls.calc_nparams_to_prune(layer, idxs, pruning_dim=kwargs['pruning_dim'])
+        else:
+            nparams_to_prune = cls.calc_nparams_to_prune(layer, idxs)
         if dry_run:
             return layer, nparams_to_prune
         if not inplace:
             layer = deepcopy(layer)
-        layer = cls.prune_params(layer, idxs)
+        if any(isinstance(layer, submodule) for submodule in cls.NEED_PRUNING_DIM_MODULES):
+            layer = cls.prune_params(layer, idxs, pruning_dim=kwargs['pruning_dim'])
+        else:
+            layer = cls.prune_params(layer, idxs)
         return layer, nparams_to_prune
 
     @staticmethod
@@ -137,6 +145,30 @@ class BatchnormPruning(BasePruningFunction):
         nparams_to_prune = len(idxs)* ( 2 if layer.affine else 1)
         return nparams_to_prune
 
+class LayernormPruning(BasePruningFunction):
+    @staticmethod
+    def prune_params(layer:nn.Module, idxs: Sequence[int], pruning_dim: int) -> nn.Module:
+        if len(layer.normalized_shape) < -pruning_dim:
+            return layer
+
+        num_features = layer.normalized_shape[pruning_dim]
+        keep_idxs = torch.tensor(list(set(range(num_features)) - set(idxs)))
+        if layer.elementwise_affine:
+            layer.weight = torch.nn.Parameter(layer.weight.data.clone().index_select(pruning_dim, keep_idxs))
+            layer.bias = torch.nn.Parameter(layer.bias.data.clone().index_select(pruning_dim, keep_idxs))
+        
+        if pruning_dim != -1:
+            layer.normalized_shape = layer.normalized_shape[:pruning_dim] + (keep_idxs.size(0), ) + layer.normalized_shape[pruning_dim+1:]  
+        else:
+            layer.normalized_shape = layer.normalized_shape[:pruning_dim] + (keep_idxs.size(0), ) 
+       
+        return layer
+    
+    @staticmethod
+    def calc_nparams_to_prune(layer: nn.Module, idxs: Sequence[int], pruning_dim: int) -> int:
+        nparams_to_prune = len(idxs) * 2 if layer.elementwise_affine and len(layer.normalized_shape) >= -pruning_dim else 0
+        return nparams_to_prune
+
 class PReLUPruning(BasePruningFunction):
     @staticmethod
     def prune_params(layer: nn.PReLU, idxs: list)-> nn.Module: 
@@ -151,25 +183,45 @@ class PReLUPruning(BasePruningFunction):
         nparams_to_prune = 0 if layer.num_parameters==1 else len(idxs)
         return nparams_to_prune
 
+class EmbeddingPruning(BasePruningFunction):  
+    @staticmethod
+    def prune_params(layer: nn.Embedding, idxs: list)-> nn.Module:
+        num_features = layer.embedding_dim
+        keep_idxs = list(set(range(num_features)) - set(idxs))
+        layer.weight = torch.nn.Parameter(layer.weight.data.clone()[:, keep_idxs])
+        layer.embedding_dim = len(keep_idxs)
+        return layer
+    
+    @staticmethod
+    def calc_nparams_to_prune(layer: nn.Embedding, idxs: Sequence[int]) -> int:
+        nparams_to_prune = layer.num_embeddings * len(idxs)
+        return nparams_to_prune
+        
+
 # Funtional
-def prune_conv(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False) -> Tuple[nn.Module, int] : 
-    return ConvPruning.apply(layer, idxs, inplace, dry_run)
+def prune_conv(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False, **kwargs) -> Tuple[nn.Module, int] : 
+    return ConvPruning.apply(layer, idxs, inplace, dry_run, **kwargs)
 
-def prune_related_conv(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False) -> Tuple[nn.Module, int] : 
-    return RelatedConvPruning.apply(layer, idxs, inplace, dry_run)
+def prune_related_conv(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False, **kwargs) -> Tuple[nn.Module, int] : 
+    return RelatedConvPruning.apply(layer, idxs, inplace, dry_run, **kwargs)
 
-def prune_group_conv(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False) -> Tuple[nn.Module, int] : 
-    return GroupConvPruning.apply(layer, idxs, inplace, dry_run)
+def prune_group_conv(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False, **kwargs) -> Tuple[nn.Module, int] : 
+    return GroupConvPruning.apply(layer, idxs, inplace, dry_run, **kwargs)
 
-def prune_batchnorm(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False) -> Tuple[nn.Module, int] : 
-    return BatchnormPruning.apply(layer, idxs, inplace, dry_run)
+def prune_batchnorm(layer: nn.modules.batchnorm._BatchNorm, idxs: list, inplace: bool=True, dry_run: bool=False, **kwargs) -> Tuple[nn.Module, int] : 
+    return BatchnormPruning.apply(layer, idxs, inplace, dry_run, **kwargs)
 
-def prune_linear(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False) -> Tuple[nn.Module, int] : 
-    return LinearPruning.apply(layer, idxs, inplace, dry_run)
+def prune_linear(layer: nn.Linear, idxs: list, inplace: bool=True, dry_run: bool=False, **kwargs) -> Tuple[nn.Module, int] : 
+    return LinearPruning.apply(layer, idxs, inplace, dry_run, **kwargs)
 
-def prune_related_linear(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False) -> Tuple[nn.Module, int] : 
-    return RelatedLinearPruning.apply(layer, idxs, inplace, dry_run)
+def prune_related_linear(layer: nn.Linear, idxs: list, inplace: bool=True, dry_run: bool=False, **kwargs) -> Tuple[nn.Module, int] : 
+    return RelatedLinearPruning.apply(layer, idxs, inplace, dry_run, **kwargs)
 
-def prune_prelu(layer: nn.modules.conv._ConvNd, idxs: list, inplace: bool=True, dry_run: bool=False) -> Tuple[nn.Module, int] : 
-    return PReLUPruning.apply(layer, idxs, inplace, dry_run)
+def prune_prelu(layer: nn.PReLU, idxs: list, inplace: bool=True, dry_run: bool=False, **kwargs) -> Tuple[nn.Module, int] : 
+    return PReLUPruning.apply(layer, idxs, inplace, dry_run, **kwargs)
 
+def prune_layernorm(layer: nn.modules.normalization.LayerNorm, idxs: list, inplace: bool=True, dry_run: bool=False, **kwargs) -> Tuple[nn.Module, int] :
+    return LayernormPruning.apply(layer, idxs, inplace, dry_run, **kwargs)
+
+def prune_embedding(layer: nn.Embedding, idxs: list, inplace: bool=True, dry_run: bool=False, **kwargs) -> Tuple[nn.Module, int] :
+    return EmbeddingPruning.apply(layer, idxs, inplace, dry_run, **kwargs)

@@ -58,8 +58,8 @@ class MyPruningFn(tp.prune.structured.BasePruningFunction):
         return nparams_to_prune
 
 # function wrapper
-def my_pruning_fn(layer: CustomizedLayer, idxs: list, inplace: bool=True, dry_run: bool=False):
-    return MyPruningFn.apply(layer, idxs, inplace, dry_run)
+def my_pruning_fn(layer: CustomizedLayer, idxs: list, inplace: bool=True, dry_run: bool=False, **kwargs):
+    return MyPruningFn.apply(layer, idxs, inplace, dry_run, **kwargs)
 
 model = FullyConnectedNet(128, 10, 256)
 # pruning according to L1 Norm
