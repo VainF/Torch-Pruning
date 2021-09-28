@@ -11,8 +11,10 @@ __all__ = ['PruningPlan', 'Dependency', 'DependencyGraph']
 
 TORCH_CONV = nn.modules.conv._ConvNd
 TORCH_BATCHNORM = nn.modules.batchnorm._BatchNorm
+TORCH_LAYERNORM = nn.modules.normalization.LayerNorm
 TORCH_PRELU = nn.PReLU
 TORCH_LINEAR = nn.Linear
+TORCH_EMBED = nn.Embedding
 
 class OPTYPE(IntEnum):
     CONV = 0
@@ -25,6 +27,9 @@ class OPTYPE(IntEnum):
     SPLIT=6
     CUSTOMIZED=7
     ELEMENTWISE=8
+
+    LN = 9
+    EMBED = 10
 
 def _get_module_type(module):
     if isinstance( module, TORCH_CONV ):
@@ -42,6 +47,10 @@ def _get_module_type(module):
         return OPTYPE.CONCAT
     elif isinstance( module, _SplitOp):
         return OPTYPE.SPLIT
+    elif isinstance( module, TORCH_LAYERNORM ):
+        return OPTYPE.LN
+    elif isinstance( module, TORCH_EMBED ):
+        return OPTYPE.EMBED
     elif isinstance(module, _CustomizedOp):
         return OPTYPE.CUSTOMIZED
     else:
@@ -52,6 +61,8 @@ def _get_node_out_channel(node):
         return node.module.out_channels
     elif node.type==OPTYPE.BN:
         return node.module.num_features
+    elif node.type==OPTYPE.LN:
+        return node.module.normalized_shape[node.pruning_dim]
     elif node.type==OPTYPE.LINEAR:
         return node.module.out_features
     elif node.type==OPTYPE.PRELU:
@@ -69,6 +80,8 @@ def _get_node_in_channel(node):
         return node.module.in_channels
     elif node.type==OPTYPE.BN:
         return node.module.num_features
+    elif node.type==OPTYPE.LN:
+        return node.module.normalized_shape[node.pruning_dim]
     elif node.type==OPTYPE.LINEAR:
         return node.module.in_features
     elif node.type==OPTYPE.PRELU:
@@ -165,12 +178,13 @@ class _SplitIndexTransform(object):
         return new_idxs
         
 class Node(object):
-    def __init__(self, module, grad_fn, node_name=None):
+    def __init__(self, module, grad_fn, pruning_dim=-1, node_name=None):
         self.module = module
         self.grad_fn = grad_fn
         self.inputs = []
         self.outputs = []
         self.dependencies = []
+        self.pruning_dim = pruning_dim
         self._node_name = node_name 
         self.type = _get_module_type( module )
 
@@ -221,7 +235,7 @@ class Dependency(object):
         self.index_transform = index_transform
 
     def __call__(self, idxs: list, dry_run: bool=False):
-        result = self.handler(self.broken_node.module, idxs, dry_run=dry_run)
+        result = self.handler(self.broken_node.module, idxs, pruning_dim=self.broken_node.pruning_dim, dry_run=dry_run)
         return result
 
     def __repr__(self):
@@ -297,7 +311,10 @@ class PruningPlan(object):
 
 class DependencyGraph(object):
 
-    PRUNABLE_MODULES = [ nn.modules.conv._ConvNd, nn.modules.batchnorm._BatchNorm, nn.Linear, nn.PReLU ]
+    PRUNABLE_MODULES = [ 
+        nn.modules.conv._ConvNd, nn.modules.batchnorm._BatchNorm, nn.Linear, nn.PReLU,
+        nn.modules.normalization.LayerNorm, nn.Embedding
+    ]
     
     HANDLER = {    # pruning function that changes 1. in_channel           2. out_channel
                 OPTYPE.CONV                 :  (prune.prune_related_conv,   prune.prune_conv),
@@ -308,6 +325,8 @@ class DependencyGraph(object):
                 OPTYPE.CONCAT               :  (_prune_concat,              _prune_concat),
                 OPTYPE.SPLIT                :  (_prune_split,               _prune_split),
                 OPTYPE.ELEMENTWISE          :  (_prune_elementwise_op,      _prune_elementwise_op),
+                OPTYPE.LN                   :  (prune.prune_layernorm,      prune.prune_layernorm),
+                OPTYPE.EMBED                :  (prune.prune_embedding,      prune.prune_embedding),
                 OPTYPE.CUSTOMIZED           :  (None, None), # placeholder
             }
     OUTPUT_NODE_RULES = {}
@@ -321,6 +340,7 @@ class DependencyGraph(object):
     def build_dependency( self, 
         model:torch.nn.Module, 
         example_inputs: typing.Union[torch.Tensor, typing.Sequence],
+        pruning_dim: int=1,
         output_transform:typing.Callable=None, 
         verbose:bool=True ):
         """ Build a dependency graph through forwarding.
@@ -335,8 +355,10 @@ class DependencyGraph(object):
         self.verbose = verbose
         # get module name
         self._module_to_name = { module: name for (name, module) in model.named_modules() }
+        if pruning_dim >= 0:
+            pruning_dim = pruning_dim - len(example_inputs.size())
         # build dependency graph
-        self.module_to_node = self._obtain_forward_graph( model, example_inputs, output_transform=output_transform )
+        self.module_to_node = self._obtain_forward_graph( model, example_inputs, output_transform=output_transform, pruning_dim=pruning_dim)
         self._build_dependency(self.module_to_node)
         self.update_index()
         return self
@@ -429,7 +451,7 @@ class DependencyGraph(object):
                     dep = Dependency( trigger=trigger, handler=handler, broken_node=out_node)
                     node.dependencies.append( dep )
     
-    def _obtain_forward_graph(self, model, example_inputs, output_transform):
+    def _obtain_forward_graph(self, model, example_inputs, output_transform, pruning_dim):
         #module_to_node = { m: Node( m ) for m in model.modules() if isinstance( m, self.PRUNABLE_MODULES ) }
         model.eval().cpu()
         # Get grad_fn from prunable modules
@@ -476,7 +498,7 @@ class DependencyGraph(object):
                 grad_fn_to_module[ grad_fn ] = module # record grad_fn
 
             if module not in module_to_node:
-                node = Node( module, grad_fn, self._module_to_name.get( module, None ) )
+                node = Node( module, grad_fn, pruning_dim, self._module_to_name.get( module, None ) )
                 if type(module) in self.CUSTOMIZED_OP_FN.keys(): # mark it as a customized OP
                     node.type = OPTYPE.CUSTOMIZED
                     node.customized_op_fn = self.CUSTOMIZED_OP_FN[type(module)]
@@ -503,7 +525,7 @@ class DependencyGraph(object):
         #else:
         #    _build_graph( out.grad_fn )
         for o in flatten_as_list(out):
-             _build_graph( o.grad_fn )
+            _build_graph( o.grad_fn )
         return module_to_node
 
     def update_index( self ):
