@@ -4,19 +4,12 @@ from typing import Sequence
 import random
 import warnings
 
+# https://github.com/VainF/Torch-Pruning/issues/49 by @Serjio42
 def round_pruning_amount(total_parameters, n_to_prune, round_to):
     """round the parameter amount after pruning to an integer multiple of `round_to`.
     """
-    round_to = int(round_to)
-    if round_to<=1: return n_to_prune
-    after_pruning = total_parameters - n_to_prune
-    compensation = after_pruning % round_to
-    #   round to the nearest (round_to * N)                          # avoid negative n_to_prune
-    if (compensation < round_to // 2 and after_pruning > round_to) or round_to>n_to_prune: 
-        n_to_prune = n_to_prune + compensation # floor
-    else:
-        n_to_prune = n_to_prune - round_to + compensation # ceiling
-    return n_to_prune
+    n_remain = round_to*max(int(total_parameters - n_to_prune)//round_to, 1)
+    return max(total_parameters - n_remain, 0)
 
 class BaseStrategy(ABC):
     def __call__(self, *args, **kwargs):
