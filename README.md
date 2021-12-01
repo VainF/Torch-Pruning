@@ -98,7 +98,7 @@ model = torch.load('model.pth') # no load_state_dict
 
 ### 2. Low-level pruning functions
 
-In absence of DependencyGraph, we have to manually handle the broken dependencies layer by layer.
+It is equivalent to make a layer-by-layer fixing using the low-level pruning functions. 
 
 ```python
 tp.prune_conv( model.conv1, idxs=[2,6,9] )
