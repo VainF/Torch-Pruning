@@ -11,15 +11,27 @@ Torch-Pruning is a pytorch toolbox for structured neural network pruning. Differ
 * Supported operations: split, concatenation, skip connection, flatten, etc.
 * Pruning strategies: Random, L1, L2, etc.
 
+  
+## How it works
+
+**We are drafting a paper to provide more technical details for this repo, which will be released as soon as possible, together with some practical examples for yolo and other popular networks.**
+  
+Torch-Pruning will forward your model with a fake inputs and collect layer information just like ``torch.jit``. A dependency graph is established to describe the computational graph and the dependency between layers. A dependency refers to a pair of coupled layers like two neighbouring convolutional layers, where pruning a certain layer may affect several coupled layers (see Quick Start). Torch-pruning will collect all affected layers according to the dependecy graph by propogating them on the whole graph, and then provide a `PruningPlan` to prune the model correctly. All pruning indices will be automatically transformed if there is ``torch.split`` or ``torch.cat`` in your models. 
+  
 ## Installation
 
 ```bash
 pip install torch_pruning # v0.2.7
 ```
+**Known Issues**: 
 
-## How it works
+* When groups>1, only depthwise conv is supported, i.e. `groups`=`in_channels`=`out_channels`. 
+* Customized operations will be treated as element-wise op, e.g. subclass of `torch.autograd.Function`. 
 
-Torch-Pruning will forward your model with a fake inputs and collect layer information just like ``torch.jit``. A dependency graph is established to describe the computational graph and layer relations. As pruning a certain layer may affect several different layers (see Quick Start), the dependecy will propogate your pruning operation to other layers automatically and provide a `PruningPlan`. All pruning indices will be correctly transformed if there is ``torch.split`` or ``torch.cat`` in your models.
+
+## Quickstart
+  
+### 0. Dependenies
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
@@ -29,12 +41,6 @@ Torch-Pruning will forward your model with a fake inputs and collect layer infor
 |    Concatenation      | <img src="assets/concat.png" width="80%">     | DenseNet, ASPP |
 |    Split              | <img src="assets/split.png" width="80%">      | torch.chunk |
 
-**Known Issues**: 
-
-* When groups>1, only depthwise conv is supported, i.e. `groups`=`in_channels`=`out_channels`. 
-* Customized operations will be treated as element-wise op, e.g. subclass of `torch.autograd.Function`. 
-
-## Quickstart
 
 ### 1. A minimal example 
 
