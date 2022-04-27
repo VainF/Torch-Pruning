@@ -453,7 +453,8 @@ class DependencyGraph(object):
     
     def _obtain_forward_graph(self, model, example_inputs, output_transform, pruning_dim):
         #module_to_node = { m: Node( m ) for m in model.modules() if isinstance( m, self.PRUNABLE_MODULES ) }
-        model.eval().cpu()
+        model.eval()
+        model.cpu()
         # Get grad_fn from prunable modules
         grad_fn_to_module = {}
 
