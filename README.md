@@ -15,7 +15,7 @@ Torch-Pruning is a pytorch toolbox for structured neural network pruning. Differ
 
 ### Updates:
   
-**3/24/2022. We are drafting a paper to provide more technical details about this repo, which will be released as soon as possible (in May), together with a new version and some practical examples for yolo and other popular networks.**
+**3/24/2022. We are drafting a paper to provide more technical details about this repo, which will be released as soon as possible, together with a new version and some practical examples for yolo and other popular networks.**
   
 ## How it works
   
