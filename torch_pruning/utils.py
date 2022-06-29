@@ -38,3 +38,5 @@ def count_prunable_channels(module):
 def count_params(module):
     return sum([ p.numel() for p in module.parameters() ])
 
+
+    
