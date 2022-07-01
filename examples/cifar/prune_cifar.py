@@ -1,9 +1,6 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-from cifar_resnet import ResNet18
-import cifar_resnet as resnet
-
 import torch_pruning as tp
 import argparse
 import torch
@@ -12,29 +9,22 @@ from torchvision import transforms
 import torch.nn.functional as F
 import torch.nn as nn 
 import numpy as np 
+import registry
+import models
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', type=str, required=True, choices=['train', 'prune', 'test'])
+parser.add_argument('--model', type=str, required=True)
+parser.add_argument('--dataset', type=str, default='cifar100')
 parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--verbose', action='store_true', default=False)
 parser.add_argument('--total_epochs', type=int, default=100)
 parser.add_argument('--step_size', type=int, default=70)
 parser.add_argument('--round', type=int, default=1)
+parser.add_argument('--restore_from', type=str, default=None)
 
 args = parser.parse_args()
 
-def get_dataloader():
-    train_loader = torch.utils.data.DataLoader(
-        CIFAR10('./data', train=True, transform=transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-        ]), download=True),batch_size=args.batch_size, num_workers=2)
-    test_loader = torch.utils.data.DataLoader(
-        CIFAR10('./data', train=False, transform=transforms.Compose([
-            transforms.ToTensor(),
-        ]),download=True),batch_size=args.batch_size, num_workers=2)
-    return train_loader, test_loader
 
 def eval(model, test_loader):
     correct = 0
@@ -75,53 +65,65 @@ def train_model(model, train_loader, test_loader):
         acc = eval(model, test_loader)
         print("Epoch %d/%d, Acc=%.4f"%(epoch, args.total_epochs, acc))
         if best_acc<acc:
-            torch.save( model, 'resnet18-round%d.pth'%(args.round) )
+            os.makedirs('checkpoints/pruned', exist_ok=True)
+            torch.save( model, 'checkpoints/pruned/%s-%s-round%d.pth'%(args.dataset, args.model, args.round) )
             best_acc=acc
         scheduler.step()
     print("Best Acc=%.4f"%(best_acc))
 
-def prune_model(model):
+def prune_model(model, args):
     model.cpu()
-    DG = tp.DependencyGraph().build_dependency( model, torch.randn(1, 3, 32, 32) )
-    def prune_conv(conv, amount=0.2):
-        #weight = conv.weight.detach().cpu().numpy()
-        #out_channels = weight.shape[0]
-        #L1_norm = np.sum( np.abs(weight), axis=(1,2,3))
-        #num_pruned = int(out_channels * pruned_prob)
-        #pruning_index = np.argsort(L1_norm)[:num_pruned].tolist() # remove filters with small L1-Norm
-        strategy = tp.strategy.L1Strategy()
-        pruning_index = strategy(conv.weight, amount=amount)
-        plan = DG.get_pruning_plan(conv, tp.prune_conv, pruning_index)
-        plan.exec()
+    userdefined_parameters=[model.pos_embedding, model.cls_token] if 'vit' in args.model else None
+    DG = tp.DependencyGraph().build_dependency( model, torch.randn(1, 3, 32, 32), userdefined_parameters=userdefined_parameters )
     
-    block_prune_probs = [0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.3, 0.3]
-    blk_id = 0
-    for m in model.modules():
-        if isinstance( m, resnet.BasicBlock ):
-            prune_conv( m.conv1, block_prune_probs[blk_id] )
-            prune_conv( m.conv2, block_prune_probs[blk_id] )
-            blk_id+=1
+    def prune_linear(layer, amount=0.2):
+        strategy = tp.strategy.L1Strategy()
+        pruning_index = strategy(layer.weight, amount=amount)
+        plan = DG.get_pruning_plan(layer, tp.prune_linear_out_channel, pruning_index)
+        plan.exec()
+
+    def prune_conv(layer, amount=0.2):
+        strategy = tp.strategy.L1Strategy()
+        pruning_index = strategy(layer.weight, amount=amount)
+        plan = DG.get_pruning_plan(layer, tp.prune_conv_out_channel, pruning_index)
+        plan.exec()
+
+    for (i, m) in enumerate(model.modules()):
+        if isinstance( m, models.vit.FeedForward ): # do not prune the to_patch_embedding layers! 
+            prune_linear(m.net[0], 0.2)
+            prune_linear(m.net[0], 0.2)
+        elif isinstance(m, nn.Conv2d):
+            prune_conv(m, 0.1)
     return model    
 
 def main():
-    train_loader, test_loader = get_dataloader()
+    num_classes, train_dst, val_dst = registry.get_dataset(args.dataset, data_root='data')
+    train_loader = torch.utils.data.DataLoader(
+        train_dst, batch_size=args.batch_size, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(
+        val_dst,batch_size=args.batch_size, num_workers=4)
+    args.num_classes = num_classes
+    
+    if args.restore_from is not None:
+        loaded = torch.load(args.restore_from)
+        if isinstance(loaded, nn.Module):
+            model = loaded
+        else:
+            model = registry.get_model(args.model, num_classes=num_classes)
+            model.load_state_dict(loaded['state_dict'])
+
     if args.mode=='train':
         args.round=0
-        model = ResNet18(num_classes=10)
         train_model(model, train_loader, test_loader)
     elif args.mode=='prune':
-        previous_ckpt = 'resnet18-round%d.pth'%(args.round-1)
-        print("Pruning round %d, load model from %s"%( args.round, previous_ckpt ))
-        model = torch.load( previous_ckpt )
-        prune_model(model)
+        print("Pruning round %d, load model from %s"%( args.round, args.restore_from ))
+        prune_model(model, args)
         print(model)
         params = sum([np.prod(p.size()) for p in model.parameters()])
         print("Number of Parameters: %.1fM"%(params/1e6))
         train_model(model, train_loader, test_loader)
     elif args.mode=='test':
-        ckpt = 'resnet18-round%d.pth'%(args.round)
-        print("Load model from %s"%( ckpt ))
-        model = torch.load( ckpt )
+        print("Load model from %s"%( args.restore_from ))
         params = sum([np.prod(p.size()) for p in model.parameters()])
         print("Number of Parameters: %.1fM"%(params/1e6))
         acc = eval(model, test_loader)

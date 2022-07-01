@@ -11,8 +11,6 @@ Torch-Pruning is a pytorch toolbox for structured neural network pruning. Differ
 * Supported operations: split, concatenation, skip connection, flatten, etc.
 * Pruning strategies: Random, L1, L2, etc.
 
-  
-
 ### Updates:
   
 **3/24/2022. We are drafting a paper to provide more technical details about this repo, which will be released as soon as possible, together with a new version and some practical examples for yolo and other popular networks.**
@@ -63,7 +61,7 @@ DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
 # 3. get a pruning plan from the dependency graph.
 pruning_idxs = strategy(model.conv1.weight, amount=0.4) # or manually selected pruning_idxs=[2, 6, 9, ...]
-pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv, idxs=pruning_idxs )
+pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs )
 print(pruning_plan)
 
 # 4. execute this plan (prune the model)
@@ -74,22 +72,22 @@ Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning p
 
 ```
 -------------
-[ <DEP: prune_conv => prune_conv on conv1 (Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False))>, Index=[2, 6, 9], NumPruned=441]
-[ <DEP: prune_conv => prune_batchnorm on bn1 (BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True))>, Index=[2, 6, 9], NumPruned=6]
+[ <DEP: prune_conv_out_channel => prune_conv_out_channel on conv1 (Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False))>, Index=[2, 6, 9], NumPruned=441]
+[ <DEP: prune_conv_out_channel => prune_batchnorm on bn1 (BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True))>, Index=[2, 6, 9], NumPruned=6]
 [ <DEP: prune_batchnorm => _prune_elementwise_op on _ElementWiseOp()>, Index=[2, 6, 9], NumPruned=0]
 [ <DEP: _prune_elementwise_op => _prune_elementwise_op on _ElementWiseOp()>, Index=[2, 6, 9], NumPruned=0]
-[ <DEP: _prune_elementwise_op => prune_related_conv on layer1.0.conv1 (Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False))>, Index=[2, 6, 9], NumPruned=1728]
+[ <DEP: _prune_elementwise_op => prune_conv_in_channel on layer1.0.conv1 (Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False))>, Index=[2, 6, 9], NumPruned=1728]
 [ <DEP: _prune_elementwise_op => _prune_elementwise_op on _ElementWiseOp()>, Index=[2, 6, 9], NumPruned=0]
 [ <DEP: _prune_elementwise_op => prune_batchnorm on layer1.0.bn2 (BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True))>, Index=[2, 6, 9], NumPruned=6]
-[ <DEP: prune_batchnorm => prune_conv on layer1.0.conv2 (Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False))>, Index=[2, 6, 9], NumPruned=1728]
+[ <DEP: prune_batchnorm => prune_conv_out_channel on layer1.0.conv2 (Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False))>, Index=[2, 6, 9], NumPruned=1728]
 [ <DEP: _prune_elementwise_op => _prune_elementwise_op on _ElementWiseOp()>, Index=[2, 6, 9], NumPruned=0]
-[ <DEP: _prune_elementwise_op => prune_related_conv on layer1.1.conv1 (Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False))>, Index=[2, 6, 9], NumPruned=1728]
+[ <DEP: _prune_elementwise_op => prune_conv_in_channel on layer1.1.conv1 (Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False))>, Index=[2, 6, 9], NumPruned=1728]
 [ <DEP: _prune_elementwise_op => _prune_elementwise_op on _ElementWiseOp()>, Index=[2, 6, 9], NumPruned=0]
 [ <DEP: _prune_elementwise_op => prune_batchnorm on layer1.1.bn2 (BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True))>, Index=[2, 6, 9], NumPruned=6]
-[ <DEP: prune_batchnorm => prune_conv on layer1.1.conv2 (Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False))>, Index=[2, 6, 9], NumPruned=1728]
+[ <DEP: prune_batchnorm => prune_conv_out_channel on layer1.1.conv2 (Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False))>, Index=[2, 6, 9], NumPruned=1728]
 [ <DEP: _prune_elementwise_op => _prune_elementwise_op on _ElementWiseOp()>, Index=[2, 6, 9], NumPruned=0]
-[ <DEP: _prune_elementwise_op => prune_related_conv on layer2.0.conv1 (Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False))>, Index=[2, 6, 9], NumPruned=3456]
-[ <DEP: _prune_elementwise_op => prune_related_conv on layer2.0.downsample.0 (Conv2d(64, 128, kernel_size=(1, 1), stride=(2, 2), bias=False))>, Index=[2, 6, 9], NumPruned=384]
+[ <DEP: _prune_elementwise_op => prune_conv_in_channel on layer2.0.conv1 (Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False))>, Index=[2, 6, 9], NumPruned=3456]
+[ <DEP: _prune_elementwise_op => prune_conv_in_channel on layer2.0.downsample.0 (Conv2d(64, 128, kernel_size=(1, 1), stride=(2, 2), bias=False))>, Index=[2, 6, 9], NumPruned=384]
 11211 parameters will be pruned
 -------------
 ```
@@ -110,11 +108,11 @@ model = torch.load('model.pth') # no load_state_dict
 It is equivalent to make a layer-by-layer fixing using the low-level pruning functions. 
 
 ```python
-tp.prune_conv( model.conv1, idxs=[2,6,9] )
+tp.prune_conv_out_channel( model.conv1, idxs=[2,6,9] )
 
 # fix the broken dependencies manually
 tp.prune_batchnorm( model.bn1, idxs=[2,6,9] )
-tp.prune_related_conv( model.layer2[0].conv1, idxs=[2,6,9] )
+tp.prune_conv_in_channel( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
 
@@ -134,7 +132,7 @@ Please refer to [https://github.com/VainF/Torch-Pruning/issues/38](https://githu
 
 #### 5.1. Scratch training
 ```bash
-cd examples
+cd examples/cifar_minimal
 python prune_resnet18_cifar10.py --mode train # 11.1M, Acc=0.9248
 ```
 

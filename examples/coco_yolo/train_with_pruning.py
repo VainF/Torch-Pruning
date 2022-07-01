@@ -113,7 +113,7 @@ def train(hyp, opt, device, tb_writer=None):
     excluded_layers = list(model.model[-1].modules())
     for m in model.modules():
         if isinstance(m, nn.Conv2d) and m not in excluded_layers:
-            pruning_plan = DG.get_pruning_plan( m, tp.prune_conv, idxs=strategy(m.weight, amount=0.4) )
+            pruning_plan = DG.get_pruning_plan( m, tp.prune_conv_out_channel, idxs=strategy(m.weight, amount=0.4) )
             print(pruning_plan)
             # execute the plan (prune the model)
             pruning_plan.exec()

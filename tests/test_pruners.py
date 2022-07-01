@@ -12,8 +12,8 @@ print(model.features[:4])
 print(model.features[0].weight.shape)
 print(model.features[3].weight.shape)
 
-tp.prune_conv(model.features[0], idxs=[0,1,3,4])
-tp.prune_related_conv( model.features[3], idxs=[0,1,3,4] )
+tp.prune_conv_out_channel(model.features[0], idxs=[0,1,3,4])
+tp.prune_conv_in_channel( model.features[3], idxs=[0,1,3,4] )
 
 print("\nAfter pruning: ")
 print(model.features[:4])

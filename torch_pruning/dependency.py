@@ -1,16 +1,22 @@
+from distutils.fancy_getopt import OptionDummy
 import imp
+from inspect import Parameter
+
+from numpy import empty, isin
 import torch
 import torch.nn as nn
 import typing
 
 from functools import reduce
 from operator import mul
+
+from torch_pruning.prune import structured
 from . import prune
 from enum import IntEnum
 from numbers import Number
 import warnings
 
-__all__ = ['PruningPlan', 'Dependency', 'DependencyGraph']
+__all__ = ["PruningPlan", "Dependency", "DependencyGraph"]
 
 TORCH_CONV = nn.modules.conv._ConvNd
 TORCH_BATCHNORM = nn.modules.batchnorm._BatchNorm
@@ -24,159 +30,187 @@ class OPTYPE(IntEnum):
     BN = 1
     LINEAR = 2
     PRELU = 3
-    GROUP_CONV=4
+    GROUP_CONV = 4
 
-    CONCAT=5
-    SPLIT=6
-    CUSTOMIZED=7
-    ELEMENTWISE=8
+    CONCAT = 5
+    SPLIT = 6
+    CUSTOMIZED = 7
+    ELEMENTWISE = 8
 
     LN = 9
     EMBED = 10
-    
+    PARAMETER = 11
+
 
 def _get_module_type(module):
-    if isinstance( module, TORCH_CONV ):
-        if module.groups>1:
+    if isinstance(module, TORCH_CONV):
+        if module.groups > 1:
             return OPTYPE.GROUP_CONV
         else:
             return OPTYPE.CONV
-    elif isinstance( module, TORCH_BATCHNORM ):
+    elif isinstance(module, TORCH_BATCHNORM):
         return OPTYPE.BN
-    elif isinstance( module, TORCH_PRELU ):
+    elif isinstance(module, TORCH_PRELU):
         return OPTYPE.PRELU
-    elif isinstance( module, TORCH_LINEAR ):
+    elif isinstance(module, TORCH_LINEAR):
         return OPTYPE.LINEAR
-    elif isinstance( module, _ConcatOp ):
+    elif isinstance(module, _ConcatOp):
         return OPTYPE.CONCAT
-    elif isinstance( module, _SplitOp):
+    elif isinstance(module, _SplitOp):
         return OPTYPE.SPLIT
-    elif isinstance( module, TORCH_LAYERNORM ):
+    elif isinstance(module, TORCH_LAYERNORM):
         return OPTYPE.LN
-    elif isinstance( module, TORCH_EMBED ):
+    elif isinstance(module, TORCH_EMBED):
         return OPTYPE.EMBED
     elif isinstance(module, _CustomizedOp):
         return OPTYPE.CUSTOMIZED
+    elif isinstance(module, torch.nn.Parameter):
+        return OPTYPE.PARAMETER
     else:
         return OPTYPE.ELEMENTWISE
 
-     
+
 class Node(object):
-    def __init__(self, module, grad_fn, pruning_dim=-1, node_name=None):
+    def __init__(self, module, grad_fn, node_name=None):
         self.module = module
         self.grad_fn = grad_fn
         self.inputs = []
         self.outputs = []
         self.dependencies = []
-        self.pruning_dim = pruning_dim
-        self._node_name = node_name 
-        self.type = _get_module_type( module )
+        self._node_name = node_name
+        self.type = _get_module_type(module)
 
     @property
     def node_name(self):
-        return "%s (%s)"%(self._node_name, str(self.module)) if self._node_name is not None else str(self.module)
+        if self._node_name is None:
+            return str(self.module)
+        else:
+            fmt = "%s"%(self._node_name)
+            if self.type!=OPTYPE.PARAMETER:
+                fmt += " (%s)"%(str(self.module))
+            return fmt
 
     def add_input(self, node):
         if node not in self.inputs:
-            self.inputs.append( node )
-    
+            self.inputs.append(node)
+
     def add_output(self, node):
         if node not in self.outputs:
-            self.outputs.append( node )
+            self.outputs.append(node)
 
     def __repr__(self):
-        return "<Node: (%s, %s)>"%( self.node_name, self.grad_fn )
+        return "<Node: (%s, %s)>" % (self.node_name, self.grad_fn)
 
     def __str__(self):
-        return "<Node: (%s, %s)>"%( self.node_name, self.grad_fn )
+        return "<Node: (%s, %s)>" % (self.node_name, self.grad_fn)
 
     def details(self):
-        fmt = "<Node: (%s, %s)>\n"%( self.node_name, self.grad_fn )
-        fmt += ' '*4+'IN:\n'
+        fmt = "<Node: (%s, %s)>\n" % (self.node_name, self.grad_fn)
+        fmt += " " * 4 + "IN:\n"
         for in_node in self.inputs:
-            fmt+=' '*8+'%s\n'%(in_node)
-        fmt += ' '*4+'OUT:\n'
+            fmt += " " * 8 + "%s\n" % (in_node)
+        fmt += " " * 4 + "OUT:\n"
         for out_node in self.outputs:
-            fmt+=' '*8+'%s\n'%(out_node)
+            fmt += " " * 8 + "%s\n" % (out_node)
 
-        fmt += ' '*4+'DEP:\n'
+        fmt += " " * 4 + "DEP:\n"
         for dep in self.dependencies:
-            fmt+=' '*8+"%s\n"%(dep)
+            fmt += " " * 8 + "%s\n" % (dep)
         return fmt
+
 
 def flatten_as_list(obj):
     if isinstance(obj, torch.Tensor):
-        return [ obj ]
-    elif isinstance(obj, (list,tuple)):
+        return [obj]
+    elif isinstance(obj, (list, tuple)):
         flattened_list = []
         for sub_obj in obj:
-            flattened_list.extend( flatten_as_list(sub_obj) )
+            flattened_list.extend(flatten_as_list(sub_obj))
         return flattened_list
     elif isinstance(obj, dict):
         flattened_list = []
         for sub_obj in obj.values():
-            flattened_list.extend( flatten_as_list(sub_obj) )
+            flattened_list.extend(flatten_as_list(sub_obj))
         return flattened_list
     else:
         return obj
 
+
 def _get_output_channels_of_node(node: Node):
-    if node.type==OPTYPE.CONV or node.type==OPTYPE.GROUP_CONV:
+    if node.type == OPTYPE.CONV or node.type == OPTYPE.GROUP_CONV:
         return node.module.out_channels
-    elif node.type==OPTYPE.BN:
+    elif node.type == OPTYPE.BN:
         return node.module.num_features
-    elif node.type==OPTYPE.LN:
-        return node.module.normalized_shape[node.pruning_dim]
-    elif node.type==OPTYPE.LINEAR:
+    elif node.type == OPTYPE.LN:
+        return node.module.normalized_shape[prune.prune_layernorm.pruning_dim]
+    elif node.type == OPTYPE.LINEAR:
         return node.module.out_features
-    elif node.type==OPTYPE.PRELU:
-        if node.module.num_parameters==1:
+    elif node.type == OPTYPE.PRELU:
+        if node.module.num_parameters == 1:
             return None
         else:
             return node.module.num_parameters
-    elif node.type==OPTYPE.CUSTOMIZED:
-        return node.customized_op_fn['get_out_ch_fn'](node.module)
+    elif node.type == OPTYPE.PARAMETER:
+        return node.module.shape[prune.prune_parameter.dim]
+    elif node.type == OPTYPE.CUSTOMIZED:
+        return node.customized_op_fn["get_out_ch_fn"](node.module)
     else:
         return None
 
+
 def _get_input_channels_of_node(node: Node):
-    if node.type==OPTYPE.CONV or node.type==OPTYPE.GROUP_CONV:
+    if node.type == OPTYPE.CONV or node.type == OPTYPE.GROUP_CONV:
         return node.module.in_channels
-    elif node.type==OPTYPE.BN:
+    elif node.type == OPTYPE.BN:
         return node.module.num_features
-    elif node.type==OPTYPE.LN:
-        return node.module.normalized_shape[node.pruning_dim]
-    elif node.type==OPTYPE.LINEAR:
+    elif node.type == OPTYPE.LN:
+        return node.module.normalized_shape[prune.prune_layernorm.pruning_dim]
+    elif node.type == OPTYPE.LINEAR:
         return node.module.in_features
-    elif node.type==OPTYPE.PRELU:
-        if node.module.num_parameters==1:
+    elif node.type == OPTYPE.PRELU:
+        if node.module.num_parameters == 1:
             return None
         else:
             return node.module.num_parameters
-    elif node.type==OPTYPE.CUSTOMIZED:
-        return node.customized_op_fn['get_in_ch_fn'](node.module)
+    elif node.type == OPTYPE.PARAMETER:
+        return node.module.shape[prune.prune_parameter.dim]
+    elif node.type == OPTYPE.CUSTOMIZED:
+        return node.customized_op_fn["get_in_ch_fn"](node.module)
     else:
         return None
+
 
 class _CustomizedOp(nn.Module):
     def __init__(self, op_class):
         self.op_cls = op_class
 
     def __repr__(self):
-        return "CustomizedOp(%s)"%(str(self.op_cls))
+        return "CustomizedOp(%s)" % (str(self.op_cls))
 
 
-######################################################        
+######################################################
 # Dummy Pruning fn
 def _prune_concat(layer, *args, **kargs):
     return layer, 0
 
-def _prune_split(layer, *args, **kargs):
-    return layer, 0
+class DummyPruner(structured.BasePruner):
+    def __call__(self, layer, *args, **kargs):
+        return layer, 0
+    def calc_nparams_to_prune(self, layer, idxs):
+        return 0
+    def prune(self, layer, idxs):
+        return layer
 
-def _prune_elementwise_op(layer, *args, **kargs):
-    return layer, 0
+class ConcatPruner(DummyPruner):
+    pass 
+class SplitPruner(DummyPruner):
+    pass 
+class ElementWiseOpPruner(DummyPruner):
+    pass 
 
+_prune_concat = ConcatPruner()
+_prune_split = SplitPruner()
+_prune_elementwise_op = ElementWiseOpPruner()
 
 ######################################################
 # Dummy module
@@ -184,24 +218,33 @@ class _ConcatOp(nn.Module):
     def __init__(self):
         super(_ConcatOp, self).__init__()
         self.offsets = None
-        
+
     def __repr__(self):
-        return "_ConcatOp(%s)"%(self.offsets)
+        return "_ConcatOp(%s)" % (self.offsets)
+
 
 class _SplitOp(nn.Module):
     def __init__(self):
         super(_SplitOp, self).__init__()
         self.offsets = None
-        
+
     def __repr__(self):
-        return "_SplitOp(%s)"%(self.offsets)
+        return "_SplitOp(%s)" % (self.offsets)
+
 
 class _ElementWiseOp(nn.Module):
-    def __init__(self):
+    def __init__(self, grad_fn):
         super(_ElementWiseOp, self).__init__()
+        self._grad_fn = grad_fn
+    def __repr__(self):
+        return "_ElementWiseOp(%s)"%(self._grad_fn)
+
+class _ParameterOp(nn.Module):
+    def __init__(self):
+        super(_ParameterOp, self).__init__()
 
     def __repr__(self):
-        return "_ElementWiseOp()"
+        return "_ParameterOp()"
 
 ######################################################
 # Index transform
@@ -212,13 +255,13 @@ class _FlattenIndexTransform(object):
 
     def __call__(self, idxs):
         new_idxs = []
-        if self.reverse==True:
+        if self.reverse == True:
             for i in idxs:
-                new_idxs.append( i//self._stride )
-                new_idxs = list( set(new_idxs) )
+                new_idxs.append(i // self._stride)
+                new_idxs = list(set(new_idxs))
         else:
             for i in idxs:
-                new_idxs.extend(list( range(i*self._stride, (i+1)*self._stride)))
+                new_idxs.extend(list(range(i * self._stride, (i + 1) * self._stride)))
         return new_idxs
 
 
@@ -228,10 +271,14 @@ class _ConcatIndexTransform(object):
         self.reverse = reverse
 
     def __call__(self, idxs):
-        if self.reverse==True:
-            new_idxs = [i-self.offset[0] for i in idxs if (i>=self.offset[0] and i<self.offset[1])]
+        if self.reverse == True:
+            new_idxs = [
+                i - self.offset[0]
+                for i in idxs
+                if (i >= self.offset[0] and i < self.offset[1])
+            ]
         else:
-            new_idxs = [i+self.offset[0] for i in idxs]
+            new_idxs = [i + self.offset[0] for i in idxs]
         return new_idxs
 
 
@@ -241,17 +288,28 @@ class _SplitIndexTransform(object):
         self.reverse = reverse
 
     def __call__(self, idxs):
-        if self.reverse==True:
-            new_idxs = [i+self.offset[0] for i in idxs ]
+        if self.reverse == True:
+            new_idxs = [i + self.offset[0] for i in idxs]
         else:
-            new_idxs = [i-self.offset[0] for i in idxs if (i>=self.offset[0] and i<self.offset[1])]
+            new_idxs = [
+                i - self.offset[0]
+                for i in idxs
+                if (i >= self.offset[0] and i < self.offset[1])
+            ]
         return new_idxs
-   
+
+
 ######################################################
 # Dependency & DependecyGraph
 class Dependency(object):
-    def __init__(self, trigger, handler, broken_node: Node, index_transform: typing.Callable=None):
-        """ Layer dependency in structed neural network pruning. 
+    def __init__(
+        self,
+        trigger,
+        handler,
+        broken_node: Node,
+        index_transform: typing.Callable = None,
+    ):
+        """Layer dependency in structed neural network pruning.
 
         Args:
             trigger (Callable or None): a pruning function that breaks the dependency
@@ -264,27 +322,38 @@ class Dependency(object):
         self.broken_node = broken_node
         self.index_transform = index_transform
 
-    def __call__(self, idxs: list, dry_run: bool=False):
-        result = self.handler(self.broken_node.module, idxs, pruning_dim=self.broken_node.pruning_dim, dry_run=dry_run)
+    def __call__(self, idxs: list, dry_run: bool = False):
+        result = self.handler(
+            self.broken_node.module,
+            idxs,
+            dry_run=dry_run,
+        )
         return result
 
     def __repr__(self):
         return str(self)
 
     def __str__(self):
-        return "<DEP: %s => %s on %s>" % ("None" if self.trigger is None else self.trigger.__name__, self.handler.__name__, self.broken_node.node_name)
+        return "<DEP: %s => %s on %s>" % (
+            "None" if self.trigger is None else self.trigger.__class__.__name__,
+            self.handler.__class__.__name__,
+            self.broken_node.node_name,
+        )
 
     def is_triggered_by(self, pruning_fn):
         return pruning_fn == self.trigger
 
     def __eq__(self, other):
-        return ((self.trigger == other.trigger) and
-                    self.handler == other.handler and 
-                        self.broken_node == other.broken_node)
+        return (
+            (self.trigger == other.trigger)
+            and self.handler == other.handler
+            and self.broken_node == other.broken_node
+        )
+
 
 class PruningPlan(object):
-    """ Pruning plan.
-    
+    """Pruning plan.
+
     Args:
         dry_run (Callable or None): only return the info about pruning.
         module_to_name (dict): mapping nn.module to a readable name. It will be filled by DependencyGraph.
@@ -294,87 +363,113 @@ class PruningPlan(object):
         self._plans = list()
 
     def add_plan(self, dep, idxs):
-        self._plans.append( (dep, idxs) )
-    
+        self._plans.append((dep, idxs))
+
     @property
     def plan(self):
         return self._plans
 
     def exec(self, dry_run=False):
-        num_pruned = 0
+        metric_sum = 0
         for dep, idxs in self._plans:
-            _, n = dep(idxs, dry_run=dry_run)
-            num_pruned += n
-        return num_pruned
+            _, m = dep(idxs, dry_run=dry_run)
+            metric_sum += m
+        return metric_sum
 
     def has_dep(self, dep):
         for _dep, _ in self._plans:
-            if dep==_dep:
-                return True    
+            if dep == _dep:
+                return True
         return False
-    
+
     def has_pruning_op(self, dep, idxs):
         for _dep, _idxs in self._plans:
-            if _dep.broken_node==dep.broken_node and _dep.handler==dep.handler and _idxs==idxs:
+            if (
+                _dep.broken_node == dep.broken_node
+                and _dep.handler == dep.handler
+                and _idxs == idxs
+            ):
                 return True
         return False
 
     def add_plan_and_merge(self, dep, idxs):
         for i, (_dep, _idxs) in enumerate(self._plans):
-            if _dep.broken_node==dep.broken_node and _dep.handler==dep.handler:
-                self._plans[i] = (_dep, list(set(_idxs+idxs)))
+            if _dep.broken_node == dep.broken_node and _dep.handler == dep.handler:
+                self._plans[i] = (_dep, list(set(_idxs + idxs)))
                 return
-        self.add_plan( dep, idxs )
+        self.add_plan(dep, idxs)
 
     def __str__(self):
         fmt = ""
-        fmt += "\n-------------\n"
-        totally_pruned = 0
-        for dep, idxs in self._plans:
-            _, n_pruned = dep(idxs, dry_run=True)
-            totally_pruned += n_pruned
-            fmt += "[ %s, Index=%s, NumPruned=%d]\n" % (dep, idxs, n_pruned)
-        fmt += "%d Args will be pruned\n" % (totally_pruned)
-        fmt += "-------------\n"
+        fmt += "\n"+"-"*32+"\n"
+        fmt += " "*10 + "Pruning Plan" 
+        fmt += "\n"+"-"*32+"\n"
+        metric_sum = 0
+        for i, (dep, idxs) in enumerate(self._plans):
+            _, m = dep(idxs, dry_run=True)
+            metric_sum += m
+            if i==0:
+                fmt+= "User pruning:\n"
+            fmt += "[ %s, Index=%s, metric=%f]\n" % (dep, idxs, metric_sum)
+            if i==0:
+                fmt+= "\nCoupled pruning:\n"
+        fmt += "\nMetric Sum: %f\n" % (metric_sum)
+        fmt += "-"*32+"\n"
         return fmt
+
 
 class DependencyGraph(object):
 
     # can be changed by adding some customized rules
-    PRUNABLE_MODULES = [ 
-        nn.modules.conv._ConvNd, nn.modules.batchnorm._BatchNorm, nn.Linear, nn.PReLU,
-        nn.modules.normalization.LayerNorm, nn.Embedding
+    PRUNABLE_MODULES = [
+        nn.modules.conv._ConvNd,
+        nn.modules.batchnorm._BatchNorm,
+        nn.Linear,
+        nn.PReLU,
+        nn.modules.normalization.LayerNorm,
+        nn.Embedding,
     ]
 
-    PRUNING_FN = {    # pruning function that changes 1. in_channel           2. out_channel
-                OPTYPE.CONV                 :  (prune.prune_related_conv,   prune.prune_conv),
-                OPTYPE.BN                   :  (prune.prune_batchnorm,      prune.prune_batchnorm),
-                OPTYPE.PRELU                :  (prune.prune_prelu,          prune.prune_prelu),
-                OPTYPE.LINEAR               :  (prune.prune_related_linear, prune.prune_linear),
-                OPTYPE.GROUP_CONV           :  (prune.prune_group_conv,     prune.prune_group_conv),
-                OPTYPE.CONCAT               :  (_prune_concat,              _prune_concat),
-                OPTYPE.SPLIT                :  (_prune_split,               _prune_split),
-                OPTYPE.ELEMENTWISE          :  (_prune_elementwise_op,      _prune_elementwise_op),
-                OPTYPE.LN                   :  (prune.prune_layernorm,      prune.prune_layernorm),
-                OPTYPE.EMBED                :  (prune.prune_embedding,      prune.prune_embedding),
-                OPTYPE.CUSTOMIZED           :  (None, None), # placeholder
-            }
-    SUCCEEDING_RULES = {} 
-    PRECEDING_RULES = {}  
+    PRUNING_FN = (
+        {  # pruning function that changes 1. in_channel           2. out_channel
+            OPTYPE.CONV: (prune.prune_conv_in_channel, prune.prune_conv_out_channel),
+            OPTYPE.BN: (prune.prune_batchnorm, prune.prune_batchnorm),
+            OPTYPE.PRELU: (prune.prune_prelu, prune.prune_prelu),
+            OPTYPE.LINEAR: (prune.prune_linear_in_channel, prune.prune_linear_out_channel),
+            OPTYPE.GROUP_CONV: (prune.prune_group_conv, prune.prune_group_conv),
+            OPTYPE.CONCAT: (_prune_concat, _prune_concat),
+            OPTYPE.SPLIT: (_prune_split, _prune_split),
+            OPTYPE.ELEMENTWISE: (_prune_elementwise_op, _prune_elementwise_op),
+            OPTYPE.LN: (prune.prune_layernorm, prune.prune_layernorm),
+            OPTYPE.EMBED: (prune.prune_embedding, prune.prune_embedding),
+            OPTYPE.PARAMETER: (prune.prune_parameter, prune.prune_parameter),
+            OPTYPE.CUSTOMIZED: (None, None),  # placeholder
+        }
+    )
+    SUCCEEDING_RULES = {}
+    PRECEDING_RULES = {}
     for t1 in PRUNING_FN.keys():
-        for t2 in PRUNING_FN.keys():                # trigger        handler
-            SUCCEEDING_RULES[ (t1, t2) ] = (PRUNING_FN[t1][1], PRUNING_FN[t2][0]) # change in_channels of succeeding layers
-            PRECEDING_RULES[ (t1, t2) ] = (PRUNING_FN[t1][0], PRUNING_FN[t2][1])  # change out_channels of preceding layers
+        for t2 in PRUNING_FN.keys():  # trigger        handler
+            SUCCEEDING_RULES[(t1, t2)] = (
+                PRUNING_FN[t1][1],
+                PRUNING_FN[t2][0],
+            )  # change in_channels of succeeding layers
+            PRECEDING_RULES[(t1, t2)] = (
+                PRUNING_FN[t1][0],
+                PRUNING_FN[t2][1],
+            )  # change out_channels of preceding layers
     CUSTOMIZED_OP_FN = {}
 
-    def build_dependency( self, 
-        model:torch.nn.Module, 
+    def build_dependency(
+        self,
+        model: torch.nn.Module,
         example_inputs: typing.Union[torch.Tensor, typing.Sequence],
-        pruning_dim: int=1,
-        output_transform:typing.Callable=None, 
-        verbose:bool=True ):
+        output_transform: typing.Callable = None,
+        verbose: bool = True,
+        userdefined_parameters = None,
+    ):
 
-        """ Build a dependency graph through forwarding.
+        """Build a dependency graph through forwarding.
 
         Args:
             model (class): the model to be pruned.
@@ -384,20 +479,29 @@ class DependencyGraph(object):
         """
 
         self.verbose = verbose
-        self._module_to_name = { module: name for (name, module) in model.named_modules() }
-
-        #if pruning_dim >= 0:
-        #    pruning_dim = pruning_dim - len(example_inputs.size())
-        self.pruning_dim = pruning_dim 
-
+        self._module_to_name = {
+            module: name for (name, module) in model.named_modules()
+        }
+        if userdefined_parameters is None:
+            userdefined_parameters = []
+        self.userdefined_parameters = userdefined_parameters
         # build dependency graph
-        self.module_to_node = self._build_forward_graph( model, example_inputs, output_transform=output_transform)
+        self.module_to_node = self._build_forward_graph(
+            model, example_inputs, output_transform=output_transform
+        )
         self._build_dependency(self.module_to_node)
         self.update_index()
         return self
 
-    def register_customized_layer(self, layer_type, in_ch_pruning_fn, out_ch_pruning_fn, get_in_ch_fn, get_out_ch_fn):
-        """ Register a customized layer for pruning.
+    def register_customized_layer(
+        self,
+        layer_type,
+        in_ch_pruning_fn,
+        out_ch_pruning_fn,
+        get_in_ch_fn,
+        get_out_ch_fn,
+    ):
+        """Register a customized layer for pruning.
 
         Args:
             layer_type (class): the type of layer
@@ -407,22 +511,27 @@ class DependencyGraph(object):
             get_out_ch_fn (Callable):estimate the n_channel of layer output. Return None if the layer does not change tensor shape.
         """
         self.CUSTOMIZED_OP_FN[layer_type] = {
-            "in_ch_pruning_fn": in_ch_pruning_fn, 
-            "out_ch_pruning_fn": out_ch_pruning_fn, 
-            "get_in_ch_fn": get_in_ch_fn, 
+            "in_ch_pruning_fn": in_ch_pruning_fn,
+            "out_ch_pruning_fn": out_ch_pruning_fn,
+            "get_in_ch_fn": get_in_ch_fn,
             "get_out_ch_fn": get_out_ch_fn,
         }
-        self.PRUNABLE_MODULES.append( layer_type )
- 
-    def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]): 
-        """ Get a pruning plan from the dependency graph, according to user's pruning operations. 
+        self.PRUNABLE_MODULES.append(layer_type)
+
+    def get_pruning_plan(
+        self,
+        module: nn.Module,
+        pruning_fn: typing.Callable,
+        idxs: typing.Union[list, tuple],
+    ):
+        """Get a pruning plan from the dependency graph, according to user's pruning operations.
 
         Args:
             module (nn.Module): the module to be pruned.
             pruning_fn (Callable): the pruning function.
             idxs (list or tuple): the indices of paramters to be pruned.
         """
-        if isinstance(module, TORCH_CONV) and module.groups>1:
+        if isinstance(module, TORCH_CONV) and module.groups > 1:
             pruning_fn = prune.prune_group_conv
         if isinstance(idxs, Number):
             idxs = [idxs]
@@ -432,69 +541,95 @@ class DependencyGraph(object):
         #  the user pruning operation
         root_node = self.module_to_node[module]
         plan.add_plan(Dependency(pruning_fn, pruning_fn, root_node), idxs)
-        
+
         visited = set()
+
         def _fix_denpendency_graph(node, fn, indices):
-            visited.add( node )
+            visited.add(node)
             for dep in node.dependencies:
-                if dep.is_triggered_by(fn): #and dep.broken_node not in visited:
+                if dep.is_triggered_by(fn):  # and dep.broken_node not in visited:
                     if dep.index_transform is not None:
                         new_indices = dep.index_transform(indices)
                     else:
                         new_indices = indices
-
-                    if len(new_indices)==0:
+                    if len(new_indices) == 0:
                         continue
-                    if dep.broken_node in visited and plan.has_pruning_op( dep, new_indices ):
+                    if dep.broken_node in visited and plan.has_pruning_op(
+                        dep, new_indices
+                    ):
                         continue
                     else:
                         plan.add_plan(dep, new_indices)
-                        _fix_denpendency_graph(dep.broken_node, dep.handler, new_indices)
+                        _fix_denpendency_graph(
+                            dep.broken_node, dep.handler, new_indices
+                        )
         _fix_denpendency_graph(root_node, pruning_fn, idxs)
 
         # merge pruning ops
         merged_plan = PruningPlan()
         for dep, idxs in plan.plan:
-            merged_plan.add_plan_and_merge( dep, idxs )
+            merged_plan.add_plan_and_merge(dep, idxs)
         return merged_plan
 
     def _build_dependency(self, module_to_node):
         for module, node in module_to_node.items():
             for in_node in node.inputs:
-                preceding_rule = self.PRECEDING_RULES.get( (node.type, in_node.type), None )
+                preceding_rule = self.PRECEDING_RULES.get(
+                    (node.type, in_node.type), None
+                )
                 if preceding_rule is not None:
                     trigger = preceding_rule[0]
                     handler = preceding_rule[1]
                     if trigger is None:
-                        trigger = self.CUSTOMIZED_OP_FN[type(node.module)]['in_ch_pruning_fn']
+                        trigger = self.CUSTOMIZED_OP_FN[type(node.module)][
+                            "in_ch_pruning_fn"
+                        ]
                     if handler is None:
-                        handler = self.CUSTOMIZED_OP_FN[type(in_node.module)]['out_ch_pruning_fn']
-                    dep = Dependency( trigger=trigger, handler=handler, broken_node=in_node)
-                    node.dependencies.append( dep )
+                        handler = self.CUSTOMIZED_OP_FN[type(in_node.module)][
+                            "out_ch_pruning_fn"
+                        ]
+                    dep = Dependency(
+                        trigger=trigger, handler=handler, broken_node=in_node
+                    )
+                    node.dependencies.append(dep)
 
             for out_node in node.outputs:
-                succeeding_rule = self.SUCCEEDING_RULES.get( (node.type, out_node.type), None )
+                succeeding_rule = self.SUCCEEDING_RULES.get(
+                    (node.type, out_node.type), None
+                )
                 if succeeding_rule is not None:
                     trigger = succeeding_rule[0]
                     handler = succeeding_rule[1]
                     if trigger is None:
-                        trigger = self.CUSTOMIZED_OP_FN[type(node.module)]['out_ch_pruning_fn']
+                        trigger = self.CUSTOMIZED_OP_FN[type(node.module)][
+                            "out_ch_pruning_fn"
+                        ]
                     if handler is None:
-                        handler = self.CUSTOMIZED_OP_FN[type(out_node.module)]['in_ch_pruning_fn']
-                    dep = Dependency( trigger=trigger, handler=handler, broken_node=out_node)
-                    node.dependencies.append( dep )
-    
+                        handler = self.CUSTOMIZED_OP_FN[type(out_node.module)][
+                            "in_ch_pruning_fn"
+                        ]
+                    dep = Dependency(
+                        trigger=trigger, handler=handler, broken_node=out_node
+                    )
+                    node.dependencies.append(dep)
+
     def _build_forward_graph(self, model, example_inputs, output_transform):
         model.eval()
         grad_fn_to_module = {}
         visited = {}
+
         def _record_grad_fn(module, inputs, outputs):
             if module not in visited:
                 visited[module] = 1
             else:
                 visited[module] += 1
             grad_fn_to_module[outputs.grad_fn] = module
-        hooks = [m.register_forward_hook(_record_grad_fn) for m in model.modules() if isinstance( m, tuple(self.PRUNABLE_MODULES )) ]
+
+        hooks = [
+            m.register_forward_hook(_record_grad_fn)
+            for m in model.modules()
+            if isinstance(m, tuple(self.PRUNABLE_MODULES))
+        ]
         # Feed forward and record all gradient function for prunable modules
         if isinstance(example_inputs, (tuple, list)):
             out = model(*example_inputs)
@@ -504,68 +639,108 @@ class DependencyGraph(object):
             out = model(example_inputs)
         for hook in hooks:
             hook.remove()
-        reused = [ m for (m, count) in visited.items() if count>1 ]
+        reused = [m for (m, count) in visited.items() if count > 1]
         if output_transform is not None:
             out = output_transform(out)
         for o in flatten_as_list(out):
             module_to_node = self._build_graph(o.grad_fn, grad_fn_to_module, reused)
+        
+        # BUG: Special case for torch.cat without index transform in ViT, 
+        # where concatination is not applied to feature dims.
+        # Notably, this is a bad practice and will be fixed in the future version
+        # Some problems may occurs if your vision transform has a lot of complicated torch.cat.
+        for node in module_to_node.values():
+            node.enable_index_transform = True
+            if node.type==OPTYPE.CONCAT:
+                stack = [node]
+                while len(stack)>0:
+                    n = stack.pop(-1)
+                    if n.type==OPTYPE.PARAMETER and len(n.module.shape)==3:
+                        node.enable_index_transform=False
+                        break
+                    else:
+                        stack.extend(n.inputs)
         return module_to_node
 
     def _build_graph(self, grad_fn_root, grad_fn_to_module, reused):
         module_to_node = {}
+        
         def create_or_get_node(grad_fn):
-            module = grad_fn_to_module.get( grad_fn, None )  
+            module = grad_fn_to_module.get(grad_fn, None)
             if module is not None and module in module_to_node and module not in reused:
                 return module_to_node[module]
 
-            if module is None: # modules without recording
-                if not hasattr(grad_fn, 'name'):
-                    module = _ElementWiseOp() # skip customized modules
+            if module is None:  # modules without recording
+                if not hasattr(grad_fn, "name"):
+                    module = _ElementWiseOp("Unknown")  # skip customized modules
                     if self.verbose:
-                        warnings.warn("[Warning] Unrecognized operation: %s. It will be treated as element-wise op"%( str(grad_fn) ))
-                elif 'catbackward' in grad_fn.name().lower(): # concat op
+                        warnings.warn(
+                            "[Warning] Unrecognized operation: %s. It will be treated as element-wise op"
+                            % (str(grad_fn))
+                        )
+                elif "catbackward" in grad_fn.name().lower():  # concat op
                     module = _ConcatOp()
-                elif 'splitbackward' in grad_fn.name().lower():
+                elif "splitbackward" in grad_fn.name().lower():
                     module = _SplitOp()
                 else:
-                    module = _ElementWiseOp()   # All other ops are treated as element-wise ops
-                grad_fn_to_module[ grad_fn ] = module # update grad_fn
+                    module = (
+                        _ElementWiseOp(grad_fn.name())
+                    )  # other ops are treated as element-wise ops
+                grad_fn_to_module[grad_fn] = module  # update grad_fn
 
-            if module not in module_to_node: # modules without node
-                node = Node( module, grad_fn, self.pruning_dim, self._module_to_name.get( module, None ) )
-                if type(module) in self.CUSTOMIZED_OP_FN.keys(): # mark it as a customized OP
+            if module not in module_to_node:  # modules without node
+                node = Node(
+                    module,
+                    grad_fn,
+                    self._module_to_name.get(module, None),
+                )
+                if (
+                    type(module) in self.CUSTOMIZED_OP_FN.keys()
+                ):  # mark it as a customized OP
                     node.type = OPTYPE.CUSTOMIZED
                     node.customized_op_fn = self.CUSTOMIZED_OP_FN[type(module)]
-                module_to_node[ module ] = node
+                module_to_node[module] = node
             else:
                 node = module_to_node[module]
             return node
+
         processing_stack = [grad_fn_root]
         visited = set()
-        while len(processing_stack)>0:
+        while len(processing_stack) > 0:
             grad_fn = processing_stack.pop(-1)
             if grad_fn in visited:
                 continue
             node = create_or_get_node(grad_fn=grad_fn)
-            if hasattr(grad_fn, 'next_functions'):
+            if hasattr(grad_fn, "next_functions"):
                 for f in grad_fn.next_functions:
                     if f[0] is not None:
-                        if hasattr( f[0], 'name' ) and 'accumulategrad' in f[0].name().lower(): # skip leaf variables
-                            continue
+                        if (
+                            hasattr(f[0], "name")
+                            and "accumulategrad" in f[0].name().lower()
+                        ):  
+                            is_user_defined_param = False
+                            for (j, p) in enumerate(self.userdefined_parameters):
+                                if f[0].variable is p:
+                                    is_user_defined_param = True
+                                    grad_fn_to_module[f[0]] = p
+                                    self._module_to_name[p] = "Parameter_%d"%j
+                            if not is_user_defined_param:
+                                continue
                         input_node = create_or_get_node(f[0])
-                        node.add_input( input_node )
-                        input_node.add_output( node )
+                        node.add_input(input_node)
+                        input_node.add_output(node)
                         processing_stack.append(f[0])
-            visited.add(grad_fn) # all preceding nodes have been connected
+            visited.add(grad_fn)  # all preceding nodes have been connected
+
         return module_to_node
 
-    def update_index( self ):
+    def update_index(self):
         for module, node in self.module_to_node.items():
-            if node.type==OPTYPE.LINEAR:
-                self._set_fc_index_transform( node )
-            if node.type==OPTYPE.CONCAT:
+            if node.type == OPTYPE.LINEAR:
+                self._set_fc_index_transform(node)
+            if node.type == OPTYPE.CONCAT:
                 self._set_concat_index_transform(node)
-            if node.type==OPTYPE.SPLIT:
+            if node.type == OPTYPE.SPLIT:
                 self._set_split_index_transform(node)
 
     def _set_fc_index_transform(self, fc_node: Node):
@@ -573,41 +748,52 @@ class DependencyGraph(object):
             return
         visited = set()
         fc_in_features = fc_node.module.in_features
-        feature_channels = _get_out_channels_of_in_node(fc_node.inputs[0])
-        if feature_channels<=0: # the first layer: https://github.com/VainF/Torch-Pruning/issues/21
+        feature_channels = _get_output_channels_of_input_node(fc_node.inputs[0])
+        if (
+            feature_channels <= 0
+        ):  # the first layer: https://github.com/VainF/Torch-Pruning/issues/21
             return
         stride = fc_in_features // feature_channels
-        if stride>1:
+        if stride > 1:
             for in_node in fc_node.inputs:
                 for dep in fc_node.dependencies:
-                    if dep.broken_node==in_node:
-                        dep.index_transform = _FlattenIndexTransform( stride=stride, reverse=True )
-                
+                    if dep.broken_node == in_node:
+                        dep.index_transform = _FlattenIndexTransform(
+                            stride=stride, reverse=True
+                        )
+
                 for dep in in_node.dependencies:
                     if dep.broken_node == fc_node:
-                        dep.index_transform = _FlattenIndexTransform( stride=stride, reverse=False )
+                        dep.index_transform = _FlattenIndexTransform(
+                            stride=stride, reverse=False
+                        )
 
     def _set_concat_index_transform(self, cat_node: Node):
         if cat_node.type != OPTYPE.CONCAT:
             return
-        
         chs = []
         for n in cat_node.inputs:
-            chs.append( _get_out_channels_of_in_node(n) )
-
+            chs.append(_get_output_channels_of_input_node(n))
         offsets = [0]
         for ch in chs:
-            offsets.append( offsets[-1]+ch )
+            offsets.append(offsets[-1] + ch)
         cat_node.module.offsets = offsets
-
+        
+        #no transform if the concat dim is different from the feature dim
         for i, in_node in enumerate(cat_node.inputs):
             for dep in cat_node.dependencies:
                 if dep.broken_node == in_node:
-                    dep.index_transform = _ConcatIndexTransform( offset=offsets[i:i+2], reverse=True )
+                    if cat_node.enable_index_transform:
+                        dep.index_transform = _ConcatIndexTransform(
+                            offset=offsets[i : i + 2], reverse=True
+                        )
 
             for dep in in_node.dependencies:
                 if dep.broken_node == cat_node:
-                    dep.index_transform = _ConcatIndexTransform( offset=offsets[i:i+2], reverse=False )
+                    if cat_node.enable_index_transform:
+                        dep.index_transform = _ConcatIndexTransform(
+                            offset=offsets[i : i + 2], reverse=False
+                        )
 
     def _set_split_index_transform(self, split_node: Node):
         if split_node.type != OPTYPE.SPLIT:
@@ -615,41 +801,46 @@ class DependencyGraph(object):
         
         chs = []
         for n in split_node.outputs:
-            chs.append( _get_in_channels_of_out_node(n) )
+            chs.append(_get_input_channels_of_output_node(n))
 
         offsets = [0]
         for ch in chs:
-            offsets.append( offsets[-1]+ch )
+            offsets.append(offsets[-1] + ch)
         split_node.module.offsets = offsets
+
         for i, out_node in enumerate(split_node.outputs):
             for dep in split_node.dependencies:
                 if dep.broken_node == out_node:
-                    dep.index_transform = _SplitIndexTransform( offset=offsets[i:i+2], reverse=False )
+                    dep.index_transform = _SplitIndexTransform(
+                        offset=offsets[i : i + 2], reverse=False
+                    )
 
             for dep in out_node.dependencies:
                 if dep.broken_node == split_node:
-                    dep.index_transform = _SplitIndexTransform( offset=offsets[i:i+2], reverse=True )
+                    dep.index_transform = _SplitIndexTransform(
+                        offset=offsets[i : i + 2], reverse=True
+                    )
 
-def _get_out_channels_of_in_node(node):
+
+def _get_output_channels_of_input_node(node):
     ch = _get_output_channels_of_node(node)
     if ch is None:
         ch = 0
         for in_node in node.inputs:
-            if node.type==OPTYPE.CONCAT:
-                ch+=_get_out_channels_of_in_node( in_node )
+            if node.type == OPTYPE.CONCAT:
+                ch += _get_output_channels_of_input_node(in_node)
             else:
-                ch=_get_out_channels_of_in_node( in_node )
+                ch = _get_output_channels_of_input_node(in_node)
     return ch
 
-def _get_in_channels_of_out_node(node):
+
+def _get_input_channels_of_output_node(node):
     ch = _get_input_channels_of_node(node)
     if ch is None:
         ch = 0
         for out_node in node.outputs:
-            if node.type==OPTYPE.SPLIT:
-                ch+=_get_in_channels_of_out_node( out_node )
+            if node.type == OPTYPE.SPLIT:
+                ch += _get_input_channels_of_output_node(out_node)
             else:
-                ch=_get_in_channels_of_out_node( out_node )
+                ch = _get_input_channels_of_output_node(out_node)
     return ch
-
-

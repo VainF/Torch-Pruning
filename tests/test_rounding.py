@@ -35,7 +35,7 @@ DG.build_dependency(model, example_inputs=fake_input)
 for m in model.modules():
     if isinstance(m, nn.Conv2d):
         pruning_idxs = strategy(m.weight, amount=0.2)
-        pruning_plan = DG.get_pruning_plan( m, tp.prune_conv, idxs=pruning_idxs )
+        pruning_plan = DG.get_pruning_plan( m, tp.prune_conv_out_channel, idxs=pruning_idxs )
         pruning_plan.exec()
 model = model.to(device)
 fake_input = fake_input.to(device)
@@ -51,7 +51,7 @@ DG.build_dependency(model, example_inputs=fake_input)
 for m in model.modules():
     if isinstance(m, nn.Conv2d):
         pruning_idxs = strategy(m.weight, amount=0.2, round_to=16)
-        pruning_plan = DG.get_pruning_plan( m, tp.prune_conv, idxs=pruning_idxs )
+        pruning_plan = DG.get_pruning_plan( m, tp.prune_conv_out_channel, idxs=pruning_idxs )
         pruning_plan.exec()
 model = model.to(device)
 fake_input = fake_input.to(device)
