@@ -16,4 +16,5 @@ pruning_idxs = strategy(model.conv1.weight, amount=0.4) # or manually selected [
 pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs )
 print(pruning_plan)
 # execute this plan (prune the model)
-pruning_plan.exec()
+if DG.check_pruning_plan(pruning_plan):
+    pruning_plan.exec()
