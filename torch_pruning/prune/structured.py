@@ -73,8 +73,7 @@ class ConvInChannelPruner(BasePruner):
 class GroupConvPruner(ConvOutChannelPruner):
 
     def check(self, layer, idxs)-> nn.Module: 
-        if layer.groups>1:
-            assert layer.groups==layer.in_channels and layer.groups==layer.out_channels, "only group conv with in_channel==groups==out_channels is supported"
+        pass
 
     def prune(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module: 
         keep_idxs = list(set(range(layer.out_channels)) - set(idxs))
