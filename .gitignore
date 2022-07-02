@@ -5,3 +5,7 @@ data
 *.egg-info
 dist
 build
+checkpoints
+run
+benchmarks
+text.txt
