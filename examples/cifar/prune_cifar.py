@@ -76,7 +76,7 @@ def prune_model(model, args):
     userdefined_parameters=[model.pos_embedding, model.cls_token] if 'vit' in args.model else None
     DG = tp.DependencyGraph().build_dependency( model, torch.randn(1, 3, 32, 32), userdefined_parameters=userdefined_parameters )
     
-    def prune_linear(layer, amount=0.2):
+    def prune_linear(layer, amount=0.4):
         strategy = tp.strategy.L1Strategy()
         pruning_index = strategy(layer.weight, amount=amount)
         plan = DG.get_pruning_plan(layer, tp.prune_linear_out_channel, pruning_index)
@@ -105,7 +105,7 @@ def main():
     args.num_classes = num_classes
     
     if args.restore_from is not None:
-        loaded = torch.load(args.restore_from)
+        loaded = torch.load(args.restore_from, map_location='cpu')
         if isinstance(loaded, nn.Module):
             model = loaded
         else:

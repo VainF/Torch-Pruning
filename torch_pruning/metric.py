@@ -4,6 +4,7 @@ from typing import Sequence
 import random
 import warnings
 from .dependency import TORCH_CONV, TORCH_BATCHNORM, TORCH_PRELU, TORCH_LINEAR
+from .import prune
 
 def norm(weights, p=1, norm_dim=0, idxs=None, reduction='sum'):
     l1_norm = torch.norm( weights.transpose(0, norm_dim).flatten(1), p=p, dim=1 )

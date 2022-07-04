@@ -42,7 +42,7 @@ class _ElementWiseOp(nn.Module):
 # Dummy Pruning fn
 class DummyPruner(prune.BasePruner):
     def __call__(self, layer, *args, **kargs):
-        return layer, 0
+        return layer, {}
     def calc_nparams_to_prune(self, layer, idxs):
         return 0
     def prune(self, layer, idxs):
@@ -169,3 +169,19 @@ def gconv2convs(module):
     for name, child in module.named_children():
         new_module.add_module(name, gconv2convs(child))
     return new_module
+
+class RunningSum():
+    def __init__(self):
+        self._results = {}
+
+    def update(self, metric_dict):
+        for metric_name, metric_val in metric_dict.items():
+            if metric_name not in self._results:
+                self._results[metric_name] = 0
+            self._results[metric_name] += metric_val
+
+    def results(self):
+        return self._results
+    
+    def reset(self):
+        self._results = {}

@@ -5,22 +5,25 @@ from copy import deepcopy
 from functools import reduce
 from operator import mul
 from abc import ABC, abstractmethod, abstractstaticmethod
-from typing import Callable, Sequence, Tuple
+from typing import Callable, Sequence, Tuple, Dict
 
 class BasePruner(ABC):
-    def __init__(self, metrics: Callable=None, dim=1):
+    def __init__(self, metrics: Dict[str, Callable]=None, dim=1):
         if metrics == None:
-            metrics = self.calc_nparams_to_prune
+            metrics = {"#params": self.calc_nparams_to_prune}
         self.metrics = metrics
         self.dim=dim
     
+    def add_metric(self, name, metric_fn):
+        self.metrics[name] = metric_fn
+
     def check(self, layer, idxs):
         pass
 
     def __call__(self, layer: nn.Module, idxs: Sequence[int], inplace: bool=True, dry_run: bool=False) -> Tuple[nn.Module, int]:
         idxs = list(set(idxs))
         self.check(layer, idxs)
-        metrics = self.metrics(layer, idxs)
+        metrics = { name: metric_fn(layer, idxs) for (name, metric_fn) in self.metrics.items() }
         if dry_run:
             return layer, metrics
         if not inplace:

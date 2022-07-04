@@ -62,6 +62,52 @@ def _module2type(module):
         return OPTYPE.ELEMENTWISE
 
 
+def _infer_out_dim_from_node(node):
+    if node.type == OPTYPE.CONV or node.type == OPTYPE.GROUP_CONV:
+        return node.module.out_channels
+    elif node.type == OPTYPE.BN:
+        return node.module.num_features
+    elif node.type == OPTYPE.LN:
+        return node.module.normalized_shape[prune.prune_layernorm.pruning_dim]
+    elif node.type == OPTYPE.LINEAR:
+        return node.module.out_features
+    elif node.type == OPTYPE.PRELU:
+        if node.module.num_parameters == 1:
+            return None # return None if oc can not be infered
+        else:
+            return node.module.num_parameters
+    elif node.type == OPTYPE.PARAMETER:
+        return node.module.shape[prune.prune_parameter.dim]
+    elif node.type == OPTYPE.CUSTOMIZED:
+        return node.customized_pruning_fn["get_out_ch_fn"](node.module)
+    else:
+        return None # return None if oc can not be infered
+
+
+def _infer_in_dim_from_node(node):
+    if node.type == OPTYPE.CONV or node.type == OPTYPE.GROUP_CONV:
+        return node.module.in_channels
+    elif node.type == OPTYPE.BN:
+        return node.module.num_features
+    elif node.type == OPTYPE.LN:
+        return node.module.normalized_shape[prune.prune_layernorm.pruning_dim]
+    elif node.type == OPTYPE.LINEAR:
+        return node.module.in_features
+    elif node.type == OPTYPE.PRELU:
+        if node.module.num_parameters == 1:
+            return None # return None if ic can not be infered
+        else:
+            return node.module.num_parameters
+    elif node.type == OPTYPE.PARAMETER:
+        return node.module.shape[prune.prune_parameter.dim]
+    elif node.type == OPTYPE.CUSTOMIZED:
+        return node.customized_pruning_fn["get_in_ch_fn"](node.module)
+    else:
+        return None # return None if ic can not be infered
+
+
+######################################################
+# Dependency & DependecyGraph
 class Node(object):
     def __init__(self, module, grad_fn, name=None):
         self.module = module
@@ -112,60 +158,13 @@ class Node(object):
             fmt += " " * 8 + "%s\n" % (dep)
         return fmt
 
-
-def _get_output_channels_of_node(node: Node):
-    if node.type == OPTYPE.CONV or node.type == OPTYPE.GROUP_CONV:
-        return node.module.out_channels
-    elif node.type == OPTYPE.BN:
-        return node.module.num_features
-    elif node.type == OPTYPE.LN:
-        return node.module.normalized_shape[prune.prune_layernorm.pruning_dim]
-    elif node.type == OPTYPE.LINEAR:
-        return node.module.out_features
-    elif node.type == OPTYPE.PRELU:
-        if node.module.num_parameters == 1:
-            return None # return None if oc can not be infered
-        else:
-            return node.module.num_parameters
-    elif node.type == OPTYPE.PARAMETER:
-        return node.module.shape[prune.prune_parameter.dim]
-    elif node.type == OPTYPE.CUSTOMIZED:
-        return node.customized_pruning_fn["get_out_ch_fn"](node.module)
-    else:
-        return None # return None if oc can not be infered
-
-
-def _get_input_channels_of_node(node: Node):
-    if node.type == OPTYPE.CONV or node.type == OPTYPE.GROUP_CONV:
-        return node.module.in_channels
-    elif node.type == OPTYPE.BN:
-        return node.module.num_features
-    elif node.type == OPTYPE.LN:
-        return node.module.normalized_shape[prune.prune_layernorm.pruning_dim]
-    elif node.type == OPTYPE.LINEAR:
-        return node.module.in_features
-    elif node.type == OPTYPE.PRELU:
-        if node.module.num_parameters == 1:
-            return None # return None if ic can not be infered
-        else:
-            return node.module.num_parameters
-    elif node.type == OPTYPE.PARAMETER:
-        return node.module.shape[prune.prune_parameter.dim]
-    elif node.type == OPTYPE.CUSTOMIZED:
-        return node.customized_pruning_fn["get_in_ch_fn"](node.module)
-    else:
-        return None # return None if ic can not be infered
-
-
-
-######################################################
-# Dependency & DependecyGraph
 class Dependency(object):
     def __init__(
         self,
         trigger,
         handler,
-        broken_node: Node,
+        source: Node,
+        target: Node,
         index_transform: typing.Callable = None,
     ):
         """Layer dependency in structed neural network pruning.
@@ -173,17 +172,18 @@ class Dependency(object):
         Args:
             trigger (Callable or None): a pruning function that breaks the dependency
             handler (Callable): a pruning function to fix the broken dependency
-            broken_node (nn.Module): the broken layer
+            target (nn.Module): the broken layer
             index_transform (Callable): a function to transform the pruning index
         """
         self.trigger = trigger
         self.handler = handler
-        self.broken_node = broken_node
+        self.source = source
+        self.target = target
         self.index_transform = index_transform
 
     def __call__(self, idxs: list, dry_run: bool = False):
         result = self.handler(
-            self.broken_node.module,
+            self.target.module,
             idxs,
             dry_run=dry_run,
         )
@@ -193,10 +193,11 @@ class Dependency(object):
         return str(self)
 
     def __str__(self):
-        return "<DEP: %s => %s on %s>" % (
-            "None" if self.trigger is None else self.trigger.__class__.__name__,
+        return "[DEP] %s on %s => %s on %s" % (
             self.handler.__class__.__name__,
-            self.broken_node.name,
+            self.target.name,
+            "None" if self.trigger is None else self.trigger.__class__.__name__,
+            self.source.name,
         )
 
     def is_triggered_by(self, pruning_fn):
@@ -206,7 +207,8 @@ class Dependency(object):
         return (
             (self.trigger == other.trigger)
             and self.handler == other.handler
-            and self.broken_node == other.broken_node
+            and self.target == other.target
+            and self.source == other.source
         )
 
 class PruningPlan(object):
@@ -219,6 +221,7 @@ class PruningPlan(object):
 
     def __init__(self):
         self._plans = list()
+        self._metrics_running_sum = helpers.RunningSum()
 
     def add_plan(self, dep, idxs):
         self._plans.append((dep, idxs))
@@ -228,11 +231,11 @@ class PruningPlan(object):
         return self._plans
 
     def exec(self, dry_run=False):
-        metric_sum = 0
+        self._metrics_running_sum.reset()
         for dep, idxs in self._plans:
-            _, m = dep(idxs, dry_run=dry_run)
-            metric_sum += m
-        return metric_sum
+            _, metric_dict = dep(idxs, dry_run=dry_run)
+            self._metrics_running_sum.update( metric_dict )
+        return self._metrics_running_sum.results()
 
     def has_dep(self, dep):
         for _dep, _ in self._plans:
@@ -243,7 +246,7 @@ class PruningPlan(object):
     def has_pruning_op(self, dep, idxs):
         for _dep, _idxs in self._plans:
             if (
-                _dep.broken_node == dep.broken_node
+                _dep.target == dep.target
                 and _dep.handler == dep.handler
                 and _idxs == idxs
             ):
@@ -252,7 +255,7 @@ class PruningPlan(object):
 
     def add_plan_and_merge(self, dep, idxs):
         for i, (_dep, _idxs) in enumerate(self._plans):
-            if _dep.broken_node == dep.broken_node and _dep.handler == dep.handler:
+            if _dep.target == dep.target and _dep.handler == dep.handler:
                 self._plans[i] = (_dep, list(set(_idxs + idxs)))
                 return
         self.add_plan(dep, idxs)
@@ -262,16 +265,16 @@ class PruningPlan(object):
         fmt += "\n"+"-"*32+"\n"
         fmt += " "*10 + "Pruning Plan" 
         fmt += "\n"+"-"*32+"\n"
-        metric_sum = 0
+        self._metrics_running_sum.reset()
         for i, (dep, idxs) in enumerate(self._plans):
-            _, m = dep(idxs, dry_run=True)
-            metric_sum += m
+            _, metric_dict = dep(idxs, dry_run=True)
+            self._metrics_running_sum.update( metric_dict )
             if i==0:
                 fmt+= "User pruning:\n"
-            fmt += "[ %s, Index=%s, metric=%f]\n" % (dep, idxs, metric_sum)
+            fmt += "[ %s, Index=%s, metric=%s]\n" % (dep, idxs, metric_dict)
             if i==0:
                 fmt+= "\nCoupled pruning:\n"
-        fmt += "\nMetric Sum: %f\n" % (metric_sum)
+        fmt += "\nMetric Sum: %s\n" % (self._metrics_running_sum.results())
         fmt += "-"*32+"\n"
         return fmt
 
@@ -381,7 +384,7 @@ class DependencyGraph(object):
     def check_pruning_plan(self, plan):
         for dep, idxs in plan.plan:
             if dep.handler in (prune.prune_conv_out_channel, prune.prune_batchnorm, prune.prune_linear_out_channel, prune.prune_group_conv):
-                prunable_chs = count_prunable_channels(dep.broken_node.module)
+                prunable_chs = count_prunable_channels(dep.target.module)
                 if prunable_chs<=len(idxs): return False
         return True
 
@@ -407,27 +410,27 @@ class DependencyGraph(object):
         plan = PruningPlan()
         #  the user pruning operation
         root_node = self.module2node[module]
-        plan.add_plan(Dependency(pruning_fn, pruning_fn, root_node), idxs)
+        plan.add_plan(Dependency(pruning_fn, pruning_fn, source=root_node, target=root_node), idxs)
         visited = set()
 
         def _fix_denpendency_graph(node, fn, indices):
             visited.add(node)
             for dep in node.dependencies:
-                if dep.is_triggered_by(fn):  # and dep.broken_node not in visited:
+                if dep.is_triggered_by(fn):  # and dep.target not in visited:
                     if dep.index_transform is not None:
                         new_indices = dep.index_transform(indices)
                     else:
                         new_indices = indices
                     if len(new_indices) == 0:
                         continue
-                    if dep.broken_node in visited and plan.has_pruning_op(
+                    if dep.target in visited and plan.has_pruning_op(
                         dep, new_indices
                     ):
                         continue
                     else:
                         plan.add_plan(dep, new_indices)
                         _fix_denpendency_graph(
-                            dep.broken_node, dep.handler, new_indices
+                            dep.target, dep.handler, new_indices
                         )
         _fix_denpendency_graph(root_node, pruning_fn, idxs)
 
@@ -455,7 +458,7 @@ class DependencyGraph(object):
                             "out_ch_pruning_fn"
                         ]
                     dep = Dependency(
-                        trigger=trigger, handler=handler, broken_node=in_node
+                        trigger=trigger, handler=handler, source=node, target=in_node
                     )
                     node.dependencies.append(dep)
 
@@ -475,7 +478,7 @@ class DependencyGraph(object):
                             "in_ch_pruning_fn"
                         ]
                     dep = Dependency(
-                        trigger=trigger, handler=handler, broken_node=out_node
+                        trigger=trigger, handler=handler, source=node, target=out_node
                     )
                     node.dependencies.append(dep)
 
@@ -618,7 +621,7 @@ class DependencyGraph(object):
             return
         visited = set()
         fc_in_features = fc_node.module.in_features
-        feature_channels = _get_output_channels_of_input_node(fc_node.inputs[0])
+        feature_channels = _infer_out_dim_from_node_by_recursion(fc_node.inputs[0])
         if (
             feature_channels <= 0
         ):  # the first layer: https://github.com/VainF/Torch-Pruning/issues/21
@@ -627,13 +630,13 @@ class DependencyGraph(object):
         if stride > 1:
             for in_node in fc_node.inputs:
                 for dep in fc_node.dependencies:
-                    if dep.broken_node == in_node:
+                    if dep.target == in_node:
                         dep.index_transform = helpers._FlattenIndexTransform(
                             stride=stride, reverse=True
                         )
 
                 for dep in in_node.dependencies:
-                    if dep.broken_node == fc_node:
+                    if dep.target == fc_node:
                         dep.index_transform = helpers._FlattenIndexTransform(
                             stride=stride, reverse=False
                         )
@@ -643,7 +646,7 @@ class DependencyGraph(object):
             return
         chs = []
         for n in cat_node.inputs:
-            chs.append(_get_output_channels_of_input_node(n))
+            chs.append(_infer_out_dim_from_node_by_recursion(n))
         offsets = [0]
         for ch in chs:
             offsets.append(offsets[-1] + ch)
@@ -652,14 +655,14 @@ class DependencyGraph(object):
         #no transform if the concat dim is different from the feature dim
         for i, in_node in enumerate(cat_node.inputs):
             for dep in cat_node.dependencies:
-                if dep.broken_node == in_node:
+                if dep.target == in_node:
                     #if cat_node.enable_index_transform:
                     dep.index_transform = helpers._ConcatIndexTransform(
                         offset=offsets[i : i + 2], reverse=True
                     )
 
             for dep in in_node.dependencies:
-                if dep.broken_node == cat_node:
+                if dep.target == cat_node:
                     #if cat_node.enable_index_transform:
                     dep.index_transform = helpers._ConcatIndexTransform(
                         offset=offsets[i : i + 2], reverse=False
@@ -671,7 +674,7 @@ class DependencyGraph(object):
         
         chs = []
         for n in split_node.outputs:
-            chs.append(_get_input_channels_of_output_node(n))
+            chs.append(_infer_in_dim_from_node_by_recursion(n))
 
         offsets = [0]
         for ch in chs:
@@ -680,39 +683,39 @@ class DependencyGraph(object):
 
         for i, out_node in enumerate(split_node.outputs):
             for dep in split_node.dependencies:
-                if dep.broken_node == out_node:
+                if dep.target == out_node:
                     dep.index_transform = helpers._SplitIndexTransform(
                         offset=offsets[i : i + 2], reverse=False
                     )
 
             for dep in out_node.dependencies:
-                if dep.broken_node == split_node:
+                if dep.target == split_node:
                     dep.index_transform = helpers._SplitIndexTransform(
                         offset=offsets[i : i + 2], reverse=True
                     )
 
 
-def _get_output_channels_of_input_node(node):
-    ch = _get_output_channels_of_node(node)
+def _infer_out_dim_from_node_by_recursion(node):
+    ch = _infer_out_dim_from_node(node)
     if ch is None:
         ch = 0
         for in_node in node.inputs:
             if node.type == OPTYPE.CONCAT:
-                ch += _get_output_channels_of_input_node(in_node)
+                ch += _infer_out_dim_from_node_by_recursion(in_node)
             else:
-                ch = _get_output_channels_of_input_node(in_node)
+                ch = _infer_out_dim_from_node_by_recursion(in_node)
     return ch
 
 
-def _get_input_channels_of_output_node(node):
-    ch = _get_input_channels_of_node(node)
+def _infer_in_dim_from_node_by_recursion(node):
+    ch = _infer_in_dim_from_node(node)
     if ch is None:
         ch = 0
         for out_node in node.outputs:
             if node.type == OPTYPE.SPLIT:
-                ch += _get_input_channels_of_output_node(out_node)
+                ch += _infer_in_dim_from_node_by_recursion(out_node)
             else:
-                ch = _get_input_channels_of_output_node(out_node)
+                ch = _infer_in_dim_from_node_by_recursion(out_node)
     return ch
 
 def flatten_as_list(obj):
