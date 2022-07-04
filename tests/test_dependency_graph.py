@@ -12,7 +12,7 @@ strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 # get a pruning plan according to the dependency graph. idxs is the indices of pruned filters.
-pruning_idxs = strategy(model.conv1.weight, amount=0.4) # or manually selected [0, 2, 6]
+pruning_idxs = [0, 2, 6] #strategy(model.conv1.weight, amount=0.4) # or manually selected [0, 2, 6]
 pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs )
 print(pruning_plan)
 # execute this plan (prune the model)
