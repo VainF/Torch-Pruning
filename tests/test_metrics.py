@@ -9,11 +9,11 @@ model = resnet18(pretrained=True)
 
 # update prunner metrics
 l2_norm_metric = tp.metric.NormMetric(p=1)
-tp.prune_conv_in_channel.metrics = l2_norm_metric
-tp.prune_conv_out_channel.metrics = l2_norm_metric
-tp.prune_linear_in_channel.metrics = l2_norm_metric
-tp.prune_linear_out_channel.metrics = l2_norm_metric
-tp.prune_batchnorm.metrics = l2_norm_metric
+tp.prune_conv_in_channel.add_metric("l2nrom", l2_norm_metric)
+tp.prune_conv_out_channel.add_metric("l2nrom", l2_norm_metric)
+tp.prune_linear_in_channel.add_metric("l2nrom", l2_norm_metric)
+tp.prune_linear_out_channel.add_metric("l2nrom", l2_norm_metric)
+tp.prune_batchnorm.add_metric("l2nrom", l2_norm_metric)
 
 # pruning according to L1 Norm
 strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
