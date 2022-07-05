@@ -447,28 +447,7 @@ class DependencyGraph(object):
                         else:
                             plan.add_plan(dep, new_indices)
                             processing_stack.append( (dep.target, dep.handler, new_indices) )
-
-
-        def _fix_denpendency_graph(node, fn, indices):
-            visited.add(node)
-            for dep in node.dependencies:
-                if dep.is_triggered_by(fn):  # and dep.target not in visited:
-                    if dep.index_transform is not None:
-                        new_indices = dep.index_transform(indices)
-                    else:
-                        new_indices = indices
-                    if len(new_indices) == 0:
-                        continue
-                    if dep.target in visited and plan.has_pruning_op(
-                        dep, new_indices
-                    ):
-                        continue
-                    else:
-                        plan.add_plan(dep, new_indices)
-                        _fix_denpendency_graph(
-                            dep.target, dep.handler, new_indices
-                        )
-                
+      
         _fix_dependency_graph_non_recursive(root_node, pruning_fn, idxs)
 
         # merge pruning ops
