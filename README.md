@@ -17,7 +17,7 @@ Pruning is a popular approach to reduce the heavy computational cost of neural n
 * Low-level pruning [functions](torch_pruning/prune/structured.py)
 
 ### Updates:
-**02/07/2022** A new version is available in branch [v1.0](https://github.com/VainF/Torch-Pruning/tree/v1.0), which supports Vision Transformers, Group Convolutions, etc.
+**02/07/2022** The latest version is under development in branch [v1.0](https://github.com/VainF/Torch-Pruning/tree/v1.0).
 
 **24/03/2022** We are drafting a paper to provide more technical details about this repo, which will be released as soon as possible, together with a new version and some practical examples for yolo and other popular networks.
   
