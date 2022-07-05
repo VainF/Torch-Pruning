@@ -120,6 +120,22 @@ model = torch.load('model.pth') # no load_state_dict
 
 ### 2. Low-level pruning functions
 
+The following pruning functions are available:
+
+```python
+tp.prune_conv_in_channel
+tp.prune_conv_out_channel
+tp.prune_group_conv
+tp.prune_batchnorm 
+tp.prune_linear_in_channel 
+tp.prune_linear_out_channel 
+tp.prune_prelu
+tp.prune_layernorm 
+tp.prune_embedding 
+tp.prune_parameter
+tp.prune_multihead_attention
+```
+
 It is equivalent to make a layer-by-layer fixing using the low-level pruning functions. 
 
 ```python
