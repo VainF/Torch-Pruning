@@ -14,7 +14,7 @@ Pruning is a popular approach to reduce the heavy computational cost of neural n
 * Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 * Supported operations: split, concatenation, skip connection, flatten, etc.
 * Pruning strategies: Random, L1, L2, etc.
-* Low-level pruning [functions](torch_pruning/prune/structured)
+* Low-level pruning [functions](torch_pruning/prune/structured.py)
 
 ### Updates:
   
