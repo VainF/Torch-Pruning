@@ -234,7 +234,8 @@ class PruningPlan(object):
 
     def __init__(self):
         self._plans = list()
-        self._metrics_running_sum = helpers.RunningSum()
+        self._metrics_scalar_sum = helpers.ScalarSum()
+        self._metrics_vector_sum = helpers.VectorSum()
 
     def add_plan(self, dep, idxs):
         self._plans.append((dep, idxs))
@@ -244,11 +245,11 @@ class PruningPlan(object):
         return self._plans
 
     def exec(self, dry_run=False):
-        self._metrics_running_sum.reset()
+        per_layer_metrics = []
         for dep, idxs in self._plans:
             _, metric_dict = dep(idxs, dry_run=dry_run)
-            self._metrics_running_sum.update( metric_dict )
-        return self._metrics_running_sum.results()
+            per_layer_metrics.append(metric_dict)
+        return per_layer_metrics
 
     def has_dep(self, dep):
         for _dep, _ in self._plans:
@@ -280,18 +281,30 @@ class PruningPlan(object):
         fmt += "\n"+"-"*32+"\n"
         fmt += " "*10 + "Pruning Plan" 
         fmt += "\n"+"-"*32+"\n"
-        self._metrics_running_sum.reset()
+        self._metrics_scalar_sum.reset()
+        self._metrics_vector_sum.reset()
+
         for i, (dep, idxs) in enumerate(self._plans):
             _, metric_dict = dep(idxs, dry_run=True)
-            self._metrics_running_sum.update( metric_dict )
+            for k, v in metric_dict.items():
+                if helpers.is_scalar(v):
+                    self._metrics_scalar_sum.update(k, v)
+                else:
+                    self._metrics_vector_sum.update(k, v)
             if i==0:
                 fmt+= "User pruning:\n"
             fmt += "[ %s, Index=%s, metric=%s]\n" % (dep, idxs, metric_dict)
             if i==0:
                 fmt+= "\nCoupled pruning:\n"
-        fmt += "\nMetric Sum: %s\n" % (self._metrics_running_sum.results())
+        
+        scalar_metric = self._metrics_scalar_sum.results()
+        vector_metric = self._metrics_vector_sum.results()
+        scalar_metric.update(vector_metric)
+        fmt += "\nMetric Sum: %s\n" % (scalar_metric)
         fmt += "-"*32+"\n"
         return fmt
+
+
 
 
 class DependencyGraph(object):

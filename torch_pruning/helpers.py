@@ -3,6 +3,17 @@ import torch.nn as nn
 from . import prune
 import numpy as np 
 import torch
+from operator import add
+from numbers import Number
+
+def is_scalar(x):
+    if isinstance(x, torch.Tensor):
+        return len(x.shape)==0
+    elif isinstance(x, Number):
+        return True
+    elif isinstance(x, (list, tuple)):
+        return False
+    return False
 
 class _CustomizedOp(nn.Module):
     def __init__(self, op_class):
@@ -173,15 +184,32 @@ def gconv2convs(module):
         new_module.add_module(name, gconv2convs(child))
     return new_module
 
-class RunningSum():
+class ScalarSum():
     def __init__(self):
         self._results = {}
 
-    def update(self, metric_dict):
-        for metric_name, metric_val in metric_dict.items():
-            if metric_name not in self._results:
-                self._results[metric_name] = 0
-            self._results[metric_name] += metric_val
+    def update(self, metric_name, metric_value):
+        if metric_name not in self._results:
+            self._results[metric_name] = 0
+        self._results[metric_name] += metric_value
+
+    def results(self):
+        return self._results
+    
+    def reset(self):
+        self._results = {}
+
+class VectorSum():
+    def __init__(self):
+        self._results = {}
+
+    def update(self, metric_name, metric_value):
+        if metric_name not in self._results:
+            self._results[metric_name] = metric_value
+        if isinstance(metric_value, torch.Tensor):
+            self._results[metric_name] += metric_value
+        elif isinstance(metric_value, list):
+            self._results[metric_name] = list( map(add, self._results[metric_name], metric_value) ) 
 
     def results(self):
         return self._results
