@@ -1,6 +1,15 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+#from torchvision.models.swin_transformer import swin_t, swin_s, swin_b
+from torchvision.models.vision_transformer import (
+    vit_b_16,
+    vit_b_32,
+    vit_l_16,
+    vit_l_32,
+    vit_h_14,
+)
 
+#
 from torchvision.models.alexnet import alexnet 
 from torchvision.models.densenet import densenet121, densenet169, densenet201, densenet161
 from torchvision.models.efficientnet import (
@@ -82,16 +91,6 @@ from torchvision.models.vgg import vgg11, vgg13, vgg16, vgg19, vgg11_bn, vgg13_b
 # 4. unknown issues
 #from torchvision.models.swin_transformer import swin_t, swin_s, swin_b
 
-
-# 5. you can refer to examples/cifar/prune_cifar.py for more details about vit pruning
-# from torchvision.models.vision_transformer import (
-#    vit_b_16,
-#    vit_b_32,
-#    vit_l_16,
-#    vit_l_32,
-#    vit_h_14,
-#)
-
 if __name__=='__main__':
 
     entries = globals().copy()
@@ -102,13 +101,17 @@ if __name__=='__main__':
     import random
 
     def random_prune(model, example_inputs, output_transform):
+        from torchvision.models.vision_transformer import VisionTransformer
+
         model.cpu().eval()
         model = tp.helpers.gconv2convs(model)
         prunable_module_type = ( nn.Conv2d, nn.BatchNorm2d )
         prunable_modules = [ m for m in model.modules() if isinstance(m, prunable_module_type) ]
         ori_size = tp.utils.count_params( model )
-        DG = tp.DependencyGraph().build_dependency( model, example_inputs=example_inputs, output_transform=output_transform )
-        
+        user_defined_parameters = None
+        if isinstance(model, VisionTransformer):
+            user_defined_parameters = [model.class_token, model.encoder.pos_embedding]
+        DG = tp.DependencyGraph().build_dependency( model, example_inputs=example_inputs, output_transform=output_transform, user_defined_parameters=user_defined_parameters )
         for layer_to_prune in prunable_modules:
             # select a layer
 
@@ -116,15 +119,24 @@ if __name__=='__main__':
                 prune_fn = tp.prune_conv_out_channel
             elif isinstance(layer_to_prune, nn.BatchNorm2d):
                 prune_fn = tp.prune_batchnorm
+            elif isinstance(layer_to_prune, nn.Linear):
+                prune_fn = tp.prune_linear_out_channel
 
             ch = tp.utils.count_prunable_channels( layer_to_prune )
             if ch==1: continue
-            rand_idx = random.sample( list(range(ch)), min( ch//2, 10 ) )
+            n_to_prune = min( ch//2, 10 )
+            if isinstance(model, VisionTransformer):
+                num_heads = model.encoder.layers[0].num_heads
+                n_to_prune = n_to_prune % num_heads * num_heads
+            rand_idx = random.sample( list(range(ch)), n_to_prune )
             plan = DG.get_pruning_plan( layer_to_prune, prune_fn, rand_idx)
             if DG.check_pruning_plan(plan):
                 plan.exec()
-            
         print(model)
+        if isinstance(model, VisionTransformer): # Torchvision uses a static hidden_dim for reshape
+            model.hidden_dim = model.conv_proj.out_channels
+        print(model)
+
         with torch.no_grad():
             if isinstance(example_inputs, dict):
                 out = model( **example_inputs )

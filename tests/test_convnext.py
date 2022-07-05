@@ -14,16 +14,16 @@ if __name__=='__main__':
 
         model = tp.helpers.gconv2convs(model)
         from torchvision.models.convnext import CNBlock
-        userdefined_parameters = []
+        user_defined_parameters = []
         for m in model.modules():
             if isinstance(m, CNBlock):
-                userdefined_parameters.append(m.layer_scale)
+                user_defined_parameters.append(m.layer_scale)
         tp.prune.prune_parameter.dim = 0
         
         prunable_module_type = ( nn.Conv2d, nn.BatchNorm2d )
         prunable_modules = [ m for m in model.modules() if isinstance(m, prunable_module_type) ]
         ori_size = tp.utils.count_params( model )
-        DG = tp.DependencyGraph().build_dependency( model, example_inputs=example_inputs, output_transform=output_transform, userdefined_parameters=userdefined_parameters )
+        DG = tp.DependencyGraph().build_dependency( model, example_inputs=example_inputs, output_transform=output_transform, user_defined_parameters=user_defined_parameters )
         for layer_to_prune in prunable_modules:
             # select a layer
     
