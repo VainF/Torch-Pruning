@@ -59,3 +59,27 @@ class L1Strategy(LNStrategy):
 class L2Strategy(LNStrategy):
     def __init__(self):
         super(L2Strategy, self).__init__(p=2)
+
+
+class GroupLNStrategy(ABC):
+    def __call__(self, *args, **kwargs):
+        return self.apply(*args, **kwargs)
+
+    @abstractclassmethod
+    def apply(self, group, amount=0.0, round_to=1)->  Sequence[int]:  # return index
+        """ Apply the strategy on weights with user specified pruning percentage.
+
+        Parameters:
+            weights (torch.Parameter): weights to be pruned.
+            amount (Callable): the percentage of weights to be pruned (amount<1.0) or the amount of weights to be pruned (amount>=1.0) 
+            round_to (int): the number to which the number of pruned channels is rounded.
+        """
+        metrics = []
+        for dep, idxs in self._plans:
+            _, metric = dep.handler(
+            dep.target.module,
+            idxs,
+            dry_run=True,
+        )
+        print(metric)
+        
