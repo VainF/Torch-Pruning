@@ -199,6 +199,51 @@ class ParameterPruner(BasePruner):
     def calc_nparams_to_prune(tensor: nn.Embedding, idxs: Sequence[int]) -> int:
         return 0
     
+class MultiheadAttentionPruner(BasePruner):
+    def check(self, layer, idxs):
+        assert (layer.embed_dim - len(idxs))  % layer.num_heads == 0, "embed_dim (%d) of MultiheadAttention after pruning must divide evenly by `num_heads` (%d)"%(layer.embed_dim, layer.num_heads)
+    def prune(self, layer, idxs: list)-> nn.Module:
+        keep_idxs = list(set(range(layer.embed_dim)) - set(idxs))
+        if layer.q_proj_weight is not None:
+            layer.q_proj_weight.data = torch.index_select(layer.q_proj_weight.data, 0, torch.LongTensor(keep_idxs))
+        if layer.k_proj_weight is not None:
+            layer.q_proj_weight.data = torch.index_select(layer.q_proj_weight.data, 0, torch.LongTensor(keep_idxs))
+        if layer.v_proj_weight is not None:
+            layer.v_proj_weight.data = torch.index_select(layer.v_proj_weight.data, 0, torch.LongTensor(keep_idxs))
+        
+        pruning_idxs_3x = idxs + [i+layer.embed_dim for i in idxs] + [i+2*layer.embed_dim for i in idxs]
+        keep_idxs_3x = list(set(range(3*layer.embed_dim)) - set(pruning_idxs_3x))
+        if layer.in_proj_weight is not None:
+            layer.in_proj_weight.data = torch.index_select(layer.in_proj_weight.data, 0, torch.LongTensor(keep_idxs_3x))
+            layer.in_proj_weight.data = torch.index_select(layer.in_proj_weight.data, 1, torch.LongTensor(keep_idxs))
+            
+        if layer.in_proj_bias is not None:
+            layer.in_proj_bias.data = torch.index_select(layer.in_proj_bias.data, 0, torch.LongTensor(keep_idxs_3x))
+        
+        if layer.bias_k is not None:
+            layer.bias_k.data = torch.index_select(layer.bias_k.data, 2, torch.LongTensor(keep_idxs))
+        if layer.bias_v is not None:
+            layer.bias_v.data = torch.index_select(layer.bias_v.data, 2, torch.LongTensor(keep_idxs))
+        
+        linear = layer.out_proj
+        keep_idxs = list(set(range(linear.out_features)) - set(idxs))
+        linear.out_features = linear.out_features-len(idxs)
+        linear.weight = torch.nn.Parameter(linear.weight.data.clone()[keep_idxs])
+        if linear.bias is not None:
+            linear.bias = torch.nn.Parameter(linear.bias.data.clone()[keep_idxs])
+        keep_idxs = list(set(range(linear.in_features)) - set(idxs))
+        linear.in_features = linear.in_features-len(idxs)
+        linear.weight = torch.nn.Parameter(linear.weight.data.clone()[:, keep_idxs])
+        layer.embed_dim = layer.embed_dim - len(idxs)
+        return layer
+
+    @staticmethod
+    def calc_nparams_to_prune(layer: nn.Embedding, idxs: Sequence[int]) -> int:
+        linear = layer.out_proj
+        nparams_to_prune = len(idxs)*linear.weight.shape[1] + len(idxs) * (layer.embed_dim - len(idxs)) + (len(idxs) if linear.bias is not None else 0) 
+        return nparams_to_prune
+
+
 prune_conv_in_channel = ConvInChannelPruner()
 prune_conv_out_channel = ConvOutChannelPruner()
 prune_group_conv = GroupConvPruner()
@@ -209,6 +254,7 @@ prune_prelu = PReLUPruner()
 prune_layernorm = LayernormPruner()
 prune_embedding = EmbeddingPruner() 
 prune_parameter = ParameterPruner(dim=2) # default=2 for tranformers
+prune_multihead_attention = MultiheadAttentionPruner()
 
 
 

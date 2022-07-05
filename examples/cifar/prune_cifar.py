@@ -73,8 +73,8 @@ def train_model(model, train_loader, test_loader):
 
 def prune_model(model, args):
     model.cpu()
-    userdefined_parameters=[model.pos_embedding, model.cls_token] if 'vit' in args.model else None
-    DG = tp.DependencyGraph().build_dependency( model, torch.randn(1, 3, 32, 32), userdefined_parameters=userdefined_parameters )
+    user_defined_parameters=[model.pos_embedding, model.cls_token] if 'vit' in args.model else None
+    DG = tp.DependencyGraph().build_dependency( model, torch.randn(1, 3, 32, 32), user_defined_parameters=user_defined_parameters )
     
     def prune_linear(layer, amount=0.4):
         strategy = tp.strategy.L1Strategy()

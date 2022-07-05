@@ -21,6 +21,9 @@ class _ConcatOp(nn.Module):
     def __repr__(self):
         return "_ConcatOp(%s)" % (self.offsets)
 
+class DummyMHA(nn.Module):
+    def __init__(self):
+        super(DummyMHA, self).__init__()
 
 class _SplitOp(nn.Module):
     def __init__(self):

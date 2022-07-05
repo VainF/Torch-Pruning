@@ -16,6 +16,10 @@ TORCH_LAYERNORM = nn.modules.normalization.LayerNorm
 TORCH_PRELU = nn.PReLU
 TORCH_LINEAR = nn.Linear
 TORCH_EMBED = nn.Embedding
+try:
+    TORCH_MHA = nn.MultiheadAttention
+except:
+    TORCH_MHA = helpers.DummyMHA  # for pytorch w/o MultiHeadAttention
 
 
 class OPTYPE(IntEnum):
@@ -32,6 +36,7 @@ class OPTYPE(IntEnum):
     LN = 9           # nn.LayerNorm
     EMBED = 10       # nn.Embedding
     PARAMETER = 11   # nn.Parameter
+    MHA = 12
 
 
 def _module2type(module):
@@ -58,6 +63,8 @@ def _module2type(module):
         return OPTYPE.CUSTOMIZED
     elif isinstance(module, torch.nn.Parameter):
         return OPTYPE.PARAMETER
+    elif isinstance(module, TORCH_MHA):
+        return OPTYPE.MHA
     else:
         return OPTYPE.ELEMENTWISE
 
@@ -80,6 +87,8 @@ def _infer_out_dim_from_node(node):
         return node.module.shape[prune.prune_parameter.dim]
     elif node.type == OPTYPE.CUSTOMIZED:
         return node.customized_pruning_fn["get_out_ch_fn"](node.module)
+    elif node.type == OPTYPE.MHA:
+        return node.module.embed_dim
     else:
         return None # return None if oc can not be infered
 
@@ -102,6 +111,8 @@ def _infer_in_dim_from_node(node):
         return node.module.shape[prune.prune_parameter.dim]
     elif node.type == OPTYPE.CUSTOMIZED:
         return node.customized_pruning_fn["get_in_ch_fn"](node.module)
+    elif node.type == OPTYPE.MHA:
+        return node.module.embed_dim
     else:
         return None # return None if ic can not be infered
 
@@ -120,6 +131,7 @@ class Node(object):
 
         self._name = name
         self.type = _module2type(module)
+        self.enable_index_transform = True
 
     @property
     def name(self):
@@ -156,6 +168,7 @@ class Node(object):
         fmt += " " * 4 + "DEP:\n"
         for dep in self.dependencies:
             fmt += " " * 8 + "%s\n" % (dep)
+        fmt+="\tEnable_index_transform=%s\n"%(self.enable_index_transform)
         return fmt
 
 class Dependency(object):
@@ -194,10 +207,10 @@ class Dependency(object):
 
     def __str__(self):
         return "[DEP] %s on %s => %s on %s" % (
-            self.handler.__class__.__name__,
-            self.target.name,
             "None" if self.trigger is None else self.trigger.__class__.__name__,
             self.source.name,
+            self.handler.__class__.__name__,
+            self.target.name,
         )
 
     def is_triggered_by(self, pruning_fn):
@@ -208,7 +221,7 @@ class Dependency(object):
             (self.trigger == other.trigger)
             and self.handler == other.handler
             and self.target == other.target
-            and self.source == other.source
+            #and self.source == other.source
         )
 
 class PruningPlan(object):
@@ -252,6 +265,8 @@ class PruningPlan(object):
             ):
                 return True
         return False
+    def __len__(self):
+        return len( self._plans )
 
     def add_plan_and_merge(self, dep, idxs):
         for i, (_dep, _idxs) in enumerate(self._plans):
@@ -289,6 +304,7 @@ class DependencyGraph(object):
         TORCH_PRELU,
         TORCH_LAYERNORM,
         TORCH_EMBED,
+        TORCH_MHA,
     ]
 
     PRUNING_FN = (
@@ -304,18 +320,19 @@ class DependencyGraph(object):
             OPTYPE.LN: (prune.prune_layernorm, prune.prune_layernorm),
             OPTYPE.EMBED: (prune.prune_embedding, prune.prune_embedding),
             OPTYPE.PARAMETER: (prune.prune_parameter, prune.prune_parameter),
+            OPTYPE.MHA: (prune.prune_multihead_attention, prune.prune_multihead_attention),
             OPTYPE.CUSTOMIZED: (None, None),  # placeholder
         }
     )
-    RULES_TO_SUCCEEDING_LAYERS = {}
-    RULES_TO_PRECEDING_LAYERS = {}
+    RULES_FOR_SUCCEEDING_LAYERS = {}
+    RULES_FOR_PRECEDING_LAYERS = {}
     for t1 in PRUNING_FN.keys():
         for t2 in PRUNING_FN.keys():          
-            RULES_TO_SUCCEEDING_LAYERS[(t1, t2)] = (
+            RULES_FOR_SUCCEEDING_LAYERS[(t1, t2)] = (
                 PRUNING_FN[t1][1], # trigger
                 PRUNING_FN[t2][0], # handler
             )  # change in_channels of succeeding layers
-            RULES_TO_PRECEDING_LAYERS[(t1, t2)] = (
+            RULES_FOR_PRECEDING_LAYERS[(t1, t2)] = (
                 PRUNING_FN[t1][0], # trigger
                 PRUNING_FN[t2][1], # handler
             )  # change out_channels of preceding layers
@@ -327,7 +344,7 @@ class DependencyGraph(object):
         example_inputs: typing.Union[torch.Tensor, typing.Sequence],
         output_transform: typing.Callable = None,
         verbose: bool = True,
-        userdefined_parameters = None,
+        user_defined_parameters = None,
     ):
         """Build a dependency graph by tracing.
 
@@ -344,9 +361,9 @@ class DependencyGraph(object):
             module: name for (name, module) in model.named_modules()
         }
         # user-defined nn.Parameters like the learnable pos_emb in ViT
-        if userdefined_parameters is None:
-            userdefined_parameters = []
-        self.userdefined_parameters = userdefined_parameters
+        if user_defined_parameters is None:
+            user_defined_parameters = []
+        self.user_defined_parameters = user_defined_parameters
 
         # build dependency graph by tracing
         self.module2node = self._trace(
@@ -411,7 +428,26 @@ class DependencyGraph(object):
         #  the user pruning operation
         root_node = self.module2node[module]
         plan.add_plan(Dependency(pruning_fn, pruning_fn, source=root_node, target=root_node), idxs)
+        
         visited = set()
+        def _fix_dependency_graph_non_recursive(node, fn, indices):
+            processing_stack = [(node, fn, indices)]
+            while len(processing_stack)>0:
+                node, fn, indices = processing_stack.pop(-1)
+                #print(node in visited)
+                visited.add(node)
+                
+                for dep in node.dependencies:
+                    if dep.is_triggered_by(fn): 
+                        new_indices = dep.index_transform(indices) if dep.index_transform is not None else indices
+                        if len(new_indices) == 0:
+                            continue
+                        if dep.target in visited and plan.has_pruning_op(dep, new_indices):
+                            continue
+                        else:
+                            plan.add_plan(dep, new_indices)
+                            processing_stack.append( (dep.target, dep.handler, new_indices) )
+
 
         def _fix_denpendency_graph(node, fn, indices):
             visited.add(node)
@@ -432,10 +468,12 @@ class DependencyGraph(object):
                         _fix_denpendency_graph(
                             dep.target, dep.handler, new_indices
                         )
-        _fix_denpendency_graph(root_node, pruning_fn, idxs)
+                
+        _fix_dependency_graph_non_recursive(root_node, pruning_fn, idxs)
 
         # merge pruning ops
         merged_plan = PruningPlan()
+        
         for dep, idxs in plan.plan:
             merged_plan.add_plan_and_merge(dep, idxs)
         return merged_plan
@@ -443,7 +481,7 @@ class DependencyGraph(object):
     def _build_dependency(self, module2node):
         for module, node in module2node.items():
             for in_node in node.inputs:
-                preceding_rule = self.RULES_TO_PRECEDING_LAYERS.get(
+                preceding_rule = self.RULES_FOR_PRECEDING_LAYERS.get(
                     (node.type, in_node.type), None
                 )
                 if preceding_rule is not None:
@@ -463,7 +501,7 @@ class DependencyGraph(object):
                     node.dependencies.append(dep)
 
             for out_node in node.outputs:
-                succeeding_rule = self.RULES_TO_SUCCEEDING_LAYERS.get(
+                succeeding_rule = self.RULES_FOR_SUCCEEDING_LAYERS.get(
                     (node.type, out_node.type), None
                 )
                 if succeeding_rule is not None:
@@ -492,6 +530,8 @@ class DependencyGraph(object):
                 visited[module] = 1
             else:
                 visited[module] += 1
+            if isinstance(outputs, tuple):
+                outputs = outputs[0]
             gradfn2module[outputs.grad_fn] = module
         hooks = [
             m.register_forward_hook(_record_grad_fn)
@@ -521,10 +561,9 @@ class DependencyGraph(object):
         # where concatination is not applied to feature dims.
         # Notably, this is a bad practice and will be fixed in the future version
         # Some problems may occurs if your vision transform has a lot of complicated torch.cat.
-        if len(self.userdefined_parameters)>0: 
+        if len(self.user_defined_parameters)>0: 
             for node in module2node.values():    
-                if node.type==OPTYPE.CONCAT:
-                    node.enable_index_transform = True
+                if node.type in (OPTYPE.CONCAT, OPTYPE.SPLIT):
                     stack = [node]
                     while len(stack)>0:
                         n = stack.pop(-1)
@@ -593,7 +632,7 @@ class DependencyGraph(object):
                             and "accumulategrad" in f[0].name().lower()
                         ):  
                             is_user_defined_param = False
-                            for (j, p) in enumerate(self.userdefined_parameters):
+                            for (j, p) in enumerate(self.user_defined_parameters):
                                 if f[0].variable is p:
                                     is_user_defined_param = True
                                     gradfn2module[f[0]] = p
@@ -656,17 +695,17 @@ class DependencyGraph(object):
         for i, in_node in enumerate(cat_node.inputs):
             for dep in cat_node.dependencies:
                 if dep.target == in_node:
-                    #if cat_node.enable_index_transform:
-                    dep.index_transform = helpers._ConcatIndexTransform(
-                        offset=offsets[i : i + 2], reverse=True
-                    )
+                    if cat_node.enable_index_transform:
+                        dep.index_transform = helpers._ConcatIndexTransform(
+                            offset=offsets[i : i + 2], reverse=True
+                        )
 
             for dep in in_node.dependencies:
                 if dep.target == cat_node:
-                    #if cat_node.enable_index_transform:
-                    dep.index_transform = helpers._ConcatIndexTransform(
-                        offset=offsets[i : i + 2], reverse=False
-                    )
+                    if cat_node.enable_index_transform:
+                        dep.index_transform = helpers._ConcatIndexTransform(
+                            offset=offsets[i : i + 2], reverse=False
+                        )
 
     def _set_split_index_transform(self, split_node: Node):
         if split_node.type != OPTYPE.SPLIT:
@@ -684,15 +723,17 @@ class DependencyGraph(object):
         for i, out_node in enumerate(split_node.outputs):
             for dep in split_node.dependencies:
                 if dep.target == out_node:
-                    dep.index_transform = helpers._SplitIndexTransform(
-                        offset=offsets[i : i + 2], reverse=False
-                    )
+                    if split_node.enable_index_transform:
+                        dep.index_transform = helpers._SplitIndexTransform(
+                            offset=offsets[i : i + 2], reverse=False
+                        )
 
             for dep in out_node.dependencies:
                 if dep.target == split_node:
-                    dep.index_transform = helpers._SplitIndexTransform(
-                        offset=offsets[i : i + 2], reverse=True
-                    )
+                    if split_node.enable_index_transform:
+                        dep.index_transform = helpers._SplitIndexTransform(
+                            offset=offsets[i : i + 2], reverse=True
+                        )
 
 
 def _infer_out_dim_from_node_by_recursion(node):
