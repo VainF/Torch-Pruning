@@ -136,7 +136,7 @@ tp.prune_parameter
 tp.prune_multihead_attention
 ```
 
-You can prune your model by yourself without DependencyGraph:
+You can prune your model manually without DependencyGraph:
 
 ```python
 tp.prune_conv_out_channel( model.conv1, idxs=[2,6,9] )
