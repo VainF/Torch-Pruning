@@ -1,4 +1,4 @@
-<div align="center"> <h1>Torch-Pruning <br> <h3>Pruning channels for model acceleration<h3> </h1> </div>
+<div align="center"> <h1>Torch-Pruning <br> <h3>Structural Pruning for Model Acceleration<h3> </h1> </div>
 <div align="center">
 <img src="assets/intro.jpg" width="45%">
 </div>
