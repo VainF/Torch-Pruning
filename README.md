@@ -136,7 +136,7 @@ tp.prune_parameter
 tp.prune_multihead_attention
 ```
 
-It is equivalent to make a layer-by-layer fixing using the low-level pruning functions. 
+You can prune your model by yourself without DependencyGraph:
 
 ```python
 tp.prune_conv_out_channel( model.conv1, idxs=[2,6,9] )
