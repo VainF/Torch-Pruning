@@ -1,6 +1,6 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-#from torchvision.models.swin_transformer import swin_t, swin_s, swin_b
+
 from torchvision.models.vision_transformer import (
     vit_b_16,
     vit_b_32,
