@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="torch-pruning",
-    version="0.3.0",
+    version="0.2.8",
     author="Gongfan Fang",
     author_email="fgf@zju.edu.cn",
     description="A pytorch toolkit for structured neural network pruning and automatic layer dependency maintaining.",
@@ -18,6 +18,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['torch'],
+    install_requires=['torch', 'numpy'],
     python_requires='>=3.6',
 )

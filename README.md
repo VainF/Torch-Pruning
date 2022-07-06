@@ -28,7 +28,7 @@ Torch-Pruning will forward your model with a fake inputs and trace the computati
 ## Installation
 
 ```bash
-pip install torch_pruning # v0.2.7
+pip install torch_pruning # v0.2.8
 ```
 **Known Issues**: 
 
