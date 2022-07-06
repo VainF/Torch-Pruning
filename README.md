@@ -77,7 +77,7 @@ if DG.check_pruning_plan(pruning_plan):
     pruning_plan.exec()
 ```
 
-Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning plan (with pruning_idxs=[2, 6, 9]). It return the pruning details and the total amount of pruned parameters. You can also customize the metrics following [test_metrics.py](tests/test_metrics.py).
+Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning plan (with pruning_idxs=[2, 6, 9]). You can also customize the metrics following [test_metrics.py](tests/test_metrics.py).
 
 ```
 --------------------------------
