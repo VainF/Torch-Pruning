@@ -38,7 +38,7 @@ pip install torch_pruning # v0.2.8
 
 ## Quickstart
   
-### 0. Dependenies
+### 0. Dependency
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
