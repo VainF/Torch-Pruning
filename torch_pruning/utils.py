@@ -1,7 +1,7 @@
 from .dependency import TORCH_CONV, TORCH_BATCHNORM, TORCH_PRELU, TORCH_LINEAR
 import torch
 
-def count_prunable_params(module):
+def count_prunable_params_of_modules(module):
     if isinstance( module, ( TORCH_CONV, TORCH_LINEAR) ):
         num_params = module.weight.numel()
         if module.bias is not None:

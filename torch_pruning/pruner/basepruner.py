@@ -59,9 +59,7 @@ class BasePruner:
             return
 
         for m in self.model.modules():
-            if m not in self.DG.PRUNABLE_MODULES:
-                continue
-
+            
             if self.ignored_layers is not None and m in self.ignored_layers:
                 continue
 
@@ -78,6 +76,7 @@ class BasePruner:
             full_plan = self.DG.get_pruning_plan(
                 m, pruning_fn, list(range(layer_channels))
             )
+
             for dep, _ in full_plan:
                 if dep.target.module in self.layer_ch_sparsity and dep.handler in [
                     functional.prune_conv_out_channel,
@@ -101,7 +100,6 @@ class BasePruner:
             pruning_idxs = imp_argsort[:n_pruned].tolist()
 
             plan = self.DG.get_pruning_plan(m, pruning_fn, pruning_idxs)
-            # print(plan)
             if self.DG.check_pruning_plan(plan):
                 plan.exec()
         self.current_step += 1
