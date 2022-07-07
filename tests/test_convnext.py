@@ -18,7 +18,7 @@ if __name__=='__main__':
         for m in model.modules():
             if isinstance(m, CNBlock):
                 user_defined_parameters.append(m.layer_scale)
-        tp.prune.prune_parameter.dim = 0
+        tp.functional.prune_parameter.dim = 0
         
         prunable_module_type = ( nn.Conv2d, nn.BatchNorm2d )
         prunable_modules = [ m for m in model.modules() if isinstance(m, prunable_module_type) ]

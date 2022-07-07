@@ -20,6 +20,21 @@ def count_prunable_params(module):
     else:
         return 0
 
+def count_prunable_in_channels(module):
+    if isinstance( module, TORCH_CONV ):
+        return module.weight.shape[1]
+    elif isinstance( module, TORCH_LINEAR ):
+        return module.in_features
+    elif isinstance( module, TORCH_BATCHNORM ):
+        return module.num_features
+    elif isinstance( module, TORCH_PRELU ):
+        if len( module.weight )==1:
+            return 0
+        else:
+            return len(module.weight)
+    else:
+        return 0
+
 def count_prunable_channels(module):
     if isinstance( module, TORCH_CONV ):
         return module.weight.shape[0]

@@ -118,7 +118,34 @@ torch.save(model, 'model.pth') # obj (arch + weights), recommended.
 model = torch.load('model.pth') # no load_state_dict
 ```
 
-### 2. Low-level pruning functions
+### 2. High-level Pruners
+
+We provide some model-level pruners in this repo. You can specify the channel sparsity to prune the whole model and fintune it using your own training code. Please refer to [tests/test_pruner.py](tests/test_pruner.py) for more details.
+
+```python
+import torch
+from torchvision.models import resnet18
+import torch_pruning as tp
+model = resnet18(pretrained=True)
+example_inputs = torch.randn(1,3,224,224)
+imp = tp.importance.MagnitudeImportance(p=2)
+pruner = tp.pruner.MagnitudeBasedPruner(
+    model, example_inputs, importance=imp, steps=5, ch_sparsity=0.5, ignored_layers=[model.fc]
+)
+
+for i in range(5):
+    pruner.step()
+    print( "  Params: %.2f M => %.2f M"%( ori_size/1e6, tp.utils.count_params(model)/1e6 ) )
+    # finetune your model here
+    # finetune()
+    #
+    
+with torch.no_grad():
+    print(model)
+    print(model(example_inputs).shape)
+```
+
+### 3. Low-level pruning functions
 
 It is equivalent to make a layer-by-layer fixing using the low-level pruning functions. 
 
@@ -131,14 +158,14 @@ tp.prune_conv_in_channel( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
 
-### 3. Group Convs
+### 4. Group Convs
 We provide a tool `tp.helpers.gconv2convs()`  to transform Group Conv to a group of vanilla convs. Please refer to [test_convnext.py](tests/test_convnext.py) for more details.
 
-### 4. Customized Layers
+### 5. Customized Layers
 
 Please refer to [examples/customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/customized_layer.py).
 
-### 5. Rounding channels for device-friendly network pruning
+### 6. Rounding channels for device-friendly network pruning
 You can round the channels by passing a `round_to` parameter to strategy. For example, the following script will round the number of channels to 16xN (e.g., 16, 32, 48, 64).
 ```python
 strategy = tp.strategy.L1Strategy()
@@ -146,15 +173,15 @@ pruning_idxs = strategy(model.conv1.weight, amount=0.2, round_to=16)
 ```
 Please refer to [https://github.com/VainF/Torch-Pruning/issues/38](https://github.com/VainF/Torch-Pruning/issues/38) for more details.
 
-### 5. Example: pruning ResNet18 on Cifar10
+### 7. Example: pruning ResNet18 on Cifar10
 
-#### 5.1. Scratch training
+#### 7.1. Scratch training
 ```bash
 cd examples/cifar_minimal
 python prune_resnet18_cifar10.py --mode train # 11.1M, Acc=0.9248
 ```
 
-#### 5.2. Pruning and fintuning
+#### 7.2. Pruning and fintuning
 ```bash
 python prune_resnet18_cifar10.py --mode prune --round 1 --total_epochs 30 --step_size 20 # 4.5M, Acc=0.9229
 python prune_resnet18_cifar10.py --mode prune --round 2 --total_epochs 30 --step_size 20 # 1.9M, Acc=0.9207

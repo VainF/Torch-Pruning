@@ -1,3 +1,3 @@
 from .dependency import *
-from .prune import *
-from . import metric, utils, strategy, helpers
+from .functional import *
+from . import metric, utils, strategy, helpers, importance, pruner
