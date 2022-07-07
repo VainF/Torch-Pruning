@@ -20,7 +20,14 @@ Pruning is a popular approach to reduce the heavy computational cost of neural n
 **02/07/2022** The latest version is under development in branch [v1.0](https://github.com/VainF/Torch-Pruning/tree/v1.0).
 
 **24/03/2022** We are drafting a paper to provide more technical details about this repo, which will be released as soon as possible, together with a new version and some practical examples for yolo and other popular networks.
-  
+ 
+### Some Plans
+* High-level pruner like MagnitudeBasedPruner (:heavy_check_mark:), SensitivityBasedPruner, HessianBasedPruner and [Slimming Pruner (ICCV'17)](https://openaccess.thecvf.com/content_iccv_2017/html/Liu_Learning_Efficient_Convolutional_ICCV_2017_paper.html).
+* Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
+* A pruning benchmark on CIFAR100 and ImageNet.
+* Some examples in detection and segmentation.
+* A paper about this repo: title (now we are here! :turtle:), abstract, introduction, methodology, experiments and conclusion.
+
 ## How it works
   
 Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the relation coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningPlan` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
