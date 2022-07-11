@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Fang"
+  given-names: "Gongfan"
+title: "Torch-Pruning"
+version: 0.2.8
+date-released: 2022-07-10
+url: "https://github.com/VainF/Torch-Pruning"
