@@ -207,4 +207,15 @@ the layer dependency becomes much more complicated when the model contains skip 
 
 See paper [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710) for more details.
 
-
+# Bibtex
+If you find this repo useful, please cite:
+```
+@software{Fang_Torch-Pruning_2022,
+ author = {Fang, Gongfan},
+ month = {7},
+ title = {{Torch-Pruning}},
+ url = {https://github.com/VainF/Torch-Pruning},
+ version = {0.2.8},
+ year = {2022}
+}
+```
