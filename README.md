@@ -121,7 +121,7 @@ model = torch.load('model.pth') # no load_state_dict
 
 ### 2. High-level Pruners
 
-We provide some model-level pruners in this repo. You can specify the channel sparsity to prune the whole model and fintune it using your own training code. Please refer to [tests/test_pruner.py](tests/test_pruner.py) for more details.
+We provide some model-level pruners in this repo. You can specify the channel sparsity to prune the whole model and fintune it using your own training code. Please refer to [tests/test_pruner.py](tests/test_pruner.py) for more details. More examples can be found in [benchmarks/main.py](benchmarks/main.py).
 
 ```python
 import torch
@@ -140,12 +140,12 @@ for m in model.modules():
         ignored_layers.append(m)
 
 total_steps = 5 
-pruner = tp.pruner.LocalMagnitudePruner(
+pruner = tp.pruner.LocalMagnitudePruner( 
     model,
     example_inputs,
     importance=imp,
     total_steps=total_steps, # number of iterations
-    ch_sparsity=0.5, #channel sparsity
+    ch_sparsity=0.5, # channel sparsity
     ignored_layers=ignored_layers, # ignored_layers will not be pruned
 )
 
@@ -161,7 +161,7 @@ for i in range(total_steps): # iterative pruning
 
 ### 3. Low-level pruning functions
 
-It is equivalent to make a layer-by-layer fixing using the low-level pruning functions. 
+You can make a layer-by-layer pruning by yourself with the low-level pruning functions. 
 
 ```python
 tp.prune_conv_out_channel( model.conv1, idxs=[2,6,9] )
