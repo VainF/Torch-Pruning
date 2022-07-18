@@ -282,3 +282,16 @@ def set_global_metrics(metric_dict):
     prune_embedding.set_metrics(metric_dict)
     prune_parameter.set_metrics(metric_dict)
     prune_multihead_attention.set_metrics(metric_dict)
+
+def add_global_metrics(name, metric_fn):
+    prune_conv_in_channel.add_metric(name, metric_fn)
+    prune_conv_out_channel.add_metric(name, metric_fn)
+    prune_group_conv.add_metric(name, metric_fn)
+    prune_batchnorm.add_metric(name, metric_fn)
+    prune_linear_in_channel.add_metric(name, metric_fn)
+    prune_linear_out_channel.add_metric(name, metric_fn)
+    prune_prelu.add_metric(name, metric_fn)
+    prune_layernorm.add_metric(name, metric_fn)
+    prune_embedding.add_metric(name, metric_fn)
+    prune_parameter.add_metric(name, metric_fn)
+    prune_multihead_attention.add_metric(name, metric_fn)

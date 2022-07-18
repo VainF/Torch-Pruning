@@ -134,7 +134,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # Logger
     ############################################
     log_name = 'R%d-%s-%s'%(args.rank, args.dataset, args.model) if args.multiprocessing_distributed else '%s-%s'%(args.dataset, args.model)
-    args.logger = engine.utils.get_logger(log_name, output='checkpoints/scratch/log-%s-%s.txt'%(args.dataset, args.model))
+    args.logger = engine.utils.get_logger(log_name, output='run/pretrain/log-%s-%s.txt'%(args.dataset, args.model))
     if args.rank<=0:
         for k, v in engine.utils.flatten_dict( vars(args) ).items(): # print args
             args.logger.info( "%s: %s"%(k,v) )
@@ -257,7 +257,7 @@ def main_worker(gpu, ngpus_per_node, args):
         scheduler.step()
         is_best = acc1 > best_acc1
         best_acc1 = max(acc1, best_acc1)
-        _best_ckpt = 'checkpoints/scratch/%s_%s.pth'%(args.dataset, args.model)
+        _best_ckpt = 'run/pretrain/%s_%s.pth'%(args.dataset, args.model)
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                 and args.rank % ngpus_per_node == 0):
             save_checkpoint({

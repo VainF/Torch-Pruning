@@ -132,6 +132,8 @@ if __name__ == "__main__":
         for m in model.modules():
             if isinstance(m, nn.Linear) and m.out_features == 1000:
                 ignored_layers.append(m)
+            elif isinstance(m, nn.modules.linear.NonDynamicallyQuantizableLinear):
+                ignored_layers.append(m) # this module is used in Self-Attention
 
         user_defined_parameters = None
         round_to = None
@@ -148,11 +150,11 @@ if __name__ == "__main__":
             tp.functional.prune_parameter.dim = 0
 
         importance = tp.importance.MagnitudeImportance(p=2)
-        pruner = tp.pruner.MagnitudeBasedPruner(
+        pruner = tp.pruner.LocalMagnitudePruner(
             model,
             example_inputs=example_inputs,
             importance=importance,
-            steps=1,
+            total_steps=1,
             ch_sparsity=0.5,
             round_to=round_to,
             user_defined_parameters=user_defined_parameters,

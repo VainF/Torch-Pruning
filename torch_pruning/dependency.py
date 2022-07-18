@@ -138,9 +138,9 @@ class Node(object):
         if self._name is None:
             return str(self.module)
         else:
-            fmt = "%s" % (self._name)
+            fmt = self._name
             if self.type != OPTYPE.PARAMETER:
-                fmt += " (%s)" % (str(self.module))
+                fmt += " ({})".format(str(self.module))
             return fmt
 
     def add_input(self, node):
@@ -152,23 +152,23 @@ class Node(object):
             self.outputs.append(node)
 
     def __repr__(self):
-        return "<Node: (%s, %s)>" % (self.name, self.grad_fn)
+        return "<Node: ({})>".format(self.name)
 
     def __str__(self):
-        return "<Node: (%s, %s)>" % (self.name, self.grad_fn)
+        return "<Node: ({})>".format(self.name)
 
     def details(self):
-        fmt = "<Node: (%s, %s)>\n" % (self.name, self.grad_fn)
+        fmt = "<Node: ({})>\n".format(self.name)
         fmt += " " * 4 + "IN:\n"
         for in_node in self.inputs:
-            fmt += " " * 8 + "%s\n" % (in_node)
+            fmt += " " * 8 + "{}\n".format(in_node)
         fmt += " " * 4 + "OUT:\n"
         for out_node in self.outputs:
-            fmt += " " * 8 + "%s\n" % (out_node)
+            fmt += " " * 8 + "{}\n".format(out_node)
         fmt += " " * 4 + "DEP:\n"
         for dep in self.dependencies:
-            fmt += " " * 8 + "%s\n" % (dep)
-        fmt += "\tEnable_index_transform=%s\n" % (self.enable_index_transform)
+            fmt += " " * 8 + "{}\n".format(dep)
+        fmt += "\tEnable_index_transform={}\n".format(self.enable_index_transform)
         return fmt
 
 
@@ -207,11 +207,11 @@ class Dependency(object):
         return str(self)
 
     def __str__(self):
-        return "[DEP] %s on %s => %s on %s" % (
-            "None" if self.trigger is None else self.trigger.__class__.__name__,
-            self.source.name,
+        return "[DEP] {} on {} <= {} on {}".format(
             self.handler.__class__.__name__,
             self.target.name,
+            "None" if self.trigger is None else self.trigger.__class__.__name__,
+            self.source.name,
         )
 
     def is_triggered_by(self, pruning_fn):
@@ -299,14 +299,14 @@ class PruningPlan(object):
                     self._metrics_vector_sum.update(k, v)
             if i == 0:
                 fmt += "User pruning:\n"
-            fmt += "[ %s, Index=%s, metric=%s]\n" % (dep, idxs, metric_dict)
+            fmt += "[ {}, Index={}, metric={}]\n".format(dep, idxs, metric_dict)
             if i == 0:
                 fmt += "\nCoupled pruning:\n"
 
         scalar_metric = self._metrics_scalar_sum.results()
         vector_metric = self._metrics_vector_sum.results()
         scalar_metric.update(vector_metric)
-        fmt += "\nMetric Sum: %s\n" % (scalar_metric)
+        fmt += "\nMetric Sum: {}\n".format(scalar_metric)
         fmt += "-" * 32 + "\n"
         return fmt
 
@@ -445,7 +445,7 @@ class DependencyGraph(object):
                 functional.prune_linear_out_channel,
                 functional.prune_group_conv,
             ):
-                prunable_chs = count_prunable_channels(dep.target.module)
+                prunable_chs = count_prunable_out_channels(dep.target.module)
                 if prunable_chs <= len(idxs):
                     return False
             if dep.handler in (
@@ -632,8 +632,7 @@ class DependencyGraph(object):
                     module = helpers._ElementWiseOp("Unknown")
                     if self.verbose:
                         warnings.warn(
-                            "[Warning] Unrecognized operation: %s, which will be treated as an element-wise op"
-                            % (str(grad_fn))
+                            "[Warning] Unrecognized operation {} will be treated as an element-wise op".format(str(grad_fn))
                         )
                 elif "catbackward" in grad_fn.name().lower():  # concat op
                     module = helpers._ConcatOp()
@@ -682,7 +681,7 @@ class DependencyGraph(object):
                                 if f[0].variable is p:
                                     is_user_defined_param = True
                                     gradfn2module[f[0]] = p
-                                    self._module2name[p] = "UserParameter_%d" % j
+                                    self._module2name[p] = "UserParameter_{}".format(j)
                             if not is_user_defined_param:
                                 continue
                         input_node = create_node_if_not_exists(f[0])
@@ -704,12 +703,12 @@ class DependencyGraph(object):
     def _set_fc_index_transform(self, fc_node: Node):
         if fc_node.type != OPTYPE.LINEAR:
             return
-        visited = set()
         fc_in_features = fc_node.module.in_features
         feature_channels = 0
-        for n in fc_node.inputs:
-            feature_channels = max(_infer_out_dim_from_node_by_recursion(fc_node), feature_channels)
-        
+        for n in fc_node.inputs: 
+            feature_channels = _infer_out_dim_from_node_by_recursion(n)
+            if feature_channels>0: # =0 if there is a residual connection to model inputs
+                break 
         if (
             feature_channels <= 0
         ):  # the first layer: https://github.com/VainF/Torch-Pruning/issues/21
@@ -826,7 +825,7 @@ def flatten_as_list(obj):
         return obj
 
 
-def count_prunable_channels(module):
+def count_prunable_out_channels(module):
     if isinstance(module, TORCH_CONV):
         return module.weight.shape[0]
     elif isinstance(module, TORCH_LINEAR):

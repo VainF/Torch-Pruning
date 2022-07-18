@@ -170,7 +170,6 @@ class StrcuturalImportance(Importance):
         importance_mat = []
         non_importance = True
         for dep, idxs in plan:
-            #print(plan)
             layer = dep.target.module
             prune_fn = dep.handler
             if prune_fn in [
@@ -208,7 +207,6 @@ class StrcuturalImportance(Importance):
             if self.local:
                 break
         importance_mat = torch.stack(importance_mat, dim=0)
-        print(importance_mat.shape, importance_mat.sum(dim=0).shape)
         if non_importance:
             return None
         if self.reduction == "sum":

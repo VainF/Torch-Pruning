@@ -33,7 +33,8 @@ class MetaPruner(abc.ABC):
             output_transform=output_transform,
             user_defined_parameters=user_defined_parameters,
         )
-
+        if ignored_layers is None:
+            ignored_layers = []
         self.ignored_layers = ignored_layers
         self.total_steps = total_steps
         self.current_step = 0
@@ -42,11 +43,10 @@ class MetaPruner(abc.ABC):
         self.layer_init_out_ch = {}
         self.layer_init_in_ch = {}
         self.per_step_ch_sparsity = {}
-        self.plans = self.get_all_plans()
         
         for m in self.model.modules(): #self.model.modules():
             if isinstance(m, (dependency.TORCH_CONV, dependency.TORCH_LINEAR)):
-                self.layer_init_out_ch[m] = utils.count_prunable_channels(m)
+                self.layer_init_out_ch[m] = utils.count_prunable_out_channels(m)
                 self.layer_init_in_ch[m] = utils.count_prunable_in_channels(m)
                 self.per_step_ch_sparsity[m] = self.pruning_rate_scheduler(
                     self.ch_sparsity, self.total_steps
@@ -71,7 +71,7 @@ class MetaPruner(abc.ABC):
         plans = []
         visited_layers = []
         for m in self.model.modules():
-            if self.ignored_layers is not None and m in self.ignored_layers:
+            if m in self.ignored_layers:
                 continue
             if isinstance(m, dependency.TORCH_CONV):
                 pruning_fn = functional.prune_conv_out_channel
@@ -79,11 +79,11 @@ class MetaPruner(abc.ABC):
                 pruning_fn = functional.prune_linear_out_channel
             else:
                 continue
-            # check ch_sparsity
+
             if m in visited_layers and pruning_fn in self.DG.out_channel_pruners:
                 continue
 
-            layer_channels = utils.count_prunable_channels(m)
+            layer_channels = utils.count_prunable_out_channels(m)
             plan = self.DG.get_pruning_plan(
                 m, pruning_fn, list(range(layer_channels))
             )
@@ -93,14 +93,10 @@ class MetaPruner(abc.ABC):
                 pruning_fn = dep.handler
                 if pruning_fn in self.DG.out_channel_pruners:
                     visited_layers.append(module)
-                    if self.ignored_layers is not None and module in self.ignored_layers:
+                    if module in self.ignored_layers:
                         active_plan=False
-                        break
             if active_plan:
-                plans.append(plan)
-                print(plan)
-        print(len(plans))
-        return plans
+                yield plan
 
     @abc.abstractclassmethod
     def step(self):
@@ -115,14 +111,13 @@ class LocalPruner(MetaPruner):
     def step(self):
         if self.current_step == self.total_steps:
             return
-
-        for plan in self.plans:
+        for plan in self.get_all_plans():
             # check pruning rate
             if self._is_valid(plan):
                 module = plan[0][0].target.module
                 pruning_fn = plan[0][0].handler
                 imp = self.estimate_importance(plan)
-                current_channels = utils.count_prunable_channels(module)
+                current_channels = utils.count_prunable_out_channels(module)
                 layer_step_ch_sparsity = self.per_step_ch_sparsity[module][self.current_step]
                 n_pruned = current_channels - int(
                     self.layer_init_out_ch[module] * (1 - layer_step_ch_sparsity)
@@ -144,7 +139,7 @@ class LocalPruner(MetaPruner):
                     functional.prune_linear_out_channel,
                 ]:
                     layer_step_ch_sparsity = self.per_step_ch_sparsity[dep.target.module][self.current_step]
-                    layer_channels = utils.count_prunable_channels(dep.target.module)
+                    layer_channels = utils.count_prunable_out_channels(dep.target.module)
                     if layer_channels <= self.layer_init_out_ch[dep.target.module] * (1 - layer_step_ch_sparsity):
                         return False
                 elif dep.handler in [
@@ -218,7 +213,7 @@ class GlobalPruner:
             if m in visited_layers and pruning_fn in self.DG.out_channel_pruners:
                 continue
 
-            layer_channels = utils.count_prunable_channels(m)
+            layer_channels = utils.count_prunable_out_channels(m)
             plan = self.DG.get_pruning_plan(
                 m, pruning_fn, list(range(layer_channels))
             )

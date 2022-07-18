@@ -22,7 +22,7 @@ class _CustomizedOp(nn.Module):
         self.op_cls = op_class
 
     def __repr__(self):
-        return "CustomizedOp(%s)" % (str(self.op_cls))
+        return "CustomizedOp({})".format(str(self.op_cls))
 
 
 ######################################################
@@ -33,7 +33,7 @@ class _ConcatOp(nn.Module):
         self.offsets = None
 
     def __repr__(self):
-        return "_ConcatOp(%s)" % (self.offsets)
+        return "_ConcatOp({})".format(self.offsets)
 
 
 class DummyMHA(nn.Module):
@@ -47,7 +47,7 @@ class _SplitOp(nn.Module):
         self.offsets = None
 
     def __repr__(self):
-        return "_SplitOp(%s)" % (self.offsets)
+        return "_SplitOp({})".format(self.offsets)
 
 
 class _ElementWiseOp(nn.Module):
@@ -56,7 +56,7 @@ class _ElementWiseOp(nn.Module):
         self._grad_fn = grad_fn
 
     def __repr__(self):
-        return "_ElementWiseOp(%s)" % (self._grad_fn)
+        return "_ElementWiseOp({})".format(self._grad_fn)
 
 
 ######################################################
@@ -112,7 +112,6 @@ class _ConcatIndexTransform(object):
     def __init__(self, offset, reverse=False):
         self.offset = offset
         self.reverse = reverse
-
     def __call__(self, idxs):
 
         if self.reverse == True:

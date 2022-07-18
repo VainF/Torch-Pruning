@@ -1,5 +1,5 @@
 from .dependency import TORCH_CONV, TORCH_BATCHNORM, TORCH_PRELU, TORCH_LINEAR
-import torch
+import torch, thop
 
 def count_prunable_params_of_modules(module):
     if isinstance( module, ( TORCH_CONV, TORCH_LINEAR) ):
@@ -35,7 +35,7 @@ def count_prunable_in_channels(module):
     else:
         return 0
 
-def count_prunable_channels(module):
+def count_prunable_out_channels(module):
     if isinstance( module, TORCH_CONV ):
         return module.weight.shape[0]
     elif isinstance( module, TORCH_LINEAR ):
@@ -53,5 +53,10 @@ def count_prunable_channels(module):
 def count_params(module):
     return sum([ p.numel() for p in module.parameters() ])
 
+def count_macs_and_params(model, input_size, example_inputs=None):
+    if example_inputs is None:
+        example_inputs = torch.randn(*input_size)
+    macs, params = thop.profile(model, inputs=(example_inputs, ), verbose=False)
+    return macs, params
 
     

@@ -3,11 +3,10 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import torch
-from torchvision.models import resnet18 as entry
+from torchvision.models import densenet121 as entry
 import torch_pruning as tp
 
-model = entry(pretrained=False)
-model = tp.helpers.gconv2convs(model)
+model = entry(pretrained=True)
 print(model)
 # Global metrics
 ori_size = tp.utils.count_params(model)
@@ -18,16 +17,17 @@ for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m)
 
-pruner = tp.pruner.MagnitudeBasedPruner(
+total_steps = 5
+pruner = tp.pruner.LocalMagnitudePruner(
     model,
     example_inputs,
     importance=imp,
-    steps=5,
+    total_steps=total_steps,
     ch_sparsity=0.5,
     ignored_layers=ignored_layers,
 )
 
-for i in range(5):
+for i in range(total_steps):
     pruner.step()
     print(
         "  Params: %.2f M => %.2f M"

@@ -21,7 +21,7 @@ parser.add_argument('--verbose', action='store_true', default=False)
 parser.add_argument('--total_epochs', type=int, default=100)
 parser.add_argument('--lr_decay_milestones', default="40,60,80", type=str,
                     help='milestones for learning rate decay')
-parser.add_argument('--restore_from', type=str, default=None)
+parser.add_argument('--restore', type=str, default=None)
 parser.add_argument('--sparsity', type=float, default=0.8)
 parser.add_argument('--pruning_steps', type=int, default=4)
 

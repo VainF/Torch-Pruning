@@ -125,25 +125,38 @@ We provide some model-level pruners in this repo. You can specify the channel sp
 
 ```python
 import torch
-from torchvision.models import resnet18
+from torchvision.models import densenet121 as entry
 import torch_pruning as tp
-model = resnet18(pretrained=True)
-example_inputs = torch.randn(1,3,224,224)
-imp = tp.importance.MagnitudeImportance(p=2)
-pruner = tp.pruner.MagnitudeBasedPruner(
-    model, example_inputs, importance=imp, steps=5, ch_sparsity=0.5, ignored_layers=[model.fc]
+
+model = entry(pretrained=True)
+print(model)
+
+ori_size = tp.utils.count_params(model)
+example_inputs = torch.randn(1, 3, 224, 224)
+imp = tp.importance.MagnitudeImportance(p=2) # L2 norm pruning
+ignored_layers = []
+for m in model.modules():
+    if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
+        ignored_layers.append(m)
+
+total_steps = 5 
+pruner = tp.pruner.LocalMagnitudePruner(
+    model,
+    example_inputs,
+    importance=imp,
+    total_steps=total_steps, # number of iterations
+    ch_sparsity=0.5, #channel sparsity
+    ignored_layers=ignored_layers, # ignored_layers will not be pruned
 )
 
-for i in range(5):
+for i in range(total_steps): # iterative pruning
     pruner.step()
-    print( "  Params: %.2f M => %.2f M"%( ori_size/1e6, tp.utils.count_params(model)/1e6 ) )
-    # finetune your model here
-    # finetune()
-    #
-    
-with torch.no_grad():
-    print(model)
-    print(model(example_inputs).shape)
+    print(
+        "  Params: %.2f M => %.2f M"
+        % (ori_size / 1e6, tp.utils.count_params(model) / 1e6)
+    )
+    # Your training code here
+    # train(...)
 ```
 
 ### 3. Low-level pruning functions
