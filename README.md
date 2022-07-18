@@ -169,7 +169,7 @@ for i in range(total_steps): # iterative pruning
 
 ### 3. Low-level pruning functions
 
-You can make a layer-by-layer pruning by yourself with the low-level pruning functions.
+You can prune your model manually without DependencyGraph:
 
 ```python
 tp.prune_conv_out_channel( model.conv1, idxs=[2,6,9] )
@@ -195,8 +195,6 @@ tp.prune_embedding
 tp.prune_parameter
 tp.prune_multihead_attention
 ```
-
-You can prune your model manually without DependencyGraph:
 
 
 ### 4. Group Convs
