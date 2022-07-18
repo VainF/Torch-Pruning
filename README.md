@@ -1,27 +1,34 @@
-<div align="center"> <h1>Torch-Pruning <br> <h3>Pruning channels for model acceleration<h3> </h1> </div>
+<div align="center"> <h1>Torch-Pruning <br> <h3>Structural Pruning for Model Acceleration<h3> </h1> </div>
 <div align="center">
 <img src="assets/intro.jpg" width="45%">
 </div>
 
-Torch-Pruning is a general-purpose library for structured channel pruning, which supports a large variaty of nerual networks like ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, etc.
+Torch-Pruning is a general-purpose library for structural network pruning, which supports a large variaty of nerual networks like Vision Transformers, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, etc. Please refer to [tests/test_torchvision_models.py](tests/test_torchvision_models.py) for more details about prunable models.
 
 
-Pruning is a popular approach to reduce the heavy computational cost of neural networks by removing redundancies. Existing pruning methods prune networks in a case-by-case way, i.e., writing **different code for different models**. However, with the network designs being more and more complicated, applying traditional pruning algorithms modern neural networks is very difficult. One of the most prominent problems in pruning comes from layer dependencies, where several layers are coupled and must be pruned simultaneously to guarantee the correctness of networks. This project provides the ability of detecting and handling layer dependencies. 
+Pruning is a popular approach to reduce the heavy computational cost of neural networks by removing redundancies. Existing pruning methods prune networks in a case-by-case way, i.e., writing **different code for different models**. However, with the network designs being more and more complicated, applying traditional pruning algorithms to modern neural networks is very difficult. One of the most prominent problems in pruning comes from layer dependencies, where several layers are coupled and must be pruned simultaneously to guarantee the correctness of networks. This project provides the ability of detecting and handling layer dependencies, which allows us to prune complicated networks without too much human effort.
 
 ### **Features:**
 * Channel pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
-* High-level pruners: MagnitudeBasedPruner, ... (comming soon).
+* High-level pruners: LocalMagnitudePruner, GlobalMagnitudePruner, BNScalePruner, etc.
 * Graph Tracing and dependency fixing.
-* Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, nn.Parameters and [customized modules](tests/test_customized_layer.py).
+* Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 * Supported operations: split, concatenation, skip connection, flatten, etc.
 * Pruning strategies: Random, L1, L2, etc.
 * Low-level pruning [functions](torch_pruning/prune/structured.py)
 
 ### Updates:
-**02/07/2022** A new version is available in branch [v1.0](https://github.com/VainF/Torch-Pruning/tree/v1.0), which supports Vision Transformers, Group Convolutions, etc.
+**02/07/2022** The latest version is under development in branch [v1.0](https://github.com/VainF/Torch-Pruning/tree/v1.0).
 
 **24/03/2022** We are drafting a paper to provide more technical details about this repo, which will be released as soon as possible, together with a new version and some practical examples for yolo and other popular networks.
-  
+ 
+### Some Plans
+* High-level pruners like MagnitudeBasedPruner (:heavy_check_mark:), SensitivityBasedPruner, HessianBasedPruner and [Slimming Pruner (ICCV'17)](https://openaccess.thecvf.com/content_iccv_2017/html/Liu_Learning_Efficient_Convolutional_ICCV_2017_paper.html).
+* Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
+* A pruning benchmark on CIFAR100 and ImageNet.
+* Some examples in detection and segmentation.
+* A paper about this repo: title (now we are here! :turtle:), abstract, introduction, methodology, experiments and conclusion.
+
 ## How it works
   
 Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the relation coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningPlan` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
@@ -29,7 +36,7 @@ Torch-Pruning will forward your model with a fake inputs and trace the computati
 ## Installation
 
 ```bash
-pip install torch_pruning # v0.2.7
+pip install torch_pruning # v0.2.8
 ```
 **Known Issues**: 
 
@@ -39,7 +46,7 @@ pip install torch_pruning # v0.2.7
 
 ## Quickstart
   
-### 0. Dependenies
+### 0. Dependency
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
@@ -78,7 +85,7 @@ if DG.check_pruning_plan(pruning_plan):
     pruning_plan.exec()
 ```
 
-Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning plan (with pruning_idxs=[2, 6, 9]). It return the pruning details and the total amount of pruned parameters. You can also customize the metrics following [test_metrics.py](tests/test_metrics.py).
+Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning plan (with pruning_idxs=[2, 6, 9]). You can also customize the metrics following [test_metrics.py](tests/test_metrics.py).
 
 ```
 --------------------------------
@@ -161,7 +168,7 @@ for i in range(total_steps): # iterative pruning
 
 ### 3. Low-level pruning functions
 
-You can make a layer-by-layer pruning by yourself with the low-level pruning functions. 
+You can make a layer-by-layer pruning by yourself with the low-level pruning functions.
 
 ```python
 tp.prune_conv_out_channel( model.conv1, idxs=[2,6,9] )
@@ -171,6 +178,25 @@ tp.prune_batchnorm( model.bn1, idxs=[2,6,9] )
 tp.prune_conv_in_channel( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
+
+The following pruning functions are available:
+
+```python
+tp.prune_conv_in_channel
+tp.prune_conv_out_channel
+tp.prune_group_conv
+tp.prune_batchnorm 
+tp.prune_linear_in_channel 
+tp.prune_linear_out_channel 
+tp.prune_prelu
+tp.prune_layernorm 
+tp.prune_embedding 
+tp.prune_parameter
+tp.prune_multihead_attention
+```
+
+You can prune your model manually without DependencyGraph:
+
 
 ### 4. Group Convs
 We provide a tool `tp.helpers.gconv2convs()`  to transform Group Conv to a group of vanilla convs. Please refer to [test_convnext.py](tests/test_convnext.py) for more details.
@@ -225,4 +251,15 @@ the layer dependency becomes much more complicated when the model contains skip 
 
 See paper [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710) for more details.
 
-
+# Citation
+If you find this repo helpful, please cite:
+```
+@software{Fang_Torch-Pruning_2022,
+  author = {Fang, Gongfan},
+  month = {7},
+  title = {{Torch-Pruning}},
+  url = {https://github.com/VainF/Torch-Pruning},
+  version = {0.2.8},
+  year = {2022}
+}
+```
