@@ -43,7 +43,7 @@ class FullyConnectedNet(nn.Module):
 ############################
 # Implement your pruning function for the customized layer
 #
-class MyPruningFn(tp.prune.structured.BasePruner):
+class MyPruningFn(tp.functional.structured.BasePruner):
 
     def prune(self, layer: CustomizedLayer, idxs: Sequence[int]) -> nn.Module: 
         keep_idxs = list(set(range(layer.in_dim)) - set(idxs))

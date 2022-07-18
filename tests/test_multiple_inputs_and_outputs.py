@@ -1,4 +1,5 @@
 import sys, os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import torch
@@ -7,8 +8,10 @@ import torch.nn.functional as F
 
 import torch_pruning as tp
 
+
 class FullyConnectedNet(nn.Module):
     """https://github.com/VainF/Torch-Pruning/issues/21"""
+
     def __init__(self, input_sizes, output_sizes):
         super().__init__()
 
@@ -22,17 +25,20 @@ class FullyConnectedNet(nn.Module):
         x3 = F.relu(self.fc3(torch.cat([x1, x2], dim=1)))
         return x1, x2, x3
 
+
 model = FullyConnectedNet([128, 64], [32, 32])
 
 # pruning according to L1 Norm
-strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
+strategy = tp.strategy.L1Strategy()  # or tp.strategy.RandomStrategy()
 
 # Build dependency graph
 DG = tp.DependencyGraph()
-DG.build_dependency(model, example_inputs=[torch.randn(1,128), torch.randn(1, 64)])
+DG.build_dependency(model, example_inputs=[torch.randn(1, 128), torch.randn(1, 64)])
 
 # get a pruning plan according to the dependency graph. idxs is the indices of pruned filters.
-pruning_plan = DG.get_pruning_plan( model.fc1, tp.prune_linear_out_channel, idxs=strategy(model.fc1.weight, amount=0.4) )
+pruning_plan = DG.get_pruning_plan(
+    model.fc1, tp.prune_linear_out_channel, idxs=strategy(model.fc1.weight, amount=0.4)
+)
 print(pruning_plan)
 
 # execute this plan (prune the model)

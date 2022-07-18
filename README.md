@@ -10,6 +10,7 @@ Pruning is a popular approach to reduce the heavy computational cost of neural n
 
 ### **Features:**
 * Channel pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
+* High-level pruners: LocalMagnitudePruner, GlobalMagnitudePruner, BNScalePruner, etc.
 * Graph Tracing and dependency fixing.
 * Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 * Supported operations: split, concatenation, skip connection, flatten, etc.
@@ -125,7 +126,58 @@ torch.save(model, 'model.pth') # obj (arch + weights), recommended.
 model = torch.load('model.pth') # no load_state_dict
 ```
 
-### 2. Low-level pruning functions
+### 2. High-level Pruners
+
+We provide some model-level pruners in this repo. You can specify the channel sparsity to prune the whole model and fintune it using your own training code. Please refer to [tests/test_pruner.py](tests/test_pruner.py) for more details. More examples can be found in [benchmarks/main.py](benchmarks/main.py).
+
+```python
+import torch
+from torchvision.models import densenet121 as entry
+import torch_pruning as tp
+
+model = entry(pretrained=True)
+print(model)
+
+ori_size = tp.utils.count_params(model)
+example_inputs = torch.randn(1, 3, 224, 224)
+imp = tp.importance.MagnitudeImportance(p=2) # L2 norm pruning
+ignored_layers = []
+for m in model.modules():
+    if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
+        ignored_layers.append(m)
+
+total_steps = 5 
+pruner = tp.pruner.LocalMagnitudePruner( 
+    model,
+    example_inputs,
+    importance=imp,
+    total_steps=total_steps, # number of iterations
+    ch_sparsity=0.5, # channel sparsity
+    ignored_layers=ignored_layers, # ignored_layers will not be pruned
+)
+
+for i in range(total_steps): # iterative pruning
+    pruner.step()
+    print(
+        "  Params: %.2f M => %.2f M"
+        % (ori_size / 1e6, tp.utils.count_params(model) / 1e6)
+    )
+    # Your training code here
+    # train(...)
+```
+
+### 3. Low-level pruning functions
+
+You can make a layer-by-layer pruning by yourself with the low-level pruning functions.
+
+```python
+tp.prune_conv_out_channel( model.conv1, idxs=[2,6,9] )
+
+# fix the broken dependencies manually
+tp.prune_batchnorm( model.bn1, idxs=[2,6,9] )
+tp.prune_conv_in_channel( model.layer2[0].conv1, idxs=[2,6,9] )
+...
+```
 
 The following pruning functions are available:
 
@@ -145,23 +197,15 @@ tp.prune_multihead_attention
 
 You can prune your model manually without DependencyGraph:
 
-```python
-tp.prune_conv_out_channel( model.conv1, idxs=[2,6,9] )
 
-# fix the broken dependencies manually
-tp.prune_batchnorm( model.bn1, idxs=[2,6,9] )
-tp.prune_conv_in_channel( model.layer2[0].conv1, idxs=[2,6,9] )
-...
-```
-
-### 3. Group Convs
+### 4. Group Convs
 We provide a tool `tp.helpers.gconv2convs()`  to transform Group Conv to a group of vanilla convs. Please refer to [test_convnext.py](tests/test_convnext.py) for more details.
 
-### 4. Customized Layers
+### 5. Customized Layers
 
 Please refer to [examples/customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/examples/customized_layer.py).
 
-### 5. Rounding channels for device-friendly network pruning
+### 6. Rounding channels for device-friendly network pruning
 You can round the channels by passing a `round_to` parameter to strategy. For example, the following script will round the number of channels to 16xN (e.g., 16, 32, 48, 64).
 ```python
 strategy = tp.strategy.L1Strategy()
@@ -169,15 +213,15 @@ pruning_idxs = strategy(model.conv1.weight, amount=0.2, round_to=16)
 ```
 Please refer to [https://github.com/VainF/Torch-Pruning/issues/38](https://github.com/VainF/Torch-Pruning/issues/38) for more details.
 
-### 5. Example: pruning ResNet18 on Cifar10
+### 7. Example: pruning ResNet18 on Cifar10
 
-#### 5.1. Scratch training
+#### 7.1. Scratch training
 ```bash
 cd examples/cifar_minimal
 python prune_resnet18_cifar10.py --mode train # 11.1M, Acc=0.9248
 ```
 
-#### 5.2. Pruning and fintuning
+#### 7.2. Pruning and fintuning
 ```bash
 python prune_resnet18_cifar10.py --mode prune --round 1 --total_epochs 30 --step_size 20 # 4.5M, Acc=0.9229
 python prune_resnet18_cifar10.py --mode prune --round 2 --total_epochs 30 --step_size 20 # 1.9M, Acc=0.9207

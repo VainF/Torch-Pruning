@@ -1,0 +1,5 @@
+from .basepruner import LocalPruner, GlobalPruner
+from .magnitude_based_pruner import LocalMagnitudePruner, GlobalMagnitudePruner
+from .batchnorm_scale_pruner import LocalBNScalePruner, GlobalBNScalePruner
+from .structural_reg_pruner import LocalStructrualRegularizedPruner
+from .structural_dropout_pruner import StructrualDropoutPruner

@@ -19,9 +19,11 @@ parser.add_argument('--dataset', type=str, default='cifar100')
 parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--verbose', action='store_true', default=False)
 parser.add_argument('--total_epochs', type=int, default=100)
-parser.add_argument('--step_size', type=int, default=70)
-parser.add_argument('--round', type=int, default=1)
-parser.add_argument('--restore_from', type=str, default=None)
+parser.add_argument('--lr_decay_milestones', default="40,60,80", type=str,
+                    help='milestones for learning rate decay')
+parser.add_argument('--restore', type=str, default=None)
+parser.add_argument('--sparsity', type=float, default=0.8)
+parser.add_argument('--pruning_steps', type=int, default=4)
 
 args = parser.parse_args()
 
@@ -42,11 +44,11 @@ def eval(model, test_loader):
             total += len(target)
     return correct / total
 
-def train_model(model, train_loader, test_loader):
-    
+def train_model(model, train_loader, test_loader, pruning_step):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.step_size, 0.1)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+    milestones = [ int(ms) for ms in args.lr_decay_milestones.split(',') ]
+    scheduler = torch.optim.lr_scheduler.MultiStepLR( optimizer, milestones=milestones, gamma=0.1)
     model.to(device)
 
     best_acc = -1
@@ -66,35 +68,30 @@ def train_model(model, train_loader, test_loader):
         print("Epoch %d/%d, Acc=%.4f"%(epoch, args.total_epochs, acc))
         if best_acc<acc:
             os.makedirs('checkpoints/pruned', exist_ok=True)
-            torch.save( model, 'checkpoints/pruned/%s-%s-round%d.pth'%(args.dataset, args.model, args.round) )
+            torch.save( model, 'checkpoints/pruned/%s_%s_step%d.pth'%(args.dataset, args.model, pruning_step) )
             best_acc=acc
         scheduler.step()
     print("Best Acc=%.4f"%(best_acc))
 
-def prune_model(model, args):
+def get_pruner(model, args):
     model.cpu()
     user_defined_parameters=[model.pos_embedding, model.cls_token] if 'vit' in args.model else None
-    DG = tp.DependencyGraph().build_dependency( model, torch.randn(1, 3, 32, 32), user_defined_parameters=user_defined_parameters )
-    
-    def prune_linear(layer, amount=0.4):
-        strategy = tp.strategy.L1Strategy()
-        pruning_index = strategy(layer.weight, amount=amount)
-        plan = DG.get_pruning_plan(layer, tp.prune_linear_out_channel, pruning_index)
-        plan.exec()
-
-    def prune_conv(layer, amount=0.2):
-        strategy = tp.strategy.L1Strategy()
-        pruning_index = strategy(layer.weight, amount=amount)
-        plan = DG.get_pruning_plan(layer, tp.prune_conv_out_channel, pruning_index)
-        plan.exec()
-
-    for (i, m) in enumerate(model.modules()):
-        if isinstance( m, models.vit.FeedForward ): # do not prune the to_patch_embedding layers! 
-            prune_linear(m.net[0], 0.2)
-            prune_linear(m.net[0], 0.2)
-        elif isinstance(m, nn.Conv2d):
-            prune_conv(m, 0.1)
-    return model    
+    example_inputs = torch.randn(1, 3, 32, 32)
+    imp = tp.importance.MagnitudeImportance(p=2)
+    ignored_layers = []
+    for m in model.modules():
+        if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
+            ignored_layers.append(m)
+    pruner = tp.pruner.MagnitudeBasedPruner(
+        model,
+        example_inputs,
+        importance=imp,
+        steps=args.pruning_steps,
+        ch_sparsity=args.sparsity,
+        ignored_layers=ignored_layers,
+        user_defined_parameters=user_defined_parameters
+    )
+    return pruner
 
 def main():
     num_classes, train_dst, val_dst = registry.get_dataset(args.dataset, data_root='data')
@@ -103,7 +100,6 @@ def main():
     test_loader = torch.utils.data.DataLoader(
         val_dst,batch_size=args.batch_size, num_workers=4)
     args.num_classes = num_classes
-    
     if args.restore_from is not None:
         loaded = torch.load(args.restore_from, map_location='cpu')
         if isinstance(loaded, nn.Module):
@@ -113,18 +109,22 @@ def main():
             model.load_state_dict(loaded['state_dict'])
 
     if args.mode=='train':
-        args.round=0
         train_model(model, train_loader, test_loader)
     elif args.mode=='prune':
-        print("Pruning round %d, load model from %s"%( args.round, args.restore_from ))
-        prune_model(model, args)
-        print(model)
-        params = sum([np.prod(p.size()) for p in model.parameters()])
-        print("Number of Parameters: %.1fM"%(params/1e6))
-        train_model(model, train_loader, test_loader)
+        ori_size = tp.utils.count_params(model)
+        print("Loading model from %s"%(args.restore_from ))
+        pruner = get_pruner(model, args)
+
+        for step in range(pruner.steps):
+            print("Pruning step %d"%(step))
+            print(model)
+            pruned_size = tp.utils.count_params(model)
+            print("Number of Parameters: %.2f => %.2fM"%(ori_size/1e6 ,pruned_size/1e6))
+            train_model(model, train_loader, test_loader)
+
     elif args.mode=='test':
         print("Load model from %s"%( args.restore_from ))
-        params = sum([np.prod(p.size()) for p in model.parameters()])
+        params = tp.utils.count_params(model)
         print("Number of Parameters: %.1fM"%(params/1e6))
         acc = eval(model, test_loader)
         print("Acc=%.4f\n"%(acc))

@@ -18,7 +18,7 @@ if __name__=='__main__':
         for m in model.modules():
             if isinstance(m, CNBlock):
                 user_defined_parameters.append(m.layer_scale)
-        tp.prune.prune_parameter.dim = 0
+        tp.functional.prune_parameter.dim = 0
         
         prunable_module_type = ( nn.Conv2d, nn.BatchNorm2d )
         prunable_modules = [ m for m in model.modules() if isinstance(m, prunable_module_type) ]
@@ -32,7 +32,7 @@ if __name__=='__main__':
             elif isinstance(layer_to_prune, nn.BatchNorm2d):
                 prune_fn = tp.prune_batchnorm
 
-            ch = tp.utils.count_prunable_channels( layer_to_prune )
+            ch = tp.utils.count_prunable_out_channels( layer_to_prune )
             rand_idx = random.sample( list(range(ch)), min( ch//2, 10 ) )
             plan = DG.get_pruning_plan( layer_to_prune, prune_fn, rand_idx)
             plan.exec()
