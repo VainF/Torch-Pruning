@@ -1,0 +1,1 @@
+python baseline_slimming_train.py --model resnet56 --dataset cifar100 --batch-size 128 --lr 0.01 --epoch 100 --gpu 0 --sparsity 0.00001 --resume checkpoints/scratch/cifar100_resnet56.pth --lr_decay_milestones 50,70,90
