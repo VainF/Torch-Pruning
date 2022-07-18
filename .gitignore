@@ -7,7 +7,6 @@ dist
 build
 checkpoints
 run
-benchmarks
 text.txt
 run*
 baselines
