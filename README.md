@@ -44,11 +44,6 @@ or
 ```bash
 pip install torch_pruning # v0.2.8
 ```
-**Known Issues**: 
-
-* When groups>1, only depthwise conv is supported, i.e. `groups`=`in_channels`=`out_channels`. 
-* Customized operations will be treated as element-wise op, e.g. subclass of `torch.autograd.Function`. 
-
 
 ## Quickstart
   
