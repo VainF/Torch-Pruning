@@ -2,10 +2,10 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import argparse
-from thop import profile
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import time
 
 import torch_pruning as tp
 import registry
@@ -27,13 +27,13 @@ parser.add_argument(
 parser.add_argument("--lr", default=0.01, type=float, help="learning rate")
 parser.add_argument("--restore", type=str, default=None)
 parser.add_argument("--pruning_steps", type=int, default=1)
-parser.add_argument("--save_dir", type=str, default="checkpoints/pruned")
+parser.add_argument("--save_dir", type=str, default="run")
 
 
 # Pruning options
 parser.add_argument("--sparsity", type=float, default=0.4)
 parser.add_argument("--local", action="store_true", default=False)
-parser.add_argument("--method", type=str, default="filters")
+parser.add_argument("--method", type=str, default=None)
 
 
 args = parser.parse_args()
@@ -66,10 +66,10 @@ def train_model(
         model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4
     )
     milestones = [int(ms) for ms in args.lr_decay_milestones.split(",")]
-    #scheduler = torch.optim.lr_scheduler.MultiStepLR(
-    #    optimizer, milestones=milestones, gamma=0.1
-    #)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        optimizer, milestones=milestones, gamma=0.1
+    )
+    #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     model.to(device)
     model.train()
     best_acc = -1
@@ -86,8 +86,7 @@ def train_model(
             optimizer.step()
             if i % 10 == 0 and args.verbose:
                 args.logger.info(
-                    "Epoch %d/%d, iter %d/%d, loss=%.4f, lr=%.4f"
-                    % (
+                    "Epoch {:d}/{:d}, iter {:d}/{:d}, loss={:.4f}, lr={:.4f}".format(
                         epoch,
                         epochs,
                         i,
@@ -99,16 +98,20 @@ def train_model(
         model.eval()
         acc = eval(model, test_loader)
         args.logger.info(
-            "Epoch %d/%d, Acc=%.4f, lr=%.4f"
-            % (epoch, epochs, acc, optimizer.param_groups[0]["lr"])
+            "Epoch {:d}/{:d}, Acc={:.4f}, lr={:.4f}".format(epoch, epochs, acc, optimizer.param_groups[0]["lr"])
         )
         if best_acc < acc:
             os.makedirs(args.save_dir, exist_ok=True)
-            torch.save(
-                model.state_dict(),
-                "%s/%s_%s_step%d.pth"
-                % (args.save_dir, args.dataset, args.model, pruner.current_step),
-            )
+            if args.mode=='prune':
+                torch.save(
+                    model,
+                    os.path.join( args.save_dir, "{}_{}_{}_step{}.pth".format(args.dataset, args.model, args.method, pruner.current_step) )
+                )
+            elif args.mode=='train':
+                torch.save(
+                    model.state_dict(),
+                    os.path.join( args.save_dir, "{}_{}.pth".format(args.dataset, args.model) )
+                )
             best_acc = acc
         scheduler.step()
     args.logger.info("Best Acc=%.4f" % (best_acc))
@@ -189,21 +192,37 @@ def get_pruner(model, args):
     return pruner
 
 def main():
+    if args.mode=='prune':
+        exp_id = "{dataset}-{model}-{method}-{time}".format(
+            dataset=args.dataset,
+            model=args.model,
+            method=args.method,
+            time=time.asctime().replace(' ', '_'))
+        args.save_dir = os.path.join(args.save_dir, args.mode, exp_id)
+    elif args.mode=='train':
+        args.save_dir = os.path.join(args.save_dir, args.mode)
+    
+    args.logger = tools.utils.get_logger(args.method, output="{}/{}_{}_{}.txt".format(args.save_dir, args.dataset, args.method, args.model))
+    os.makedirs(args.save_dir, exist_ok=True)
+    
     # Model & Dataset
     num_classes, train_dst, val_dst = registry.get_dataset(args.dataset, data_root="data")
     model = registry.get_model(args.model, num_classes=num_classes)
     train_loader = torch.utils.data.DataLoader(train_dst, batch_size=args.batch_size, num_workers=4, drop_last=True, shuffle=True)
     test_loader = torch.utils.data.DataLoader(val_dst, batch_size=args.batch_size, num_workers=4)
     args.num_classes = num_classes
-    args.logger = tools.utils.get_logger(args.method, output="run/%s_%s_%s.txt" % (args.dataset, args.method, args.model))
+
+    for k, v in tools.utils.flatten_dict( vars(args) ).items(): # print args
+        args.logger.info( "%s: %s"%(k,v) )
+    
     if args.restore is not None:
         loaded = torch.load(args.restore, map_location="cpu")
         if isinstance(loaded, nn.Module): 
             model = loaded
         else:
             model.load_state_dict(loaded["state_dict"])
-        args.logger.info("Loading model from %s" % (args.restore))
-    
+        args.logger.info("Loading model from {restore}".format(restore=args.restore))
+
     
     ######################################################
     # Training / Pruning / Testing
@@ -254,15 +273,13 @@ def main():
             # pruned_size = tp.utils.count_params(model)
             args.logger.info("Sparsity: %.2f" % (args.sparsity))
             args.logger.info(
-                "Parameters: %.2f M => %.2f M (%.2f %%)"
-                % (ori_size / 1e6, pruned_size / 1e6, pruned_size / ori_size * 100)
+                "Parameters: {:.2f} M => {:.2f} M ({:.2f} %%)".format(ori_size / 1e6, pruned_size / 1e6, pruned_size / ori_size * 100)
             )
             args.logger.info(
-                "FLOPs: %.2f M => %.2f M (%.2f %%)"
-                % (ori_flops / 1e6, pruned_flops / 1e6, pruned_flops / ori_flops * 100)
+                "FLOPs: {:.2f} M => {:.2f} M ({:.2f} %%)".format(ori_flops / 1e6, pruned_flops / 1e6, pruned_flops / ori_flops * 100)
             )
             args.logger.info(
-                "Acc: %.4f => %.4f (%.2f %%)" % (ori_acc, pruned_acc, pruned_acc / ori_acc * 100)
+                "Acc: {:.4f} M => {:.4f} M ({:.4f} %%)".format(ori_acc, pruned_acc, pruned_acc / ori_acc * 100)
             )
 
             train_model(
@@ -270,14 +287,14 @@ def main():
                 args.total_epochs,
                 train_loader,
                 test_loader,
-                pruner=pruner,
+                pruner,
             )
     elif args.mode == "test":
-        args.logger.info("Load model from %s" % (args.restore))
+        args.logger.info("Load model from {}".format(args.restore))
         params = tp.utils.count_params(model)
-        args.logger.info("Number of Parameters: %.1fM" % (params / 1e6))
+        args.logger.info("Number of Parameters: {:.1fM}".format(params / 1e6))
         acc = eval(model, test_loader)
-        args.logger.info("Acc=%.4f\n" % (acc))
+        args.logger.info("Acc={:.4f}\n".format(acc))
 
 
 if __name__ == "__main__":

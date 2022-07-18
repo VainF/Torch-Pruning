@@ -1,0 +1,1 @@
+python main.py --mode train --dataset cifar100 --model resnet56 --lr 0.1 --total_epochs 200 --lr_decay_milestones 120,150,180 
