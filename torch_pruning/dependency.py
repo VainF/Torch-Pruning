@@ -207,11 +207,11 @@ class Dependency(object):
         return str(self)
 
     def __str__(self):
-        return "[DEP] {} on {} <= {} on {}".format(
-            self.handler.__class__.__name__,
-            self.target.name,
+        return "[DEP] {} on {} => {} on {}".format(
             "None" if self.trigger is None else self.trigger.__class__.__name__,
             self.source.name,
+            self.handler.__class__.__name__,
+            self.target.name,
         )
 
     def is_triggered_by(self, pruning_fn):
