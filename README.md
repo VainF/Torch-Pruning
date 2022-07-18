@@ -31,7 +31,7 @@ Pruning is a popular approach to reduce the heavy computational cost of neural n
 
 ## How it works
   
-Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the relation coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningPlan` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
+Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the dependency between layers. When you prune a single layer, torch-pruning will collect all affected layers by propogating your pruning operations through the graph, and then return a `PruningPlan` for final pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
   
 ## Installation
 
