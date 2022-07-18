@@ -9,3 +9,5 @@ checkpoints
 run
 benchmarks
 text.txt
+run*
+baselines
