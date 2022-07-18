@@ -51,7 +51,6 @@ class BasicBlock(nn.Module):
             residual = self.downsample(x)
 
         out += residual
-        preact = out
         out = F.relu(out)
         return out
 
@@ -90,7 +89,6 @@ class Bottleneck(nn.Module):
             residual = self.downsample(x)
 
         out += residual
-        preact = out
         out = F.relu(out)
         return out
 

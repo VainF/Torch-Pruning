@@ -356,6 +356,7 @@ class DependencyGraph(object):
             OPTYPE.CUSTOMIZED: (None, None),  # placeholder
         }
     )
+
     RULES_FOR_SUCCEEDING_LAYERS = {}
     RULES_FOR_PRECEDING_LAYERS = {}
     for t1 in PRUNING_FN.keys():
@@ -369,6 +370,14 @@ class DependencyGraph(object):
                 PRUNING_FN[t2][1],  # handler
             )  # change out_channels of preceding layers
     CUSTOMIZED_PRUNING_FN = {}
+
+    @property
+    def out_channel_pruners(self):
+        return [pruners[1] for pruners in self.PRUNING_FN.values() if pruners[1] is not None]
+    
+    @property
+    def in_channel_pruners(self):
+        return [pruners[0] for pruners in self.PRUNING_FN.values() if pruners[0] is not None]
 
     def build_dependency(
         self,
@@ -588,8 +597,10 @@ class DependencyGraph(object):
         # build graph
         if output_transform is not None:
             out = output_transform(out)
+        
+        module2node = {}
         for o in flatten_as_list(out):
-            module2node = self._build_graph(o.grad_fn, gradfn2module, reused)
+            self._build_graph(module2node, o.grad_fn, gradfn2module, reused)
 
         # BUG: Special case for torch.cat in ViT,
         # where concatination is not applied to feature dims.
@@ -608,8 +619,7 @@ class DependencyGraph(object):
                             stack.extend(n.inputs)
         return module2node
 
-    def _build_graph(self, grad_fn_root, gradfn2module, reused):
-        module2node = {}
+    def _build_graph(self, module2node, grad_fn_root, gradfn2module, reused):
 
         def create_node_if_not_exists(grad_fn):
             module = gradfn2module.get(grad_fn, None)
@@ -696,13 +706,16 @@ class DependencyGraph(object):
             return
         visited = set()
         fc_in_features = fc_node.module.in_features
-        feature_channels = _infer_out_dim_from_node_by_recursion(fc_node.inputs[0])
+        feature_channels = 0
+        for n in fc_node.inputs:
+            feature_channels = max(_infer_out_dim_from_node_by_recursion(fc_node), feature_channels)
+        
         if (
             feature_channels <= 0
         ):  # the first layer: https://github.com/VainF/Torch-Pruning/issues/21
             return
         stride = fc_in_features // feature_channels
-        if stride > 1:
+        if stride > 1 and fc_in_features % feature_channels==0:
             for in_node in fc_node.inputs:
                 for dep in fc_node.dependencies:
                     if dep.target == in_node:
