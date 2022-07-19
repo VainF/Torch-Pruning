@@ -11,7 +11,7 @@ def rescale(x):
     return (x - x.min()) / (x.max() - x.min())
 
 class MagnitudeImportance(Importance):
-    def __init__(self, p=1, local=False, reduction="sum"):
+    def __init__(self, p=1, local=False, reduction="mean"):
         self.p = p
         self.local = local
         self.reduction = reduction
@@ -81,7 +81,7 @@ class RandomImportance(Importance):
 
 
 class SensitivityImportance(Importance):
-    def __init__(self, local=False, reduction="sum") -> None:
+    def __init__(self, local=False, reduction="mean") -> None:
         self.local = local
         self.reduction = reduction
 

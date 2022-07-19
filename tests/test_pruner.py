@@ -9,7 +9,6 @@ import torch_pruning as tp
 model = entry(pretrained=True)
 print(model)
 # Global metrics
-ori_size = tp.utils.count_params(model)
 example_inputs = torch.randn(1, 3, 224, 224)
 imp = tp.importance.MagnitudeImportance(p=2)
 ignored_layers = []
@@ -28,11 +27,13 @@ pruner = tp.pruner.LocalMagnitudePruner(
 )
 
 for i in range(total_steps):
+    ori_size = tp.utils.count_params(model)
     pruner.step()
     print(
         "  Params: %.2f M => %.2f M"
         % (ori_size / 1e6, tp.utils.count_params(model) / 1e6)
     )
+
 with torch.no_grad():
     print(model)
     print(model(example_inputs).shape)

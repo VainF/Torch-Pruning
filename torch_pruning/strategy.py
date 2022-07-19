@@ -81,5 +81,4 @@ class GroupLNStrategy(ABC):
             idxs,
             dry_run=True,
         )
-        print(metric)
         
