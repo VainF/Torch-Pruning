@@ -17,6 +17,10 @@ Pruning is a popular approach to reduce the heavy computational cost of neural n
 * Pruning strategies: Random, L1, L2, etc.
 * Low-level pruning [functions](torch_pruning/prune/structured.py)
 
+### How it works
+  
+Torch-Pruning provide built-in mechanism for network tracing, which will run your model and trace the computational graph just like ``torch.jit``. Further, a dependency graph will be established to record the dependency between layers. When you prune a single layer, torch-pruning will collect all affected layers by propogating your pruning operations on graph, and then return a `PruningPlan` for final pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
+
 ### Updates:
 **02/07/2022** The latest version is under development in branch [v1.0](https://github.com/VainF/Torch-Pruning/tree/v1.0).
 
@@ -28,10 +32,6 @@ Pruning is a popular approach to reduce the heavy computational cost of neural n
 * A pruning benchmark on CIFAR100 and ImageNet.
 * Some examples in detection and segmentation.
 * A paper about this repo: title (now we are here! :turtle:), abstract, introduction, methodology, experiments and conclusion.
-
-## How it works
-  
-Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the dependency between layers. When you prune a single layer, torch-pruning will collect all affected layers by propogating your pruning operations through the graph, and then return a `PruningPlan` for final pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
   
 ## Installation
 
