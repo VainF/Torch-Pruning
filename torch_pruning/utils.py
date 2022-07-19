@@ -59,4 +59,11 @@ def count_macs_and_params(model, input_size, example_inputs=None):
     macs, params = thop.profile(model, inputs=(example_inputs, ), verbose=False)
     return macs, params
 
+def count_total_prunable_channels(model):
+    in_ch = 0
+    out_ch = 0
+    for m in model.modules():
+        out_ch+=count_prunable_out_channels(m)
+        in_ch+= count_prunable_in_channels(m)
+    return out_ch, in_ch
     

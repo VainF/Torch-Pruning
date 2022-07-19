@@ -35,7 +35,6 @@ class LocalBNScalePruner(LocalPruner):
             output_transform=output_transform,
         )
         self.beta = beta
-        self.importance = importance
 
     def regularize(self, model):
         for m in model.modules():
@@ -53,6 +52,7 @@ class GlobalBNScalePruner(GlobalPruner):
         total_steps=1,
         pruning_rate_scheduler: Callable = None,
         ch_sparsity=0.5,
+        max_ch_sparsity=1.0,
         layer_ch_sparsity=None,
         round_to=None,
         ignored_layers=None,
@@ -62,9 +62,11 @@ class GlobalBNScalePruner(GlobalPruner):
         super(GlobalBNScalePruner, self).__init__(
             model=model,
             example_inputs=example_inputs,
+            importance=importance,
             total_steps=total_steps,
             pruning_rate_scheduler=pruning_rate_scheduler,
             ch_sparsity=ch_sparsity,
+            max_ch_sparsity=max_ch_sparsity,
             layer_ch_sparsity=layer_ch_sparsity,
             round_to=round_to,
             ignored_layers=ignored_layers,
@@ -72,12 +74,8 @@ class GlobalBNScalePruner(GlobalPruner):
             output_transform=output_transform,
         )
         self.beta = beta
-        self.importance = importance
-
-    def estimate_importance(self, plan):
-        return self.importance(plan)
 
     def regularize(self, model):
         for m in model.modules():
             if isinstance(m, nn.BatchNorm2d):
-                m.weight.grad.data.add_(self.beta*torch.sign(m.weight.data))
+                m.weight.grad.data.add_(self.beta*torch.sign(m.weight.data)) # Lasso
