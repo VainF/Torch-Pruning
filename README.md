@@ -19,7 +19,7 @@ Pruning is a popular approach to reduce the heavy computational cost of neural n
 
 ### How it works
   
-Torch-Pruning provide built-in mechanism for network tracing, which will run your model and trace the computational graph just like ``torch.jit``. Further, a dependency graph will be established to record the dependency between layers. When you prune a single layer, torch-pruning will collect all affected layers by propogating your pruning operations on graph, and then return a `PruningPlan` for final pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
+Torch-Pruning provide built-in mechanisms for network tracing, which will run your model and trace the computational graph just like ``torch.jit``. Further, a dependency graph will be established to record the dependency between layers. When you prune a single layer, torch-pruning will collect all affected layers by propogating your pruning operations on the dependency graph, and then return a `PruningPlan` for final pruning. All pruning indices will be automatically transformed and aligned if there are operations like ``torch.split`` or ``torch.cat``. 
 
 ### Updates:
 **02/07/2022** The latest version is under development in branch [v1.0](https://github.com/VainF/Torch-Pruning/tree/v1.0).
