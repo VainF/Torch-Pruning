@@ -31,7 +31,7 @@ Torch-Pruning provide built-in mechanism for network tracing, which will run you
 * Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 * A pruning benchmark on CIFAR100 and ImageNet.
 * Some examples in detection and segmentation.
-* A paper about this repo: title (now we are here! :turtle:), abstract, introduction, methodology, experiments and conclusion.
+* A paper about this repo: title, abstract, introduction, methodology (now we are here! :turtle:), experiments and conclusion.
   
 ## Installation
 
