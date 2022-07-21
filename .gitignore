@@ -10,3 +10,5 @@ run
 text.txt
 run*
 baselines
+*.txt
+ours.sh
