@@ -1,7 +1,7 @@
 from .. import dependency, functional, utils
 from numbers import Number
 from typing import Callable
-from .basepruner import LocalPruner, GlobalPruner
+from .basepruner import LocalPruner, GlobalPruner, linear_scheduler
 import torch
 import torch.nn as nn
 
@@ -13,7 +13,7 @@ class LocalBNScalePruner(LocalPruner):
         importance,
         beta=1e-5,
         total_steps=1,
-        pruning_rate_scheduler: Callable = None,
+        pruning_rate_scheduler: Callable = linear_scheduler,
         ch_sparsity=0.5,
         layer_ch_sparsity=None,
         round_to=None,

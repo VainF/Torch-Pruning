@@ -25,6 +25,7 @@ class BasePruner(ABC):
         pass
 
     def __call__(self, layer: nn.Module, idxs: Sequence[int], inplace: bool=True, dry_run: bool=False) -> Tuple[nn.Module, int]:
+        idxs.sort()
         self.check(layer, idxs)
         metrics = { name: metric_fn(layer, idxs) for (name, metric_fn) in self.metrics.items() }
         if dry_run:
@@ -64,6 +65,7 @@ class ConvOutChannelPruner(BasePruner):
 class ConvInChannelPruner(BasePruner):
     def prune(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module: 
         keep_idxs = list(set(range(layer.in_channels)) - set(idxs))
+        keep_idxs.sort()
         layer.in_channels = layer.in_channels - len(idxs)
         if not layer.transposed:
             layer.weight = torch.nn.Parameter(layer.weight.data.clone()[:, keep_idxs]) 

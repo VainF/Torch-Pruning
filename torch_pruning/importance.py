@@ -138,7 +138,6 @@ class BNScaleImportance(Importance):
 
     def __call__(self, plan):
         importance_mat = []
-
         for dep, idxs in plan:
             # Conv-BN
             module = dep.target.module
@@ -294,3 +293,46 @@ class LAMPImportance(Importance):
             return importance
         elif self.reduction == "mean":
             return importance / n_layers
+
+class GroupLassoImportance(Importance):
+    def __init__(self, p=2, local=False, reduction="mean"):
+        self.p = p
+        self.local = local
+        self.reduction = reduction
+
+    @torch.no_grad()
+    def __call__(self, plan):
+        importance = 0
+        for dep, idxs in plan:
+            layer = dep.target.module
+            prune_fn = dep.handler
+            if prune_fn in [
+                functional.prune_conv_out_channel,
+                functional.prune_linear_out_channel,
+            ]:
+                w = (layer.weight)[idxs].flatten(1)
+                importance += w.pow(2).sum(1)
+            elif prune_fn in [
+                functional.prune_conv_in_channel,
+                functional.prune_linear_in_channel,
+            ]:
+                w = (layer.weight)[:, idxs].transpose(0, 1).flatten(1)
+                if w.shape[0] != importance.shape[0]:  # for conv-flatten-linear
+                    if (
+                        w.shape[0] % importance.shape[0] != 0
+                    ):  # TODO: support Group Convs
+                        continue
+                    w = w.view(
+                        importance.shape[0],
+                        w.shape[0] // importance.shape[0],
+                        w.shape[1],
+                    )
+                    w = torch.flatten(w, 1)
+                importance+=w.pow(2).sum(1)
+            elif prune_fn == functional.prune_batchnorm:
+                if layer.affine is not None:
+                    w = (layer.weight)[idxs]
+                    importance += w.pow(2)
+            if self.local:
+                break
+        return importance

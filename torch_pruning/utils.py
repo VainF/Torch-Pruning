@@ -53,9 +53,11 @@ def count_prunable_out_channels(module):
 def count_params(module):
     return sum([ p.numel() for p in module.parameters() ])
 
-def count_macs_and_params(model, input_size, example_inputs=None):
+def count_macs_and_params(model, input_size, example_inputs=None, device=None):
     if example_inputs is None:
         example_inputs = torch.randn(*input_size)
+    if device is not None:
+        example_inputs = example_inputs.to(device)
     macs, params = thop.profile(model, inputs=(example_inputs, ), verbose=False)
     return macs, params
 

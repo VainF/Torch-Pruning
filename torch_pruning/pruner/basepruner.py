@@ -64,7 +64,7 @@ class MetaPruner(abc.ABC):
     def reset(self):
         self.current_step = 0
 
-    def regularize(self, model):
+    def regularize(self, model, loss):
         pass
 
     def get_all_plans(self):
@@ -113,14 +113,14 @@ class LocalPruner(MetaPruner):
             return
         for plan in self.get_all_plans():
             # check pruning rate
-            if self._is_valid(plan):
+            if self._check_sparsity(plan):
                 module = plan[0][0].target.module
                 pruning_fn = plan[0][0].handler
                 imp = self.estimate_importance(plan)
                 current_channels = utils.count_prunable_out_channels(module)
-                layer_step_ch_sparsity = self.per_step_ch_sparsity[module][self.current_step]
+                layer_per_step_ch_sparsity = self.per_step_ch_sparsity[module][self.current_step]
                 n_pruned = current_channels - int(
-                    self.layer_init_out_ch[module] * (1 - layer_step_ch_sparsity)
+                    self.layer_init_out_ch[module] * (1 - layer_per_step_ch_sparsity)
                 )
                 if self.round_to:
                     n_pruned = n_pruned % self.round_to * self.round_to
@@ -131,24 +131,24 @@ class LocalPruner(MetaPruner):
                     plan.exec()
         self.current_step += 1
 
-    def _is_valid(self, plan):
+    def _check_sparsity(self, plan):
         for dep, _ in plan:
             if dep.target.module in self.per_step_ch_sparsity :
                 if dep.handler in [
                     functional.prune_conv_out_channel,
                     functional.prune_linear_out_channel,
                 ]:
-                    layer_step_ch_sparsity = self.per_step_ch_sparsity[dep.target.module][self.current_step]
+                    layer_per_step_ch_sparsity = self.per_step_ch_sparsity[dep.target.module][self.current_step]
                     layer_channels = utils.count_prunable_out_channels(dep.target.module)
-                    if layer_channels <= self.layer_init_out_ch[dep.target.module] * (1 - layer_step_ch_sparsity):
+                    if layer_channels <= self.layer_init_out_ch[dep.target.module] * (1 - layer_per_step_ch_sparsity):
                         return False
                 elif dep.handler in [
                     functional.prune_conv_in_channel,
                     functional.prune_linear_in_channel,
                 ]:
-                    layer_step_ch_sparsity = self.per_step_ch_sparsity[dep.target.module][self.current_step]
+                    layer_per_step_ch_sparsity = self.per_step_ch_sparsity[dep.target.module][self.current_step]
                     layer_channels = utils.count_prunable_in_channels(dep.target.module)
-                    if layer_channels <= self.layer_init_in_ch[dep.target.module] * (1 - layer_step_ch_sparsity):
+                    if layer_channels <= self.layer_init_in_ch[dep.target.module] * (1 - layer_per_step_ch_sparsity):
                         return False
         return True
 
