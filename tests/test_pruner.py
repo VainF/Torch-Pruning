@@ -17,7 +17,7 @@ for m in model.modules():
         ignored_layers.append(m)
 
 total_steps = 5
-pruner = tp.pruner.LocalMagnitudePruner(
+pruner = tp.pruner.MagnitudePruner(
     model,
     example_inputs,
     importance=imp,

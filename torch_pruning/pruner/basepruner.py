@@ -61,13 +61,14 @@ class MetaPruner():
             self.ch_sparsity, self.total_steps
         )
         self.layer_ch_sparsity = {} # user specified channel sparsity
-        for m in layer_ch_sparsity:
-            sublayer_ch_sparsity = layer_ch_sparsity[m]
-            for subm in m.modules():
-                if isinstance(subm, (dependency.TORCH_CONV, dependency.TORCH_LINEAR)):
-                    self.layer_ch_sparsity[subm] = self.pruning_rate_scheduler(
-                        sublayer_ch_sparsity, self.total_steps
-                    )
+        if layer_ch_sparsity is not None:
+            for m in layer_ch_sparsity:
+                sublayer_ch_sparsity = layer_ch_sparsity[m]
+                for subm in m.modules():
+                    if isinstance(subm, (dependency.TORCH_CONV, dependency.TORCH_LINEAR)):
+                        self.layer_ch_sparsity[subm] = self.pruning_rate_scheduler(
+                            sublayer_ch_sparsity, self.total_steps
+                        )
 
     def get_step_ch_sparsity(self, module):
         if self.global_pruning:
