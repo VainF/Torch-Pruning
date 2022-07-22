@@ -36,10 +36,10 @@ parser.add_argument("--save_dir", type=str, default="run")
 
 # Pruning options
 parser.add_argument("--sparsity", type=float, default=0.4)
-parser.add_argument("--local", action="store_true", default=False)
 parser.add_argument("--method", type=str, default=None)
 parser.add_argument("--reg", type=float, default=1e-4)
-
+parser.add_argument("--seed", type=int, default=None)
+parser.add_argument("--global_pruning", action="store_true", default=False)
 
 args = parser.parse_args()
 
@@ -56,12 +56,12 @@ def eval(model, test_loader, device=None):
         for i, (img, target) in enumerate(test_loader):
             img, target = img.to(device), target.to(device)
             out = model(img)
-            loss += F.cross_entropy(out, target, reduction='sum')
-            pred = out.max(1)[1].detach().cpu().numpy()
-            target = target.cpu().numpy()
+            loss += F.cross_entropy(out, target, reduction="sum")
+            pred = out.max(1)[1]
             correct += (pred == target).sum()
             total += len(target)
-    return correct / total, loss / total
+    return (correct / total).item(), (loss / total).item()
+
 
 @torch.no_grad()
 def random_estimate(
@@ -89,16 +89,19 @@ def train_model(
     epochs,
     train_loader,
     test_loader,
-    # For pruning
-    pruner,
+    # For pruning only
+    pruner=None,
     regularize=False,
-
     device=None,
 ):
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     optimizer = torch.optim.SGD(
-        model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4 if not regularize else 0
+        model.parameters(),
+        lr=args.lr,
+        momentum=0.9,
+        weight_decay=5e-4 if not regularize else 0,
     )
     milestones = [int(ms) for ms in args.lr_decay_milestones.split(",")]
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
@@ -140,7 +143,7 @@ def train_model(
             os.makedirs(args.save_dir, exist_ok=True)
             if args.mode == "prune":
                 pass
-                #torch.save(
+                # torch.save(
                 #    model,
                 #    os.path.join(
                 #        args.save_dir,
@@ -148,7 +151,7 @@ def train_model(
                 #            args.dataset, args.model, args.method, pruner.current_step
                 #        ),
                 #    ),
-                #)
+                # )
             elif args.mode == "train":
                 torch.save(
                     model.state_dict(),
@@ -167,60 +170,44 @@ def get_pruner(model, args):
     )
     example_inputs = torch.randn(1, 3, 32, 32).to(args.device)
     requires_reg = False
-    if args.method == "ours":
-        imp = tp.importance.StrcuturalImportance(p=1, reduction="sum")
-        pruner_entry = tp.pruner.LocalMagnitudePruner
-    elif args.method == "group_lasso":
-        requires_reg = True
-        imp = tp.importance.GroupLassoImportance()
-        pruner_entry = partial(tp.pruner.LocalGroupLassoPruner, beta=args.reg)
-    elif args.method == "sreg":
-        requires_reg = True
-        imp = tp.importance.MagnitudeImportance(p=1, reduction="sum")
-        pruner_entry = tp.pruner.LocalStructrualRegularizedPruner
-    elif args.method == "dropout":
-        imp = None
-        pruner_entry = tp.pruner.StructrualDropoutPruner
-    elif args.method in "l1":
-        imp = tp.importance.MagnitudeImportance(p=1, local=True)
-        pruner_entry = tp.pruner.LocalMagnitudePruner
-    elif args.method in "l1_global":
-        imp = tp.importance.MagnitudeImportance(p=1, local=True)
-        pruner_entry = tp.pruner.GlobalMagnitudePruner
-    elif args.method in "l1_group":
-        imp = tp.importance.MagnitudeImportance(p=1)
-        pruner_entry = tp.pruner.LocalMagnitudePruner
+
+    if args.method == "l1":
+        imp = tp.importance.MagnitudeImportance(p=1, dep_aware=False)
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
+    elif args.method == "l1_dep":
+        imp = tp.importance.MagnitudeImportance(p=1, dep_aware=True)
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "random":
         imp = tp.importance.RandomImportance()
-        pruner_entry = tp.pruner.LocalMagnitudePruner
-    elif args.method == "lamp_global":
-        imp = tp.importance.LAMPImportance()
-        pruner_entry = tp.pruner.GlobalMagnitudePruner
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
+    elif args.method == "dropout_dep":
+        imp = None
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "lamp":
-        imp = tp.importance.LAMPImportance()
-        pruner_entry = tp.pruner.LocalMagnitudePruner
+        imp = tp.importance.LAMPImportance(p=1, dep_aware=False)
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
+    elif args.method == "lamp_dep":
+        imp = tp.importance.LAMPImportance(p=1, dep_aware=True, reduction="mean")
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "slim":
         requires_reg = True
-        imp = tp.importance.BNScaleImportance(group_level=False)
-        pruner_entry = partial(tp.pruner.LocalBNScalePruner, beta=args.reg)
-    elif args.method == "gbn":
+        imp = tp.importance.BNScaleImportance(dep_aware=False)
+        pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
+    elif args.method == "slim_dep":
         requires_reg = True
-        imp = tp.importance.BNScaleImportance(group_level=True)
-        pruner_entry = partial(tp.pruner.LocalBNScalePruner, beta=args.reg)
-    elif args.method == "gbn_oneshot":
-        requires_reg = False
-        imp = tp.importance.BNScaleImportance(group_level=True)
-        pruner_entry = tp.pruner.LocalMagnitudePruner
-    elif args.method == "slim_global":
-        requires_reg = True
-        imp = tp.importance.BNScaleImportance()
-        pruner_entry = tp.pruner.GlobalBNScalePruner
+        imp = tp.importance.BNScaleImportance(dep_aware=True)
+        pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
+    else:
+        raise NotImplementedError
+        
     args.requires_reg = requires_reg
     ignored_layers = []
     layer_ch_sparsity = {}
+    # ignore output layers
     for m in model.modules():
         if isinstance(m, torch.nn.Linear) and m.out_features == args.num_classes:
             ignored_layers.append(m)
+
         # if isinstance(m, torch.nn.Conv2d) and m.kernel_size[0]==1:
         #    ignored_layers.append(m)
 
@@ -245,12 +232,14 @@ def get_pruner(model, args):
 
 
 def main():
+    if args.seed is not None:
+        torch.manual_seed(args.seed)
     if args.mode == "prune":
         exp_id = "{dataset}-{model}-{method}".format(
             dataset=args.dataset,
             model=args.model,
             method=args.method,
-            #time=time.asctime().replace(" ", "_"),
+            # time=time.asctime().replace(" ", "_"),
         )
         args.save_dir = os.path.join(args.save_dir, args.mode, exp_id)
         log_file = "{}/{}_{}_{}.txt".format(
@@ -306,18 +295,21 @@ def main():
         model.eval()
         # States before pruning
         ori_macs, ori_size = tp.utils.count_macs_and_params(
-            model, input_size=(1, 3, 32, 32), device=args.device,
+            model,
+            input_size=(1, 3, 32, 32),
+            device=args.device,
         )
         ori_acc, ori_val_loss = eval(model, test_loader, device=args.device)
         pruner = get_pruner(model, args)
         for step in range(pruner.total_steps):
             args.logger.info("Pruning step %d" % (step))
 
-            if args.method == "dropout":
-                pruner.register_structural_dropout(model)
-                args.logger.info("random sampling...")
-                random_estimate(model, 2 , train_loader, pruner, device=args.device)
+            # if args.method in [ "dropout_local", "dropout_global" ]:
+            #    pruner.register_structural_dropout(model)
+            #    args.logger.info("random sampling...")
+            #    random_estimate(model, 2 , train_loader, pruner, device=args.device)
 
+            # 1. Training with regularization (Optional)
             if args.requires_reg:
                 args.logger.info("regularizing...")
                 train_model(
@@ -328,18 +320,19 @@ def main():
                     pruner=pruner,
                     regularize=True,
                 )
-            if args.method == "dropout":
+            if args.method in ["dropout_local", "dropout_global"]:
                 pruner.remove_structural_dropout()
 
+            # 2. Pruning
             model.eval()
             pruner.step()
             args.logger.info(model)
-
             pruned_macs, pruned_size = tp.utils.count_macs_and_params(
-                model, input_size=(1, 3, 32, 32), device=args.device,
+                model,
+                input_size=(1, 3, 32, 32),
+                device=args.device,
             )
             pruned_acc, pruned_val_loss = eval(model, test_loader, device=args.device)
-            
             args.logger.info("Sparsity: %.2f" % (args.sparsity))
             args.logger.info(
                 "Params: {:.2f} M => {:.2f} M ({:.2f}%)".format(
@@ -348,43 +341,41 @@ def main():
             )
             args.logger.info(
                 "MACs: {:.2f} M => {:.2f} M ({:.2f}%, {:.2f}X )".format(
-                    ori_macs / 1e6, pruned_macs / 1e6, pruned_macs / ori_macs * 100, ori_macs / pruned_macs
+                    ori_macs / 1e6,
+                    pruned_macs / 1e6,
+                    pruned_macs / ori_macs * 100,
+                    ori_macs / pruned_macs,
                 )
             )
+            args.logger.info("Acc: {:.4f} => {:.4f}".format(ori_acc, pruned_acc))
             args.logger.info(
-                "Acc: {:.4f} => {:.4f}".format(
-                    ori_acc, pruned_acc
-                )
+                "Val Loss: {:.4f} => {:.4f}".format(ori_val_loss, pruned_val_loss)
             )
 
-            args.logger.info(
-                "Val Loss: {:.4f} => {:.4f}".format(
-                    ori_val_loss, pruned_val_loss
-                )
-            )
-
+            # 3. finetuning
             train_model(
                 model,
                 args.total_epochs,
                 train_loader,
                 test_loader,
                 pruner,
-                device=args.device
+                device=args.device,
             )
-    elif args.mode == 'finetune':
+    elif args.mode == "finetune":
         train_model(
-                model,
-                args.total_epochs,
-                train_loader,
-                test_loader,
-                pruner,
-                device=args.device
-            )
+            model,
+            args.total_epochs,
+            train_loader,
+            test_loader,
+            pruner,
+            device=args.device,
+        )
     elif args.mode == "test":
         model.eval()
         args.logger.info("Load model from {}".format(args.restore))
-        params = tools.utils.get_n_params(model)
-        macs = tools.utils.get_n_macs(model, img_size=(32, 32))
+        macs, params = tp.utils.count_macs_and_params(
+            model, input_size=(1, 3, 32, 32), device=args.device
+        )
         args.logger.info("Params: {:.2f} M".format(params / 1e6))
         args.logger.info("MACs: {:.2f} M".format(macs / 1e6))
         acc, val_loss = eval(model, test_loader)

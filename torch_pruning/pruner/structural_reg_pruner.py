@@ -1,11 +1,11 @@
 from .. import dependency, functional, utils
 from numbers import Number
 from typing import Callable
-from .basepruner import LocalPruner, GlobalPruner
+from .basepruner import MetaPruner
 import torch
 import torch.nn as nn
 
-class LocalStructrualRegularizedPruner(LocalPruner):
+class StructrualRegularizedPruner(MetaPruner):
     def __init__(
         self,
         model,
@@ -16,18 +16,22 @@ class LocalStructrualRegularizedPruner(LocalPruner):
         pruning_rate_scheduler: Callable = None,
         ch_sparsity=0.5,
         layer_ch_sparsity=None,
+        global_pruning=False,
+        global_max_ch_sparsity=1.0,
         round_to=None,
         ignored_layers=None,
         user_defined_parameters=None,
         output_transform=None,
     ):
-        super(LocalStructrualRegularizedPruner, self).__init__(
+        super(StructrualRegularizedPruner, self).__init__(
             model=model,
             example_inputs=example_inputs,
             total_steps=total_steps,
             pruning_rate_scheduler=pruning_rate_scheduler,
             ch_sparsity=ch_sparsity,
             layer_ch_sparsity=layer_ch_sparsity,
+            global_pruning=global_pruning,
+            global_max_ch_sparsity=global_max_ch_sparsity,
             round_to=round_to,
             ignored_layers=ignored_layers,
             user_defined_parameters=user_defined_parameters,
@@ -44,7 +48,7 @@ class LocalStructrualRegularizedPruner(LocalPruner):
     def structrual_dropout(self, module, input, output):
         return self.dropout_groups[module][0](output)
 
-    def regularize(self, model):
+    def regularize(self, model, loss):
 
         for plan in self.plans:
             for dep, idxs in plan:

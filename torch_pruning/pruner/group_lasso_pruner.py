@@ -1,9 +1,9 @@
-from .basepruner import LocalPruner, GlobalPruner, linear_scheduler
+from .basepruner import MetaPruner, linear_scheduler
 from .. import functional
 import torch
 import math
 
-class LocalGroupLassoPruner(LocalPruner):
+class GroupLassoPruner(MetaPruner):
     def __init__(
         self,
         model,
@@ -13,13 +13,15 @@ class LocalGroupLassoPruner(LocalPruner):
         total_steps=1,
         pruning_rate_scheduler=linear_scheduler,
         ch_sparsity=0.5,
+        global_pruning=False,
+        global_max_ch_sparsity=1.0,
         layer_ch_sparsity=None,
         round_to=None,
         ignored_layers=None,
         user_defined_parameters=None,
         output_transform=None
     ):
-        super(LocalGroupLassoPruner, self).__init__(
+        super(GroupLassoPruner, self).__init__(
             model=model,
             example_inputs=example_inputs,
             importance=importance,
@@ -27,6 +29,8 @@ class LocalGroupLassoPruner(LocalPruner):
             pruning_rate_scheduler=pruning_rate_scheduler,
             ch_sparsity=ch_sparsity,
             layer_ch_sparsity=layer_ch_sparsity,
+            global_pruning=global_pruning,
+            global_max_ch_sparsity=global_max_ch_sparsity,
             round_to=round_to,
             ignored_layers=ignored_layers,
             user_defined_parameters=user_defined_parameters,

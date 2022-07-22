@@ -1,9 +1,5 @@
-from .basepruner import LocalPruner, GlobalPruner
+from .basepruner import MetaPruner
 
-class LocalMagnitudePruner(LocalPruner):
-    pass
-    
-
-class GlobalMagnitudePruner(GlobalPruner):
+class MagnitudePruner(MetaPruner):
     pass
     

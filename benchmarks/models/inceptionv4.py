@@ -297,7 +297,7 @@ class InceptionV4(nn.Module):
         x = self.inception_c(x)
         x = self.avgpool(x)
         x = self.dropout(x)
-        x = x.view(-1, 1536)
+        x = x.flatten(1)
         x = self.linear(x)
 
         return x
