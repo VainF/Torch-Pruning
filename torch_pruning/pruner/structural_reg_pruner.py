@@ -11,13 +11,13 @@ class StructrualRegularizedPruner(MetaPruner):
         model,
         example_inputs,
         importance,
-        total_steps=1,
+        pruning_steps=1,
         beta=1e-4,
         pruning_rate_scheduler: Callable = None,
         ch_sparsity=0.5,
         layer_ch_sparsity=None,
         global_pruning=False,
-        global_max_ch_sparsity=1.0,
+        max_ch_sparsity=1.0,
         round_to=None,
         ignored_layers=None,
         user_defined_parameters=None,
@@ -26,12 +26,12 @@ class StructrualRegularizedPruner(MetaPruner):
         super(StructrualRegularizedPruner, self).__init__(
             model=model,
             example_inputs=example_inputs,
-            total_steps=total_steps,
+            pruning_steps=pruning_steps,
             pruning_rate_scheduler=pruning_rate_scheduler,
             ch_sparsity=ch_sparsity,
             layer_ch_sparsity=layer_ch_sparsity,
             global_pruning=global_pruning,
-            global_max_ch_sparsity=global_max_ch_sparsity,
+            max_ch_sparsity=max_ch_sparsity,
             round_to=round_to,
             ignored_layers=ignored_layers,
             user_defined_parameters=user_defined_parameters,
@@ -40,18 +40,18 @@ class StructrualRegularizedPruner(MetaPruner):
         self.importance = importance
         self.dropout_groups = {}
         self.beta = beta
-        self.plans = self.get_all_plans()
+        self.plans = self.get_all_cliques()
     
-    def estimate_importance(self, plan):
-        return self.importance(plan)
+    def estimate_importance(self, clique):
+        return self.importance(clique)
 
     def structrual_dropout(self, module, input, output):
         return self.dropout_groups[module][0](output)
 
     def regularize(self, model, loss):
 
-        for plan in self.plans:
-            for dep, idxs in plan:
+        for clique in self.plans:
+            for dep, idxs in clique:
                 layer = dep.target.module
                 prune_fn = dep.handler
                 if prune_fn in [

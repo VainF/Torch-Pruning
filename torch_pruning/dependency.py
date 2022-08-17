@@ -7,7 +7,7 @@ import warnings
 
 from . import helpers, functional
 
-__all__ = ["PruningPlan", "Dependency", "DependencyGraph"]
+__all__ = ["PruningClique", "Dependency", "DependencyGraph"]
 
 # Standard Modules
 TORCH_CONV = nn.modules.conv._ConvNd
@@ -226,8 +226,8 @@ class Dependency(object):
         )
 
 
-class PruningPlan(object):
-    """Pruning plan.
+class PruningClique(object):
+    """Pruning clique.
 
     Args:
         dry_run (Callable or None): only return the info about pruning.
@@ -235,35 +235,35 @@ class PruningPlan(object):
     """
 
     def __init__(self):
-        self._plans = list()
+        self._cliques = list()
         self._metrics_scalar_sum = helpers.ScalarSum()
         self._metrics_vector_sum = helpers.VectorSum()
 
-    def add_plan(self, dep, idxs):
-        self._plans.append((dep, idxs))
+    def add_clique(self, dep, idxs):
+        self._cliques.append((dep, idxs))
 
     def __getitem__(self, k):
-        return self._plans[k]
+        return self._cliques[k]
 
     @property
-    def plan(self):
-        return self._plans
+    def items(self):
+        return self._cliques
 
     def exec(self, dry_run=False):
         per_layer_metrics = []
-        for dep, idxs in self._plans:
+        for dep, idxs in self._cliques:
             _, metric_dict = dep(idxs, dry_run=dry_run)
             per_layer_metrics.append(metric_dict)
         return per_layer_metrics
 
     def has_dep(self, dep):
-        for _dep, _ in self._plans:
+        for _dep, _ in self._cliques:
             if dep == _dep:
                 return True
         return False
 
     def has_pruning_op(self, dep, idxs):
-        for _dep, _idxs in self._plans:
+        for _dep, _idxs in self._cliques:
             if (
                 _dep.target == dep.target
                 and _dep.handler == dep.handler
@@ -273,24 +273,24 @@ class PruningPlan(object):
         return False
 
     def __len__(self):
-        return len(self._plans)
+        return len(self._cliques)
 
-    def add_plan_and_merge(self, dep, idxs):
-        for i, (_dep, _idxs) in enumerate(self._plans):
+    def add_and_merge(self, dep, idxs):
+        for i, (_dep, _idxs) in enumerate(self._cliques):
             if _dep.target == dep.target and _dep.handler == dep.handler:
-                self._plans[i] = (_dep, list(set(_idxs + idxs)))
+                self._cliques[i] = (_dep, list(set(_idxs + idxs)))
                 return
-        self.add_plan(dep, idxs)
+        self.add_clique(dep, idxs)
 
     def __str__(self):
         fmt = ""
         fmt += "\n" + "-" * 32 + "\n"
-        fmt += " " * 10 + "Pruning Plan"
+        fmt += " " * 10 + "Pruning Clique"
         fmt += "\n" + "-" * 32 + "\n"
         self._metrics_scalar_sum.reset()
         self._metrics_vector_sum.reset()
 
-        for i, (dep, idxs) in enumerate(self._plans):
+        for i, (dep, idxs) in enumerate(self._cliques):
             _, metric_dict = dep(idxs, dry_run=True)
             for k, v in metric_dict.items():
                 if helpers.is_scalar(v):
@@ -298,7 +298,7 @@ class PruningPlan(object):
                 else:
                     self._metrics_vector_sum.update(k, v)
             if i == 0:
-                fmt += "User pruning:\n"
+                fmt += "User Operation:\n"
             fmt += "[ {}, Index={}, metric={}]\n".format(dep, idxs, metric_dict)
             if i == 0:
                 fmt += "\nCoupled pruning:\n"
@@ -437,8 +437,8 @@ class DependencyGraph(object):
         }
         self.PRUNABLE_MODULES.append(layer_type)
 
-    def check_pruning_plan(self, plan):
-        for dep, idxs in plan.plan:
+    def check_pruning_clique(self, clique):
+        for dep, idxs in clique.items:
             if dep.handler in (
                 functional.prune_conv_out_channel,
                 functional.prune_batchnorm,
@@ -457,13 +457,17 @@ class DependencyGraph(object):
                     return False
         return True
 
-    def get_pruning_plan(
+    def get_pruning_clique(self, module, pruning_fn, idxs):
+        warnings.warn("get_pruning_clique has been deprecated. Please use get_pruning_clique.")
+        return self.get_pruning_clique(module, pruning_fn, idxs)
+
+    def get_pruning_clique(
         self,
         module: nn.Module,
         pruning_fn: typing.Callable,
         idxs: typing.Union[list, tuple],
     ):
-        """Get a pruning plan from the dependency graph, according to user's pruning operations.
+        """Get a pruning clique from the dependency graph, according to user's pruning operations.
 
         Args:
             module (nn.Module): the module to be pruned.
@@ -476,10 +480,10 @@ class DependencyGraph(object):
             idxs = [idxs]
 
         self.update_index()
-        plan = PruningPlan()
+        clique = PruningClique()
         #  the user pruning operation
         root_node = self.module2node[module]
-        plan.add_plan(
+        clique.add_clique(
             Dependency(pruning_fn, pruning_fn, source=root_node, target=root_node), idxs
         )
 
@@ -501,12 +505,12 @@ class DependencyGraph(object):
                         )
                         if len(new_indices) == 0:
                             continue
-                        if dep.target in visited and plan.has_pruning_op(
+                        if dep.target in visited and clique.has_pruning_op(
                             dep, new_indices
                         ):
                             continue
                         else:
-                            plan.add_plan(dep, new_indices)
+                            clique.add_clique(dep, new_indices)
                             processing_stack.append(
                                 (dep.target, dep.handler, new_indices)
                             )
@@ -514,11 +518,10 @@ class DependencyGraph(object):
         _fix_dependency_graph_non_recursive(root_node, pruning_fn, idxs)
 
         # merge pruning ops
-        merged_plan = PruningPlan()
-
-        for dep, idxs in plan.plan:
-            merged_plan.add_plan_and_merge(dep, idxs)
-        return merged_plan
+        merged_clique = PruningClique()
+        for dep, idxs in clique.items:
+            merged_clique.add_and_merge(dep, idxs)
+        return merged_clique
 
     def _build_dependency(self, module2node):
         for module, node in module2node.items():

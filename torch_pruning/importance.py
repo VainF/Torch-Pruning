@@ -14,15 +14,16 @@ def rescale(x):
 
 
 class MagnitudeImportance(Importance):
-    def __init__(self, p=1, dep_aware=False, reduction="mean"):
+    def __init__(self, p=1, dep_aware=False, normalize=False, reduction="mean"):
         self.p = p
         self.dep_aware = dep_aware
         self.reduction = reduction
+        self.normalize = normalize
 
     @torch.no_grad()
-    def __call__(self, plan):
+    def __call__(self, clique):
         global_imp = []
-        for dep, idxs in plan:
+        for dep, idxs in clique:
             layer = dep.target.module
             prune_fn = dep.handler
 
@@ -64,6 +65,8 @@ class MagnitudeImportance(Importance):
                 return local_imp
 
         global_imp = torch.stack(global_imp, dim=0)
+        if self.normalize:
+            global_imp = global_imp / torch.norm(global_imp, dim=1, p=2, keepdim=True)
         if self.reduction == "sum":
             return global_imp.sum(dim=0)
         elif self.reduction == "mean":
@@ -74,55 +77,10 @@ class MagnitudeImportance(Importance):
 
 class RandomImportance(Importance):
     @torch.no_grad()
-    def __call__(self, plan):
-        _, idxs = plan[0]
+    def __call__(self, clique):
+        _, idxs = clique[0]
         return torch.randn((len(idxs),))
-
-
-class SensitivityImportance(Importance):
-    def __init__(self, dep_aware=False, reduction="mean") -> None:
-        self.dep_aware = dep_aware
-        self.reduction = reduction
-
-    def __call__(self, loss, plan):
-        loss.backward()
-        with torch.no_grad():
-            global_imp = 0
-            for dep, idxs in plan:
-                layer = dep.target.module
-                prune_fn = dep.handler
-                n_layers += 1
-                if prune_fn in [
-                    functional.prune_conv_out_channel,
-                    functional.prune_linear_in_channel,
-                ]:
-                    w_dw = (layer.weight * layer.weight.grad)[idxs]
-                    importance += torch.norm(torch.flatten(w_dw, 1), dim=1)
-                    if layer.bias:
-                        w_dw = (layer.bias * layer.bias.grad)[idxs].view(-1, 1)
-                        importance += torch.norm(w_dw, dim=1)
-                elif prune_fn in [
-                    functional.prune_conv_in_channel,
-                    functional.prune_linear_in_channel,
-                ]:
-                    w_dw = (layer.weight * layer.weight.grad)[:, idxs].transpose(0, 1)
-                    importance += torch.norm(torch.flatten(w_dw, 1), dim=1)
-                elif prune_fn == functional.prune_batchnorm:
-                    if layer.affine:
-                        w_dw = (layer.weight * layer.weight.grad)[idxs].view(-1, 1)
-                        importance += torch.norm(w_dw, dim=1)
-                        w_dw = (layer.bias * layer.bias.grad)[idxs].view(-1, 1)
-                        importance += torch.norm(w_dw, dim=1)
-                else:
-                    n_layers -= 1
-
-                if self.dep_aware:
-                    break
-            if self.reduction == "sum":
-                return importance
-            elif self.reduction == "mean":
-                return importance / n_layers
-
+        
 
 class SensitivityImportance(Importance):
     def __init__(self, p=1, dep_aware=False, reduction="mean"):
@@ -131,9 +89,11 @@ class SensitivityImportance(Importance):
         self.reduction = reduction
 
     @torch.no_grad()
-    def __call__(self, plan):
+    def __call__(self, loss, clique):
+        loss.backward()
+
         global_imp = []
-        for dep, idxs in plan:
+        for dep, idxs in clique:
             layer = dep.target.module
             prune_fn = dep.handler
 
@@ -184,9 +144,9 @@ class BNScaleImportance(Importance):
         self.dep_aware = dep_aware
         self.reduction = reduction
 
-    def __call__(self, plan):
+    def __call__(self, clique):
         global_imp = []
-        for dep, idxs in plan:
+        for dep, idxs in clique:
             # Conv-BN
             module = dep.target.module
             if isinstance(module, nn.BatchNorm2d) and module.affine:
@@ -211,9 +171,9 @@ class LAMPImportance(Importance):
         self.reduction = reduction
 
     @torch.no_grad()
-    def __call__(self, plan):
+    def __call__(self, clique):
         global_imp = []
-        for dep, idxs in plan:
+        for dep, idxs in clique:
             layer = dep.target.module
             prune_fn = dep.handler
 
@@ -283,9 +243,9 @@ class GroupLassoImportance(Importance):
         self.reduction = reduction
 
     @torch.no_grad()
-    def __call__(self, plan):
+    def __call__(self, clique):
         global_imp = 0
-        for dep, idxs in plan:
+        for dep, idxs in clique:
             layer = dep.target.module
             prune_fn = dep.handler
             if prune_fn in [
@@ -315,9 +275,7 @@ class GroupLassoImportance(Importance):
                 if layer.affine is not None:
                     w = (layer.weight)[idxs]
                     global_imp += w.pow(2)
-
             if self.dep_aware:
                 break
-
         global_imp = global_imp.sqrt()
         return global_imp

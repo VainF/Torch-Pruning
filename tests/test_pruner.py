@@ -16,17 +16,17 @@ for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m)
 
-total_steps = 5
+pruning_steps = 5
 pruner = tp.pruner.MagnitudePruner(
     model,
     example_inputs,
     importance=imp,
-    total_steps=total_steps,
+    pruning_steps=pruning_steps,
     ch_sparsity=0.5,
     ignored_layers=ignored_layers,
 )
 
-for i in range(total_steps):
+for i in range(pruning_steps):
     ori_size = tp.utils.count_params(model)
     pruner.step()
     print(

@@ -1,18 +1,20 @@
 import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from torchvision.models.convnext import (
-    convnext_tiny,
-    convnext_small,
-    convnext_base,
-    convnext_large,
-)
+
 from torchvision.models.vision_transformer import (
     vit_b_16,
     vit_b_32,
     vit_l_16,
     vit_l_32,
     vit_h_14,
+)
+
+from torchvision.models.convnext import (
+    convnext_tiny,
+    convnext_small,
+    convnext_base,
+    convnext_large,
 )
 
 from torchvision.models.alexnet import alexnet
@@ -121,7 +123,7 @@ if __name__ == "__main__":
     import torch_pruning as tp
     import random
 
-    def random_prune(model, example_inputs, output_transform):
+    def my_prune(model, example_inputs, output_transform):
         from torchvision.models.vision_transformer import VisionTransformer
         from torchvision.models.convnext import CNBlock, ConvNeXt
 
@@ -148,13 +150,12 @@ if __name__ == "__main__":
                 if isinstance(m, CNBlock):
                     user_defined_parameters.append(m.layer_scale)
             tp.functional.prune_parameter.dim = 0
-
-        importance = tp.importance.MagnitudeImportance(p=2)
-        pruner = tp.pruner.LocalMagnitudePruner(
+        importance = tp.importance.MagnitudeImportance(p=1)
+        pruner = tp.pruner.MagnitudePruner(
             model,
             example_inputs=example_inputs,
             importance=importance,
-            total_steps=1,
+            pruning_steps=1,
             ch_sparsity=0.5,
             round_to=round_to,
             user_defined_parameters=user_defined_parameters,
@@ -208,6 +209,6 @@ if __name__ == "__main__":
         else:
             output_transform = None
         print(model_name)
-        random_prune(
+        my_prune(
             model, example_inputs=example_inputs, output_transform=output_transform
         )

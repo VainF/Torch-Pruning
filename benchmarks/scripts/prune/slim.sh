@@ -1,7 +1,7 @@
 python main.py --mode prune --model resnet56 --batch_size 128 --restore run/pretrain/cifar100_resnet56.pth --pruning_steps 1 --sparsity 0.2 --dataset cifar100  --method slim  --reg 1e-4
 python main.py --mode prune --model resnet56 --batch_size 128 --restore run/pretrain/cifar100_resnet56.pth --pruning_steps 1 --sparsity 0.4 --dataset cifar100  --method slim  --reg 1e-4 
-python main.py --mode prune --model resnet56 --batch_size 128 --restore run/pretrain/cifar100_resnet56.pth --pruning_steps 1 --sparsity 0.6 --dataset cifar100  --method slim  
-python main.py --mode prune --model resnet56 --batch_size 128 --restore run/pretrain/cifar100_resnet56.pth --pruning_steps 1 --sparsity 0.8 --dataset cifar100  --method slim  
+python main.py --mode prune --model resnet56 --batch_size 128 --restore run/pretrain/cifar100_resnet56.pth --pruning_steps 1 --sparsity 0.6 --dataset cifar100  --method slim  --reg 1e-4
+python main.py --mode prune --model resnet56 --batch_size 128 --restore run/pretrain/cifar100_resnet56.pth --pruning_steps 1 --sparsity 0.8 --dataset cifar100  --method slim  --reg 1e-4
 
 python main.py --mode prune --model vgg19 --batch_size 128 --restore run/pretrain/cifar100_vgg19.pth --pruning_steps 1 --sparsity 0.2 --dataset cifar100  --method slim  --reg 1e-4 
 python main.py --mode prune --model vgg19 --batch_size 128 --restore run/pretrain/cifar100_vgg19.pth --pruning_steps 1 --sparsity 0.4 --dataset cifar100  --method slim  --reg 1e-4 

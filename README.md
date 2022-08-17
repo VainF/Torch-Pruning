@@ -31,7 +31,7 @@ Pruning is a popular approach to reduce the heavy computational cost of neural n
 
 ## How it works
   
-Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the relation coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningPlan` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
+Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the relation coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningClique` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
   
 ## Installation
 
@@ -73,23 +73,23 @@ strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
-# 3. get a pruning plan from the dependency graph.
+# 3. get a pruning clique from the dependency graph.
 pruning_idxs = strategy(model.conv1.weight, amount=0.4) # or pruning_idxs=[2, 6, 9, ...]
-pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs )
-print(pruning_plan)
+pruning_clique = DG.get_pruning_clique( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs )
+print(pruning_clique)
 
-# 4. execute this plan after checking (prune the model)
-#    if the plan prunes some channels to zero, 
-#    DG.check_pruning plan will return False.
-if DG.check_pruning_plan(pruning_plan):
-    pruning_plan.exec()
+# 4. execute this clique after checking (prune the model)
+#    if the clique prunes some channels to zero, 
+#    DG.check_pruning clique will return False.
+if DG.check_pruning_clique(pruning_clique):
+    pruning_clique.exec()
 ```
 
-Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning plan (with pruning_idxs=[2, 6, 9]). You can also customize the metrics following [test_metrics.py](tests/test_metrics.py).
+Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning clique (with pruning_idxs=[2, 6, 9]). You can also customize the metrics following [test_metrics.py](tests/test_metrics.py).
 
 ```
 --------------------------------
-          Pruning Plan
+          Pruning Clique
 --------------------------------
 User pruning:
 [ [DEP] ConvOutChannelPruner on conv1 (Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)) => ConvOutChannelPruner on conv1 (Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)), Index=[0, 2, 6], metric={'#params': 441}]
@@ -146,17 +146,17 @@ for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m)
 
-total_steps = 5 
+pruning_steps = 5 
 pruner = tp.pruner.LocalMagnitudePruner( 
     model,
     example_inputs,
     importance=imp,
-    total_steps=total_steps, # number of iterations
+    pruning_steps=pruning_steps, # number of iterations
     ch_sparsity=0.5, # channel sparsity
     ignored_layers=ignored_layers, # ignored_layers will not be pruned
 )
 
-for i in range(total_steps): # iterative pruning
+for i in range(pruning_steps): # iterative pruning
     pruner.step()
     print(
         "  Params: %.2f M => %.2f M"

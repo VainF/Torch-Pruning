@@ -12,20 +12,20 @@ DG = tp.DependencyGraph()
 example_inputs = torch.randn(1,3,224,224)
 DG.build_dependency(model, example_inputs=example_inputs)
 pruning_idxs = list( range( tp.utils.count_prunable_out_channels(model.conv1) ))
-pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs)
+pruning_clique = DG.get_pruning_clique( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs)
 
 sensitivity_importance = tp.importance.SensitivityImportance(reduction='mean')
 out = model(example_inputs)
 loss = out.sum()
-sen_imp = sensitivity_importance(loss, pruning_plan)
+sen_imp = sensitivity_importance(loss, pruning_clique)
 print(sen_imp)
 
 magnitude_importance = tp.importance.MagnitudeImportance(p=2, reduction='mean')
-mag_imp = magnitude_importance(pruning_plan)
+mag_imp = magnitude_importance(pruning_clique)
 print(mag_imp)
 
 bn_scale_importance = tp.importance.BNScaleImportance(reduction='mean')
-bn_imp = bn_scale_importance(pruning_plan)
+bn_imp = bn_scale_importance(pruning_clique)
 print(bn_imp)
 
 

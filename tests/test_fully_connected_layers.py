@@ -28,10 +28,10 @@ strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,128))
 
-# get a pruning plan according to the dependency graph.
-pruning_plan = DG.get_pruning_plan( model.fc1, tp.prune_linear_out_channel, idxs=strategy(model.fc1.weight, amount=0.4) )
-print(pruning_plan)
+# get a pruning clique according to the dependency graph.
+pruning_clique = DG.get_pruning_clique( model.fc1, tp.prune_linear_out_channel, idxs=strategy(model.fc1.weight, amount=0.4) )
+print(pruning_clique)
 
-# execute the plan (prune the model)
-pruning_plan.exec()
+# execute the clique (prune the model)
+pruning_clique.exec()
 print(model)

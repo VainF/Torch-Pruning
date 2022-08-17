@@ -34,8 +34,8 @@ if __name__=='__main__':
 
             ch = tp.utils.count_prunable_out_channels( layer_to_prune )
             rand_idx = random.sample( list(range(ch)), min( ch//2, 10 ) )
-            plan = DG.get_pruning_plan( layer_to_prune, prune_fn, rand_idx)
-            plan.exec()
+            clique = DG.get_pruning_clique( layer_to_prune, prune_fn, rand_idx)
+            clique.exec()
 
             for m in model.modules():
                 if isinstance(m, CNBlock):

@@ -86,8 +86,8 @@ def prune_model(model):
     def prune_conv(conv, amount=0.2):
         strategy = tp.strategy.L1Strategy()
         pruning_index = strategy(conv.weight, amount=amount)
-        plan = DG.get_pruning_plan(conv, tp.prune_conv_out_channel, pruning_index)
-        plan.exec()
+        clique = DG.get_pruning_clique(conv, tp.prune_conv_out_channel, pruning_index)
+        clique.exec()
     
     block_prune_probs = [0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.3, 0.3]
     blk_id = 0

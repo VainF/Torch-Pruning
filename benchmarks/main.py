@@ -101,7 +101,7 @@ def train_model(
         model.parameters(),
         lr=args.lr,
         momentum=0.9,
-        weight_decay=5e-4 if not regularize else 0,
+        weight_decay=5e-4,
     )
     milestones = [int(ms) for ms in args.lr_decay_milestones.split(",")]
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
@@ -175,7 +175,7 @@ def get_pruner(model, args):
         imp = tp.importance.MagnitudeImportance(p=1, dep_aware=False)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "l1_dep":
-        imp = tp.importance.MagnitudeImportance(p=1, dep_aware=True)
+        imp = tp.importance.MagnitudeImportance(p=1, dep_aware=True, normalize=True)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "random":
         imp = tp.importance.RandomImportance()
@@ -197,6 +197,10 @@ def get_pruner(model, args):
         requires_reg = True
         imp = tp.importance.BNScaleImportance(dep_aware=True)
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
+    elif args.method == "group_lasso":
+        requires_reg = True
+        imp = tp.importance.GroupLassoImportance(dep_aware=True)
+        pruner_entry = partial(tp.pruner.GroupLassoPruner, reg=args.reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
         
@@ -222,7 +226,7 @@ def get_pruner(model, args):
         model,
         example_inputs,
         importance=imp,
-        total_steps=args.pruning_steps,
+        pruning_steps=args.pruning_steps,
         ch_sparsity=args.sparsity,
         layer_ch_sparsity=layer_ch_sparsity,
         ignored_layers=ignored_layers,
@@ -277,7 +281,7 @@ def main():
         if isinstance(loaded, nn.Module):
             model = loaded
         else:
-            model.load_state_dict(loaded["state_dict"])
+            model.load_state_dict(loaded)
         args.logger.info("Loading model from {restore}".format(restore=args.restore))
 
     model = model.to(args.device)
@@ -301,7 +305,7 @@ def main():
         )
         ori_acc, ori_val_loss = eval(model, test_loader, device=args.device)
         pruner = get_pruner(model, args)
-        for step in range(pruner.total_steps):
+        for step in range(pruner.pruning_steps):
             args.logger.info("Pruning step %d" % (step))
 
             # if args.method in [ "dropout_local", "dropout_global" ]:
