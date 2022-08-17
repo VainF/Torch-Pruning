@@ -4,6 +4,7 @@ from typing import Callable
 from .basepruner import MetaPruner
 import torch
 import torch.nn as nn
+from .scheduler import linear_scheduler
 
 class StructrualRegularizedPruner(MetaPruner):
     def __init__(
@@ -13,7 +14,7 @@ class StructrualRegularizedPruner(MetaPruner):
         importance,
         pruning_steps=1,
         beta=1e-4,
-        pruning_rate_scheduler: Callable = None,
+        pruning_rate_scheduler: Callable = linear_scheduler,
         ch_sparsity=0.5,
         layer_ch_sparsity=None,
         global_pruning=False,

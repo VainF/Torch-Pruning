@@ -1,7 +1,8 @@
 from .. import dependency, functional, utils
 from numbers import Number
 from typing import Callable
-from .basepruner import MetaPruner, linear_scheduler
+from .basepruner import MetaPruner
+from .scheduler import linear_scheduler
 import torch
 import torch.nn as nn
 import random

@@ -1,4 +1,5 @@
-from .basepruner import MetaPruner, linear_scheduler
+from .basepruner import MetaPruner
+from .scheduler import linear_scheduler
 from .. import functional
 import torch
 import math
