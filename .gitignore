@@ -12,3 +12,6 @@ run*
 baselines
 *.txt
 ours.sh
+benchmarks/draw
+tests/*.png
+tests/*.pdf
