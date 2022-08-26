@@ -73,19 +73,19 @@ strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
-# 3. get a pruning clique from the dependency graph.
+# 3. get a pruning group from the dependency graph.
 pruning_idxs = strategy(model.conv1.weight, amount=0.4) # or pruning_idxs=[2, 6, 9, ...]
-pruning_clique = DG.get_pruning_clique( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs )
-print(pruning_clique)
+pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs )
+print(pruning_group)
 
-# 4. execute this clique after checking (prune the model)
-#    if the clique prunes some channels to zero, 
-#    DG.check_pruning clique will return False.
-if DG.check_pruning_clique(pruning_clique):
-    pruning_clique.exec()
+# 4. prune this group after checking 
+#    if the it prunes some channels to zero, 
+#    DG.check_pruning_group will return False.
+if DG.check_pruning_group(pruning_group):
+    pruning_group.exec()
 ```
 
-Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning clique (with pruning_idxs=[2, 6, 9]). You can also customize the metrics following [test_metrics.py](tests/test_metrics.py).
+Pruning the resnet.conv1 will affect several layers. Let's inspect the pruning group (with pruning_idxs=[2, 6, 9]). You can also customize the metrics following [test_metrics.py](tests/test_metrics.py).
 
 ```
 --------------------------------

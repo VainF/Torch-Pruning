@@ -44,10 +44,10 @@ strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
 # build layer dependency for resnet18
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,1,28,28))
-# get a pruning clique according to the dependency graph. idxs is the indices of pruned filters.
+# get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
 pruning_idxs = [0, 2, 6] #strategy(model.conv1.weight, amount=0.4) # or manually selected [0, 2, 6]
-pruning_clique = DG.get_pruning_clique( model.fc2, tp.prune_linear_out_channel, idxs=pruning_idxs )
-print(pruning_clique)
-# execute this clique (prune the model)
-if DG.check_pruning_clique(pruning_clique):
-    pruning_clique.exec()
+pruning_group = DG.get_pruning_group( model.fc2, tp.prune_linear_out_channel, idxs=pruning_idxs )
+print(pruning_group)
+# execute this group (prune the model)
+if DG.check_pruning_group(pruning_group):
+    pruning_group.exec()

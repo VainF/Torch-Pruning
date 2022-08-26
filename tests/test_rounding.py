@@ -41,7 +41,7 @@ DG.build_dependency(model, example_inputs=fake_input)
 for m in model.modules():
     if isinstance(m, nn.Conv2d):
         pruning_idxs = strategy(m.weight, amount=0.2)
-        pruning_clique = DG.get_pruning_clique(
+        pruning_clique = DG.get_pruning_group(
             m, tp.prune_conv_out_channel, idxs=pruning_idxs
         )
         pruning_clique.exec()
@@ -62,7 +62,7 @@ DG.build_dependency(model, example_inputs=fake_input)
 for m in model.modules():
     if isinstance(m, nn.Conv2d):
         pruning_idxs = strategy(m.weight, amount=0.2, round_to=16)
-        pruning_clique = DG.get_pruning_clique(
+        pruning_clique = DG.get_pruning_group(
             m, tp.prune_conv_out_channel, idxs=pruning_idxs
         )
         pruning_clique.exec()
