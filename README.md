@@ -35,12 +35,12 @@ The pipeline can be visualized as the following images:
 
 **24/03/2022** We are drafting a paper to provide more technical details about this repo, which will be released as soon as possible, together with a new version and some practical examples for yolo and other popular networks.
  
-### Some Plans
-* High-level pruners like MagnitudeBasedPruner (:heavy_check_mark:), SensitivityBasedPruner, HessianBasedPruner and [Slimming Pruner (ICCV'17)](https://openaccess.thecvf.com/content_iccv_2017/html/Liu_Learning_Efficient_Convolutional_ICCV_2017_paper.html).
+### Some Plans for v1.0
+* High-level pruners like MagnitudeBasedPruner (:heavy_check_mark:), TaylerBasedPruner (:heavy_check_mark:), and [Slimming Pruner (ICCV'17)](https://openaccess.thecvf.com/content_iccv_2017/html/Liu_Learning_Efficient_Convolutional_ICCV_2017_paper.html) (:heavy_check_mark:).
 * Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
-* A pruning benchmark on CIFAR100 and ImageNet.
-* Some examples in detection and segmentation.
-* A paper about this repo: title, abstract, introduction, methodology (now we are here! :turtle:), experiments and conclusion.
+* A pruning benchmark on CIFAR100 (:heavy_check_mark:), ImageNet, 3D Point Cloud, Text, ...
+* More examples for detection and segmentation.
+* A paper about this repo: title, abstract, introduction, methodology, experiments(now we are here! :turtle:) and conclusion.
   
 ## Installation
 
