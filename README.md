@@ -23,8 +23,8 @@ Torch-Pruning provides some built-in mechanisms for network tracing, which run y
 Therefore, the pipeline can be visualized as the following images:
 
 1. Trace the model as computational graph
-2. Build dependency graph
-3. Propagate your pruning operation on the graph to find affected layers.
+2. Build dependency graph.
+3. Propagate your pruning operation on the graph to find affected layers. 
 
 <div align="center">
 <img src="assets/densenet_dep.png" width="100%">
