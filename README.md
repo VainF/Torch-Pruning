@@ -40,7 +40,7 @@ The pipeline can be visualized as the following images:
 * Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 * A pruning benchmark on CIFAR100 (:heavy_check_mark:), ImageNet, 3D Point Cloud, Text, ...
 * More examples for detection and segmentation.
-* A paper about this repo: title, abstract, introduction, methodology, experiments(now we are here! :turtle:) and conclusion.
+* A paper about this repo: title => abstract => introduction => methodology => experiments(now we are here! :turtle:) => conclusion.
   
 ## Installation
 
