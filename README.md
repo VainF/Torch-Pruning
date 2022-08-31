@@ -18,8 +18,17 @@ Pruning is a popular approach to reduce the heavy computational cost of neural n
 * Low-level pruning [functions](torch_pruning/prune/structured.py)
 
 ### How it works
-  
-Torch-Pruning provide built-in mechanisms for network tracing, which will run your model and trace the computational graph just like ``torch.jit``. Further, a dependency graph will be established to record the dependency between layers. When you prune a single layer, torch-pruning will collect all affected layers by propogating your pruning operations on the dependency graph, and then return a `PruningPlan` for final pruning. All pruning indices will be automatically transformed and aligned if there are operations like ``torch.split`` or ``torch.cat``. 
+Torch-Pruning provide some built-in mechanisms for network tracing, which runs your model and trace the computational graph just like ``torch.jit``. Further, a dependency graph will be established to record the dependency between layers & operations. If you prune a single layer, torch-pruning will collect all affected layers by propagating your pruning operations on the dependency graph, and then return a `PruningPlan` for final pruning. All pruning indices will be automatically transformed and aligned if there are operations like ``torch.split`` or ``torch.cat``. 
+
+Therefore, the pipeline can be visualized as the following images:
+
+1. Trace the model as computational graph
+2. Build dependency graph
+3. Propagate your pruning operation on the graph to find affected layers.
+
+<div align="center">
+<img src="assets/densenet_dep.png" width="100%">
+</div>
 
 ### Updates:
 **02/07/2022** The latest version is under development in branch [v1.0](https://github.com/VainF/Torch-Pruning/tree/v1.0).
