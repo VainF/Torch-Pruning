@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from . import functional
 import random
+from ._helpers import _FlattenIndexTransform
 
 def rescale(x):
     return (x - x.min(dim=1, keepdim=True)[0]) / (x.max(dim=1, keepdim=True)[0] - x.min(dim=1, keepdim=True)[0])
@@ -147,7 +148,7 @@ class BNScaleImportance(Importance):
         for dep, idxs in group:
             # Conv-BN
             module = dep.target.module
-            if isinstance(module, nn.BatchNorm2d) and module.affine:
+            if isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)) and module.affine:
                 imp = torch.abs(module.weight.data)
                 global_imp.append(imp)
                 if not self.to_group:
@@ -267,7 +268,22 @@ class GroupNormImportance(Importance):
                 functional.prune_linear_in_channel,
             ]:
                 # regularize input channels
-                w = layer.weight.data.transpose(0, 1)[idxs].flatten(1)
+                w = (layer.weight)[:, idxs].transpose(0, 1).flatten(1)
+                if (
+                    w.shape[0] != group_norm.shape[0]
+                ):  # for conv-flatten 
+                    if (
+                        w.shape[0] % group_norm.shape[0] != 0
+                    ):  # TODO: support Group Convs
+                        continue
+                    if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexTransform):
+                        w = w.view(
+                        group_norm.shape[0],
+                        w.shape[0] // group_norm.shape[0],
+                        w.shape[1],
+                    ).flatten(1)
+                    else:
+                        w = w.view( w.shape[0] // group_norm.shape[0], group_norm.shape[0], w.shape[1] ).transpose(0, 1).flatten(1)
                 group_size += w.shape[1]
                 group_norm += w.abs().pow(self.p).sum(1)
             elif prune_fn == functional.prune_batchnorm:

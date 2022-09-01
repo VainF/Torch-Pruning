@@ -158,56 +158,6 @@ class _GroupConvIndexTransform(object):
             max_group_size = int(group_histgram.max())
         return new_idxs
 
-
-class GConv(nn.Module):
-    def __init__(self, gconv):
-        super(GConv, self).__init__()
-        self.groups = gconv.groups
-        self.convs = nn.ModuleList()
-        oc_size = gconv.out_channels // self.groups
-        ic_size = gconv.in_channels // self.groups
-        for g in range(self.groups):
-            self.convs.append(
-                nn.Conv2d(
-                    in_channels=oc_size,
-                    out_channels=ic_size,
-                    kernel_size=gconv.kernel_size,
-                    stride=gconv.stride,
-                    padding=gconv.padding,
-                    dilation=gconv.dilation,
-                    groups=1,
-                    bias=gconv.bias is not None,
-                    padding_mode=gconv.padding_mode,
-                )
-            )
-        # copy parameters
-        group_size = gconv.out_channels // self.groups
-        gconv_weight = gconv.weight
-        for (i, conv) in enumerate(self.convs):
-            conv.weight.data = gconv_weight.data[oc_size * i : oc_size * (i + 1)]
-            if gconv.bias is not None:
-                conv.bias.data = gconv.bias.data[oc_size * i : oc_size * (i + 1)]
-
-    def forward(self, x):
-        split_sizes = [conv.in_channels for conv in self.convs]
-        xs = torch.split(x, split_sizes, dim=1)
-        out = torch.cat([conv(xi) for (conv, xi) in zip(self.convs, xs)], dim=1)
-        return out
-
-
-def gconv2convs(module):
-    new_module = module
-    if (
-        isinstance(module, nn.Conv2d)
-        and module.groups > 1
-        and module.groups != module.in_channels
-    ):
-        new_module = GConv(module)
-    for name, child in module.named_children():
-        new_module.add_module(name, gconv2convs(child))
-    return new_module
-
-
 class ScalarSum:
     def __init__(self):
         self._results = {}

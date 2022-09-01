@@ -43,5 +43,5 @@ class BNScalePruner(MetaPruner):
 
     def regularize(self, model, loss):
         for m in model.modules():
-            if isinstance(m, nn.BatchNorm2d) and m.affine==True:
+            if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)) and m.affine==True:
                 m.weight.grad.data.add_(self.reg*torch.sign(m.weight.data))

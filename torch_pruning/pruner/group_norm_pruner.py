@@ -3,6 +3,7 @@ from .scheduler import linear_scheduler
 from .. import functional
 import torch
 import math
+from .._helpers import _FlattenIndexTransform
 
 class GroupNormPruner(MetaPruner):
     def __init__(
@@ -66,11 +67,21 @@ class GroupNormPruner(MetaPruner):
                     functional.prune_conv_in_channel,
                     functional.prune_linear_in_channel,
                 ]:
-                    # regularize input channels
-                    w = layer.weight.data.transpose(0, 1)[idxs].flatten(1)
+                    w = (layer.weight)[:, idxs].transpose(0, 1).flatten(1)
+                    if (
+                        w.shape[0] != group_norm.shape[0]
+                    ):  # for conv-flatten 
+     
+                        if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexTransform):
+                            w = w.view(
+                            group_norm.shape[0],
+                            w.shape[0] // group_norm.shape[0],
+                            w.shape[1],
+                        ).flatten(1)
+                        else:
+                            w = w.view( w.shape[0] // group_norm.shape[0], group_norm.shape[0], w.shape[1] ).transpose(0, 1).flatten(1)
                     group_size += w.shape[1]
                     group_norm += w.pow(2).sum(1)
-
                 elif prune_fn == functional.prune_batchnorm:
                     # regularize BN
                     if layer.affine is not None:
@@ -103,9 +114,18 @@ class GroupNormPruner(MetaPruner):
                     functional.prune_conv_in_channel,
                     functional.prune_linear_in_channel,
                 ]:
+                    w = layer.weight.data[:, idxs]
+                    gn = group_norm
+                    if (
+                        w.shape[1] != group_norm.shape[0]
+                    ):  # for conv-flatten 
+                        if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexTransform):
+                            gn = group_norm.repeat_interleave(w.shape[1]//group_norm.shape[0])
+                        else:
+                            gn = group_norm.repeat(w.shape[1]//group_norm.shape[0])
                     # regularize input channels
                     w = layer.weight.data[:, idxs]
-                    g = w / group_norm.view( 1, -1, *([1]*(len(w.shape)-2)) ) * group_size  #* scale.view( 1, -1, *([1]*(len(w.shape)-2)) )
+                    g = w / gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * group_size  #* scale.view( 1, -1, *([1]*(len(w.shape)-2)) )
                     layer.weight.grad.data[:, idxs]+=self.reg*g
 
                 elif prune_fn == functional.prune_batchnorm:

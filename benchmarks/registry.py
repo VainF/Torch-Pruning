@@ -3,8 +3,9 @@ from torchvision import datasets, transforms as T
 from PIL import PngImagePlugin
 LARGE_ENOUGH_NUMBER = 100
 PngImagePlugin.MAX_TEXT_CHUNK = LARGE_ENOUGH_NUMBER * (1024**2)
-import os
-import models
+import os, sys
+import engine.models as models
+import engine.utils as utils
 
 NORMALIZE_DICT = {
     'cifar10':  dict( mean=(0.4914, 0.4822, 0.4465), std=(0.2023, 0.1994, 0.2010) ),
@@ -15,67 +16,90 @@ NORMALIZE_DICT = {
 
 
 MODEL_DICT = {
-    'resnet18': models.resnet.resnet18,
-    'resnet34': models.resnet.resnet34,
-    'resnet50': models.resnet.resnet50,
-    'resnet101': models.resnet.resnet101,
-    'resnet152': models.resnet.resnet152,
+    'resnet18': models.cifar.resnet.resnet18,
+    'resnet34': models.cifar.resnet.resnet34,
+    'resnet50': models.cifar.resnet.resnet50,
+    'resnet101': models.cifar.resnet.resnet101,
+    'resnet152': models.cifar.resnet.resnet152,
 
-    'vgg11': models.vgg.vgg11_bn,
-    'vgg13': models.vgg.vgg13_bn,
-    'vgg16': models.vgg.vgg16_bn,
-    'vgg19': models.vgg.vgg19_bn,
+    'vgg11': models.cifar.vgg.vgg11_bn,
+    'vgg13': models.cifar.vgg.vgg13_bn,
+    'vgg16': models.cifar.vgg.vgg16_bn,
+    'vgg19': models.cifar.vgg.vgg19_bn,
 
-    'densenet121': models.densenet.densenet121,
-    'densenet161': models.densenet.densenet161,
-    'densenet169': models.densenet.densenet169,
-    'densenet201': models.densenet.densenet201,
+    'densenet121': models.cifar.densenet.densenet121,
+    'densenet161': models.cifar.densenet.densenet161,
+    'densenet169': models.cifar.densenet.densenet169,
+    'densenet201': models.cifar.densenet.densenet201,
 
-    'googlenet': models.googlenet.googlenet,
+    'googlenet': models.cifar.googlenet.googlenet,
 
-    'nasnet': models.nasnet.nasnet,
+    'nasnet': models.cifar.nasnet.nasnet,
 
-    'inceptionv4': models.inceptionv4.inceptionv4,
+    'inceptionv4': models.cifar.inceptionv4.inceptionv4,
+    'inceptionv3': models.cifar.inceptionv3.inception_v3,
+
+    'mobilenetv2': models.cifar.mobilenetv2.mobilenetv2,
     
-    'mobilenetv2': models.mobilenetv2.mobilenetv2,
-    
-    'preactresnet18': models.preactresnet.preactresnet18,
-    'preactresnet34': models.preactresnet.preactresnet34,
-    'preactresnet50': models.preactresnet.preactresnet50,
-    'preactresnet101': models.preactresnet.preactresnet101,
-    'preactresnet152': models.preactresnet.preactresnet152,
+    'preactresnet18': models.cifar.preactresnet.preactresnet18,
+    'preactresnet34': models.cifar.preactresnet.preactresnet34,
+    'preactresnet50': models.cifar.preactresnet.preactresnet50,
+    'preactresnet101': models.cifar.preactresnet.preactresnet101,
+    'preactresnet152': models.cifar.preactresnet.preactresnet152,
 
-    #'resnet14': models.resnet_tiny.resnet14,
-    'resnet20': models.resnet_tiny.resnet20,
-    'resnet32': models.resnet_tiny.resnet32,
-    'resnet44': models.resnet_tiny.resnet44,
-    'resnet56': models.resnet_tiny.resnet56,
-    'resnet110': models.resnet_tiny.resnet110,
-    #'resnet8x4': models.resnet_tiny.resnet8x4,
-    #'resnet32x4': models.resnet_tiny.resnet32x4,
+    #'resnet14': models.cifar.resnet_tiny.resnet14,
+    'resnet20': models.cifar.resnet_tiny.resnet20,
+    'resnet32': models.cifar.resnet_tiny.resnet32,
+    'resnet44': models.cifar.resnet_tiny.resnet44,
+    'resnet56': models.cifar.resnet_tiny.resnet56,
+    'resnet110': models.cifar.resnet_tiny.resnet110,
+    #'resnet8x4': models.cifar.resnet_tiny.resnet8x4,
+    #'resnet32x4': models.cifar.resnet_tiny.resnet32x4,
 
-    'resnext50': models.resnext.resnext50,
-    'resnext101': models.resnext.resnext101,
-    'resnext152': models.resnext.resnext152,
+    'resnext50': models.cifar.resnext.resnext50,
+    'resnext101': models.cifar.resnext.resnext101,
+    'resnext152': models.cifar.resnext.resnext152,
     
-    'se_resnet20': models.senet.se_resnet20,
-    'se_resnet32': models.senet.se_resnet32,
-    'se_resnet56': models.senet.se_resnet56,
-    'se_resnet110': models.senet.se_resnet110,
-    'se_resnet164': models.senet.se_resnet164,
+    'se_resnet20': models.cifar.senet.se_resnet20,
+    'se_resnet32': models.cifar.senet.se_resnet32,
+    'se_resnet56': models.cifar.senet.se_resnet56,
+    'se_resnet110': models.cifar.senet.se_resnet110,
+    'se_resnet164': models.cifar.senet.se_resnet164,
 
-    'xception': models.xception.xception,
+    'xception': models.cifar.xception.xception,
     
-    'vit_cifar': models.vit.vit_cifar,
-    'swin_t': models.swin.swin_t,
-    'swin_s': models.swin.swin_s,
-    'swin_b': models.swin.swin_b,
-    'swin_l': models.swin.swin_l,
+    'vit_cifar': models.cifar.vit.vit_cifar,
+    'swin_t': models.cifar.swin.swin_t,
+    'swin_s': models.cifar.swin.swin_s,
+    'swin_b': models.cifar.swin.swin_b,
+    'swin_l': models.cifar.swin.swin_l,
 }
 
+IMAGENET_MODEL_DICT={
+    "resnet50": models.imagenet.resnet50, 
+    "densenet121": models.imagenet.densenet121,
+    "mobilenet_v2": models.imagenet.mobilenet_v2,
+    "googlenet": models.imagenet.googlenet,
+    "inception_v3": models.imagenet.inception_v3,
+    "squeezenet1_1": models.imagenet.squeezenet1_1,
+    "vgg19_bn": models.imagenet.vgg19_bn,
+    "vgg16_bn": models.imagenet.vgg16_bn,
+    "mnasnet1_0": models.imagenet.mnasnet1_0,
+    "alexnet": models.imagenet.alexnet
+}
 
-def get_model(name: str, num_classes, pretrained=False, **kwargs):
-    model = MODEL_DICT[name](num_classes=num_classes)
+GRAPH_MODEL_DICT = {
+    'pointnet': models.graph.pointnet,
+    'dgcnn': models.graph.dgcnn,
+}
+
+def get_model(name: str, num_classes, pretrained=False, target_dataset='cifar', **kwargs):
+    if target_dataset == "imagenet":
+        model = IMAGENET_MODEL_DICT[name](pretrained=pretrained)
+    elif 'cifar' in target_dataset:
+        model = MODEL_DICT[name](num_classes=num_classes)
+    elif target_dataset == 'modelnet40':
+        model = GRAPH_MODEL_DICT[name](num_classes=num_classes)
     return model 
 
 
@@ -98,6 +122,7 @@ def get_dataset(name: str, data_root: str='data', return_transform=False):
         data_root = os.path.join( data_root, 'torchdata' )
         train_dst = datasets.CIFAR10(data_root, train=True, download=False, transform=train_transform)
         val_dst = datasets.CIFAR10(data_root, train=False, download=False, transform=val_transform)
+        input_size = (1, 3, 32, 32)
     elif name=='cifar100':
         num_classes = 100
         train_transform = T.Compose([
@@ -113,6 +138,7 @@ def get_dataset(name: str, data_root: str='data', return_transform=False):
         data_root = os.path.join( data_root, 'torchdata' ) 
         train_dst = datasets.CIFAR100(data_root, train=True, download=True, transform=train_transform)
         val_dst = datasets.CIFAR100(data_root, train=False, download=True, transform=val_transform)
+        input_size = (1, 3, 32, 32)
     elif name=='cifar10_224':
         num_classes = 10
         train_transform = T.Compose([
@@ -129,6 +155,7 @@ def get_dataset(name: str, data_root: str='data', return_transform=False):
         data_root = os.path.join( data_root, 'torchdata' )
         train_dst = datasets.CIFAR10(data_root, train=True, download=False, transform=train_transform)
         val_dst = datasets.CIFAR10(data_root, train=False, download=False, transform=val_transform)
+        input_size = (1, 3, 224, 224)
     elif name=='cifar100_224':
         num_classes = 100
         train_transform = T.Compose([
@@ -146,8 +173,16 @@ def get_dataset(name: str, data_root: str='data', return_transform=False):
         data_root = os.path.join( data_root, 'torchdata' ) 
         train_dst = datasets.CIFAR100(data_root, train=True, download=True, transform=train_transform)
         val_dst = datasets.CIFAR100(data_root, train=False, download=True, transform=val_transform)
+        input_size = (1, 3, 224, 224)
+    elif name=='modelnet40':
+        num_classes=40
+        train_dst = utils.datasets.ModelNet40(data_root=data_root, partition='train', num_points=1024)
+        val_dst = utils.datasets.ModelNet40(data_root=data_root, partition='test', num_points=1024)
+        train_transform = val_transform = None
+        input_size = (1, 3, 2048)
     else:
         raise NotImplementedError
     if return_transform:
-        return num_classes, train_dst, val_dst, train_transform, val_transform
-    return num_classes, train_dst, val_dst
+        return num_classes, train_dst, val_dst, input_size, train_transform, val_transform
+    return num_classes, train_dst, val_dst, input_size
+

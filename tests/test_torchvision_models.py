@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
         ori_size = tp.utils.count_params(model)
         model.cpu().eval()
-        model = tp.helpers.gconv2convs(model)
+        model = tp._helpers.gconv2convs(model)
         ignored_layers = []
         for m in model.modules():
             if isinstance(m, nn.Linear) and m.out_features == 1000:

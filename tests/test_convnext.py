@@ -12,7 +12,7 @@ if __name__=='__main__':
     def random_prune(model, example_inputs, output_transform):
         model.cpu().eval()
 
-        model = tp.helpers.gconv2convs(model)
+        model = tp.utils.gconv2convs(model)
         from torchvision.models.convnext import CNBlock
         user_defined_parameters = []
         for m in model.modules():

@@ -68,10 +68,10 @@ DG = tp.DependencyGraph()
 # Register your customized layer
 DG.register_customized_layer(
     CustomizedLayer, 
-    in_ch_pruning_fn=my_pruning_fn, # A function to prune channels/dimensions of input tensor
-    out_ch_pruning_fn=my_pruning_fn, # A function to prune channels/dimensions of output tensor
-    get_in_ch_fn=lambda l: l.in_dim,  # estimate the n_channel of layer input. Return None if the layer does not change tensor shape.
-    get_out_ch_fn=lambda l: l.in_dim) # estimate the n_channel of layer output. Return None if the layer does not change tensor shape.
+    input_channel_pruner=my_pruning_fn, # A function to prune channels/dimensions of input tensor
+    output_channel_pruner=my_pruning_fn, # A function to prune channels/dimensions of output tensor
+    get_input_channels=lambda l: l.in_dim,  # estimate the n_channel of layer input. Return None if the layer does not change tensor shape.
+    get_output_channels=lambda l: l.in_dim) # estimate the n_channel of layer output. Return None if the layer does not change tensor shape.
 
 # Build dependency graph
 DG.build_dependency(model, example_inputs=torch.randn(1,128))

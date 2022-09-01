@@ -224,15 +224,15 @@ class MultiheadAttentionPruner(BasePruner):
         if layer.v_proj_weight is not None:
             layer.v_proj_weight.data = torch.index_select(layer.v_proj_weight.data, 0, torch.LongTensor(keep_idxs))
         
-        pruning_idxs_3x = idxs + [i+layer.embed_dim for i in idxs] + [i+2*layer.embed_dim for i in idxs]
-        keep_idxs_3x = list(set(range(3*layer.embed_dim)) - set(pruning_idxs_3x))
-        keep_idxs_3x.sort()
+        pruning_idxs_repeated = idxs + [i+layer.embed_dim for i in idxs] + [i+2*layer.embed_dim for i in idxs]
+        keep_idxs_3x_repeated = list(set(range(3*layer.embed_dim)) - set(pruning_idxs_repeated))
+        keep_idxs_3x_repeated.sort()
         if layer.in_proj_weight is not None:
-            layer.in_proj_weight.data = torch.index_select(layer.in_proj_weight.data, 0, torch.LongTensor(keep_idxs_3x))
+            layer.in_proj_weight.data = torch.index_select(layer.in_proj_weight.data, 0, torch.LongTensor(keep_idxs_3x_repeated))
             layer.in_proj_weight.data = torch.index_select(layer.in_proj_weight.data, 1, torch.LongTensor(keep_idxs))
             
         if layer.in_proj_bias is not None:
-            layer.in_proj_bias.data = torch.index_select(layer.in_proj_bias.data, 0, torch.LongTensor(keep_idxs_3x))
+            layer.in_proj_bias.data = torch.index_select(layer.in_proj_bias.data, 0, torch.LongTensor(keep_idxs_3x_repeated))
         
         if layer.bias_k is not None:
             layer.bias_k.data = torch.index_select(layer.bias_k.data, 2, torch.LongTensor(keep_idxs))

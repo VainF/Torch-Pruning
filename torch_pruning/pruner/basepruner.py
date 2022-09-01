@@ -190,6 +190,8 @@ class MetaPruner():
                 pruning_idxs = imp_argsort[:n_pruned].tolist()
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs)
+                print(group)
+
                 if self.DG.check_pruning_group(group):
                     group.exec()
 

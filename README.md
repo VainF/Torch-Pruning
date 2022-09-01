@@ -199,7 +199,7 @@ You can prune your model manually without DependencyGraph:
 
 
 ### 4. Group Convs
-We provide a tool `tp.helpers.gconv2convs()`  to transform Group Conv to a group of vanilla convs. Please refer to [test_convnext.py](tests/test_convnext.py) for more details.
+We provide a tool `tp.utils.gconv2convs()`  to transform Group Conv to a group of vanilla convs. Please refer to [test_convnext.py](tests/test_convnext.py) for more details.
 
 ### 5. Customized Layers
 

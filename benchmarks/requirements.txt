@@ -1,3 +1,11 @@
-torch
+torch>=1.8.1
 termcolor
 einops
+tqdm
+torchvision>=0.9.1
+h5py
+
+# for main_gat.py
+networkx 
+tensorboard
+igraph
