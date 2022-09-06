@@ -1,6 +1,5 @@
-from .basepruner import MetaPruner
+from .metapruner import MetaPruner
 import torch
-from .. import utils
 
 class SaliencyPruner(MetaPruner):
 
@@ -29,7 +28,7 @@ class SaliencyPruner(MetaPruner):
                 module = group[0][0].target.module
                 pruning_fn = group[0][0].handler
                 imp = self.estimate_importance(group)
-                current_channels = utils.count_prunable_out_channels(module)
+                current_channels = self.DG.get_out_channels(module) #utils.count_prunable_out_channels(module)
                 target_sparsity = self.get_target_sparsity(module)
                 n_pruned = current_channels - int(
                     self.layer_init_out_ch[module] *

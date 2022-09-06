@@ -1,67 +1,67 @@
-from .dependency import TORCH_CONV, TORCH_BATCHNORM, TORCH_PRELU, TORCH_LINEAR
-from .dependency import _module2type
+from .ops import TORCH_CONV, TORCH_BATCHNORM, TORCH_PRELU, TORCH_LINEAR
+from .ops import module2type
 import torch
 import thop
 import torch.nn as nn
 
 
-def count_prunable_params_of_modules(module):
-    if isinstance(module, (TORCH_CONV, TORCH_LINEAR)):
-        num_params = module.weight.numel()
-        if module.bias is not None:
-            num_params += module.bias.numel()
-        return num_params
-    elif isinstance(module, TORCH_BATCHNORM):
-        num_params = module.running_mean.numel() + module.running_var.numel()
-        if module.affine:
-            num_params += module.weight.numel() + module.bias.numel()
-        return num_params
-    elif isinstance(module, TORCH_PRELU):
-        if len(module.weight) == 1:
-            return 0
-        else:
-            return module.weight.numel
-    else:
-        return 0
+#def count_prunable_params_of_modules(module):
+#    if isinstance(module, (TORCH_CONV, TORCH_LINEAR)):
+#        num_params = module.weight.numel()
+#        if module.bias is not None:
+#            num_params += module.bias.numel()
+#        return num_params
+#    elif isinstance(module, TORCH_BATCHNORM):
+#        num_params = module.running_mean.numel() + module.running_var.numel()
+#        if module.affine:
+#            num_params += module.weight.numel() + module.bias.numel()
+#        return num_params
+#    elif isinstance(module, TORCH_PRELU):
+#        if len(module.weight) == 1:
+#            return 0
+#        else:
+#            return module.weight.numel
+#    else:
+#        return 0
 
 
-def count_prunable_in_channels(module):
-    if isinstance(module, TORCH_CONV):
-        return module.weight.shape[1]
-    elif isinstance(module, TORCH_LINEAR):
-        return module.in_features
-    elif isinstance(module, TORCH_BATCHNORM):
-        return module.num_features
-    elif isinstance(module, TORCH_PRELU):
-        if len(module.weight) == 1:
-            return 0
-        else:
-            return len(module.weight)
-    else:
-        return 0
-
-
-def count_prunable_out_channels(module):
-    if isinstance(module, TORCH_CONV):
-        return module.weight.shape[0]
-    elif isinstance(module, TORCH_LINEAR):
-        return module.out_features
-    elif isinstance(module, TORCH_BATCHNORM):
-        return module.num_features
-    elif isinstance(module, TORCH_PRELU):
-        if len(module.weight) == 1:
-            return 0
-        else:
-            return len(module.weight)
-    else:
-        return 0
+#def count_prunable_in_channels(module):
+#    if isinstance(module, TORCH_CONV):
+#        return module.weight.shape[1]
+#    elif isinstance(module, TORCH_LINEAR):
+#        return module.in_features
+#    elif isinstance(module, TORCH_BATCHNORM):
+#        return module.num_features
+#    elif isinstance(module, TORCH_PRELU):
+#        if len(module.weight) == 1:
+#            return 0
+#        else:
+#            return len(module.weight)
+#    else:
+#        return 0
+#
+#
+#def count_prunable_out_channels(module):
+#    if isinstance(module, TORCH_CONV):
+#        return module.weight.shape[0]
+#    elif isinstance(module, TORCH_LINEAR):
+#        return module.out_features
+#    elif isinstance(module, TORCH_BATCHNORM):
+#        return module.num_features
+#    elif isinstance(module, TORCH_PRELU):
+#        if len(module.weight) == 1:
+#            return 0
+#        else:
+#            return len(module.weight)
+#    else:
+#        return 0
 
 
 def count_params(module):
     return sum([p.numel() for p in module.parameters()])
 
 
-def count_ops_and_params(model, input_size=None, example_inputs=None, return_macs=True, device=None):
+def count_ops_and_params(model, input_size=None, example_inputs=None, return_macs=False, device=None):
     if example_inputs is None:
         example_inputs = torch.randn(*input_size)
     if device is not None:
@@ -71,17 +71,7 @@ def count_ops_and_params(model, input_size=None, example_inputs=None, return_mac
     if return_macs:
         return macs, params
     else:
-        return 2*macs, params # FLOP = 2*MACs
-
-
-def count_total_prunable_channels(model):
-    in_ch = 0
-    out_ch = 0
-    for m in model.modules():
-        out_ch += count_prunable_out_channels(m)
-        in_ch += count_prunable_in_channels(m)
-    return out_ch, in_ch
-
+        return 2*macs, params  # FLOP = 2*MACs
 
 class GConv(nn.Module):
     def __init__(self, gconv):
@@ -122,6 +112,23 @@ class GConv(nn.Module):
         return out
 
 
+def flatten_as_list(obj):
+    if isinstance(obj, torch.Tensor):
+        return [obj]
+    elif isinstance(obj, (list, tuple)):
+        flattened_list = []
+        for sub_obj in obj:
+            flattened_list.extend(flatten_as_list(sub_obj))
+        return flattened_list
+    elif isinstance(obj, dict):
+        flattened_list = []
+        for sub_obj in obj.values():
+            flattened_list.extend(flatten_as_list(sub_obj))
+        return flattened_list
+    else:
+        return obj
+
+
 def gconv2convs(module):
     new_module = module
     if (
@@ -151,7 +158,7 @@ def draw_computational_graph(DG, save_as, title='Dependency Graph', figsize=(16,
         for out_node in node.outputs:
             G[module2idx[out_node.module], module2idx[node.module]] = fill_value
             G[module2idx[node.module], module2idx[out_node.module]] = fill_value
-        fns = DG.PRUNING_FN[_module2type(module)]
+        fns = DG.PRUNING_FN[module2type(module)]
         if fns[0] == fns[1]:
             G[module2idx[node.module], module2idx[node.module]] = fill_value
     fig, ax = plt.subplots(figsize=(figsize))
@@ -174,7 +181,7 @@ def draw_groups(DG, save_as, title='Group', figsize=(16, 16), dpi=200, cmap=None
     G = np.zeros((n_nodes, n_nodes))
     fill_value = 10
     for i, (module, node) in enumerate(DG.module2node.items()):
-        group = DG.get_pruning_group(module, DG.PRUNING_FN[_module2type(
+        group = DG.get_pruning_group(module, DG.PRUNING_FN[module2type(
             module)][1], list(range(count_prunable_out_channels(module))))
         grouped_idxs = []
         for dep, _ in group:
@@ -224,7 +231,7 @@ def draw_dependency_graph(DG, save_as, title='Group', figsize=(16, 16), dpi=200,
             else:
                 G[2*node2idx[source], 2*node2idx[target]+1] = fill_value
 
-        fns = DG.PRUNING_FN[_module2type(module)]
+        fns = DG.PRUNING_FN[module2type(module)]
         if fns[0] == fns[1]:
             G[2*node2idx[node], 2*node2idx[node]+1] = fill_value
 
@@ -253,7 +260,7 @@ def draw_dependency_graph(DG, save_as, title='Group', figsize=(16, 16), dpi=200,
 #        for out_node in node.outputs:
 #            G[ module2idx[out_node.module], module2idx[node.module] ] = fill_value
 #            G[ module2idx[node.module], module2idx[out_node.module] ] = fill_value
-#        fns = DG.PRUNING_FN[_module2type(module)]
+#        fns = DG.PRUNING_FN[module2type(module)]
 #        if fns[0] == fns[1]:
 #            G[ module2idx[node.module], module2idx[node.module] ] = fill_value
 #    fig, ax = plt.subplots(figsize=(figsize))
@@ -275,7 +282,7 @@ def draw_dependency_graph(DG, save_as, title='Group', figsize=(16, 16), dpi=200,
 #    for i, (module, node) in enumerate(DG.module2node.items()):
 #        if not isinstance(module, tuple(DG.PRUNABLE_MODULES)):
 #            continue
-#        group = DG.get_pruning_group(module, DG.PRUNING_FN[_module2type(module)][1], list(range(count_prunable_out_channels(module))))
+#        group = DG.get_pruning_group(module, DG.PRUNING_FN[module2type(module)][1], list(range(count_prunable_out_channels(module))))
 #        for dep, _ in group:
 #            G[ module2idx[module], module2idx[dep.target.module] ] = fill_value
 #    fig, ax = plt.subplots(figsize=(figsize))

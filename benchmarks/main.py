@@ -20,32 +20,32 @@ parser.add_argument(
 )
 parser.add_argument("--model", type=str, required=True)
 parser.add_argument("--dataset", type=str, default="cifar100", choices=['cifar10', 'cifar100', 'modelnet40'])
-parser.add_argument("--batch-size", type=int, default=128)
+parser.add_argument("--batch_size", type=int, default=128)
 parser.add_argument("--verbose", action="store_true", default=False)
-parser.add_argument("--total-epochs", type=int, default=100)
-parser.add_argument("--speed-up", type=float, default=2)
-parser.add_argument("--soft-rank", type=float, default=0.5)
+parser.add_argument("--total_epochs", type=int, default=100)
+parser.add_argument("--speed_up", type=float, default=2)
+parser.add_argument("--soft_rank", type=float, default=0.5)
 parser.add_argument(
-    "--lr-decay-milestones",
+    "--lr_decay_milestones",
     default="60,80",
     type=str,
     help="milestones for learning rate decay",
 )
 parser.add_argument("--lr", default=0.01, type=float, help="learning rate")
 parser.add_argument("--restore", type=str, default=None)
-parser.add_argument('--output-dir', default='run/cifar', help='path where to save')
+parser.add_argument('--output_dir', default='run/cifar', help='path where to save')
 
 # Pruning options
 parser.add_argument("--method", type=str, default=None)
 parser.add_argument("--reg", type=float, default=1e-4)
 parser.add_argument("--seed", type=int, default=None)
-parser.add_argument("--global-pruning", action="store_true", default=False)
+parser.add_argument("--global_pruning", action="store_true", default=False)
 
 args = parser.parse_args()
 
-def prune_to_target_macs(pruner, model, speed_up, input_size, device):
+def prune_to_target_ops(pruner, model, speed_up, input_size, device):
     model.eval()
-    ori_macs, _ = tp.utils.count_ops_and_params(
+    ori_ops, _ = tp.utils.count_ops_and_params(
         model,
         input_size=input_size,
         device=device,
@@ -53,12 +53,12 @@ def prune_to_target_macs(pruner, model, speed_up, input_size, device):
     current_speed_up = 1
     while current_speed_up < speed_up:
         pruner.step()
-        pruned_macs, _ = tp.utils.count_ops_and_params(
+        pruned_ops, _ = tp.utils.count_ops_and_params(
             model,
             input_size=input_size,
             device=device,
         )
-        current_speed_up = float(ori_macs) / pruned_macs
+        current_speed_up = float(ori_ops) / pruned_ops
     return current_speed_up
 
 def eval(model, test_loader, device=None):
@@ -220,12 +220,12 @@ def get_pruner(model, input_size, args):
     for m in model.modules():
         if isinstance(m, torch.nn.Linear) and m.out_features == args.num_classes:
             ignored_layers.append(m)
-    # here we set pruning_steps=200 to prune the model with small steps until it satisfied required MACs.
+    # here we set pruning_steps=200 to prune the model with small steps until it satisfied required ops.
     pruner = pruner_entry(
         model,
         example_inputs,
         importance=imp,
-        pruning_steps=400,
+        pruning_steps=200,
         ch_sparsity=1.0,
         layer_ch_sparsity=layer_ch_sparsity,
         ignored_layers=ignored_layers,
@@ -298,7 +298,7 @@ def main():
     elif args.mode == "prune":
         model.eval()
         # States before pruning
-        ori_macs, ori_size = tp.utils.count_ops_and_params(
+        ori_ops, ori_size = tp.utils.count_ops_and_params(
             model,
             input_size=input_size,
             device=args.device,
@@ -330,11 +330,11 @@ def main():
         
         # 2. Pruning
         model.eval()
-        prune_to_target_macs(pruner, model, speed_up=args.speed_up, input_size=input_size, device=args.device)
+        prune_to_target_ops(pruner, model, speed_up=args.speed_up, input_size=input_size, device=args.device)
         del pruner
 
         args.logger.info(model)
-        pruned_macs, pruned_size = tp.utils.count_ops_and_params(
+        pruned_ops, pruned_size = tp.utils.count_ops_and_params(
             model,
             input_size=input_size,
             device=args.device,
@@ -346,11 +346,11 @@ def main():
             )
         )
         args.logger.info(
-            "MACs: {:.2f} M => {:.2f} M ({:.2f}%, {:.2f}X )".format(
-                ori_macs / 1e6,
-                pruned_macs / 1e6,
-                pruned_macs / ori_macs * 100,
-                ori_macs / pruned_macs,
+            "Ops (FLOPs): {:.2f} G => {:.2f} G ({:.2f}%, {:.2f}X )".format(
+                ori_ops / 1e9,
+                pruned_ops / 1e9,
+                pruned_ops / ori_ops * 100,
+                ori_ops / pruned_ops,
             )
         )
         args.logger.info("Acc: {:.4f} => {:.4f}".format(ori_acc, pruned_acc))
@@ -370,11 +370,11 @@ def main():
     elif args.mode == "test":
         model.eval()
         args.logger.info("Load model from {}".format(args.restore))
-        macs, params = tp.utils.count_ops_and_params(
+        ops, params = tp.utils.count_ops_and_params(
             model, input_size=input_size, device=args.device
         )
         args.logger.info("Params: {:.2f} M".format(params / 1e6))
-        args.logger.info("MACs: {:.2f} M".format(macs / 1e6))
+        args.logger.info("ops: {:.2f} M".format(ops / 1e6))
         acc, val_loss = eval(model, test_loader)
         args.logger.info("Acc: {:.4f} Val Loss: {:.4f}\n".format(acc, val_loss))
 

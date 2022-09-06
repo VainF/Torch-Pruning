@@ -43,42 +43,42 @@ class FullyConnectedNet(nn.Module):
 ############################
 # Implement your pruning function for the customized layer
 #
-class MyPruningFn(tp.functional.structured.BasePruner):
+class MyPruner(tp.pruner.BasePruningFunc):
 
-    def prune(self, layer: CustomizedLayer, idxs: Sequence[int]) -> nn.Module: 
+    def prune_out_channels(self, layer: CustomizedLayer, idxs: Sequence[int]) -> nn.Module: 
         keep_idxs = list(set(range(layer.in_dim)) - set(idxs))
         layer.in_dim = layer.in_dim-len(idxs)
         layer.scale = torch.nn.Parameter(layer.scale.data.clone()[keep_idxs])
         layer.bias = torch.nn.Parameter(layer.bias.data.clone()[keep_idxs])
         return layer
     
-    @staticmethod
-    def calc_nparams_to_prune(layer: CustomizedLayer, idxs: Sequence[int]) -> int: 
-        nparams_to_prune = len(idxs) * 2
-        return nparams_to_prune
+    def get_out_channels(self, layer):
+        return self.in_dim
+    
+    # identical functions
+    prune_in_channels = prune_out_channels
+    get_in_channels = get_out_channels
         
-my_pruning_fn = MyPruningFn()
-
-
 model = FullyConnectedNet(128, 10, 256)
-# pruning according to L1 Norm
-strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
 
 DG = tp.DependencyGraph()
-# Register your customized layer
+
+# 1. Register your customized layer
+my_pruner = MyPruner()
 DG.register_customized_layer(
     CustomizedLayer, 
-    input_channel_pruner=my_pruning_fn, # A function to prune channels/dimensions of input tensor
-    output_channel_pruner=my_pruning_fn, # A function to prune channels/dimensions of output tensor
-    get_input_channels=lambda l: l.in_dim,  # estimate the n_channel of layer input. Return None if the layer does not change tensor shape.
-    get_output_channels=lambda l: l.in_dim) # estimate the n_channel of layer output. Return None if the layer does not change tensor shape.
+    my_pruner)
 
-# Build dependency graph
+# 2. Build dependency graph
 DG.build_dependency(model, example_inputs=torch.randn(1,128))
-# get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
-pruning_clique = DG.get_pruning_group( model.fc1, tp.prune_linear_out_channel, idxs=strategy(model.fc1.weight, amount=0.4) )
-print(pruning_clique)
 
-# execute this group (prune the model)
-pruning_clique.exec()
-print(model)
+# 3. get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
+pruning_group = DG.get_pruning_group( model.fc1, tp.prune_linear_out_channels, idxs=[0, 1, 6] )
+print(pruning_group)
+
+# 4. execute this group (prune the model)
+pruning_group.exec()
+print("The pruned model:\n", model)
+print("Output: ", model(torch.randn(1,128)).shape)
+
+assert model.fc1.out_features==253 and model.customized_layer.in_dim==253 and model.fc2.in_features==253

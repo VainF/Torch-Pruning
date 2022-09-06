@@ -1,7 +1,6 @@
-from .. import dependency, functional, utils
 from numbers import Number
 from typing import Callable
-from .basepruner import MetaPruner
+from .metapruner import MetaPruner
 from .scheduler import linear_scheduler
 import torch
 import torch.nn as nn
@@ -21,6 +20,7 @@ class BNScalePruner(MetaPruner):
         max_ch_sparsity=1.0,
         round_to=None,
         ignored_layers=None,
+        customized_pruners=None,
         user_defined_parameters=None,
         output_transform=None,
     ):
@@ -36,6 +36,7 @@ class BNScalePruner(MetaPruner):
             max_ch_sparsity=max_ch_sparsity,
             round_to=round_to,
             ignored_layers=ignored_layers,
+            customized_pruners=customized_pruners,
             user_defined_parameters=user_defined_parameters,
             output_transform=output_transform,
         )

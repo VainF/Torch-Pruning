@@ -3,9 +3,9 @@ termcolor
 einops
 tqdm
 torchvision>=0.9.1
-h5py
+
 
 # for main_gat.py
+h5py
 networkx 
-tensorboard
 igraph

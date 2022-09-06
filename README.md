@@ -184,7 +184,7 @@ The following pruning functions are available:
 ```python
 tp.prune_conv_in_channel
 tp.prune_conv_out_channel
-tp.prune_group_conv
+tp.prune_depthwise_conv_out_channels
 tp.prune_batchnorm 
 tp.prune_linear_in_channel 
 tp.prune_linear_out_channel 

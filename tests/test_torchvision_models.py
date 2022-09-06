@@ -42,12 +42,6 @@ from torchvision.models.inception import inception_v3
 from torchvision.models.mnasnet import mnasnet0_5, mnasnet0_75, mnasnet1_0, mnasnet1_3
 from torchvision.models.mobilenetv2 import mobilenet_v2
 from torchvision.models.mobilenetv3 import mobilenet_v3_large, mobilenet_v3_small
-from torchvision.models.convnext import (
-    convnext_tiny,
-    convnext_small,
-    convnext_base,
-    convnext_large,
-)
 from torchvision.models.regnet import (
     regnet_y_400mf,
     regnet_y_800mf,
@@ -129,7 +123,6 @@ if __name__ == "__main__":
 
         ori_size = tp.utils.count_params(model)
         model.cpu().eval()
-        model = tp._helpers.gconv2convs(model)
         ignored_layers = []
         for m in model.modules():
             if isinstance(m, nn.Linear) and m.out_features == 1000:
@@ -149,7 +142,7 @@ if __name__ == "__main__":
             for m in model.modules():
                 if isinstance(m, CNBlock):
                     user_defined_parameters.append(m.layer_scale)
-            tp.functional.prune_parameter.dim = 0
+            tp.function.PrunerBox[tp.ops.OPTYPE.PARAMETER].dim = 0
         importance = tp.importance.MagnitudeImportance(p=1)
         pruner = tp.pruner.MagnitudePruner(
             model,
@@ -166,6 +159,7 @@ if __name__ == "__main__":
             model, VisionTransformer
         ):  # Torchvision uses a static hidden_dim for reshape
             model.hidden_dim = model.conv_proj.out_channels
+            print(model.class_token.shape, model.encoder.pos_embedding.shape)
         print(model)
         with torch.no_grad():
             if isinstance(example_inputs, dict):

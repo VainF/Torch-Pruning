@@ -1,5 +1,4 @@
 import torch.nn as nn
-from . import functional
 import numpy as np
 import torch
 from operator import add
@@ -16,80 +15,6 @@ def is_scalar(x):
     return False
 
 
-class _CustomizedOp(nn.Module):
-    def __init__(self, op_class):
-        self.op_cls = op_class
-
-    def __repr__(self):
-        return "CustomizedOp({})".format(str(self.op_cls))
-
-
-######################################################
-# Dummy module
-class _ConcatOp(nn.Module):
-    def __init__(self):
-        super(_ConcatOp, self).__init__()
-        self.offsets = None
-
-    def __repr__(self):
-        return "_ConcatOp({})".format(self.offsets)
-
-
-class DummyMHA(nn.Module):
-    def __init__(self):
-        super(DummyMHA, self).__init__()
-
-
-class _SplitOp(nn.Module):
-    def __init__(self):
-        super(_SplitOp, self).__init__()
-        self.offsets = None
-
-    def __repr__(self):
-        return "_SplitOp({})".format(self.offsets)
-
-
-class _ElementWiseOp(nn.Module):
-    def __init__(self, grad_fn):
-        super(_ElementWiseOp, self).__init__()
-        self._grad_fn = grad_fn
-
-    def __repr__(self):
-        return "_ElementWiseOp({})".format(self._grad_fn)
-
-
-######################################################
-# Dummy Pruning fn
-class DummyPruner(functional.BasePruner):
-    def __call__(self, layer, *args, **kargs):
-        return layer, {}
-
-    def calc_nparams_to_prune(self, layer, idxs):
-        return 0
-
-    def prune(self, layer, idxs):
-        return layer
-
-
-class ConcatPruner(DummyPruner):
-    pass
-
-
-class SplitPruner(DummyPruner):
-    pass
-
-
-class ElementWiseOpPruner(DummyPruner):
-    pass
-
-
-_prune_concat = ConcatPruner()
-_prune_split = SplitPruner()
-_prune_elementwise_op = ElementWiseOpPruner()
-
-
-######################################################
-# Index transform
 class _FlattenIndexTransform(object):
     def __init__(self, stride=1, reverse=False):
         self._stride = stride
@@ -103,7 +28,8 @@ class _FlattenIndexTransform(object):
                 new_idxs = list(set(new_idxs))
         else:
             for i in idxs:
-                new_idxs.extend(list(range(i * self._stride, (i + 1) * self._stride)))
+                new_idxs.extend(
+                    list(range(i * self._stride, (i + 1) * self._stride)))
         return new_idxs
 
 
@@ -111,6 +37,7 @@ class _ConcatIndexTransform(object):
     def __init__(self, offset, reverse=False):
         self.offset = offset
         self.reverse = reverse
+
     def __call__(self, idxs):
 
         if self.reverse == True:
@@ -157,6 +84,7 @@ class _GroupConvIndexTransform(object):
             )
             max_group_size = int(group_histgram.max())
         return new_idxs
+
 
 class ScalarSum:
     def __init__(self):

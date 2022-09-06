@@ -8,7 +8,6 @@ import torch.nn.functional as F
 
 import torch_pruning as tp
 
-
 class FullyConnectedNet(nn.Module):
     """https://github.com/VainF/Torch-Pruning/issues/21"""
 
@@ -25,19 +24,16 @@ class FullyConnectedNet(nn.Module):
         x3 = F.relu(self.fc3(torch.cat([x1, x2], dim=1)))
         return x1, x2, x3
 
-
 model = FullyConnectedNet([128, 64], [32, 32])
 
-# pruning according to L1 Norm
-strategy = tp.strategy.L1Strategy()  # or tp.strategy.RandomStrategy()
 
 # Build dependency graph
 DG = tp.DependencyGraph()
-DG.build_dependency(model, example_inputs=[torch.randn(1, 128), torch.randn(1, 64)])
+DG.build_dependency(model, example_inputs={'x1': torch.randn(1, 128), 'x2': torch.randn(1, 64)})
 
 # get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
 pruning_group = DG.get_pruning_group(
-    model.fc1, tp.prune_linear_out_channel, idxs=strategy(model.fc1.weight, amount=0.4)
+    model.fc1, tp.prune_linear_out_channels, idxs=[0, 2, 4]
 )
 print(pruning_group)
 
@@ -45,3 +41,8 @@ print(pruning_group)
 pruning_group.exec()
 
 print(model)
+
+print("The pruned model: \n", model)
+print("Output:")
+for o in model(torch.randn(1, 128), torch.randn(1, 64)):
+    print('\t', o.shape)

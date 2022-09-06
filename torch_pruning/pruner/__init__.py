@@ -1,5 +1,2 @@
-from .basepruner import MetaPruner
-from .magnitude_based_pruner import MagnitudePruner
-from .batchnorm_scale_pruner import BNScalePruner
-from .group_norm_pruner import GroupNormPruner
-from .saliency_based_pruner import SaliencyPruner
+from .function import *
+from .algorithms import *

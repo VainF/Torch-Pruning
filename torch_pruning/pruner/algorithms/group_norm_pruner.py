@@ -1,9 +1,9 @@
-from .basepruner import MetaPruner
+from .metapruner import MetaPruner
 from .scheduler import linear_scheduler
-from .. import functional
+from .. import function
 import torch
 import math
-from .._helpers import _FlattenIndexTransform
+from ..._helpers import _FlattenIndexTransform
 
 class GroupNormPruner(MetaPruner):
     def __init__(
@@ -20,6 +20,7 @@ class GroupNormPruner(MetaPruner):
         layer_ch_sparsity=None,
         round_to=None,
         ignored_layers=None,
+        customized_pruners=None,
         user_defined_parameters=None,
         output_transform=None
     ):
@@ -35,6 +36,7 @@ class GroupNormPruner(MetaPruner):
             max_ch_sparsity=max_ch_sparsity,
             round_to=round_to,
             ignored_layers=ignored_layers,
+            customized_pruners=customized_pruners,
             user_defined_parameters=user_defined_parameters,
             output_transform=output_transform,
         )
@@ -55,8 +57,8 @@ class GroupNormPruner(MetaPruner):
                 layer = dep.target.module
                 prune_fn = dep.handler
                 if prune_fn in [
-                    functional.prune_conv_out_channel,
-                    functional.prune_linear_out_channel,
+                    function.prune_conv_out_channels,
+                    function.prune_linear_out_channels,
                 ]:
                     # regularize output channels
                     w = layer.weight.data[idxs].flatten(1)
@@ -64,8 +66,8 @@ class GroupNormPruner(MetaPruner):
                     group_norm += w.pow(2).sum(1)
 
                 elif prune_fn in [
-                    functional.prune_conv_in_channel,
-                    functional.prune_linear_in_channel,
+                    function.prune_conv_in_channels,
+                    function.prune_linear_in_channels,
                 ]:
                     w = (layer.weight)[:, idxs].transpose(0, 1).flatten(1)
                     if (
@@ -82,7 +84,7 @@ class GroupNormPruner(MetaPruner):
                             w = w.view( w.shape[0] // group_norm.shape[0], group_norm.shape[0], w.shape[1] ).transpose(0, 1).flatten(1)
                     group_size += w.shape[1]
                     group_norm += w.pow(2).sum(1)
-                elif prune_fn == functional.prune_batchnorm:
+                elif prune_fn == function.prune_batchnorm_out_channels:
                     # regularize BN
                     if layer.affine is not None:
                         w = layer.weight.data[idxs]
@@ -102,8 +104,8 @@ class GroupNormPruner(MetaPruner):
                 layer = dep.target.module
                 prune_fn = dep.handler
                 if prune_fn in [
-                    functional.prune_conv_out_channel,
-                    functional.prune_linear_out_channel,
+                    function.prune_conv_out_channels,
+                    function.prune_linear_out_channels,
                 ]:
                     # regularize output channels
                     w = layer.weight.data[idxs]
@@ -111,8 +113,8 @@ class GroupNormPruner(MetaPruner):
                     layer.weight.grad.data[idxs]+=self.reg * g 
 
                 elif prune_fn in [
-                    functional.prune_conv_in_channel,
-                    functional.prune_linear_in_channel,
+                    function.prune_conv_in_channels,
+                    function.prune_linear_in_channels,
                 ]:
                     w = layer.weight.data[:, idxs]
                     gn = group_norm
@@ -128,7 +130,7 @@ class GroupNormPruner(MetaPruner):
                     g = w / gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * group_size  #* scale.view( 1, -1, *([1]*(len(w.shape)-2)) )
                     layer.weight.grad.data[:, idxs]+=self.reg*g
 
-                elif prune_fn == functional.prune_batchnorm:
+                elif prune_fn == function.prune_batchnorm_out_channels:
                     # regularize BN
                     if layer.affine is not None:
                         w = layer.weight.data[idxs]
