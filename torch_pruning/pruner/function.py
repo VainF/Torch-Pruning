@@ -51,11 +51,11 @@ class BasePruningFunc(ABC):
         raise NotImplementedError
 
     @abstractclassmethod
-    def get_out_channels(self, layer: nn.Module, idxs: Sequence[int]):
+    def get_out_channels(self, layer: nn.Module):
         raise NotImplementedError
 
     @abstractclassmethod
-    def get_in_channels(self, layer: nn.Module, idxs: Sequence[int]):
+    def get_in_channels(self, layer: nn.Module):
         raise NotImplementedError
 
     def check(self, layer, idxs, to_output):
@@ -68,7 +68,7 @@ class BasePruningFunc(ABC):
             prunable_channels = self.get_in_channels(layer)
         if prunable_channels is not None:
             assert all(idx < prunable_channels and idx >=
-                       0 for idx in idxs), "All pruning indices should lie in [{}, {})".format(0, prunable_channels)
+                       0 for idx in idxs), "All pruning indices should fall into [{}, {})".format(0, prunable_channels)
 
     def __call__(self, layer: nn.Module, idxs: Sequence[int], to_output: bool = True, inplace: bool = True, dry_run: bool = False) -> Tuple[nn.Module, int]:
         idxs.sort()

@@ -159,3 +159,4 @@ def type2class(op_type):
         return TORCH_MHA
     else:
         return _ElementWiseOp
+

@@ -1,0 +1,1 @@
+python -m torch.distributed.launch --nproc_per_node=2 --master_port 18109 --use_env main_imagenet.py --model mobilenet_v2_w_1_4 --epochs 90 --batch-size 96 --lr 0.045 --wd 0.00004 --lr-step-size 1 --lr-gamma 0.98 --cache-dataset --output-dir run/imagenet/pretrain_rmsprop --opt rmsprop

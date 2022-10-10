@@ -1,0 +1,1 @@
+python main.py --mode prune --model resnet56 --batch_size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_norm --speed_up 2.0 --soft_rank 0.5 --global_pruning

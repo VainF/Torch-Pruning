@@ -130,28 +130,28 @@ if __name__ == "__main__":
             elif isinstance(m, nn.modules.linear.NonDynamicallyQuantizableLinear):
                 ignored_layers.append(m) # this module is used in Self-Attention
 
-        user_defined_parameters = None
+        unwrapped_parameters = None
         round_to = None
         if isinstance(
             model, VisionTransformer
         ):  # Torchvision uses a static hidden_dim for reshape
             round_to = model.encoder.layers[0].num_heads
-            user_defined_parameters = [model.class_token, model.encoder.pos_embedding]
+            unwrapped_parameters = [model.class_token, model.encoder.pos_embedding]
         elif isinstance(model, ConvNeXt):
-            user_defined_parameters = []
+            unwrapped_parameters = []
             for m in model.modules():
                 if isinstance(m, CNBlock):
-                    user_defined_parameters.append(m.layer_scale)
+                    unwrapped_parameters.append(m.layer_scale)
             tp.function.PrunerBox[tp.ops.OPTYPE.PARAMETER].dim = 0
         importance = tp.importance.MagnitudeImportance(p=1)
         pruner = tp.pruner.MagnitudePruner(
             model,
             example_inputs=example_inputs,
             importance=importance,
-            pruning_steps=1,
+            iterative_steps=1,
             ch_sparsity=0.5,
             round_to=round_to,
-            user_defined_parameters=user_defined_parameters,
+            unwrapped_parameters=unwrapped_parameters,
             ignored_layers=ignored_layers,
         )
         pruner.step()

@@ -20,7 +20,7 @@ class SaliencyPruner(MetaPruner):
         return self.accum_imp[group]
 
     def prune_local(self):
-        if self.current_step == self.pruning_steps:
+        if self.current_step == self.iterative_steps:
             return
         for group in self.groups:
             # check pruning rate
@@ -50,7 +50,7 @@ class SaliencyPruner(MetaPruner):
                     group.exec()
 
     def prune_global(self):
-        if self.current_step == self.pruning_steps:
+        if self.current_step == self.iterative_steps:
             return
 
         global_importance = []
@@ -81,5 +81,5 @@ class SaliencyPruner(MetaPruner):
 
             group = self.DG.get_pruning_group(
                 module, pruning_fn, pruning_indices)
-            if self._check_sparsity(group) and self.DG.check_pruning_group(group):
+            if self.DG.check_pruning_group(group):
                 group.exec()

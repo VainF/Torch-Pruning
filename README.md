@@ -146,17 +146,17 @@ for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m)
 
-pruning_steps = 5 
+iterative_steps = 5 
 pruner = tp.pruner.LocalMagnitudePruner( 
     model,
     example_inputs,
     importance=imp,
-    pruning_steps=pruning_steps, # number of iterations
+    iterative_steps=iterative_steps, # number of iterations
     ch_sparsity=0.5, # channel sparsity
     ignored_layers=ignored_layers, # ignored_layers will not be pruned
 )
 
-for i in range(pruning_steps): # iterative pruning
+for i in range(iterative_steps): # iterative pruning
     pruner.step()
     print(
         "  Params: %.2f M => %.2f M"
@@ -196,10 +196,6 @@ tp.prune_multihead_attention
 ```
 
 You can prune your model manually without DependencyGraph:
-
-
-### 4. Group Convs
-We provide a tool `tp.utils.gconv2convs()`  to transform Group Conv to a group of vanilla convs. Please refer to [test_convnext.py](tests/test_convnext.py) for more details.
 
 ### 5. Customized Layers
 

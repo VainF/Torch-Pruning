@@ -1,0 +1,1 @@
+python -m torch.distributed.launch --nproc_per_node=1 --master_port 18108 --use_env main_distributed.py --model resnet50 --epochs 90 --batch-size 256 --lr 0.01 --prune --cache-dataset --method group_norm --sentinel_perc 0.5 --pretrained --output-dir run/imagenet_v2/resnet50_gnorm --target_flops 2.05 --global_pruning

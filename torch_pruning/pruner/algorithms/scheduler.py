@@ -1,3 +1,3 @@
 
-def linear_scheduler(layer_ch_sparsity, steps):
-    return [((i + 1) / float(steps)) * layer_ch_sparsity for i in range(steps)]
+def linear_scheduler(ch_sparsity_dict, steps):
+    return [((i + 1) / float(steps)) * ch_sparsity_dict for i in range(steps)]

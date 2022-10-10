@@ -28,7 +28,7 @@ class Node(object):
 
         # Dependency Graph
         self.dependencies = []  # Adjacency List
-        self.enable_index_transform = True
+        self.enable_index_mapping = True
 
     @property
     def name(self):
@@ -66,8 +66,8 @@ class Node(object):
         fmt += " " * 4 + "DEP:\n"
         for dep in self.dependencies:
             fmt += " " * 8 + "{}\n".format(dep)
-        fmt += "\tEnable_index_transform={}\n".format(
-            self.enable_index_transform)
+        fmt += "\tEnable_index_mapping={}\n".format(
+            self.enable_index_mapping)
         fmt = "-" * 32 + "\n"
         return fmt
 
@@ -82,7 +82,7 @@ class Dependency(Edge):
         handler,
         source: Node,
         target: Node,
-        index_transform: typing.Callable = None,
+        index_mapping: typing.Callable = None,
     ):
         """Layer dependency (Edge of DepGraph) in structral neural network pruning. 
 
@@ -91,13 +91,13 @@ class Dependency(Edge):
             handler (Callable): the pruning function that fixes the broken dependency
             source (nn.Module): the source node pruned by trigger
             target (nn.Module): the target node pruned by handler
-            index_transform (Callable): a callable function to transform the pruning indices
+            index_mapping (Callable): a callable function to transform the pruning indices
         """
         self.trigger = trigger
         self.handler = handler
         self.source = source
         self.target = target
-        self.index_transform = index_transform
+        self.index_mapping = index_mapping
 
     def __call__(self, idxs: list):
         result = self.handler(
@@ -213,9 +213,9 @@ class DependencyGraph(object):
         forward_fn: typing.Callable[[
             torch.nn.Module, typing.Union[torch.Tensor, typing.Sequence]], torch.Tensor] = None,
         output_transform: typing.Callable = None,
-        verbose: bool = True,
-        user_defined_parameters: typing.List = None,
+        unwrapped_parameters: typing.List[nn.Parameter] = None,
         customized_pruners: typing.Dict[typing.Any, function.BasePruningFunc] = None,
+        verbose: bool = True,
     ):
         """Build a dependency graph by tracing.
 
@@ -224,6 +224,8 @@ class DependencyGraph(object):
             example_inputs (torch.Tensor or List): dummy inputs for tracing.
             forward_fn (Callable): a function to run the model with example_inputs, which returns a reduced tensor
             output_transform (Callable): a function to transform network outputs.
+            unwrapped_parameters (List): unwrapped parameters defined by users.
+            customized_pruners (typing.Dict[typing.Any, function.BasePruningFunc]): pruners for customized layers.
             verbose (Callable): verbose mode.
         """
 
@@ -231,25 +233,25 @@ class DependencyGraph(object):
         self.model = model
         self._module2name = {module: name for (
             name, module) in model.named_modules()}
+
         # user-defined nn.Parameters & customized modules
-        if user_defined_parameters is None:
-            user_defined_parameters = []
-        self.user_defined_parameters = user_defined_parameters
+        if unwrapped_parameters is None:
+            unwrapped_parameters = []
+        self.unwrapped_parameters = unwrapped_parameters
         if customized_pruners is not None:
             for customized_module, customized_pruner in self.customized_pruners.items():
                 self.register_customized_layer(customized_module, customized_pruner)
         
         # Build computational graph by tracing.
-        # It returns the mapping between modules to nodes.
         self.module2node = self._trace(
             model, example_inputs, forward_fn, output_transform=output_transform
         )
 
-        # Build the dependency graph onto the computational graph.
+        # Build the dependency graph
         self._build_dependency(self.module2node)
 
         # Update index transform
-        self.update_index_transform()
+        self.update_index_mapping()
         return self
 
     def register_customized_layer(
@@ -300,7 +302,7 @@ class DependencyGraph(object):
         if isinstance(idxs, Number):
             idxs = [idxs]
 
-        self.update_index_transform()
+        self.update_index_mapping()
         group = DependencyGroup()
         #  the user pruning operation
         root_node = self.module2node[module]
@@ -321,8 +323,8 @@ class DependencyGraph(object):
                 for new_dep in node.dependencies:
                     if new_dep.is_triggered_by(fn):
                         new_indices = (
-                            new_dep.index_transform(idxs)
-                            if new_dep.index_transform is not None
+                            new_dep.index_mapping(idxs)
+                            if new_dep.index_mapping is not None
                             else idxs
                         )
                         if len(new_indices) == 0:
@@ -408,7 +410,7 @@ class DependencyGraph(object):
         # Note that for some units like BN and PReLU, pruning output channels is equivalent to pruning output_channels
         # Rule 2) is designed for this case.
 
-        for module, node in module2node.items():
+        for _, node in module2node.items():
             # Rule 1) - Input connections
             for in_node in node.inputs:
                 handler = self.REGISTERED_PRUNERS.get(in_node.type)
@@ -443,7 +445,7 @@ class DependencyGraph(object):
                 )
                 node.dependencies.append(dep)
 
-            # Rule 3) - equivalent pruning operations
+            # Rule 2) - out_channel pruner == in_channel pruner
             # if output_channel_pruner and input_channel_pruner are defined to be equivalent，
             # then they should trigger each other.
             # Here we use an identical function for modules with self-dependency,
@@ -508,14 +510,14 @@ class DependencyGraph(object):
         # This is a corner case for pruning ViT,
         # where concatination of pos_emb and cls_emv is not applied on the feature dim.
         # Notably, this is a bad practice and will be fixed in the future version
-        if len(self.user_defined_parameters) > 0:
+        if len(self.unwrapped_parameters) > 0:
             for node in module2node.values():
                 if node.type in (ops.OPTYPE.CONCAT, ops.OPTYPE.SPLIT):
                     stack = [node]
                     while len(stack) > 0:
                         n = stack.pop(-1)
                         if n.type == ops.OPTYPE.PARAMETER and len(n.module.shape) == 3:
-                            node.enable_index_transform = False
+                            node.enable_index_mapping = False
                             break
                         else:
                             stack.extend(n.inputs)
@@ -583,14 +585,14 @@ class DependencyGraph(object):
                             and "accumulategrad" in f[0].name().lower()
                         ):  # a leaf variable.
                             # User-defined nn.Parameter like pos_emb of ViT should be handled carefully
-                            is_user_defined_param = False
-                            for (j, p) in enumerate(self.user_defined_parameters):
+                            is_unwrapped_param = False
+                            for (j, p) in enumerate(self.unwrapped_parameters):
                                 if f[0].variable is p:
-                                    is_user_defined_param = True
+                                    is_unwrapped_param = True
                                     gradfn2module[f[0]] = p
                                     self._module2name[p] = "UserParameter_{}".format(
                                         j)
-                            if not is_user_defined_param:
+                            if not is_unwrapped_param:
                                 continue
                         input_node = create_node_if_not_exists(f[0])
                         node.add_input(input_node)
@@ -599,17 +601,17 @@ class DependencyGraph(object):
             visited.add(grad_fn)
         return module2node
 
-    def update_index_transform(self):
+    def update_index_mapping(self):
         for module, node in self.module2node.items():
             if node.type == ops.OPTYPE.LINEAR:
                 # for Conv-Flatten-Linear (e.g., VGG)
-                self._update_flatten_index_transform(node)
+                self._update_flatten_index_mapping(node)
             if node.type == ops.OPTYPE.CONCAT:
-                self._update_concat_index_transform(node)
+                self._update_concat_index_mapping(node)
             if node.type == ops.OPTYPE.SPLIT:
-                self._update_split_index_transform(node)
+                self._update_split_index_mapping(node)
 
-    def _update_flatten_index_transform(self, fc_node: Node):
+    def _update_flatten_index_mapping(self, fc_node: Node):
         if fc_node.type != ops.OPTYPE.LINEAR:
             return
         fc_in_features = fc_node.module.in_features
@@ -627,17 +629,17 @@ class DependencyGraph(object):
             for in_node in fc_node.inputs:
                 for dep in fc_node.dependencies:
                     if dep.target == in_node:
-                        dep.index_transform = _helpers._FlattenIndexTransform(
+                        dep.index_mapping = _helpers._FlattenIndexTransform(
                             stride=stride, reverse=True
                         )
 
                 for dep in in_node.dependencies:
                     if dep.target == fc_node:
-                        dep.index_transform = _helpers._FlattenIndexTransform(
+                        dep.index_mapping = _helpers._FlattenIndexTransform(
                             stride=stride, reverse=False
                         )
 
-    def _update_concat_index_transform(self, cat_node: Node):
+    def _update_concat_index_mapping(self, cat_node: Node):
         if cat_node.type != ops.OPTYPE.CONCAT:
             return
         chs = []
@@ -652,19 +654,19 @@ class DependencyGraph(object):
         for i, in_node in enumerate(cat_node.inputs):
             for dep in cat_node.dependencies:
                 if dep.target == in_node:
-                    if cat_node.enable_index_transform:
-                        dep.index_transform = _helpers._ConcatIndexTransform(
+                    if cat_node.enable_index_mapping:
+                        dep.index_mapping = _helpers._ConcatIndexTransform(
                             offset=offsets[i: i + 2], reverse=True
                         )
 
             for dep in in_node.dependencies:
                 if dep.target == cat_node:
-                    if cat_node.enable_index_transform:
-                        dep.index_transform = _helpers._ConcatIndexTransform(
+                    if cat_node.enable_index_mapping:
+                        dep.index_mapping = _helpers._ConcatIndexTransform(
                             offset=offsets[i: i + 2], reverse=False
                         )
 
-    def _update_split_index_transform(self, split_node: Node):
+    def _update_split_index_mapping(self, split_node: Node):
         if split_node.type != ops.OPTYPE.SPLIT:
             return
 
@@ -680,14 +682,14 @@ class DependencyGraph(object):
         for i, out_node in enumerate(split_node.outputs):
             for dep in split_node.dependencies:
                 if dep.target == out_node:
-                    if split_node.enable_index_transform:
-                        dep.index_transform = _helpers._SplitIndexTransform(
+                    if split_node.enable_index_mapping:
+                        dep.index_mapping = _helpers._SplitIndexTransform(
                             offset=offsets[i: i + 2], reverse=False
                         )
 
             for dep in out_node.dependencies:
                 if dep.target == split_node:
-                    if split_node.enable_index_transform:
-                        dep.index_transform = _helpers._SplitIndexTransform(
+                    if split_node.enable_index_mapping:
+                        dep.index_mapping = _helpers._SplitIndexTransform(
                             offset=offsets[i: i + 2], reverse=True
                         )

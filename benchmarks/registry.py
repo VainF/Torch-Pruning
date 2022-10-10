@@ -6,7 +6,7 @@ PngImagePlugin.MAX_TEXT_CHUNK = LARGE_ENOUGH_NUMBER * (1024**2)
 import os, sys
 import engine.models as models
 import engine.utils as utils
-
+from functools import partial
 NORMALIZE_DICT = {
     'cifar10':  dict( mean=(0.4914, 0.4822, 0.4465), std=(0.2023, 0.1994, 0.2010) ),
     'cifar100': dict( mean=(0.5071, 0.4867, 0.4408), std=(0.2675, 0.2565, 0.2761) ),
@@ -79,13 +79,15 @@ IMAGENET_MODEL_DICT={
     "resnet50": models.imagenet.resnet50, 
     "densenet121": models.imagenet.densenet121,
     "mobilenet_v2": models.imagenet.mobilenet_v2,
+    "mobilenet_v2_w_1_4": partial( models.imagenet.mobilenet_v2,  width_mult=1.4 ),
     "googlenet": models.imagenet.googlenet,
     "inception_v3": models.imagenet.inception_v3,
     "squeezenet1_1": models.imagenet.squeezenet1_1,
     "vgg19_bn": models.imagenet.vgg19_bn,
     "vgg16_bn": models.imagenet.vgg16_bn,
     "mnasnet1_0": models.imagenet.mnasnet1_0,
-    "alexnet": models.imagenet.alexnet
+    "alexnet": models.imagenet.alexnet,
+    "regnet_x_1_6gf": models.imagenet.regnet_x_1_6gf
 }
 
 GRAPH_MODEL_DICT = {
@@ -139,41 +141,6 @@ def get_dataset(name: str, data_root: str='data', return_transform=False):
         train_dst = datasets.CIFAR100(data_root, train=True, download=True, transform=train_transform)
         val_dst = datasets.CIFAR100(data_root, train=False, download=True, transform=val_transform)
         input_size = (1, 3, 32, 32)
-    elif name=='cifar10_224':
-        num_classes = 10
-        train_transform = T.Compose([
-            T.RandomCrop(32, padding=4),
-            T.RandomHorizontalFlip(),
-            T.Resize(224),
-            T.ToTensor(),
-            T.Normalize( **NORMALIZE_DICT[name] ),
-        ])
-        val_transform = T.Compose([
-            T.ToTensor(),
-            T.Normalize( **NORMALIZE_DICT[name] ),
-        ])
-        data_root = os.path.join( data_root, 'torchdata' )
-        train_dst = datasets.CIFAR10(data_root, train=True, download=False, transform=train_transform)
-        val_dst = datasets.CIFAR10(data_root, train=False, download=False, transform=val_transform)
-        input_size = (1, 3, 224, 224)
-    elif name=='cifar100_224':
-        num_classes = 100
-        train_transform = T.Compose([
-            T.RandomCrop(32, padding=4),
-            T.RandomHorizontalFlip(),
-            T.Resize(224),
-            T.ToTensor(),
-            T.Normalize( **NORMALIZE_DICT[name] ),
-        ])
-        val_transform = T.Compose([
-            T.Resize(224),
-            T.ToTensor(),
-            T.Normalize( **NORMALIZE_DICT[name] ),
-        ])
-        data_root = os.path.join( data_root, 'torchdata' ) 
-        train_dst = datasets.CIFAR100(data_root, train=True, download=True, transform=train_transform)
-        val_dst = datasets.CIFAR100(data_root, train=False, download=True, transform=val_transform)
-        input_size = (1, 3, 224, 224)
     elif name=='modelnet40':
         num_classes=40
         train_dst = utils.datasets.ModelNet40(data_root=data_root, partition='train', num_points=1024)

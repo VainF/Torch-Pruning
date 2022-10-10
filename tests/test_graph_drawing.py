@@ -23,15 +23,15 @@ class Net(nn.Module):
 
 model = densenet121() #densenet121() #resnet18() #densenet121()
 
-user_defined_parameters = None
+unwrapped_parameters = None
 round_to = None
 if isinstance(
     model, VisionTransformer
 ):  # Torchvision uses a static hidden_dim for reshape
     round_to = model.encoder.layers[0].num_heads
-    user_defined_parameters = [model.class_token, model.encoder.pos_embedding]
+    unwrapped_parameters = [model.class_token, model.encoder.pos_embedding]
 
-DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1, 3, 224, 224), user_defined_parameters=user_defined_parameters)
+DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1, 3, 224, 224), unwrapped_parameters=unwrapped_parameters)
 tp.utils.draw_computational_graph(DG, save_as='draw_comp_graph.pdf', title=None)
 tp.utils.draw_dependency_graph(DG, save_as='draw_dep_graph.pdf', title=None)
 tp.utils.draw_groups(DG, save_as='draw_groups.pdf', title=None)
