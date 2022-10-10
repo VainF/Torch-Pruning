@@ -15,3 +15,8 @@ ours.sh
 benchmarks/draw
 tests/*.png
 tests/*.pdf
+modelnet40_ply_hdf5_2048.zip
+modelnet40_ply_hdf5_2048
+benchmarks/draw
+torch_pruning_v1.0
+torch_pruning_bak
