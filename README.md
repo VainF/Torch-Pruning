@@ -48,12 +48,6 @@ The pipeline can be visualized as the following images:
 git clone https://github.com/VainF/Torch-Pruning.git # recommended
 ```
 
-or
-
-```bash
-pip install torch_pruning # v0.2.8
-```
-
 ## Quickstart
   
 ### 0. Dependency
