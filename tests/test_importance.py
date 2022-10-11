@@ -14,17 +14,11 @@ DG.build_dependency(model, example_inputs=example_inputs)
 pruning_idxs = list( range( DG.get_out_channels(model.conv1) ))
 pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=pruning_idxs)
 
-#saliency_importance = tp.importance.SaliencyImportance(reduction='mean')
-#out = model(example_inputs)
-#loss = out.sum()
-#sen_imp = saliency_importance(loss, pruning_group)
-#print(sen_imp)
-
-magnitude_importance = tp.importance.MagnitudeImportance(p=2, reduction='mean')
+magnitude_importance = tp.importance.MagnitudeImportance(p=2)
 mag_imp = magnitude_importance(pruning_group)
 print(mag_imp)
 
-bn_scale_importance = tp.importance.BNScaleImportance(reduction='mean')
+bn_scale_importance = tp.importance.BNScaleImportance()
 bn_imp = bn_scale_importance(pruning_group)
 print(bn_imp)
 

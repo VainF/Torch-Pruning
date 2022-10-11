@@ -88,10 +88,10 @@ def get_args_parser(add_help=True):
     parser.add_argument("--sentinel-perc", type=float, default=0.5)
     parser.add_argument("--reg", type=float, default=1e-5)
     parser.add_argument("--max-ch-sparsity", default=1.0, type=float, help="maximum channel sparsity")
-    parser.add_argument("--sl-epochs", type=int, default=90)
-    parser.add_argument("--sl-lr", default=0.01, type=float, help="learning rate")
-    parser.add_argument("--sl-lr-step-size", default=30, type=int, help="milestones for learning rate decay")
-    parser.add_argument("--sl-lr-warmup-epochs", default=0, type=int, help="the number of epochs to warmup (default: 0)")
+    parser.add_argument("--sl-epochs", type=int, default=None)
+    parser.add_argument("--sl-lr", default=None, type=float, help="learning rate")
+    parser.add_argument("--sl-lr-step-size", default=None, type=int, help="milestones for learning rate decay")
+    parser.add_argument("--sl-lr-warmup-epochs", default=None, type=int, help="the number of epochs to warmup (default: 0)")
     return parser
 
 def prune_to_target_flops(pruner, model, target_flops, example_inputs):
@@ -113,7 +113,7 @@ def get_pruner(model, example_inputs, args):
         imp = tp.importance.RandomImportance()
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "l1":
-        imp = tp.importance.LpNormImportance(p=1)
+        imp = tp.importance.MagnitudeImportance(p=1)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "lamp":
         imp = tp.importance.LAMPImportance(p=2, to_group=False)
@@ -361,7 +361,11 @@ def main(args):
         pruner = get_pruner(model, example_inputs=example_inputs, args=args)
         if args.sparsity_learning:
             print("Sparsifying model...")
-            model_without_ddp = train(model, args.epochs, 
+            if args.sl_lr is None: args.sl_lr = args.lr
+            if args.sl_lr_step_size is None: args.sl_lr_step_size = args.lr_step_size
+            if args.sl_lr_warmup_epochs is None: args.sl_lr_warmup_epochs = args.lr_warmup_epochs
+            if args.sl_epochs is None: args.sl_epochs = args.epochs
+            model_without_ddp = train(model, args.sl_epochs, 
                                     lr=args.sl_lr, lr_step_size=args.sl_lr_step_size, lr_warmup_epochs=args.sl_lr_warmup_epochs, 
                                     train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
                                     device=device, args=args, regularizer=pruner.regularize)
@@ -383,14 +387,14 @@ def main(args):
     train(model, args.epochs, 
             lr=args.lr, lr_step_size=args.lr_step_size, lr_warmup_epochs=args.lr_warmup_epochs, 
             train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
-            device=device, args=args, regularizer=None)
+            device=device, args=args, regularizer=None, state_dict_only=args.prune)
 
 def train(
     model, 
     epochs, 
     lr, lr_step_size, lr_warmup_epochs, 
     train_sampler, data_loader, data_loader_test, 
-    device, args, regularizer=None):
+    device, args, regularizer=None, state_dict_only=True):
 
     model.to(device)
     if args.distributed and args.sync_bn:
@@ -518,7 +522,7 @@ def train(
             acc = evaluate(model_ema, criterion, data_loader_test, device=device, log_suffix="EMA")
         if args.output_dir:
             checkpoint = {
-                "model": model_without_ddp.state_dict(),
+                "model": model_without_ddp.state_dict() if state_dict_only else model_without_ddp,
                 "optimizer": optimizer.state_dict(),
                 "lr_scheduler": lr_scheduler.state_dict(),
                 "epoch": epoch,

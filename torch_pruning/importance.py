@@ -60,7 +60,7 @@ class Importance(abc.ABC):
     def __call__(self, group)-> torch.Tensor:
         raise NotImplementedError
 
-class LpNormImportance(Importance):
+class MagnitudeImportance(Importance):
     def __init__(self, p=1, to_group=False, group_reduction="mean", normalizer=ReducingNormalizer(reduction='mean')):
         self.p = p
         self.to_group = to_group
@@ -130,7 +130,7 @@ class LpNormImportance(Importance):
         return group_imp
 
 
-class SaliencyImportance(LpNormImportance):
+class SaliencyImportance(MagnitudeImportance):
     def __init__(self, p=1, to_group=False, group_reduction='mean', normalizer=ReducingNormalizer(reduction='mean')):
         super().__init__(p=p, to_group=to_group, group_reduction=group_reduction, normalizer=normalizer)
 
@@ -172,7 +172,7 @@ class SaliencyImportance(LpNormImportance):
         return -group_imp
 
 
-class BNScaleImportance(LpNormImportance):
+class BNScaleImportance(MagnitudeImportance):
     def __init__(self, to_group=False, group_reduction="mean", normalizer=None):
         super().__init__(p=1, to_group=to_group, group_reduction=group_reduction, normalizer=normalizer)
     
@@ -193,7 +193,7 @@ class BNScaleImportance(LpNormImportance):
         return group_imp
 
 
-class LAMPImportance(LpNormImportance):
+class LAMPImportance(MagnitudeImportance):
     def __init__(self, p=2, to_group=False, group_reduction="mean", normalizer=None):
         super().__init__(p=p, to_group=to_group, group_reduction=group_reduction, normalizer=normalizer)
 
@@ -260,7 +260,7 @@ class LAMPImportance(LpNormImportance):
         return sorted_imp[inversed_idx]
 
 
-class GroupNormImportance(LpNormImportance):
+class GroupNormImportance(MagnitudeImportance):
     def __init__(self, p=2, to_group=False, soft_rank=0.5, group_reduction="mean", normalizer=SentinelNormalizer(percentage=0.5)):
         super().__init__(p=p, to_group=to_group, group_reduction=group_reduction, normalizer=normalizer)
         
@@ -326,7 +326,7 @@ class RandomImportance(Importance):
         _, idxs = group[0]
         return torch.rand(len(idxs))
 
-class GroupConvImportance(LpNormImportance):
+class GroupConvImportance(MagnitudeImportance):
     def __init__(self, p=2, to_group=False, group_reduction="mean", normalizer=SentinelNormalizer(percentage=0.5)):
         super().__init__(p=p, to_group=to_group, group_reduction=group_reduction, normalizer=normalizer)
 

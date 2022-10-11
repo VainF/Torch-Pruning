@@ -42,7 +42,12 @@ class FullyConnectedNet(nn.Module):
 
 ############################
 # Implement your pruning function for the customized layer
-#
+# You should implement the following class fucntions:
+# 1. prune_out_channels
+# 2. prune_in_channels
+# 3. get_out_channels
+# 4. get_in_channels
+
 class MyPruner(tp.pruner.BasePruningFunc):
 
     def prune_out_channels(self, layer: CustomizedLayer, idxs: Sequence[int]) -> nn.Module: 

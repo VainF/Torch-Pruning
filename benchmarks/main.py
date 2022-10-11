@@ -165,7 +165,7 @@ def get_pruner(model, example_inputs):
         imp = tp.importance.RandomImportance()
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "l1":
-        imp = tp.importance.LpNormImportance(p=1)
+        imp = tp.importance.MagnitudeImportance(p=1)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "l1_group_conv":
         imp = tp.importance.GroupConvImportance(p=1)
