@@ -19,6 +19,9 @@ python main.py --mode prune --model resnet56 --batch_size 128 --restore run/cifa
 ```
 
 ## ImageNet
+
+* ResNet50 Pruning, L1 Pruner, 2.00 GFlops
+
 ```python
-python -m torch.distributed.launch --nproc_per_node=2 --master_port 18119 --use_env main_imagenet.py --model resnet50 --epochs 90 --batch-size 128 --lr-step-size 30 --lr 0.01 --prune --method group_sl --global-pruning --sentinel-perc 0.5 --pretrained --output-dir run/imagenet/resnet50_sl --target-flops 2.04  --sl-epochs 30 --sl-lr 0.01 --sl-lr-step-size 10 --cache-dataset --reg 1e-5 --print-freq 1000 --workers 8
+python -m torch.distributed.launch --nproc_per_node=4 --master_port 18119 --use_env main_imagenet.py --model resnet50 --epochs 90 --batch-size 64 --lr-step-size 30 --lr 0.01 --prune --method l1 --pretrained --output-dir run/imagenet/resnet50_sl --target-flops 2.00 --cache-dataset --print-freq 100 --workers 16
 ```
