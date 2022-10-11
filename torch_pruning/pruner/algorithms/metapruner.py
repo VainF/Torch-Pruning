@@ -220,8 +220,8 @@ class MetaPruner():
 
                 if n_pruned<=0: 
                     continue
-
-                imp = imp.view(ch_groups, -1).sum(0)
+                if ch_groups>1:
+                    imp = imp[:len(imp)//ch_groups]
                 imp_argsort = torch.argsort(imp)
                 pruning_idxs = imp_argsort[:(n_pruned//ch_groups)]
                 if ch_groups>1:
@@ -242,7 +242,8 @@ class MetaPruner():
             if self._check_sparsity(group):
                 ch_groups = self.get_channel_groups(group)
                 imp = self.estimate_importance(group, ch_groups=ch_groups)
-                imp = imp.view(ch_groups, -1).sum(0)
+                if ch_groups>1:
+                    imp = imp[:len(imp)//ch_groups]
                 global_importance.append((group, ch_groups, imp))
             
         imp = torch.cat([local_imp[-1] for local_imp in global_importance], dim=0)

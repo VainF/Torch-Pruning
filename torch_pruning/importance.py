@@ -49,6 +49,8 @@ class SentinelNormalizer():
             self._k[m] = k
         else:
             k = self._k[m]
+        div = imp.topk(k=min(k, len(imp)), dim=0, largest=True)[0][-1]
+        #print((imp>div).sum(), len(imp), m, imp.min(), imp.topk(k=min(k, len(imp)), dim=0, largest=True)[0][-1])
         imp = imp / imp.topk(k=min(k, len(imp)), dim=0, largest=True)[0][-1]
         return imp
 
@@ -260,14 +262,15 @@ class LAMPImportance(MagnitudeImportance):
         return sorted_imp[inversed_idx]
 
 
-class GroupNormImportance(MagnitudeImportance):
-    def __init__(self, p=2, to_group=False, soft_rank=0.5, group_reduction="mean", normalizer=SentinelNormalizer(percentage=0.5)):
-        super().__init__(p=p, to_group=to_group, group_reduction=group_reduction, normalizer=normalizer)
+class GroupNormImportance(Importance):
+    def __init__(self, p=2, normalizer=SentinelNormalizer(percentage=0.5)):
+        self.p = p
+        self.normalizer = normalizer
         
     @torch.no_grad()
     def __call__(self, group, ch_groups=1):
         group_norm = 0
-        group_size = 0
+        #group_size = 0
         # Get group norm
         for dep, idxs in group:
             idxs.sort()
@@ -279,8 +282,13 @@ class GroupNormImportance(MagnitudeImportance):
             ]:
                 # regularize output channels
                 w = layer.weight.data[idxs].flatten(1)
-                group_size += w.shape[1]
-                group_norm += w.abs().pow(self.p).sum(1)
+                #group_size += w.shape[1]
+                local_norm = w.abs().pow(self.p).sum(1)
+                if ch_groups>1:
+                    local_norm = local_norm.view(ch_groups, -1).sum(0)
+                    local_norm = local_norm.repeat(ch_groups)
+                group_norm+=local_norm
+
             elif prune_fn in [
                 function.prune_conv_in_channels,
                 function.prune_linear_in_channels,
@@ -302,18 +310,24 @@ class GroupNormImportance(MagnitudeImportance):
                     else:
                         w = w.view(w.shape[0] // group_norm.shape[0],
                                    group_norm.shape[0], w.shape[1]).transpose(0, 1).flatten(1)
-                group_size += w.shape[1]
+                #group_size += w.shape[1]
                 local_norm = w.abs().pow(self.p).sum(1)
                 #if w.shape[0]!=group_norm.shape[0] and ch_groups>1:
                 if ch_groups>1:
+                    if len(local_norm)==len(group_norm):
+                        local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
                 #print(layer, local_norm.shape, group_norm.shape, ch_groups)
                 group_norm += local_norm[idxs]
             elif prune_fn == function.prune_batchnorm_out_channels:
                 if layer.affine is not None:
                     w = layer.weight.data[idxs]
-                    group_norm += w.abs().pow(self.p)
-                    group_size += 1
+                    local_norm = w.abs().pow(self.p)
+                    if ch_groups>1:
+                        local_norm = local_norm.view(ch_groups, -1).sum(0)
+                        local_norm = local_norm.repeat(ch_groups)
+                    group_norm += local_norm
+                    #group_size += 1
         group_imp = group_norm**(1/self.p)
         if self.normalizer is not None:
             group_imp = self.normalizer(group, group_imp)

@@ -83,7 +83,7 @@ def get_args_parser(add_help=True):
     # pruning parameters
     parser.add_argument("--prune", action="store_true")
     parser.add_argument("--method", type=str, default='l1')
-    parser.add_argument("--global-pruning", action="store_true")
+    parser.add_argument("--global-pruning", default=False, action="store_true")
     parser.add_argument("--target-flops", type=float, default=2.0, help="GFLOPs of pruned model")
     parser.add_argument("--sentinel-perc", type=float, default=0.5)
     parser.add_argument("--reg", type=float, default=1e-5)
@@ -123,11 +123,11 @@ def get_pruner(model, example_inputs, args):
         imp = tp.importance.BNScaleImportance(to_group=False)
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
     elif args.method == "group_norm":
-        imp = tp.importance.GroupNormImportance(p=2, to_group=True, normalizer=tp.importance.SentinelNormalizer(args.sentinel_perc))
+        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.SentinelNormalizer(args.sentinel_perc))
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)
     elif args.method == "group_sl":
         sparsity_learning = True
-        imp = tp.importance.GroupNormImportance(p=2, to_group=True, normalizer=tp.importance.SentinelNormalizer(args.sentinel_perc))
+        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.SentinelNormalizer(args.sentinel_perc))
         pruner_entry = partial(tp.pruner.GroupNormPruner, reg=args.reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
