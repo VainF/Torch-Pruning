@@ -98,7 +98,7 @@ def prune_to_target_flops(pruner, model, target_flops, example_inputs):
     model.eval()
     ori_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
     pruned_ops = ori_ops
-    while pruned_ops > target_flops*1e9:
+    while pruned_ops / 1e9 > target_flops:
         pruner.step()
         pruned_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
     return pruned_ops
@@ -350,10 +350,13 @@ def main(args):
     print("Creating model")
     model = registry.get_model(num_classes=1000, name=args.model, pretrained=args.pretrained, target_dataset='imagenet') #torchvision.models.__dict__[args.model](pretrained=args.pretrained) #torchvision.models.get_model(args.model, weights=args.weights, num_classes=num_classes)
     model.eval()
+    print("="*16)
+    print(model)
     example_inputs = torch.randn(1, 3, 224, 224)
     base_ops, base_params = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
     print("Params: {:.4f} M".format(base_params / 1e6))
     print("ops: {:.4f} G".format(base_ops / 1e9))
+    print("="*16)
     if args.prune:
         pruner = get_pruner(model, example_inputs=example_inputs, args=args)
         if args.sparsity_learning:
@@ -369,10 +372,13 @@ def main(args):
         print("Pruning model...")
         prune_to_target_flops(pruner, model, args.target_flops, example_inputs)
         pruned_ops, pruned_size = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
+        print("="*16)
+        print("After pruning:")
         print(model)
         print("Params: {:.2f} M => {:.2f} M ({:.2f}%)".format(base_params / 1e6, pruned_size / 1e6, pruned_size / base_params * 100))
         print("Ops: {:.2f} G => {:.2f} G ({:.2f}%, {:.2f}X )".format(base_ops / 1e9, pruned_ops / 1e9, pruned_ops / base_ops * 100, base_ops / pruned_ops))
-    
+        print("="*16)
+
     print("Finetuning..." if args.prune else "Training...")
     train(model, args.epochs, 
             lr=args.lr, lr_step_size=args.lr_step_size, lr_warmup_epochs=args.lr_warmup_epochs, 
@@ -500,14 +506,16 @@ def train(
         return
     
     start_time = time.time()
+    best_acc = 0
+    prefix = '' if regularizer is None else 'regularized_'
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
         train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema, scaler, regularizer)
         lr_scheduler.step()
-        evaluate(model, criterion, data_loader_test, device=device)
+        acc = evaluate(model, criterion, data_loader_test, device=device)
         if model_ema:
-            evaluate(model_ema, criterion, data_loader_test, device=device, log_suffix="EMA")
+            acc = evaluate(model_ema, criterion, data_loader_test, device=device, log_suffix="EMA")
         if args.output_dir:
             checkpoint = {
                 "model": model_without_ddp.state_dict(),
@@ -520,8 +528,11 @@ def train(
                 checkpoint["model_ema"] = model_ema.state_dict()
             if scaler:
                 checkpoint["scaler"] = scaler.state_dict()
-            utils.save_on_master(checkpoint, os.path.join(args.output_dir, f"model_{epoch}.pth"))
-            utils.save_on_master(checkpoint, os.path.join(args.output_dir, "checkpoint.pth"))
+            if acc>best_acc:
+                best_acc=acc
+                utils.save_on_master(checkpoint, os.path.join(args.output_dir, prefix+"best.pth"))
+            utils.save_on_master(checkpoint, os.path.join(args.output_dir, prefix+"latest.pth"))
+        print("Epoch {}, Current Best Acc = {:.4f}".format(epoch, best_acc))
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))

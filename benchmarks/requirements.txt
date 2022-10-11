@@ -3,7 +3,7 @@ termcolor
 einops
 tqdm
 torchvision>=0.9.1
-
+tensorboard
 
 # for main_gat.py
 h5py

@@ -122,7 +122,7 @@ def get_dataset(name: str, data_root: str='data', return_transform=False):
             T.Normalize( **NORMALIZE_DICT[name] ),
         ])
         data_root = os.path.join( data_root, 'torchdata' )
-        train_dst = datasets.CIFAR10(data_root, train=True, download=False, transform=train_transform)
+        train_dst = datasets.CIFAR10(data_root, train=True, download=True, transform=train_transform)
         val_dst = datasets.CIFAR10(data_root, train=False, download=False, transform=val_transform)
         input_size = (1, 3, 32, 32)
     elif name=='cifar100':

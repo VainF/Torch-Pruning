@@ -102,7 +102,7 @@ class ConvPruner(BasePruningFunc):
         keep_idxs.sort()
         layer.in_channels = layer.in_channels - len(idxs)
         if layer.groups>1:
-                keep_idxs = keep_idxs[:len(keep_idxs)//layer.groups]
+            keep_idxs = keep_idxs[:len(keep_idxs)//layer.groups]
         if not layer.transposed:
             layer.weight = torch.nn.Parameter(
                 layer.weight.data.clone()[:, keep_idxs])

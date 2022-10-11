@@ -170,7 +170,7 @@ class MetaPruner():
             module = dep.target.module
             pruning_fn = dep.handler
             if function.is_out_channel_pruner(pruning_fn):
-                target_sparsity = self.get_target_sparsity(module)
+                #target_sparsity = self.get_target_sparsity(module)
                 layer_out_ch = self.DG.get_out_channels(module)
                 
                 if layer_out_ch < self.layer_init_out_ch[module] * (
@@ -179,7 +179,7 @@ class MetaPruner():
                     return False
 
             elif function.is_in_channel_pruner(pruning_fn):
-                target_sparsity = self.get_target_sparsity(module)
+                #target_sparsity = self.get_target_sparsity(module)
                 layer_in_ch = self.DG.get_in_channels(module)
                 if layer_in_ch < self.layer_init_in_ch[module] * (
                     1 - self.max_ch_sparsity #self.max_ch_sparsity
@@ -192,7 +192,7 @@ class MetaPruner():
             return self.channel_groups
         for dep, _ in group:
             module = dep.target.module
-            if module in self.channel_groups and function.is_out_channel_pruner(dep.handler):
+            if module in self.channel_groups: #and function.is_out_channel_pruner(dep.handler):
                 return self.channel_groups[module]
         return 1 # no channel grouping
 
@@ -236,13 +236,12 @@ class MetaPruner():
     def prune_global(self):
         if self.current_step >= self.iterative_steps:
             return
-        
+
         global_importance = []
         for group in self.get_all_groups():
             if self._check_sparsity(group):
                 ch_groups = self.get_channel_groups(group)
                 imp = self.estimate_importance(group, ch_groups=ch_groups)
-                #print(group, "\n", imp)
                 imp = imp.view(ch_groups, -1).sum(0)
                 global_importance.append((group, ch_groups, imp))
             
