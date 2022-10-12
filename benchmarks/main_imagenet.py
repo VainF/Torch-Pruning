@@ -400,7 +400,10 @@ def train(
     if args.distributed and args.sync_bn:
         model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
 
-    criterion = nn.CrossEntropyLoss(label_smoothing=args.label_smoothing)
+    if args.label_smoothing>0:
+        criterion = nn.CrossEntropyLoss(label_smoothing=args.label_smoothing)
+    else:
+        criterion = nn.CrossEntropyLoss()
 
     custom_keys_weight_decay = []
     if args.bias_weight_decay is not None:
