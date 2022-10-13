@@ -295,12 +295,8 @@ class GroupNormImportance(Importance):
             ]:
                 w = (layer.weight).transpose(0, 1).flatten(1)
                 if (
-                    ch_groups == 1 and w.shape[0] != group_norm.shape[0]
+                    ch_groups == 1 and len(idxs) != group_norm.shape[0]
                 ):  # for conv-flatten
-                    if (
-                        w.shape[0] % group_norm.shape[0] != 0
-                    ):  # TODO: support Group Convs
-                        continue
                     if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexTransform):
                         w = w.view(
                             group_norm.shape[0],
@@ -310,14 +306,11 @@ class GroupNormImportance(Importance):
                     else:
                         w = w.view(w.shape[0] // group_norm.shape[0],
                                    group_norm.shape[0], w.shape[1]).transpose(0, 1).flatten(1)
-                #group_size += w.shape[1]
                 local_norm = w.abs().pow(self.p).sum(1)
-                #if w.shape[0]!=group_norm.shape[0] and ch_groups>1:
                 if ch_groups>1:
                     if len(local_norm)==len(group_norm):
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
-                #print(layer, local_norm.shape, group_norm.shape, ch_groups)
                 group_norm += local_norm[idxs]
             elif prune_fn == function.prune_batchnorm_out_channels:
                 if layer.affine is not None:
