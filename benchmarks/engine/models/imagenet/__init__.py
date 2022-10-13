@@ -13,5 +13,9 @@ from torchvision.models import (
 
 try:
     from torchvision.models import regnet_x_1_6gf
+    from torchvision.models import resnext50_32x4d
+    from torchvision.models import vit_b_16
 except:
     regnet_x_1_6gf = None
+    resnext50_32x4d = None
+    vit_b_16 = None

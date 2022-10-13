@@ -88,9 +88,10 @@ def get_args_parser(add_help=True):
     parser.add_argument("--global-pruning", default=False, action="store_true")
     parser.add_argument("--target-flops", type=float, default=2.0, help="GFLOPs of pruned model")
     parser.add_argument("--sentinel-perc", type=float, default=0.5)
-    parser.add_argument("--reg", type=float, default=1e-5)
+    parser.add_argument("--reg", type=float, default=1e-4)
     parser.add_argument("--max-ch-sparsity", default=1.0, type=float, help="maximum channel sparsity")
     parser.add_argument("--sl-epochs", type=int, default=None)
+    parser.add_argument("--sl-resume", type=str, default=None)
     parser.add_argument("--sl-lr", default=None, type=float, help="learning rate")
     parser.add_argument("--sl-lr-step-size", default=None, type=int, help="milestones for learning rate decay")
     parser.add_argument("--sl-lr-warmup-epochs", default=None, type=int, help="the number of epochs to warmup (default: 0)")
@@ -362,18 +363,22 @@ def main(args):
     if args.prune:
         pruner = get_pruner(model, example_inputs=example_inputs, args=args)
         if args.sparsity_learning:
-            print("Sparsifying model...")
-            if args.sl_lr is None: args.sl_lr = args.lr
-            if args.sl_lr_step_size is None: args.sl_lr_step_size = args.lr_step_size
-            if args.sl_lr_warmup_epochs is None: args.sl_lr_warmup_epochs = args.lr_warmup_epochs
-            if args.sl_epochs is None: args.sl_epochs = args.epochs
-            model_without_ddp = train(model, args.sl_epochs, 
-                                    lr=args.sl_lr, lr_step_size=args.sl_lr_step_size, lr_warmup_epochs=args.sl_lr_warmup_epochs, 
-                                    train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
-                                    device=device, args=args, regularizer=pruner.regularize)
-            utils.save_on_master(
-                model_without_ddp.state_dict(),
-                os.path.join(args.output_dir, 'sparsity.pth'))
+            if args.sl_resume:
+                print("Loading sparse model from {}...".format(args.sl_resume))
+                model_without_ddp.load_state_dict( torch.load(args.sl_resume)['model'] )
+            else:
+                print("Sparsifying model...")
+                if args.sl_lr is None: args.sl_lr = args.lr
+                if args.sl_lr_step_size is None: args.sl_lr_step_size = args.lr_step_size
+                if args.sl_lr_warmup_epochs is None: args.sl_lr_warmup_epochs = args.lr_warmup_epochs
+                if args.sl_epochs is None: args.sl_epochs = args.epochs
+                model_without_ddp = train(model, args.sl_epochs, 
+                                        lr=args.sl_lr, lr_step_size=args.sl_lr_step_size, lr_warmup_epochs=args.sl_lr_warmup_epochs, 
+                                        train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
+                                        device=device, args=args, regularizer=pruner.regularize, state_dict_only=True)
+                #utils.save_on_master(
+                #    model_without_ddp.state_dict(),
+                #    os.path.join(args.output_dir, 'regularized-{:.4f}.pth'.format(args.reg)))
         model = model.to('cpu')
         print("Pruning model...")
         prune_to_target_flops(pruner, model, args.target_flops, example_inputs)
@@ -389,7 +394,7 @@ def main(args):
     train(model, args.epochs, 
             lr=args.lr, lr_step_size=args.lr_step_size, lr_warmup_epochs=args.lr_warmup_epochs, 
             train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
-            device=device, args=args, regularizer=None, state_dict_only=args.prune)
+            device=device, args=args, regularizer=None, state_dict_only=(not args.prune))
 
 def train(
     model, 

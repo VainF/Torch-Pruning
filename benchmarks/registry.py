@@ -87,7 +87,9 @@ IMAGENET_MODEL_DICT={
     "vgg16_bn": models.imagenet.vgg16_bn,
     "mnasnet1_0": models.imagenet.mnasnet1_0,
     "alexnet": models.imagenet.alexnet,
-    "regnet_x_1_6gf": models.imagenet.regnet_x_1_6gf
+    "regnet_x_1_6gf": models.imagenet.regnet_x_1_6gf,
+    "resnext50_32x4d": models.imagenet.resnext50_32x4d,
+    "vit_b_16": models.imagenet.vit_b_16,
 }
 
 GRAPH_MODEL_DICT = {
