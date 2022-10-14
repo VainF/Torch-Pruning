@@ -492,7 +492,7 @@ def train(
         # total_ema_updates = (Dataset_size / n_GPUs) * epochs / (batch_size_per_gpu * EMA_steps)
         # We consider constant = Dataset_size for a given dataset/setup and ommit it. Thus:
         # adjust = 1 / total_ema_updates ~= n_GPUs * batch_size_per_gpu * EMA_steps / epochs
-        adjust = args.world_size * args.batch_size * args.model_ema_steps / args.epochs
+        adjust = args.world_size * args.batch_size * args.model_ema_steps / epochs
         alpha = 1.0 - args.model_ema_decay
         alpha = min(1.0, alpha * adjust)
         model_ema = utils.ExponentialMovingAverage(model_without_ddp, device=device, decay=1.0 - alpha)
@@ -521,8 +521,8 @@ def train(
     
     start_time = time.time()
     best_acc = 0
-    prefix = '' if regularizer is None else 'regularized_'
-    for epoch in range(args.start_epoch, args.epochs):
+    prefix = '' if regularizer is None else 'regularized_{:.4f}'.format(args.reg)
+    for epoch in range(args.start_epoch, epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
         train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema, scaler, regularizer)
