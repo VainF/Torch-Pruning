@@ -18,6 +18,7 @@ class GroupNormPruner(MetaPruner):
         global_pruning=False,
         channel_groups=dict(),
         max_ch_sparsity=1.0,
+        soft_keep_ratio=0.0,
         ch_sparsity_dict=None,
         round_to=None,
         ignored_layers=None,
@@ -44,6 +45,7 @@ class GroupNormPruner(MetaPruner):
         )
         self.reg = reg
         self.groups = list(self.get_all_groups())
+        self.soft_keep_ratio = soft_keep_ratio
 
     @torch.no_grad()
     def regularize(self, model):
@@ -59,45 +61,57 @@ class GroupNormPruner(MetaPruner):
                 idxs.sort()
                 layer = dep.target.module
                 prune_fn = dep.handler
+                # Conv out_channels
                 if prune_fn in [
                     function.prune_conv_out_channels,
                     function.prune_linear_out_channels,
                 ]:
                     # regularize output channels
                     w = layer.weight.data[idxs].flatten(1)
-                    group_size+=w.shape[1]
-                    group_norm += w.pow(2).sum(1)
-
+                    group_size += w.shape[1]*ch_groups
+                    local_norm = w.pow(2).sum(1)
+                    if ch_groups>1:
+                        local_norm = local_norm.view(ch_groups, -1).sum(0)
+                        local_norm = local_norm.repeat(ch_groups)
+                    group_norm+=local_norm
+                # Conv in_channels
                 elif prune_fn in [
                     function.prune_conv_in_channels,
                     function.prune_linear_in_channels,
                 ]:
-                    #w = (layer.weight)[:, idxs].transpose(0, 1).flatten(1)
                     w = (layer.weight).transpose(0, 1).flatten(1)
-                    group_size+=w.shape[1]
+                    group_size+=w.shape[1]*ch_groups
                     if (
-                        w.shape[0] != group_norm.shape[0] and ch_groups==1
-                    ):  # for conv-flatten 
-    
+                        w.shape[0] != group_norm.shape[0]
+                    ):  
                         if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexTransform):
+                            # conv - latten
                             w = w.view(
-                            group_norm.shape[0],
-                            w.shape[0] // group_norm.shape[0],
-                            w.shape[1],
-                        ).flatten(1)
-                        else:
-                            w = w.view( w.shape[0] // group_norm.shape[0], group_norm.shape[0], w.shape[1] ).transpose(0, 1).flatten(1)
-
-                    local_norm = w.abs().pow(2).sum(1)
+                                group_norm.shape[0],
+                                w.shape[0] // group_norm.shape[0],
+                                w.shape[1],
+                            ).flatten(1)
+                        elif ch_groups>1:
+                            # group conv
+                            w = w.view(w.shape[0] // group_norm.shape[0],
+                                    group_norm.shape[0], w.shape[1]).transpose(0, 1).flatten(1)               
+                    local_norm = w.pow(2).sum(1)
                     if ch_groups>1:
-                        local_norm = local_norm.repeat(ch_groups)
+                        if len(local_norm)==len(group_norm):
+                            local_norm = local_norm.view(ch_groups, -1).sum(0)
+                    local_norm = local_norm.repeat(ch_groups)
                     group_norm += local_norm[idxs]
+                # BN
                 elif prune_fn == function.prune_batchnorm_out_channels:
                     # regularize BN
-                    if layer.affine is not None:
-                        w = layer.weight.data[idxs]
-                        group_norm += w.pow(2)
-                        group_size+=1
+                    w = layer.weight.data[idxs]
+                    local_norm = w.pow(2)
+                    if ch_groups>1:
+                        local_norm = local_norm.view(ch_groups, -1).sum(0)
+                        local_norm = local_norm.repeat(ch_groups)
+                    group_norm += local_norm
+                    group_size += ch_groups
+
             current_channels = len(group_norm)
             if ch_groups>1:
                 group_norm = group_norm.view(ch_groups, -1).sum(0)
@@ -106,7 +120,10 @@ class GroupNormPruner(MetaPruner):
             group_norm = group_norm.sqrt()
             group_size = math.sqrt(group_size)
             gnorm_list.append(group_norm)
-            
+            topk_gnorm = torch.topk(group_norm, k=max(int(self.soft_keep_ratio * len(group_norm)), 1), largest=True)[1]
+            scale = torch.ones_like(gnorm)
+            scale[topk_gnorm]*=0
+
             # Update Gradient
             for dep, idxs in group:
                 layer = dep.target.module
@@ -115,9 +132,8 @@ class GroupNormPruner(MetaPruner):
                     function.prune_conv_out_channels,
                     function.prune_linear_out_channels,
                 ]:
-                    # regularize output channels
                     w = layer.weight.data[idxs]
-                    g = w / group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size #* scale.view( -1, *([1]*(len(w.shape)-1)) )
+                    g = w / group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size * scale.view( -1, *([1]*(len(w.shape)-1)) )
                     layer.weight.grad.data[idxs]+=self.reg * g 
                 elif prune_fn in [
                     function.prune_conv_in_channels,
@@ -126,20 +142,21 @@ class GroupNormPruner(MetaPruner):
                     w = layer.weight.data[:, idxs]
                     gn = group_norm
                     if (
-                        w.shape[1] != group_norm.shape[0]
-                    ):  # for conv-flatten 
+                        len(idxs) != group_norm.shape[0]
+                    ):  
                         if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexTransform):
+                            # conv-flatten 
                             gn = group_norm.repeat_interleave(w.shape[1]//group_norm.shape[0])
-                        else:
+                        elif ch_groups>1:
+                            # group conv 
                             gn = group_norm.repeat(w.shape[1]//group_norm.shape[0])
                     # regularize input channels
-                    w = layer.weight.data[:, idxs]
-                    g = w / gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * group_size  #* scale.view( 1, -1, *([1]*(len(w.shape)-2)) )
-                    layer.weight.grad.data[:, idxs]+=self.reg * g
+                    g = w / gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * scale.view( 1, -1, *([1]*(len(w.shape)-2))  )
+                    layer.weight.grad.data[:, idxs]+=self.reg * g * group_size
                 elif prune_fn == function.prune_batchnorm_out_channels:
                     # regularize BN
                     if layer.affine is not None:
                         w = layer.weight.data[idxs]
                         g = w / group_norm
-                        layer.weight.grad.data[idxs]+=self.reg * g  * group_size
+                        layer.weight.grad.data[idxs]+=self.reg * g  * group_size * scale
         return gnorm_list
