@@ -88,7 +88,7 @@ def get_args_parser(add_help=True):
     parser.add_argument("--global-pruning", default=False, action="store_true")
     parser.add_argument("--target-flops", type=float, default=2.0, help="GFLOPs of pruned model")
     parser.add_argument("--sentinel-perc", type=float, default=0.5)
-    parser.add_argument("--reg", type=float, default=1e-4)
+    parser.add_argument("--reg", type=float, default=1e-3)
     parser.add_argument("--max-ch-sparsity", default=1.0, type=float, help="maximum channel sparsity")
     parser.add_argument("--sl-epochs", type=int, default=None)
     parser.add_argument("--sl-resume", type=str, default=None)
@@ -365,7 +365,7 @@ def main(args):
         if args.sparsity_learning:
             if args.sl_resume:
                 print("Loading sparse model from {}...".format(args.sl_resume))
-                model.load_state_dict( torch.load(args.sl_resume)['model'] )
+                model.load_state_dict( torch.load(args.sl_resume, map_location='cpu')['model'] )
             else:
                 print("Sparsifying model...")
                 if args.sl_lr is None: args.sl_lr = args.lr
@@ -431,7 +431,7 @@ def train(
             parameters,
             lr=lr,
             momentum=args.momentum,
-            weight_decay=args.weight_decay if regularizer is None else 0,
+            weight_decay=args.weight_decay,
             nesterov="nesterov" in opt_name,
         )
     elif opt_name == "rmsprop":
@@ -521,7 +521,7 @@ def train(
     
     start_time = time.time()
     best_acc = 0
-    prefix = '' if regularizer is None else 'regularized_{:.4f}'.format(args.reg)
+    prefix = '' if regularizer is None else 'regularized_{:.4f}_'.format(args.reg)
     for epoch in range(args.start_epoch, epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
@@ -546,7 +546,7 @@ def train(
                 best_acc=acc
                 utils.save_on_master(checkpoint, os.path.join(args.output_dir, prefix+"best.pth"))
             utils.save_on_master(checkpoint, os.path.join(args.output_dir, prefix+"latest.pth"))
-        print("Epoch {}, Current Best Acc = {:.4f}".format(epoch, best_acc))
+        print("Epoch {}/{}, Current Best Acc = {:.4f}".format(epoch, epochs, best_acc))
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))

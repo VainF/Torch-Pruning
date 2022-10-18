@@ -4,10 +4,11 @@ import torch
 from .op_counter import profile
 import torch.nn as nn
 
-
+@torch.no_grad()
 def count_params(module):
     return sum([p.numel() for p in module.parameters()])
 
+@torch.no_grad()
 def count_ops_and_params(model, input_size=None, example_inputs=None, return_macs=True, device=None):
     if example_inputs is None:
         example_inputs = torch.randn(*input_size)
