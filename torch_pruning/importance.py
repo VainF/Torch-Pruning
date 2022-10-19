@@ -37,7 +37,7 @@ class ReducingNormalizer(ImportanceNormalizer):
         else:
             raise NotImplementedError
 
-class SentinelNormalizer():
+class RelativeNormalizer():
     def __init__(self, percentage=None):
         self._k = dict()
         self.percentage = percentage
@@ -49,8 +49,7 @@ class SentinelNormalizer():
             self._k[m] = k
         else:
             k = self._k[m]
-        div = imp.topk(k=min(k, len(imp)), dim=0, largest=True)[0][-1]
-        #print((imp>div).sum(), len(imp), m, imp.min(), imp.topk(k=min(k, len(imp)), dim=0, largest=True)[0][-1])
+        #div = imp.topk(k=min(k, len(imp)), dim=0, largest=True)[0][-1]
         imp = imp / imp.topk(k=min(k, len(imp)), dim=0, largest=True)[0][-1]
         return imp
 
@@ -263,15 +262,15 @@ class LAMPImportance(MagnitudeImportance):
 
 
 class GroupNormImportance(Importance):
-    def __init__(self, p=2, normalizer=SentinelNormalizer(percentage=0.5)):
+    def __init__(self, p=2, normalizer=RelativeNormalizer(percentage=0.0)):
         self.p = p
         self.normalizer = normalizer
         
     @torch.no_grad()
     def __call__(self, group, ch_groups=1):
         group_norm = 0
-        #group_size = 0
-        # Get group norm
+        group_size = 0
+        #Get group norm
         for dep, idxs in group:
             idxs.sort()
             layer = dep.target.module
@@ -282,7 +281,7 @@ class GroupNormImportance(Importance):
             ]:
                 # regularize output channels
                 w = layer.weight.data[idxs].flatten(1)
-                #group_size += w.shape[1]
+                group_size += w.shape[1] * ch_groups
                 local_norm = w.abs().pow(self.p).sum(1)
                 if ch_groups>1:
                     local_norm = local_norm.view(ch_groups, -1).sum(0)
@@ -294,6 +293,7 @@ class GroupNormImportance(Importance):
                 function.prune_linear_in_channels,
             ]:
                 w = (layer.weight).transpose(0, 1).flatten(1)
+                group_size += w.shape[1] * ch_groups
                 if (
                     ch_groups == 1 and len(idxs) != group_norm.shape[0]
                 ):  # for conv-flatten
@@ -320,12 +320,11 @@ class GroupNormImportance(Importance):
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                         local_norm = local_norm.repeat(ch_groups)
                     group_norm += local_norm
-                    #group_size += 1
+                    group_size += ch_groups
         group_imp = group_norm**(1/self.p)
-        if self.normalizer is not None:
-            group_imp = self.normalizer(group, group_imp)
+        #if self.normalizer is not None:
+        #    group_imp = self.normalizer(group, group_imp)
         return group_imp
-
 
 class RandomImportance(Importance):
     @torch.no_grad()
@@ -334,7 +333,7 @@ class RandomImportance(Importance):
         return torch.rand(len(idxs))
 
 class GroupConvImportance(MagnitudeImportance):
-    def __init__(self, p=2, to_group=False, group_reduction="mean", normalizer=SentinelNormalizer(percentage=0.5)):
+    def __init__(self, p=2, to_group=False, group_reduction="mean", normalizer=RelativeNormalizer(percentage=0.5)):
         super().__init__(p=p, to_group=to_group, group_reduction=group_reduction, normalizer=normalizer)
 
     @torch.no_grad()

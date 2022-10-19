@@ -53,11 +53,11 @@ def get_pruner(model, example_inputs, config):
         imp = tp.importance.BNScaleImportance(to_group=False)
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=config['reg'], global_pruning=config['global_pruning'])
     elif config['method'] == "group_norm":
-        imp = tp.importance.GroupNormImportance(p=2, to_group=True, normalizer=tp.importance.SentinelNormalizer(percentage=config['sentinel_perc']))
+        imp = tp.importance.GroupNormImportance(p=2, to_group=True, normalizer=tp.importance.RelativeNormalizer(percentage=config['soft_keeping_ratio']))
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=config['global_pruning'])
     elif config['method'] == "group_sl":
         sparsity_learning = True
-        imp = tp.importance.GroupNormImportance(p=2, to_group=True, normalizer=tp.importance.SentinelNormalizer(percentage=config['sentinel_perc']))
+        imp = tp.importance.GroupNormImportance(p=2, to_group=True, normalizer=tp.importance.RelativeNormalizer(percentage=config['soft_keeping_ratio']))
         pruner_entry = partial(tp.pruner.GroupNormPruner, reg=config['reg'], global_pruning=config['global_pruning'])
     else:
         raise NotImplementedError
@@ -335,7 +335,7 @@ def get_training_args():
         "--speed-up", type=float, default=2.0,
     )
     parser.add_argument(
-        "--sentinel-perc", type=float, default=0.0,
+        "--soft-keeping-ratio", type=float, default=0.0,
     )
     parser.add_argument(
         "--reg", type=float, default=1e-5,

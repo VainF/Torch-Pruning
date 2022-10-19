@@ -18,7 +18,7 @@ class GroupNormPruner(MetaPruner):
         global_pruning=False,
         channel_groups=dict(),
         max_ch_sparsity=1.0,
-        soft_keep_ratio=0.0,
+        soft_keeping_ratio=0.0,
         ch_sparsity_dict=None,
         round_to=None,
         ignored_layers=None,
@@ -45,7 +45,7 @@ class GroupNormPruner(MetaPruner):
         )
         self.reg = reg
         self.groups = list(self.get_all_groups())
-        self.soft_keep_ratio = soft_keep_ratio
+        self.soft_keeping_ratio = soft_keeping_ratio
 
     @torch.no_grad()
     def regularize(self, model):
@@ -99,7 +99,7 @@ class GroupNormPruner(MetaPruner):
                     if ch_groups>1:
                         if len(local_norm)==len(group_norm):
                             local_norm = local_norm.view(ch_groups, -1).sum(0)
-                    local_norm = local_norm.repeat(ch_groups)
+                        local_norm = local_norm.repeat(ch_groups)
                     group_norm += local_norm[idxs]
                 # BN
                 elif prune_fn == function.prune_batchnorm_out_channels:
@@ -120,9 +120,6 @@ class GroupNormPruner(MetaPruner):
             group_norm = group_norm.sqrt()
             group_size = math.sqrt(group_size)
             gnorm_list.append(group_norm)
-            topk_gnorm = torch.topk(group_norm, k=max(int(self.soft_keep_ratio * len(group_norm)), 1), largest=True)[1]
-            scale = torch.ones_like(gnorm)
-            scale[topk_gnorm]*=0
 
             # Update Gradient
             for dep, idxs in group:
@@ -133,7 +130,7 @@ class GroupNormPruner(MetaPruner):
                     function.prune_linear_out_channels,
                 ]:
                     w = layer.weight.data[idxs]
-                    g = w / group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size * scale.view( -1, *([1]*(len(w.shape)-1)) )
+                    g = w / group_norm.view( -1, *([1]*(len(w.shape)-1)) ) #* group_size #* scale.view( -1, *([1]*(len(w.shape)-1)) )
                     layer.weight.grad.data[idxs]+=self.reg * g 
                 elif prune_fn in [
                     function.prune_conv_in_channels,
@@ -151,12 +148,12 @@ class GroupNormPruner(MetaPruner):
                             # group conv 
                             gn = group_norm.repeat(w.shape[1]//group_norm.shape[0])
                     # regularize input channels
-                    g = w / gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * scale.view( 1, -1, *([1]*(len(w.shape)-2))  )
-                    layer.weight.grad.data[:, idxs]+=self.reg * g * group_size
+                    g = w / gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) #* group_size #* scale.view( 1, -1, *([1]*(len(w.shape)-2))  )
+                    layer.weight.grad.data[:, idxs]+=self.reg * g
                 elif prune_fn == function.prune_batchnorm_out_channels:
                     # regularize BN
                     if layer.affine is not None:
                         w = layer.weight.data[idxs]
-                        g = w / group_norm
-                        layer.weight.grad.data[idxs]+=self.reg * g  * group_size * scale
+                        g = w / group_norm #* group_size
+                        layer.weight.grad.data[idxs]+=self.reg * g 
         return gnorm_list

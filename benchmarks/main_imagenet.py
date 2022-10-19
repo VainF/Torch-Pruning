@@ -20,6 +20,7 @@ from torchvision.transforms.functional import InterpolationMode
 
 import torch_pruning as tp 
 from functools import partial
+from engine.utils import count_ops_and_params
 
 def get_args_parser(add_help=True):
     import argparse
@@ -87,7 +88,7 @@ def get_args_parser(add_help=True):
     parser.add_argument("--method", type=str, default='l1')
     parser.add_argument("--global-pruning", default=False, action="store_true")
     parser.add_argument("--target-flops", type=float, default=2.0, help="GFLOPs of pruned model")
-    parser.add_argument("--sentinel-perc", type=float, default=0.5)
+    parser.add_argument("--soft-keeping-ratio", type=float, default=0.5)
     parser.add_argument("--reg", type=float, default=1e-3)
     parser.add_argument("--max-ch-sparsity", default=1.0, type=float, help="maximum channel sparsity")
     parser.add_argument("--sl-epochs", type=int, default=None)
@@ -99,11 +100,11 @@ def get_args_parser(add_help=True):
 
 def prune_to_target_flops(pruner, model, target_flops, example_inputs):
     model.eval()
-    ori_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
+    ori_ops, _ = count_ops_and_params(model, example_inputs=example_inputs)
     pruned_ops = ori_ops
     while pruned_ops / 1e9 > target_flops:
         pruner.step()
-        pruned_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
+        pruned_ops, _ = count_ops_and_params(model, example_inputs=example_inputs)
     return pruned_ops
 
 def get_pruner(model, example_inputs, args):
@@ -126,11 +127,11 @@ def get_pruner(model, example_inputs, args):
         imp = tp.importance.BNScaleImportance(to_group=False)
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
     elif args.method == "group_norm":
-        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.SentinelNormalizer(args.sentinel_perc))
+        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)
     elif args.method == "group_sl":
         sparsity_learning = True
-        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.SentinelNormalizer(args.sentinel_perc))
+        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
         pruner_entry = partial(tp.pruner.GroupNormPruner, reg=args.reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
@@ -356,7 +357,7 @@ def main(args):
     print("="*16)
     print(model)
     example_inputs = torch.randn(1, 3, 224, 224)
-    base_ops, base_params = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
+    base_ops, base_params = count_ops_and_params(model, example_inputs=example_inputs)
     print("Params: {:.4f} M".format(base_params / 1e6))
     print("ops: {:.4f} G".format(base_ops / 1e9))
     print("="*16)
@@ -382,7 +383,7 @@ def main(args):
         model = model.to('cpu')
         print("Pruning model...")
         prune_to_target_flops(pruner, model, args.target_flops, example_inputs)
-        pruned_ops, pruned_size = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
+        pruned_ops, pruned_size = count_ops_and_params(model, example_inputs=example_inputs)
         print("="*16)
         print("After pruning:")
         print(model)

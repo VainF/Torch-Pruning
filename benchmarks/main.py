@@ -33,8 +33,8 @@ parser.add_argument('--output-dir', default='run', help='path where to save')
 parser.add_argument("--method", type=str, default=None)
 parser.add_argument("--speed-up", type=float, default=2)
 parser.add_argument("--max-sparsity", type=float, default=1.0)
-parser.add_argument("--sentinel-perc", type=float, default=0.0)
-parser.add_argument("--reg", type=float, default=1e-3)
+parser.add_argument("--soft-keeping-ratio", type=float, default=0.0)
+parser.add_argument("--reg", type=float, default=1e-4)
 
 parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--global-pruning", action="store_true", default=False)
@@ -49,14 +49,14 @@ args = parser.parse_args()
 
 def progressive_pruning(pruner, model, speed_up, example_inputs):
     model.eval()
-    base_ops, _ = tp.utils.count_ops_and_params(
+    base_ops, _ = utils.count_ops_and_params(
         model,
         example_inputs=example_inputs,
     )
     current_speed_up = 1
     while current_speed_up < speed_up:
         pruner.step()
-        pruned_ops, _ = tp.utils.count_ops_and_params(
+        pruned_ops, _ = utils.count_ops_and_params(
             model,
             example_inputs=example_inputs
         )
@@ -178,12 +178,12 @@ def get_pruner(model, example_inputs):
         imp = tp.importance.BNScaleImportance(to_group=False)
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
     elif args.method == "group_norm":
-        imp = tp.importance.GroupNormImportance(p=2, to_group=True, normalizer=tp.importance.SentinelNormalizer(args.sentinel_perc))
-        pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)
+        imp = tp.importance.GroupNormImportance(p=2,  normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
+        pruner_entry = partial(tp.pruner.GroupNormPruner, soft_keeping_ratio=args.soft_keeping_ratio, global_pruning=args.global_pruning)
     elif args.method == "group_sl":
         sparsity_learning = True
-        imp = tp.importance.GroupNormImportance(p=2, to_group=True, normalizer=tp.importance.SentinelNormalizer(args.sentinel_perc))
-        pruner_entry = partial(tp.pruner.GroupNormPruner, reg=args.reg, global_pruning=args.global_pruning)
+        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
+        pruner_entry = partial(tp.pruner.GroupNormPruner, soft_keeping_ratio=args.soft_keeping_ratio, reg=args.reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
     
