@@ -49,17 +49,11 @@ args = parser.parse_args()
 
 def progressive_pruning(pruner, model, speed_up, example_inputs):
     model.eval()
-    base_ops, _ = utils.count_ops_and_params(
-        model,
-        example_inputs=example_inputs,
-    )
+    base_ops, _ = utils.count_ops_and_params(model, example_inputs=example_inputs)
     current_speed_up = 1
     while current_speed_up < speed_up:
         pruner.step()
-        pruned_ops, _ = utils.count_ops_and_params(
-            model,
-            example_inputs=example_inputs
-        )
+        pruned_ops, _ = utils.count_ops_and_params(model, example_inputs=example_inputs)
         current_speed_up = float(base_ops) / pruned_ops
     return current_speed_up
 

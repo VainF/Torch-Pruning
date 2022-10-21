@@ -8,6 +8,7 @@ Copyright (C) 2021 Sovrasov V. - All Rights Reserved
 
 import numpy as np
 import torch.nn as nn
+import torch
 
 
 def empty_flops_counter_hook(module, input, output):
@@ -284,6 +285,7 @@ from functools import partial
 import torch.nn as nn
 import copy
 
+@torch.no_grad()
 def count_ops_and_params(model, example_inputs):
     global CUSTOM_MODULES_MAPPING
     model = copy.deepcopy(model)

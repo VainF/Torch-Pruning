@@ -89,7 +89,7 @@ def get_args_parser(add_help=True):
     parser.add_argument("--global-pruning", default=False, action="store_true")
     parser.add_argument("--target-flops", type=float, default=2.0, help="GFLOPs of pruned model")
     parser.add_argument("--soft-keeping-ratio", type=float, default=0.5)
-    parser.add_argument("--reg", type=float, default=1e-3)
+    parser.add_argument("--reg", type=float, default=1e-4)
     parser.add_argument("--max-ch-sparsity", default=1.0, type=float, help="maximum channel sparsity")
     parser.add_argument("--sl-epochs", type=int, default=None)
     parser.add_argument("--sl-resume", type=str, default=None)
@@ -377,9 +377,11 @@ def main(args):
                                         lr=args.sl_lr, lr_step_size=args.sl_lr_step_size, lr_warmup_epochs=args.sl_lr_warmup_epochs, 
                                         train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
                                         device=device, args=args, regularizer=pruner.regularize, state_dict_only=True)
+                model.load_state_dict( torch.load('regularized_{:.4f}_best.pth'.format(args.reg), map_location='cpu')['model'] )
                 #utils.save_on_master(
                 #    model_without_ddp.state_dict(),
                 #    os.path.join(args.output_dir, 'regularized-{:.4f}.pth'.format(args.reg)))
+
         model = model.to('cpu')
         print("Pruning model...")
         prune_to_target_flops(pruner, model, args.target_flops, example_inputs)
@@ -413,16 +415,20 @@ def train(
     else:
         criterion = nn.CrossEntropyLoss()
 
+    weight_decay = args.weight_decay if regularizer is None else 0
+    bias_weight_decay = args.bias_weight_decay if regularizer is None else 0
+    norm_weight_decay = args.norm_weight_decay if regularizer is None else 0
+
     custom_keys_weight_decay = []
-    if args.bias_weight_decay is not None:
-        custom_keys_weight_decay.append(("bias", args.bias_weight_decay))
+    if bias_weight_decay is not None:
+        custom_keys_weight_decay.append(("bias", bias_weight_decay))
     if args.transformer_embedding_decay is not None:
         for key in ["class_token", "position_embedding", "relative_position_bias_table"]:
             custom_keys_weight_decay.append((key, args.transformer_embedding_decay))
     parameters = utils.set_weight_decay(
         model,
-        args.weight_decay,
-        norm_weight_decay=args.norm_weight_decay,
+        weight_decay,
+        norm_weight_decay=norm_weight_decay,
         custom_keys_weight_decay=custom_keys_weight_decay if len(custom_keys_weight_decay) > 0 else None,
     )
 
@@ -432,15 +438,15 @@ def train(
             parameters,
             lr=lr,
             momentum=args.momentum,
-            weight_decay=args.weight_decay,
+            weight_decay=weight_decay,
             nesterov="nesterov" in opt_name,
         )
     elif opt_name == "rmsprop":
         optimizer = torch.optim.RMSprop(
-            parameters, lr=lr, momentum=args.momentum, weight_decay=args.weight_decay, eps=0.0316, alpha=0.9
+            parameters, lr=lr, momentum=args.momentum, weight_decay=weight_decay, eps=0.0316, alpha=0.9
         )
     elif opt_name == "adamw":
-        optimizer = torch.optim.AdamW(parameters, lr=lr, weight_decay=args.weight_decay)
+        optimizer = torch.optim.AdamW(parameters, lr=lr, weight_decay=weight_decay)
     else:
         raise RuntimeError(f"Invalid optimizer {args.opt}. Only SGD, RMSprop and AdamW are supported.")
 

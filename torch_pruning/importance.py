@@ -5,6 +5,7 @@ import torch.nn as nn
 from .pruner import function
 from ._helpers import _FlattenIndexTransform
 from . import ops
+import math
 
 class ImportanceNormalizer():
     def __call__(self, group, imp):
@@ -322,8 +323,9 @@ class GroupNormImportance(Importance):
                     group_norm += local_norm
                     group_size += ch_groups
         group_imp = group_norm**(1/self.p)
-        #if self.normalizer is not None:
-        #    group_imp = self.normalizer(group, group_imp)
+        group_size = math.sqrt(group_size)
+        if self.normalizer is not None:
+            group_imp = self.normalizer(group, group_imp)
         return group_imp
 
 class RandomImportance(Importance):
