@@ -49,6 +49,7 @@ class GroupNormPruner(MetaPruner):
         self.cnt = 0
     @torch.no_grad()
     def regularize(self, model):
+        print("Aha", model.module==self.model)
         gnorm_list = []
 
         for i, group in enumerate(self.groups):
@@ -120,9 +121,9 @@ class GroupNormPruner(MetaPruner):
             group_norm = group_norm.sqrt()
             group_size = math.sqrt(group_size)
             gnorm_list.append(group_norm)
-            alpha = 4
+            alpha = 4 # 4 for cifar
             scale = 2 ** (alpha*(1 - (group_norm - group_norm.min()) / (group_norm.max() - group_norm.min())))
-            #if self.cnt%100==0:
+            #if self.cnt%10==0:
             #    print("="*15)
             #    print(group)
             #    print("Group {}".format(i))
@@ -140,6 +141,7 @@ class GroupNormPruner(MetaPruner):
                     w = layer.weight.data[idxs]
                     g = w * scale.view( -1, *([1]*(len(w.shape)-1)) ) #/ group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size #group_size #* scale.view( -1, *([1]*(len(w.shape)-1)) )
                     layer.weight.grad.data[idxs]+=self.reg * g 
+
                 elif prune_fn in [
                     function.prune_conv_in_channels,
                     function.prune_linear_in_channels,

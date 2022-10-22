@@ -271,6 +271,7 @@ class GroupNormImportance(Importance):
     def __call__(self, group, ch_groups=1):
         group_norm = 0
         group_size = 0
+
         #Get group norm
         for dep, idxs in group:
             idxs.sort()
@@ -324,6 +325,11 @@ class GroupNormImportance(Importance):
                     group_size += ch_groups
         group_imp = group_norm**(1/self.p)
         group_size = math.sqrt(group_size)
+
+        #print("="*15)
+        #print(group)
+        #print(group_imp)
+            
         if self.normalizer is not None:
             group_imp = self.normalizer(group, group_imp)
         return group_imp
