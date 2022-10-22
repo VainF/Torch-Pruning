@@ -91,7 +91,7 @@ class GroupNormPruner(MetaPruner):
                                 w.shape[0] // group_norm.shape[0],
                                 w.shape[1],
                             ).flatten(1)
-                        elif ch_groups>1:
+                        elif ch_groups>1 and prune_fn==function.prune_conv_in_channels and layer.groups==1:
                             # group conv
                             w = w.view(w.shape[0] // group_norm.shape[0],
                                     group_norm.shape[0], w.shape[1]).transpose(0, 1).flatten(1)               
@@ -144,18 +144,22 @@ class GroupNormPruner(MetaPruner):
                     function.prune_conv_in_channels,
                     function.prune_linear_in_channels,
                 ]:
-                    w = layer.weight.data[:, idxs]
-                    gn = group_norm
-                    if (
-                        len(idxs) != group_norm.shape[0]
-                    ):  
-                        if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexTransform):
-                            # conv-flatten 
-                            gn = group_norm.repeat_interleave(w.shape[1]//group_norm.shape[0])
-                        elif ch_groups>1:
+                    
+                    #gn = group_norm
+                    #if (
+                    #    w.shape[1] != group_norm.shape[0]
+                    #):  
+                    #if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexTransform):
+                        # conv-flatten 
+                        #gn = group_norm.repeat_interleave(w.shape[1]//group_norm.shape[0])
+                        #elif ch_groups>1:
                             # group conv 
-                            gn = group_norm.repeat(w.shape[1]//group_norm.shape[0])
+                        #    gn = group_norm.repeat(w.shape[1]//group_norm.shape[0])
                     # regularize input channels
+                    if prune_fn==function.prune_conv_in_channels and layer.groups>1:
+                        scale = scale[:len(idxs)//ch_groups]
+                        idxs = idxs[:len(idxs)//ch_groups]
+                    w = layer.weight.data[:, idxs]
                     g = w * scale.view( 1, -1, *([1]*(len(w.shape)-2))  ) #/ gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * group_size #* scale.view( 1, -1, *([1]*(len(w.shape)-2))  )
                     layer.weight.grad.data[:, idxs]+=self.reg * g
                 elif prune_fn == function.prune_batchnorm_out_channels:

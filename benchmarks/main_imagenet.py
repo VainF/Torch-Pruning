@@ -88,7 +88,7 @@ def get_args_parser(add_help=True):
     parser.add_argument("--method", type=str, default='l1')
     parser.add_argument("--global-pruning", default=False, action="store_true")
     parser.add_argument("--target-flops", type=float, default=2.0, help="GFLOPs of pruned model")
-    parser.add_argument("--soft-keeping-ratio", type=float, default=0.5)
+    parser.add_argument("--soft-keeping-ratio", type=float, default=0.0)
     parser.add_argument("--reg", type=float, default=1e-4)
     parser.add_argument("--max-ch-sparsity", default=1.0, type=float, help="maximum channel sparsity")
     parser.add_argument("--sl-epochs", type=int, default=None)
@@ -553,7 +553,7 @@ def train(
                 best_acc=acc
                 utils.save_on_master(checkpoint, os.path.join(args.output_dir, prefix+"best.pth"))
             utils.save_on_master(checkpoint, os.path.join(args.output_dir, prefix+"latest.pth"))
-        print("Epoch {}/{}, Current Best Acc = {:.4f}".format(epoch, epochs, best_acc))
+        print("Epoch {}/{}, Current Best Acc = {:.6f}".format(epoch, epochs, best_acc))
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
