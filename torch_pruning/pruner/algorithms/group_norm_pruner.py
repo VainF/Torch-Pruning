@@ -49,7 +49,6 @@ class GroupNormPruner(MetaPruner):
         self.cnt = 0
     @torch.no_grad()
     def regularize(self, model):
-        print("Aha", model.module==self.model)
         gnorm_list = []
 
         for i, group in enumerate(self.groups):
