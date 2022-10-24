@@ -375,7 +375,7 @@ def main(args):
                                         lr=args.sl_lr, lr_step_size=args.sl_lr_step_size, lr_warmup_epochs=args.sl_lr_warmup_epochs, 
                                         train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
                                         device=device, args=args, regularizer=pruner.regularize, state_dict_only=True)
-                model.load_state_dict( torch.load('regularized_{:.4f}_best.pth'.format(args.reg), map_location='cpu')['model'] )
+                #model.load_state_dict( torch.load('regularized_{:.4f}_best.pth'.format(args.reg), map_location='cpu')['model'] )
                 #utils.save_on_master(
                 #    model_without_ddp.state_dict(),
                 #    os.path.join(args.output_dir, 'regularized-{:.4f}.pth'.format(args.reg)))

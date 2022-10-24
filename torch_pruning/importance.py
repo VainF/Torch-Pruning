@@ -326,12 +326,12 @@ class GroupNormImportance(Importance):
         group_imp = group_norm**(1/self.p)
         group_size = math.sqrt(group_size)
 
-        #print("="*15)
-        #print(group)
-        #print(group_imp)
+        print("="*15)
+        print(group)
+        print(group_imp)
             
-        if self.normalizer is not None:
-            group_imp = self.normalizer(group, group_imp)
+        #if self.normalizer is not None:
+        #    group_imp = self.normalizer(group, group_imp)
         return group_imp
 
 class RandomImportance(Importance):
