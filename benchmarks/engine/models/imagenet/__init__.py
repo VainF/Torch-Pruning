@@ -10,7 +10,6 @@ from torchvision.models import (
     mnasnet1_0,
     alexnet,
 )
-from .vision_transformer import vit_b_16
 
 try:
     from torchvision.models import regnet_x_1_6gf
