@@ -50,8 +50,6 @@ class GroupNormPruner(MetaPruner):
 
     @torch.no_grad()
     def regularize(self, model):
-        gnorm_list = []
-
         for i, group in enumerate(self.groups):
             ch_groups = self.get_channel_groups(group)
             group_norm = 0
@@ -62,12 +60,12 @@ class GroupNormPruner(MetaPruner):
                 idxs.sort()
                 layer = dep.target.module
                 prune_fn = dep.handler
+
                 # Conv out_channels
                 if prune_fn in [
                     function.prune_conv_out_channels,
                     function.prune_linear_out_channels,
                 ]:
-                    # regularize output channels
                     w = layer.weight.data[idxs].flatten(1)
                     group_size += w.shape[1]*ch_groups
                     local_norm = w.pow(2).sum(1)
@@ -75,11 +73,9 @@ class GroupNormPruner(MetaPruner):
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                         local_norm = local_norm.repeat(ch_groups)
                     group_norm+=local_norm
-
                     if layer.bias is not None:
                         group_norm += layer.bias.data[idxs].pow(2)
                         group_size += ch_groups
-
                 # Conv in_channels
                 elif prune_fn in [
                     function.prune_conv_in_channels,
@@ -135,10 +131,9 @@ class GroupNormPruner(MetaPruner):
                 group_norm = torch.cat([group_norm+group_stride*i for i in range(ch_groups)], 0)
             group_norm = group_norm.sqrt()
             group_size = math.sqrt(group_size)
-            gnorm_list.append(group_norm)
             alpha = 4 # 4 for cifar
             scale = 2 ** (alpha*(1 - (group_norm - group_norm.min()) / (group_norm.max() - group_norm.min())))
-            #if self.cnt%100==0:
+            #if self.cnt%1000==0:
             #    print("="*15)
             #    print(group)
             #    print("Group {}".format(i))
@@ -185,4 +180,3 @@ class GroupNormPruner(MetaPruner):
                         g = b * scale #/ group_norm * group_size
                         layer.bias.grad.data[idxs]+=self.reg * g 
         self.cnt+=1
-        return gnorm_list

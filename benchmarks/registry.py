@@ -99,6 +99,7 @@ GRAPH_MODEL_DICT = {
 
 def get_model(name: str, num_classes, pretrained=False, target_dataset='cifar', **kwargs):
     if target_dataset == "imagenet":
+        
         model = IMAGENET_MODEL_DICT[name](pretrained=pretrained)
     elif 'cifar' in target_dataset:
         model = MODEL_DICT[name](num_classes=num_classes)

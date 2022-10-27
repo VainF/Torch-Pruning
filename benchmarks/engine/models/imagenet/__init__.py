@@ -10,11 +10,12 @@ from torchvision.models import (
     mnasnet1_0,
     alexnet,
 )
+from .vision_transformer import vit_b_16
 
 try:
     from torchvision.models import regnet_x_1_6gf
     from torchvision.models import resnext50_32x4d
-    from torchvision.models import vit_b_16
+    from .vision_transformer import vit_b_16
 except:
     regnet_x_1_6gf = None
     resnext50_32x4d = None

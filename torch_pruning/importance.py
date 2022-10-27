@@ -332,7 +332,7 @@ class GroupNormImportance(Importance):
             
         #if self.normalizer is not None:
         #    group_imp = self.normalizer(group, group_imp)
-        return group_imp
+        return group_imp / group_norm.max()
 
 class RandomImportance(Importance):
     @torch.no_grad()

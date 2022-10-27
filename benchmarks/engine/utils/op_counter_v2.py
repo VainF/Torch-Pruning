@@ -159,7 +159,6 @@ def rnn_cell_flops_counter_hook(rnn_cell_module, input, output):
 
 def multihead_attention_counter_hook(multihead_attention_module, input, output):
     flops = 0
-
     q, k, v = input
 
     batch_first = multihead_attention_module.batch_first \
