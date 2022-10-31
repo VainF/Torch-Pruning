@@ -281,43 +281,57 @@ class GroupNormImportance(Importance):
                 function.prune_conv_out_channels,
                 function.prune_linear_out_channels,
             ]:
-                # regularize output channels
                 w = layer.weight.data[idxs].flatten(1)
-                group_size += w.shape[1] * ch_groups
-                local_norm = w.abs().pow(self.p).sum(1)
+                group_size += w.shape[1]*ch_groups
+                local_norm = w.pow(2).sum(1)
                 if ch_groups>1:
                     local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
                 group_norm+=local_norm
-
+                if layer.bias is not None:
+                    group_norm += layer.bias.data[idxs].pow(2)
+                    group_size += ch_groups
+            # Conv in_channels
             elif prune_fn in [
                 function.prune_conv_in_channels,
                 function.prune_linear_in_channels,
             ]:
                 w = (layer.weight).transpose(0, 1).flatten(1)
-                group_size += w.shape[1] * ch_groups
+                group_size+=w.shape[1]*ch_groups
                 if (
-                    ch_groups == 1 and len(idxs) != group_norm.shape[0]
-                ):  # for conv-flatten
+                    w.shape[0] != group_norm.shape[0]
+                ):  
                     if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexTransform):
+                        # conv - latten
                         w = w.view(
                             group_norm.shape[0],
                             w.shape[0] // group_norm.shape[0],
                             w.shape[1],
                         ).flatten(1)
-                    else:
+                    elif ch_groups>1 and prune_fn==function.prune_conv_in_channels and layer.groups==1:
+                        # group conv
                         w = w.view(w.shape[0] // group_norm.shape[0],
-                                   group_norm.shape[0], w.shape[1]).transpose(0, 1).flatten(1)
-                local_norm = w.abs().pow(self.p).sum(1)
+                                group_norm.shape[0], w.shape[1]).transpose(0, 1).flatten(1)               
+                local_norm = w.pow(2).sum(1)
                 if ch_groups>1:
                     if len(local_norm)==len(group_norm):
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
                 group_norm += local_norm[idxs]
+            # BN
             elif prune_fn == function.prune_batchnorm_out_channels:
-                if layer.affine is not None:
+                # regularize BN
+                if layer.affine:
                     w = layer.weight.data[idxs]
-                    local_norm = w.abs().pow(self.p)
+                    local_norm = w.pow(2)
+                    if ch_groups>1:
+                        local_norm = local_norm.view(ch_groups, -1).sum(0)
+                        local_norm = local_norm.repeat(ch_groups)
+                    group_norm += local_norm
+                    group_size += ch_groups
+
+                    b = layer.bias.data[idxs]
+                    local_norm = b.pow(2)
                     if ch_groups>1:
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                         local_norm = local_norm.repeat(ch_groups)
@@ -332,7 +346,7 @@ class GroupNormImportance(Importance):
             
         #if self.normalizer is not None:
         #    group_imp = self.normalizer(group, group_imp)
-        return group_imp / group_norm.max()
+        return group_imp / group_imp.max()
 
 class RandomImportance(Importance):
     @torch.no_grad()

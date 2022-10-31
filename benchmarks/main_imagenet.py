@@ -525,7 +525,7 @@ def train(
     
     start_time = time.time()
     best_acc = 0
-    prefix = '' if regularizer is None else 'regularized_{:.4f}_'.format(args.reg)
+    prefix = '' if regularizer is None else 'regularized_{:e}_'.format(args.reg)
     for epoch in range(args.start_epoch, epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)

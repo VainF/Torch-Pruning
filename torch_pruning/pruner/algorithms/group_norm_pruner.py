@@ -116,7 +116,7 @@ class GroupNormPruner(MetaPruner):
                         group_size += ch_groups
 
                         b = layer.bias.data[idxs]
-                        local_norm = w.pow(2)
+                        local_norm = b.pow(2)
                         if ch_groups>1:
                             local_norm = local_norm.view(ch_groups, -1).sum(0)
                             local_norm = local_norm.repeat(ch_groups)
@@ -131,14 +131,14 @@ class GroupNormPruner(MetaPruner):
                 group_norm = torch.cat([group_norm+group_stride*i for i in range(ch_groups)], 0)
             group_norm = group_norm.sqrt()
             group_size = math.sqrt(group_size)
-            alpha = 4 # 4 for cifar
-            scale = 2 ** (alpha*(1 - (group_norm - group_norm.min()) / (group_norm.max() - group_norm.min())))
-            #if self.cnt%1000==0:
-            #    print("="*15)
-            #    print(group)
-            #    print("Group {}".format(i))
-            #    print(group_norm)
-            #    print(scale)
+            alpha = 7 # 4 for cifar
+            scale = 1 / group_norm #2 ** (alpha*(1 - (group_norm - group_norm.min()) / (group_norm.max() - group_norm.min())))
+            if self.cnt%1000==0:
+                print("="*15)
+                print(group)
+                print("Group {}".format(i))
+                print(group_norm)
+                print(scale)
             
             # Update Gradient
             for dep, idxs in group:

@@ -170,7 +170,7 @@ class MetaPruner():
             module = dep.target.module
             pruning_fn = dep.handler
             if function.is_out_channel_pruner(pruning_fn):
-                #target_sparsity = self.get_target_sparsity(module)
+                target_sparsity = self.get_target_sparsity(module)
                 layer_out_ch = self.DG.get_out_channels(module)
                 
                 if layer_out_ch < self.layer_init_out_ch[module] * (
