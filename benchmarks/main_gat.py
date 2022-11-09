@@ -16,7 +16,7 @@ from torch.optim import Adam
 from engine.models.graph.gat import GAT, GATLayer
 from engine.utils.graph_utils import constants, data_loading
 from engine.utils.graph_utils import utils
-
+from engine.utils import count_ops_and_params, MagnitudeRecover
 
 def prune_to_target_ops(pruner, model, speed_up, example_inputs, device):
     model.eval()
@@ -53,11 +53,11 @@ def get_pruner(model, example_inputs, config):
         imp = tp.importance.BNScaleImportance(to_group=False)
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=config['reg'], global_pruning=config['global_pruning'])
     elif config['method'] == "group_norm":
-        imp = tp.importance.GroupNormImportance(p=2, to_group=True, normalizer=tp.importance.RelativeNormalizer(percentage=config['soft_keeping_ratio']))
+        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.RelativeNormalizer(percentage=config['soft_keeping_ratio']))
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=config['global_pruning'])
     elif config['method'] == "group_sl":
         sparsity_learning = True
-        imp = tp.importance.GroupNormImportance(p=2, to_group=True, normalizer=tp.importance.RelativeNormalizer(percentage=config['soft_keeping_ratio']))
+        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.RelativeNormalizer(percentage=config['soft_keeping_ratio']))
         pruner_entry = partial(tp.pruner.GroupNormPruner, reg=config['reg'], global_pruning=config['global_pruning'])
     else:
         raise NotImplementedError
@@ -71,7 +71,6 @@ def get_pruner(model, example_inputs, config):
     for m in model.modules():
         if isinstance(m, GATLayer):
             channel_groups[m.linear_proj] = m.num_of_heads
-            #print(m.linear_proj, channel_groups[m])
             unwrapped_parameters.append(m.scoring_fn_source)
             unwrapped_parameters.append(m.scoring_fn_target)
             unwrapped_parameters.append(m.bias)
@@ -91,7 +90,7 @@ def get_pruner(model, example_inputs, config):
     return pruner
 
 # Simple decorator function so that I don't have to pass arguments that don't change from epoch to epoch
-def train_one_epoch(phase, gat, sigmoid_cross_entropy_loss, optimizer, data_loader, epoch=0, regularizer=None):
+def train_one_epoch(phase, gat, sigmoid_cross_entropy_loss, optimizer, data_loader, epoch=0, regularizer=None, recover=None):
     device = next(gat.parameters()).device  # fetch the device info from the model instead of passing it as a param
     mean_score = []
     # Certain modules behave differently depending on whether we're training the model or not.
@@ -135,6 +134,8 @@ def train_one_epoch(phase, gat, sigmoid_cross_entropy_loss, optimizer, data_load
             loss.backward()  # compute the gradients for every trainable weight in the computational graph
             if regularizer is not None:
                 regularizer(gat)
+            if recover is not None:
+                recover(gat)
             optimizer.step()  # apply the gradients to weights
         pred = (nodes_unnormalized_scores > 0).float().cpu().numpy()
         gt = gt_node_labels.cpu().numpy()
@@ -191,6 +192,7 @@ def train_gat_ppi(config):
         return 
 
     if config['prune']:
+        norm_recover = MagnitudeRecover(gat, reg=2*config['weight_decay'])
         os.makedirs('run/ppi/prune', exist_ok=True)
         node_features, gt_node_labels, edge_index = next(iter(data_loader_test))
         example_inputs = ( node_features, edge_index )
@@ -266,7 +268,8 @@ def train_gat_ppi(config):
                             data_loader_test=data_loader_test, 
                             data_loader_val = data_loader_val,
                             config=config, 
-                            save_as = os.path.join('run/ppi/prune', 'best_pruned_gat.pth'))
+                            save_as = os.path.join('run/ppi/prune', 'best_pruned_gat.pth'),
+                            recover=norm_recover.regularize if config['prune'] else None,)
         print(f'The best f1: {best_f1}')
     else:
         gat.to(device)
@@ -284,11 +287,11 @@ def train_gat_ppi(config):
         micro_f1 = train_one_epoch(phase=constants.LoopPhase.TEST, data_loader=data_loader_test)
         print(f'Test micro-F1 = {micro_f1}')
 
-def train(gat, main_loop, sigmoid_cross_entropy_loss, optimizer, data_loader_train, data_loader_test, data_loader_val, config, save_as, regularizer=None):
+def train(gat, main_loop, sigmoid_cross_entropy_loss, optimizer, data_loader_train, data_loader_test, data_loader_val, config, save_as, regularizer=None, recover=None):
     best_f1 = 0
     for epoch in range(config['num_of_epochs']):
         # Training loop
-        train_one_epoch(phase=constants.LoopPhase.TRAIN, gat=gat, sigmoid_cross_entropy_loss=sigmoid_cross_entropy_loss, optimizer=optimizer,  data_loader=data_loader_train, epoch=epoch, regularizer=regularizer)
+        train_one_epoch(phase=constants.LoopPhase.TRAIN, gat=gat, sigmoid_cross_entropy_loss=sigmoid_cross_entropy_loss, optimizer=optimizer,  data_loader=data_loader_train, epoch=epoch, regularizer=regularizer, recover=recover)
         micro_f1 = train_one_epoch(phase=constants.LoopPhase.VAL, gat=gat, sigmoid_cross_entropy_loss=sigmoid_cross_entropy_loss, optimizer=optimizer,  data_loader=data_loader_val, epoch=epoch)
         print(f'Epoch = {epoch} Test micro-F1 = {micro_f1}')
         if micro_f1 >= best_f1:

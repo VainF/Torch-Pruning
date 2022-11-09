@@ -13,6 +13,7 @@ import torch.nn.functional as F
 import torch_pruning as tp
 import registry
 import engine.utils as utils
+from engine.utils import count_ops_and_params
 
 parser = argparse.ArgumentParser()
 
@@ -34,13 +35,15 @@ parser.add_argument("--method", type=str, default=None)
 parser.add_argument("--speed-up", type=float, default=2)
 parser.add_argument("--max-sparsity", type=float, default=1.0)
 parser.add_argument("--soft-keeping-ratio", type=float, default=0.0)
-parser.add_argument("--reg", type=float, default=1e-4)
+parser.add_argument("--reg", type=float, default=5e-4)
+parser.add_argument("--weight-decay", type=float, default=5e-4)
 
 parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--global-pruning", action="store_true", default=False)
 parser.add_argument("--sl-total-epochs", type=int, default=100, help="epochs for sparsity learning")
 parser.add_argument("--sl-lr", default=0.01, type=float, help="learning rate for sparsity learning")
 parser.add_argument("--sl-lr-decay-milestones", default="60,80", type=str, help="milestones for sparsity learning")
+parser.add_argument("--sl-reg-warmup", type=int, default=0, help="epochs for sparsity learning")
 #parser.add_argument("--sl_restore", type=str, default=None)
 parser.add_argument("--sl-restore", action="store_true", default=False)
 parser.add_argument("--iterative-steps", default=400, type=int)
@@ -49,11 +52,11 @@ args = parser.parse_args()
 
 def progressive_pruning(pruner, model, speed_up, example_inputs):
     model.eval()
-    base_ops, _ = utils.count_ops_and_params(model, example_inputs=example_inputs)
+    base_ops, _ = count_ops_and_params(model, example_inputs=example_inputs)
     current_speed_up = 1
     while current_speed_up < speed_up:
         pruner.step()
-        pruned_ops, _ = utils.count_ops_and_params(model, example_inputs=example_inputs)
+        pruned_ops, _ = count_ops_and_params(model, example_inputs=example_inputs)
         current_speed_up = float(base_ops) / pruned_ops
     return current_speed_up
 
@@ -86,9 +89,11 @@ def train_model(
     save_as=None,
     
     # For pruning
+    weight_decay=5e-4,
     save_state_dict_only=True,
     regularizer=None,
     device=None,
+    recover=None,
 ):
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -96,7 +101,7 @@ def train_model(
         model.parameters(),
         lr=lr,
         momentum=0.9,
-        weight_decay=5e-4 if regularizer is None else 0.0,
+        weight_decay=weight_decay if regularizer is None else 0.0,
     )
     milestones = [int(ms) for ms in lr_decay_milestones.split(",")]
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
@@ -114,6 +119,8 @@ def train_model(
             loss.backward()
             if regularizer is not None:
                 regularizer(model) # for sparsity learning
+            if recover is not None:
+                recover(model)
             optimizer.step()
             if i % 10 == 0 and args.verbose:
                 args.logger.info(
@@ -178,6 +185,10 @@ def get_pruner(model, example_inputs):
         sparsity_learning = True
         imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
         pruner_entry = partial(tp.pruner.GroupNormPruner, soft_keeping_ratio=args.soft_keeping_ratio, reg=args.reg, global_pruning=args.global_pruning)
+    elif args.method == "group_bn":
+        sparsity_learning = True
+        imp = tp.importance.GroupBNScalingImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
+        pruner_entry = partial(tp.pruner.GroupBNScaling, soft_keeping_ratio=args.soft_keeping_ratio, reg=args.reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
     
@@ -262,7 +273,7 @@ def main():
     # Training / Pruning / Testing
     example_inputs = train_dst[0][0].unsqueeze(0).to(args.device)
     if args.mode == "pretrain":
-        ops, params = tp.utils.count_ops_and_params(
+        ops, params = count_ops_and_params(
             model, example_inputs=example_inputs,
         )
         args.logger.info("Params: {:.2f} M".format(params / 1e6))
@@ -277,7 +288,9 @@ def main():
         )
     elif args.mode == "prune":
         model.eval()
-        ori_ops, ori_size = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
+        norm_recover = utils.MagnitudeRecover(model, reg=2*args.weight_decay)
+        torch.save(norm_recover, os.path.join(args.output_dir, 'norm_recover.pth') )
+        ori_ops, ori_size = count_ops_and_params(model, example_inputs=example_inputs)
         ori_acc, ori_val_loss = eval(model, test_loader, device=args.device)
         pruner = get_pruner(model, example_inputs=example_inputs)
 
@@ -301,6 +314,7 @@ def main():
                 )
             args.logger.info("Loading sparsity model from {}...".format(reg_pth))
             model.load_state_dict( torch.load( reg_pth, map_location=args.device) )
+            norm_recover = torch.load( os.path.join(args.output_dir, 'norm_recover.pth') )
         
         # 1. Pruning
         model.eval()
@@ -308,7 +322,7 @@ def main():
         progressive_pruning(pruner, model, speed_up=args.speed_up, example_inputs=example_inputs)
         del pruner # remove reference
         args.logger.info(model)
-        pruned_ops, pruned_size = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
+        pruned_ops, pruned_size = count_ops_and_params(model, example_inputs=example_inputs)
         pruned_acc, pruned_val_loss = eval(model, test_loader, device=args.device)
         
         args.logger.info(
@@ -340,10 +354,11 @@ def main():
             test_loader=test_loader,
             device=args.device,
             save_state_dict_only=False,
+            recover=norm_recover.regularize,
         )
     elif args.mode == "test":
         model.eval()
-        ops, params = tp.utils.count_ops_and_params(
+        ops, params = count_ops_and_params(
             model, example_inputs=example_inputs,
         )
         args.logger.info("Params: {:.2f} M".format(params / 1e6))

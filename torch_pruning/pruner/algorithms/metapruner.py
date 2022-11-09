@@ -44,7 +44,7 @@ class MetaPruner():
         channel_groups: typing.Dict[nn.Module, int] = dict(), # for grouped channels.
         customized_pruners: typing.Dict[typing.Any, function.BasePruningFunc] = None, # pruners for customized layers
         unwrapped_parameters: typing.List[nn.Parameter] = None, # unwrapped nn.Parameters like ViT.pos_emb
-        root_module_types: typing.List = [ops.TORCH_CONV, ops.TORCH_LINEAR], # root module for each group
+        root_module_types: typing.List = [ops.TORCH_CONV, ops.TORCH_LINEAR, ops.TORCH_LSTM], # root module for each group
         output_transform: typing.Callable = None,
     ):
         self.model = model
@@ -134,7 +134,7 @@ class MetaPruner():
             
             if not isinstance(m, tuple(self.root_module_types)):
                 continue
-
+        
             pruner = self.DG.REGISTERED_PRUNERS.get(ops.module2type(m), None)
             if pruner is None or pruner.get_out_channels(m) is None:
                 continue
@@ -174,7 +174,7 @@ class MetaPruner():
                 layer_out_ch = self.DG.get_out_channels(module)
                 
                 if layer_out_ch < self.layer_init_out_ch[module] * (
-                    1 - self.max_ch_sparsity #self.max_ch_sparsity
+                    1 - self.max_ch_sparsity
                 ) or layer_out_ch==1:
                     return False
 
@@ -182,7 +182,7 @@ class MetaPruner():
                 #target_sparsity = self.get_target_sparsity(module)
                 layer_in_ch = self.DG.get_in_channels(module)
                 if layer_in_ch < self.layer_init_in_ch[module] * (
-                    1 - self.max_ch_sparsity #self.max_ch_sparsity
+                    1 - self.max_ch_sparsity
                 ) or layer_in_ch==1:
                     return False
         return True
@@ -192,7 +192,7 @@ class MetaPruner():
             return self.channel_groups
         for dep, _ in group:
             module = dep.target.module
-            if module in self.channel_groups: #and function.is_out_channel_pruner(dep.handler):
+            if module in self.channel_groups and function.is_out_channel_pruner(dep.handler):
                 return self.channel_groups[module]
         return 1 # no channel grouping
 
@@ -245,7 +245,7 @@ class MetaPruner():
                 if ch_groups>1:
                     imp = imp[:len(imp)//ch_groups]
                 global_importance.append((group, ch_groups, imp))
-            
+
         imp = torch.cat([local_imp[-1] for local_imp in global_importance], dim=0)
         target_sparsity = self.per_step_ch_sparsity[self.current_step]
         n_pruned = len(imp) - int(

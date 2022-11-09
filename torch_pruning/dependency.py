@@ -472,8 +472,11 @@ class DependencyGraph(object):
                 visited[module] = 1
             else:
                 visited[module] += 1
+        
             if isinstance(outputs, tuple):
                 outputs = outputs[0]
+            if isinstance(outputs, torch.nn.utils.rnn.PackedSequence):
+                outputs = outputs.data
             gradfn2module[outputs.grad_fn] = module
 
         registered_types = tuple(ops.type2class(
@@ -489,7 +492,9 @@ class DependencyGraph(object):
             out = forward_fn(model, example_inputs)
         elif isinstance(example_inputs, dict):
             out = model(**example_inputs)
-        else:
+        try:
+            out = model(*example_inputs)
+        except:
             out = model(example_inputs)
 
         for hook in hooks:

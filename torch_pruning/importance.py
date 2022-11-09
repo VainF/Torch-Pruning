@@ -51,7 +51,7 @@ class RelativeNormalizer():
         else:
             k = self._k[m]
         #div = imp.topk(k=min(k, len(imp)), dim=0, largest=True)[0][-1]
-        imp = imp / imp.topk(k=min(k, len(imp)), dim=0, largest=True)[0][-1]
+        imp = imp / imp.topk(k=min(k, len(imp)), dim=0, largest=True)[0].mean()
         return imp
 
 
@@ -277,27 +277,27 @@ class GroupNormImportance(Importance):
             idxs.sort()
             layer = dep.target.module
             prune_fn = dep.handler
+
+            # Conv out_channels
             if prune_fn in [
                 function.prune_conv_out_channels,
                 function.prune_linear_out_channels,
             ]:
                 w = layer.weight.data[idxs].flatten(1)
-                group_size += w.shape[1]*ch_groups
                 local_norm = w.pow(2).sum(1)
+                #print(local_norm.shape, layer, idxs, ch_groups)
                 if ch_groups>1:
                     local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
                 group_norm+=local_norm
-                if layer.bias is not None:
-                    group_norm += layer.bias.data[idxs].pow(2)
-                    group_size += ch_groups
+                #if layer.bias is not None:
+                #    group_norm += layer.bias.data[idxs].pow(2)
             # Conv in_channels
             elif prune_fn in [
                 function.prune_conv_in_channels,
                 function.prune_linear_in_channels,
             ]:
                 w = (layer.weight).transpose(0, 1).flatten(1)
-                group_size+=w.shape[1]*ch_groups
                 if (
                     w.shape[0] != group_norm.shape[0]
                 ):  
@@ -328,10 +328,70 @@ class GroupNormImportance(Importance):
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                         local_norm = local_norm.repeat(ch_groups)
                     group_norm += local_norm
-                    group_size += ch_groups
 
-                    b = layer.bias.data[idxs]
-                    local_norm = b.pow(2)
+                    #b = layer.bias.data[idxs]
+                    #local_norm = b.pow(2)
+                    #if ch_groups>1:
+                    #    local_norm = local_norm.view(ch_groups, -1).sum(0)
+                    #    local_norm = local_norm.repeat(ch_groups)
+                    #group_norm += local_norm
+            elif prune_fn == function.prune_lstm_out_channels:
+                _idxs = torch.tensor(idxs)
+                local_norm = 0
+                local_norm_reverse = 0
+                num_layers = layer.num_layers
+                expanded_idxs = torch.cat([ _idxs+i*layer.hidden_size for i in range(4) ], dim=0)
+                if layer.bidirectional:
+                    postfix = ['', '_reverse']
+                else:
+                    postfix = ['']
+
+                local_norm+=getattr(layer, 'weight_hh_l0')[expanded_idxs].pow(2).sum(1).view(4, -1).sum(0)
+                local_norm+=getattr(layer, 'weight_hh_l0')[:, _idxs].pow(2).sum(0)
+                local_norm+=getattr(layer, 'weight_ih_l0')[expanded_idxs].pow(2).sum(1).view(4, -1).sum(0)
+                if layer.bidirectional:
+                    local_norm_reverse+=getattr(layer, 'weight_hh_l0')[expanded_idxs].pow(2).sum(1).view(4, -1).sum(0)
+                    local_norm_reverse+=getattr(layer, 'weight_hh_l0')[:, _idxs].pow(2).sum(0)
+                    local_norm_reverse+=getattr(layer, 'weight_ih_l0')[expanded_idxs].pow(2).sum(1).view(4, -1).sum(0)
+                    local_norm = torch.cat([local_norm, local_norm_reverse], dim=0)
+                group_norm += local_norm
+            elif prune_fn == function.prune_lstm_in_channels:
+                local_norm=getattr(layer, 'weight_ih_l0')[:, idxs].pow(2).sum(0)
+                if layer.bidirectional:
+                    local_norm_reverse+=getattr(layer, 'weight_ih_l0_reverse')[:, idxs].pow(2).sum(0)
+                    local_norm = torch.cat([local_norm, local_norm_reverse], dim=0)
+                group_norm+=local_norm
+        group_imp = group_norm**(1/self.p)
+        group_size = math.sqrt(group_size)
+        print("="*15)
+        print(group)
+        print(group_imp)
+        if self.normalizer is not None:
+            group_imp = self.normalizer(group, group_imp)
+        return group_imp 
+
+class GroupBNScalingImportance(Importance):
+    def __init__(self, p=2, normalizer=RelativeNormalizer(percentage=0.0)):
+        self.p = p
+        self.normalizer = normalizer
+        
+    @torch.no_grad()
+    def __call__(self, group, ch_groups=1):
+        group_norm = 0
+        group_size = 0
+
+        #Get group norm
+        for dep, idxs in group:
+            idxs.sort()
+            layer = dep.target.module
+            prune_fn = dep.handler
+    
+            # Conv in_channels
+            if prune_fn == function.prune_batchnorm_out_channels:
+                # regularize BN
+                if layer.affine:
+                    w = layer.weight.data[idxs]
+                    local_norm = w.pow(2)
                     if ch_groups>1:
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                         local_norm = local_norm.repeat(ch_groups)
@@ -339,14 +399,12 @@ class GroupNormImportance(Importance):
                     group_size += ch_groups
         group_imp = group_norm**(1/self.p)
         group_size = math.sqrt(group_size)
+        if self.normalizer is not None:
+            group_imp = self.normalizer(group, group_imp)
+        #group_imp = (group_imp-group_imp.mean()) / group_imp.std()
+        return group_imp 
 
-        print("="*15)
-        print(group)
-        print(group_imp)
-            
-        #if self.normalizer is not None:
-        #    group_imp = self.normalizer(group, group_imp)
-        return group_imp / group_imp.max()
+
 
 class RandomImportance(Importance):
     @torch.no_grad()
@@ -375,8 +433,9 @@ class GroupConvImportance(MagnitudeImportance):
                 group_size += w.shape[1]
                 group_norm += w.abs().pow(self.p).sum(1)
         group_imp = group_norm**(1/self.p)
-        if self.normalizer is not None:
-            group_imp = self.normalizer(group, group_imp)
+        #if self.normalizer is not None:
+        #    group_imp = self.normalizer(group, group_imp)
+        group_norm / group_size
         return group_norm
 
 

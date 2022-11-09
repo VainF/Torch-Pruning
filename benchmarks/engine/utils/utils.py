@@ -6,6 +6,29 @@ import copy
 import numpy as np
 import torch
 
+class MagnitudeRecover():
+    def __init__(self, model, reg=1e-3):
+        self.rec = {}
+        self.reg = reg
+        self.cnt = 0
+        with torch.no_grad():
+            for name, p in model.named_parameters():
+                norm = p.pow(2).mean()
+                self.rec[name] = norm
+
+    def regularize(self, model):
+        with torch.no_grad():
+            for name, p in model.named_parameters():
+                if name in self.rec:
+                    target_norm = self.rec[name]
+                    if p.data.pow(2).mean() > target_norm:
+                        self.rec.pop(name)
+                        continue
+                    p.grad.data+= -self.reg * p.data
+                    if self.cnt%1000==0:
+                        print(name, p.pow(2).mean(), target_norm)
+        self.cnt+=1
+        
 def flatten_dict(dic):
     flattned = dict()
     def _flatten(prefix, d):

@@ -273,14 +273,60 @@ class EmbeddingPruner(BasePruningFunc):
     #    return self.prune_out_channels(layer=layer, idxs=idxs)
 
     def get_out_channels(self, layer):
-        if layer.num_parameters == 1:
-            return None
-        else:
-            return layer.num_parameters
+        return layer.embedding_dim
 
     def get_in_channels(self, layer):
         return self.get_out_channels(layer=layer)
 
+class LSTMPruner(BasePruningFunc):
+    TARGET_MODULES = ops.TORCH_LSTM
+
+    def prune_out_channels(self, layer: nn.LSTM, idxs: list) -> nn.Module:
+        assert layer.num_layers==1
+        num_layers = layer.num_layers
+        num_features = layer.hidden_size
+        keep_idxs = list(set(range(num_features)) - set(idxs))
+        keep_idxs.sort()
+        keep_idxs = torch.tensor(keep_idxs)
+        expanded_keep_idxs = torch.cat([ keep_idxs+i*num_features for i in range(4) ], dim=0)
+        if layer.bidirectional:
+            postfix = ['', '_reverse']
+        else:
+            postfix = ['']
+        #for l in range(num_layers):
+        for pf in postfix:
+            setattr(layer, 'weight_hh_l0'+pf, torch.nn.Parameter(
+                getattr(layer, 'weight_hh_l0'+pf).data.clone()[expanded_keep_idxs]))
+            if layer.bias:
+                setattr(layer, 'bias_hh_l0'+pf, torch.nn.Parameter(
+                    getattr(layer, 'bias_hh_l0'+pf).data.clone()[expanded_keep_idxs]))
+            setattr(layer, 'weight_hh_l0'+pf, torch.nn.Parameter(
+                getattr(layer, 'weight_hh_l0'+pf).data.clone()[:, keep_idxs]))
+
+            setattr(layer, 'weight_ih_l0'+pf, torch.nn.Parameter(
+                getattr(layer, 'weight_ih_l0'+pf).data.clone()[expanded_keep_idxs]))
+            if layer.bias:
+                setattr(layer, 'bias_ih_l0'+pf, torch.nn.Parameter(
+                    getattr(layer, 'bias_ih_l0'+pf).data.clone()[expanded_keep_idxs]))
+        layer.hidden_size = len(keep_idxs)
+
+    def prune_in_channels(self, layer: nn.LSTM, idxs: list):
+        num_features = layer.input_size
+        keep_idxs = list(set(range(num_features)) - set(idxs))
+        keep_idxs.sort()
+        setattr(layer, 'weight_ih_l0', torch.nn.Parameter(
+                    getattr(layer, 'weight_ih_l0').data.clone()[:, keep_idxs]))
+        if layer.bidirectional:
+            setattr(layer, 'weight_ih_l0_reverse', torch.nn.Parameter(
+                    getattr(layer, 'weight_ih_l0_reverse').data.clone()[:, keep_idxs]))
+        layer.input_size = len(keep_idxs)
+
+    def get_out_channels(self, layer):
+        return layer.hidden_size
+        
+    def get_in_channels(self, layer):
+        return layer.input_size
+    
 
 class ParameterPruner(BasePruningFunc):
     TARGET_MODULES = ops.TORCH_PARAMETER
@@ -384,6 +430,7 @@ PrunerBox = {
     ops.OPTYPE.EMBED: EmbeddingPruner(),
     ops.OPTYPE.PARAMETER: ParameterPruner(),
     ops.OPTYPE.MHA: MultiheadAttentionPruner(),
+    ops.OPTYPE.LSTM: LSTMPruner()
 }
 
 
@@ -422,3 +469,6 @@ prune_parameter_in_channels = PrunerBox[ops.OPTYPE.PARAMETER].prune_in_channels
 
 prune_multihead_attention_out_channels = PrunerBox[ops.OPTYPE.MHA].prune_out_channels
 prune_multihead_attention_in_channels = PrunerBox[ops.OPTYPE.MHA].prune_in_channels
+
+prune_lstm_out_channels = PrunerBox[ops.OPTYPE.LSTM].prune_out_channels
+prune_lstm_in_channels = PrunerBox[ops.OPTYPE.LSTM].prune_in_channels

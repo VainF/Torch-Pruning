@@ -20,7 +20,7 @@ from torchvision.transforms.functional import InterpolationMode
 
 import torch_pruning as tp 
 from functools import partial
-from engine.utils import count_ops_and_params
+from engine.utils import count_ops_and_params, MagnitudeRecover
 
 def get_args_parser(add_help=True):
     import argparse
@@ -158,7 +158,7 @@ def get_pruner(model, example_inputs, args):
 
 
 
-def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema=None, scaler=None, regularizer=None):
+def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema=None, scaler=None, regularizer=None, recover=None):
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter("lr", utils.SmoothedValue(window_size=1, fmt="{value}"))
@@ -175,16 +175,20 @@ def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, arg
         optimizer.zero_grad()
         if scaler is not None:
             scaler.scale(loss).backward()
-            if regularizer:
+            if regularizer or recover:
                 scaler.unscale_(optimizer)
+            if regularizer:
                 regularizer(model)
-
+            if recover:
+                recover(model.module)
             scaler.step(optimizer)
             scaler.update()
         else:
             loss.backward()
             if regularizer:
                 regularizer(model)
+            if recover:
+                recover(model.module)
             if args.clip_grad_norm is not None:
                 nn.utils.clip_grad_norm_(model.parameters(), args.clip_grad_norm)
             optimizer.step()
@@ -359,6 +363,7 @@ def main(args):
     print("ops: {:.4f} G".format(base_ops / 1e9))
     print("="*16)
     if args.prune:
+        norm_recover = MagnitudeRecover(model, reg=2*args.weight_decay)
         pruner = get_pruner(model, example_inputs=example_inputs, args=args)
         if args.sparsity_learning:
             if args.sl_resume:
@@ -389,19 +394,20 @@ def main(args):
         print("Params: {:.2f} M => {:.2f} M ({:.2f}%)".format(base_params / 1e6, pruned_size / 1e6, pruned_size / base_params * 100))
         print("Ops: {:.2f} G => {:.2f} G ({:.2f}%, {:.2f}X )".format(base_ops / 1e9, pruned_ops / 1e9, pruned_ops / base_ops * 100, base_ops / pruned_ops))
         print("="*16)
-
+    
+    dataset, dataset_test, train_sampler, test_sampler = load_data(train_dir, val_dir, args)
     print("Finetuning..." if args.prune else "Training...")
     train(model, args.epochs, 
             lr=args.lr, lr_step_size=args.lr_step_size, lr_warmup_epochs=args.lr_warmup_epochs, 
             train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
-            device=device, args=args, regularizer=None, state_dict_only=(not args.prune))
+            device=device, args=args, regularizer=None, state_dict_only=(not args.prune), recover=norm_recover.regularize)
 
 def train(
     model, 
     epochs, 
     lr, lr_step_size, lr_warmup_epochs, 
     train_sampler, data_loader, data_loader_test, 
-    device, args, regularizer=None, state_dict_only=True):
+    device, args, regularizer=None, state_dict_only=True, recover=None):
 
     model.to(device)
     if args.distributed and args.sync_bn:
@@ -529,7 +535,7 @@ def train(
     for epoch in range(args.start_epoch, epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
-        train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema, scaler, regularizer)
+        train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema, scaler, regularizer, recover=recover)
         lr_scheduler.step()
         acc = evaluate(model, criterion, data_loader_test, device=device)
         if model_ema:

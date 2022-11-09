@@ -81,6 +81,7 @@ TORCH_PRELU = nn.PReLU
 TORCH_LINEAR = nn.Linear
 TORCH_EMBED = nn.Embedding
 TORCH_PARAMETER = nn.Parameter
+TORCH_LSTM = nn.LSTM
 try:
     TORCH_MHA = nn.MultiheadAttention
 except:
@@ -102,6 +103,7 @@ class OPTYPE(IntEnum):
     EMBED = 10  # nn.Embedding
     PARAMETER = 11  # nn.Parameter
     MHA = 12
+    LSTM = 13
 
 
 def module2type(module):
@@ -130,6 +132,8 @@ def module2type(module):
         return OPTYPE.PARAMETER
     elif isinstance(module, TORCH_MHA):
         return OPTYPE.MHA
+    elif isinstance(module, TORCH_LSTM):
+        return OPTYPE.LSTM
     else:
         return OPTYPE.ELEMENTWISE
 
@@ -157,6 +161,8 @@ def type2class(op_type):
         return TORCH_PARAMETER
     elif op_type == OPTYPE.MHA:
         return TORCH_MHA
+    elif op_type == OPTYPE.LSTM:
+        return TORCH_LSTM
     else:
         return _ElementWiseOp
 

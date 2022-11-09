@@ -116,8 +116,8 @@ def rnn_flops_counter_hook(rnn_module, input, output):
     flops = 0
     # input is a tuple containing a sequence to process and (optionally) hidden state
     inp = input[0]
-    batch_size = inp.shape[0]
-    seq_length = inp.shape[1]
+    batch_size = inp[0].shape[0]
+    seq_length = inp[0].shape[1]
     num_layers = rnn_module.num_layers
 
     for i in range(num_layers):
@@ -292,7 +292,10 @@ def count_ops_and_params(model, example_inputs):
     flops_model.eval()
     flops_model.start_flops_count(ost=sys.stdout, verbose=False,
                                   ignore_list=[])
-    _ = flops_model(example_inputs)
+    if isinstance(example_inputs, (tuple, list)):
+        _ = flops_model(*example_inputs)
+    else:
+        _ = flops_model(example_inputs)
     flops_count, params_count = flops_model.compute_average_flops_cost()
     flops_model.stop_flops_count()
     CUSTOM_MODULES_MAPPING = {}
