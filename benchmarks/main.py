@@ -189,6 +189,10 @@ def get_pruner(model, example_inputs):
         sparsity_learning = True
         imp = tp.importance.GroupBNScalingImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
         pruner_entry = partial(tp.pruner.GroupBNScaling, soft_keeping_ratio=args.soft_keeping_ratio, reg=args.reg, global_pruning=args.global_pruning)
+    elif args.method == "group_rank":
+        sparsity_learning = True
+        imp = tp.importance.GroupRankImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
+        pruner_entry = partial(tp.pruner.GroupRankPruner, soft_keeping_ratio=args.soft_keeping_ratio, reg=args.reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
     
