@@ -104,12 +104,15 @@ def prune_to_target_flops(pruner, model, target_flops, example_inputs):
     pruned_ops = ori_ops
     while pruned_ops / 1e9 > target_flops:
         pruner.step()
+        if 'vit' in args.model:
+            model.hidden_dim = model.conv_proj.out_channels
         pruned_ops, _ = count_ops_and_params(model, example_inputs=example_inputs)
+        
     return pruned_ops
 
 def get_pruner(model, example_inputs, args):
     unwrapped_parameters = (
-        [model.pos_embedding, model.cls_token] if "vit" in args.model else None
+        [model.encoder.pos_embedding, model.class_token] if "vit" in args.model else None
     )
     sparsity_learning = False
     data_dependency = False
@@ -146,7 +149,9 @@ def get_pruner(model, example_inputs, args):
     for m in model.modules():
         if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
             ignored_layers.append(m)
-    
+    round_to = None
+    if 'vit' in args.model:
+        round_to = model.encoder.layers[0].num_heads
     pruner = pruner_entry(
         model,
         example_inputs,
@@ -156,6 +161,7 @@ def get_pruner(model, example_inputs, args):
         ch_sparsity_dict=ch_sparsity_dict,
         max_ch_sparsity=args.max_ch_sparsity,
         ignored_layers=ignored_layers,
+        round_to=round_to,
         unwrapped_parameters=unwrapped_parameters,
     )
     return pruner
@@ -179,12 +185,11 @@ def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, arg
         optimizer.zero_grad()
         if scaler is not None:
             scaler.scale(loss).backward()
-            if regularizer or recover:
-                scaler.unscale_(optimizer)
             if regularizer:
+                scaler.unscale_(optimizer)
                 regularizer(model)
-            if recover:
-                recover(model.module)
+            #if recover:
+            #    recover(model.module)
             scaler.step(optimizer)
             scaler.update()
         else:

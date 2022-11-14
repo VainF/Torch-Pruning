@@ -674,11 +674,11 @@ class DependencyGraph(object):
     def _update_split_index_mapping(self, split_node: Node):
         if split_node.type != ops.OPTYPE.SPLIT:
             return
-
+        print(split_node)
         chs = []
         for n in split_node.outputs:
             chs.append(self._infer_in_channels_recursively(n))
-
+        
         offsets = [0]
         for ch in chs:
             offsets.append(offsets[-1] + ch)

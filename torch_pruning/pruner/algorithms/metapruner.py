@@ -192,7 +192,7 @@ class MetaPruner():
             return self.channel_groups
         for dep, _ in group:
             module = dep.target.module
-            if module in self.channel_groups and function.is_out_channel_pruner(dep.handler):
+            if module in self.channel_groups: #and function.is_out_channel_pruner(dep.handler):
                 return self.channel_groups[module]
         return 1 # no channel grouping
 
@@ -265,6 +265,10 @@ class MetaPruner():
             if ch_groups>1:
                 group_size = self.DG.get_out_channels(module)//ch_groups
                 pruning_indices = torch.cat([pruning_indices+group_size*i for i in range(ch_groups)], 0)
+            if self.round_to:
+                n_pruned = len(pruning_indices)
+                n_pruned = n_pruned - (n_pruned % self.round_to)
+                pruning_indices = pruning_indices[:n_pruned]
             group = self.DG.get_pruning_group(module, pruning_fn, pruning_indices.tolist())
             if self.DG.check_pruning_group(group):
                 group.exec()
