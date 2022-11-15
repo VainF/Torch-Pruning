@@ -39,7 +39,7 @@ The pipeline can be visualized as the following images:
 * High-level pruners like MagnitudeBasedPruner (:heavy_check_mark:), TaylerBasedPruner (:heavy_check_mark:), and [Slimming Pruner (ICCV'17)](https://openaccess.thecvf.com/content_iccv_2017/html/Liu_Learning_Efficient_Convolutional_ICCV_2017_paper.html) (:heavy_check_mark:).
 * Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 * A pruning benchmark on CIFAR100 (:heavy_check_mark:), ImageNet (:heavy_check_mark:), 3D Point Cloud (:heavy_check_mark:), Text (:heavy_check_mark:), Graph data (:heavy_check_mark:), ...
-* More examples for detection and segmentation.
+* More examples for detection (==> In progress) and segmentation.
 * A paper about this repo (:heavy_check_mark:)
   
 ## Installation
