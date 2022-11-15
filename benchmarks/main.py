@@ -168,9 +168,6 @@ def get_pruner(model, example_inputs):
     elif args.method == "l1":
         imp = tp.importance.MagnitudeImportance(p=1)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
-    elif args.method == "l1_group_conv":
-        imp = tp.importance.GroupConvImportance(p=1)
-        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "lamp":
         imp = tp.importance.LAMPImportance(p=2, to_group=False)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
@@ -185,14 +182,6 @@ def get_pruner(model, example_inputs):
         sparsity_learning = True
         imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
         pruner_entry = partial(tp.pruner.GroupNormPruner, soft_keeping_ratio=args.soft_keeping_ratio, reg=args.reg, global_pruning=args.global_pruning)
-    elif args.method == "group_bn":
-        sparsity_learning = True
-        imp = tp.importance.GroupBNScalingImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
-        pruner_entry = partial(tp.pruner.GroupBNScaling, soft_keeping_ratio=args.soft_keeping_ratio, reg=args.reg, global_pruning=args.global_pruning)
-    elif args.method == "group_rank":
-        sparsity_learning = True
-        imp = tp.importance.GroupRankImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
-        pruner_entry = partial(tp.pruner.GroupRankPruner, soft_keeping_ratio=args.soft_keeping_ratio, reg=args.reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
     
