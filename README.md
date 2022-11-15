@@ -48,7 +48,7 @@ The pipeline can be visualized as the following images:
 git clone https://github.com/VainF/Torch-Pruning.git # recommended
 ```
 
-If you would like to try the latest version with more robust design and some tutorials, please try:
+If you would like to try the latest version with robust design, [tutorials](https://github.com/VainF/Torch-Pruning/tree/v1.0/tutorials) and [CIFAR/ImageNet benchmarks](https://github.com/VainF/Torch-Pruning/tree/v1.0/benchmarks), please try:
 ```bash
 cd Torch-Pruning
 git checkout v1.0 # The interfaces in v1.0 may be slightly different.
