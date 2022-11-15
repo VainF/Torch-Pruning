@@ -1,6 +1,7 @@
 import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from torchvision.models.alexnet import alexnet
 
 from torchvision.models.vision_transformer import (
     vit_b_16,
@@ -51,13 +52,6 @@ from torchvision.models.regnet import (
     regnet_y_16gf,
     regnet_y_32gf,
     regnet_y_128gf,
-    regnet_x_400mf,
-    regnet_x_800mf,
-    regnet_x_1_6gf,
-    regnet_x_3_2gf,
-    regnet_x_8gf,
-    regnet_x_16gf,
-    regnet_x_32gf,
 )
 from torchvision.models.resnet import (
     resnet18,
@@ -134,7 +128,7 @@ if __name__ == "__main__":
         round_to = None
         if isinstance(
             model, VisionTransformer
-        ):  # Torchvision uses a static hidden_dim for reshape
+        ): 
             round_to = model.encoder.layers[0].num_heads
             unwrapped_parameters = [model.class_token, model.encoder.pos_embedding]
         elif isinstance(model, ConvNeXt):
@@ -157,7 +151,7 @@ if __name__ == "__main__":
         pruner.step()
         if isinstance(
             model, VisionTransformer
-        ):  # Torchvision uses a static hidden_dim for reshape
+        ):  # Torchvision relies on the hidden_dim variable for forwarding, so we have to modify this varaible after pruning
             model.hidden_dim = model.conv_proj.out_channels
             print(model.class_token.shape, model.encoder.pos_embedding.shape)
         print(model)

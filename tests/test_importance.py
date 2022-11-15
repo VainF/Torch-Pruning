@@ -16,11 +16,15 @@ pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, i
 
 magnitude_importance = tp.importance.MagnitudeImportance(p=2)
 mag_imp = magnitude_importance(pruning_group)
-print(mag_imp)
+print("L-2 Norm, Group Mean: ", mag_imp)
+
+magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction='sum')
+mag_imp = magnitude_importance(pruning_group)
+print("L-2 Norm, Group Sum: ", mag_imp)
 
 bn_scale_importance = tp.importance.BNScaleImportance()
 bn_imp = bn_scale_importance(pruning_group)
-print(bn_imp)
+print("BN Scaling, Group mean: ", mag_imp)
 
 
 

@@ -15,7 +15,7 @@ def is_scalar(x):
     return False
 
 
-class _FlattenIndexTransform(object):
+class _FlattenIndexMapping(object):
     def __init__(self, stride=1, reverse=False):
         self._stride = stride
         self.reverse = reverse
@@ -33,7 +33,7 @@ class _FlattenIndexTransform(object):
         return new_idxs
 
 
-class _ConcatIndexTransform(object):
+class _ConcatIndexMapping(object):
     def __init__(self, offset, reverse=False):
         self.offset = offset
         self.reverse = reverse
@@ -51,7 +51,7 @@ class _ConcatIndexTransform(object):
         return new_idxs
 
 
-class _SplitIndexTransform(object):
+class _SplitIndexMapping(object):
     def __init__(self, offset, reverse=False):
         self.offset = offset
         self.reverse = reverse
@@ -68,7 +68,7 @@ class _SplitIndexTransform(object):
         return new_idxs
 
 
-class _GroupConvIndexTransform(object):
+class _GroupConvIndexMapping(object):
     def __init__(self, in_channels, out_channels, groups, reverse=False):
         self.in_channels = in_channels
         self.out_channels = out_channels

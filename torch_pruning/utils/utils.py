@@ -1,25 +1,12 @@
 from ..ops import TORCH_CONV, TORCH_BATCHNORM, TORCH_PRELU, TORCH_LINEAR
 from ..ops import module2type
 import torch
-from .op_counter import profile
+from .op_counter import count_ops_and_params
 import torch.nn as nn
 
 @torch.no_grad()
 def count_params(module):
     return sum([p.numel() for p in module.parameters()])
-
-@torch.no_grad()
-def count_ops_and_params(model, input_size=None, example_inputs=None, return_macs=True, device=None):
-    if example_inputs is None:
-        example_inputs = torch.randn(*input_size)
-    if device is not None:
-        example_inputs = example_inputs.to(device)
-    macs, params = profile(
-        model, inputs=(example_inputs, ), verbose=False)
-    if return_macs:
-        return macs, params
-    else:
-        return 2*macs, params  # FLOP ~= 2*MACs
 
 def flatten_as_list(obj):
     if isinstance(obj, torch.Tensor):
@@ -76,17 +63,19 @@ def draw_groups(DG, save_as, title='Group', figsize=(16, 16), dpi=200, cmap=None
     G = np.zeros((n_nodes, n_nodes))
     fill_value = 10
     for i, (module, node) in enumerate(DG.module2node.items()):
-        group = DG.get_pruning_group(module, DG.PRUNING_FN[module2type(
-            module)][1], list(range(DG.get_out_channels(module))))
+        pruning_fn = DG.get_module_pruner(module).prune_out_channels
+        prunable_ch = DG.get_out_channels(module)
+        if prunable_ch is None: continue
+        group = DG.get_pruning_group(module, pruning_fn, list(range(prunable_ch)))
         grouped_idxs = []
         for dep, _ in group:
             source, target, trigger, handler = dep.source, dep.target, dep.trigger, dep.handler
-            if trigger in DG.out_channel_pruners:
+            if DG.is_out_channel_pruner(trigger):
                 grouped_idxs.append(node2idx[source]*2+1)
             else:
                 grouped_idxs.append(node2idx[source]*2)
 
-            if handler in DG.out_channel_pruners:
+            if DG.is_out_channel_pruner(handler):
                 grouped_idxs.append(node2idx[target]*2+1)
             else:
                 grouped_idxs.append(node2idx[target]*2)
@@ -121,13 +110,13 @@ def draw_dependency_graph(DG, save_as, title='Group', figsize=(16, 16), dpi=200,
             source = dep.source
             target = dep.target
 
-            if trigger in DG.out_channel_pruners:
+            if DG.is_out_channel_pruner(trigger):
                 G[2*node2idx[source]+1, 2*node2idx[target]] = fill_value
             else:
                 G[2*node2idx[source], 2*node2idx[target]+1] = fill_value
 
-        fns = DG.PRUNING_FN[module2type(module)]
-        if fns[0] == fns[1]:
+        pruner = DG.get_module_pruner(module)
+        if pruner.prune_out_channels == pruner.prune_in_channels:
             G[2*node2idx[node], 2*node2idx[node]+1] = fill_value
 
     fig, ax = plt.subplots(figsize=(figsize))

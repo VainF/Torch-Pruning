@@ -20,7 +20,6 @@ from torchvision.transforms.functional import InterpolationMode
 
 import torch_pruning as tp 
 from functools import partial
-from engine.utils import count_ops_and_params, MagnitudeRecover
 
 def get_args_parser(add_help=True):
     import argparse
@@ -100,13 +99,13 @@ def get_args_parser(add_help=True):
 
 def prune_to_target_flops(pruner, model, target_flops, example_inputs):
     model.eval()
-    ori_ops, _ = count_ops_and_params(model, example_inputs=example_inputs)
+    ori_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
     pruned_ops = ori_ops
     while pruned_ops / 1e9 > target_flops:
         pruner.step()
         if 'vit' in args.model:
             model.hidden_dim = model.conv_proj.out_channels
-        pruned_ops, _ = count_ops_and_params(model, example_inputs=example_inputs)
+        pruned_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
         
     return pruned_ops
 
@@ -123,23 +122,19 @@ def get_pruner(model, example_inputs, args):
         imp = tp.importance.MagnitudeImportance(p=1)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "lamp":
-        imp = tp.importance.LAMPImportance(p=2, to_group=False)
+        imp = tp.importance.LAMPImportance(p=2)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "slim":
         sparsity_learning = True
-        imp = tp.importance.BNScaleImportance(to_group=False)
+        imp = tp.importance.BNScaleImportance()
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
     elif args.method == "group_norm":
-        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
+        imp = tp.importance.GroupNormImportance(p=2)
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)
     elif args.method == "group_sl":
         sparsity_learning = True
-        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
+        imp = tp.importance.GroupNormImportance(p=2)
         pruner_entry = partial(tp.pruner.GroupNormPruner, reg=args.reg, global_pruning=args.global_pruning)
-    elif args.method == "group_rank":
-        sparsity_learning = True
-        imp = tp.importance.GroupRankImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
-        pruner_entry = partial(tp.pruner.GroupRankPruner, soft_keeping_ratio=args.soft_keeping_ratio, reg=args.reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
     args.data_dependency = data_dependency
@@ -367,12 +362,11 @@ def main(args):
     print("="*16)
     print(model)
     example_inputs = torch.randn(1, 3, 224, 224)
-    base_ops, base_params = count_ops_and_params(model, example_inputs=example_inputs)
+    base_ops, base_params = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
     print("Params: {:.4f} M".format(base_params / 1e6))
     print("ops: {:.4f} G".format(base_ops / 1e9))
     print("="*16)
     if args.prune:
-        norm_recover = MagnitudeRecover(model, reg=2*args.weight_decay)
         pruner = get_pruner(model, example_inputs=example_inputs, args=args)
         if args.sparsity_learning:
             if args.sl_resume:
@@ -396,7 +390,7 @@ def main(args):
         model = model.to('cpu')
         print("Pruning model...")
         prune_to_target_flops(pruner, model, args.target_flops, example_inputs)
-        pruned_ops, pruned_size = count_ops_and_params(model, example_inputs=example_inputs)
+        pruned_ops, pruned_size = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
         print("="*16)
         print("After pruning:")
         print(model)
@@ -409,7 +403,7 @@ def main(args):
     train(model, args.epochs, 
             lr=args.lr, lr_step_size=args.lr_step_size, lr_warmup_epochs=args.lr_warmup_epochs, 
             train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
-            device=device, args=args, regularizer=None, state_dict_only=(not args.prune), recover=norm_recover.regularize)
+            device=device, args=args, regularizer=None, state_dict_only=(not args.prune))
 
 def train(
     model, 

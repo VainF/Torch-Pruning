@@ -12,11 +12,13 @@ print(model)
 example_inputs = torch.randn(1, 3, 224, 224)
 imp = tp.importance.MagnitudeImportance(p=2)
 ignored_layers = []
+
+# DO NOT prune the final classifier!
 for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m)
 
-iterative_steps = 1
+iterative_steps = 5
 pruner = tp.pruner.MagnitudePruner(
     model,
     example_inputs,
@@ -26,14 +28,21 @@ pruner = tp.pruner.MagnitudePruner(
     ignored_layers=ignored_layers,
 )
 
+base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
 for i in range(iterative_steps):
-    ori_size = tp.utils.count_params(model)
     pruner.step()
+    macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
     print(model)
     print(model(example_inputs).shape)
     print(
-        "  Params: %.2f M => %.2f M"
-        % (ori_size / 1e6, tp.utils.count_params(model) / 1e6)
+        "  Iter %d/%d, Params: %.2f M => %.2f M"
+        % (i+1, iterative_steps, base_nparams / 1e6, nparams / 1e6)
     )
-
+    print(
+        "  Iter %d/%d, MACs: %.2f G => %.2f G"
+        % (i+1, iterative_steps, base_macs / 1e9, macs / 1e9)
+    )
+    # finetune your model here
+    # finetune(model)
+    # ...
 

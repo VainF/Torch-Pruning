@@ -1,615 +1,482 @@
-""" Modified from https://github.com/Lyken17/pytorch-OpCounter
-"""
+'''
+This opcounter is adapted from https://github.com/sovrasov/flops-counter.pytorch
 
-from distutils.version import LooseVersion
-import logging
-import torch
-import torch.nn as nn
-from torch.nn.modules.conv import _ConvNd
+Copyright (C) 2021 Sovrasov V. - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the MIT license.
+ * You should have received a copy of the MIT license with
+ * this file. If not visit https://opensource.org/licenses/MIT
+'''
+
 import numpy as np
-import warnings
-
-if LooseVersion(torch.__version__) < LooseVersion("1.0.0"):
-    logging.warning(
-        "You are using an old version PyTorch {version}, which THOP does NOT support.".format(
-            version=torch.__version__
-        )
-    )
-
-
-def l_prod(in_list):
-    res = 1
-    for _ in in_list:
-        res *= _
-    return res
-
-def l_sum(in_list):
-    res = 0
-    for _ in in_list:
-        res += _
-    return res
-
-
-def calculate_parameters(param_list):
-    total_params = 0
-    for p in param_list:
-        total_params += torch.DoubleTensor([p.nelement()])
-    return total_params
-
-
-def calculate_zero_ops():
-    return torch.DoubleTensor([int(0)])
-
-def calculate_conv2d_flops(input_size: list, output_size: list, kernel_size: list, groups: int, bias: bool = False):
-    # n, out_c, oh, ow = output_size
-    # n, in_c, ih, iw = input_size
-    # out_c, in_c, kh, kw = kernel_size
-    in_c = input_size[1]
-    g = groups
-    return l_prod(output_size) * (in_c // g) * l_prod(kernel_size[2:])
-
-
-def calculate_conv(bias, kernel_size, output_size, in_channel, group):
-    warnings.warn("This API is being deprecated.")
-    """inputs are all numbers!"""
-    return torch.DoubleTensor([output_size * (in_channel / group * kernel_size + bias)])
-
-
-def calculate_norm(input_size):
-    """input is a number not a array or tensor"""
-    return torch.DoubleTensor([2 * input_size])
-
-def calculate_relu_flops(input_size):
-    # x[x < 0] = 0
-    return 0
-    
-
-def calculate_relu(input_size: torch.Tensor):
-    warnings.warn("This API is being deprecated")
-    return torch.DoubleTensor([int(input_size)])
-
-
-def calculate_softmax(batch_size, nfeatures):
-    total_exp = nfeatures
-    total_add = nfeatures - 1
-    total_div = nfeatures
-    total_ops = batch_size * (total_exp + total_add + total_div)
-    return torch.DoubleTensor([int(total_ops)])
-
-
-def calculate_avgpool(input_size):
-    return torch.DoubleTensor([int(input_size)])
-
-
-def calculate_adaptive_avg(kernel_size, output_size):
-    total_div = 1
-    kernel_op = kernel_size + total_div
-    return torch.DoubleTensor([int(kernel_op * output_size)])
-
-
-def calculate_upsample(mode: str, output_size):
-    total_ops = output_size
-    if mode == "linear":
-        total_ops *= 5
-    elif mode == "bilinear":
-        total_ops *= 11
-    elif mode == "bicubic":
-        ops_solve_A = 224  # 128 muls + 96 adds
-        ops_solve_p = 35  # 16 muls + 12 adds + 4 muls + 3 adds
-        total_ops *= ops_solve_A + ops_solve_p
-    elif mode == "trilinear":
-        total_ops *= 13 * 2 + 5
-    return torch.DoubleTensor([int(total_ops)])
-
-
-def calculate_linear(in_feature, num_elements):
-    return torch.DoubleTensor([int(in_feature * num_elements)])
-
-
-def counter_matmul(input_size, output_size):
-    input_size = np.array(input_size)
-    output_size = np.array(output_size)
-    return np.prod(input_size) * output_size[-1]
-
-
-def counter_mul(input_size):
-    return input_size
-
-
-def counter_pow(input_size):
-    return input_size
-
-
-def counter_sqrt(input_size):
-    return input_size
-
-
-def counter_div(input_size):
-    return input_size
-
-multiply_adds = 1
-
-
-def count_parameters(m, x, y):
-    total_params = 0
-    for p in m.parameters():
-        total_params += torch.DoubleTensor([p.numel()])
-    m.total_params[0] = calculate_parameters(m.parameters())
-
-
-def zero_ops(m, x, y):
-    m.total_ops += calculate_zero_ops()
-
-
-def count_convNd(m: _ConvNd, x, y: torch.Tensor):
-    x = x[0]
-
-    kernel_ops = torch.zeros(m.weight.size()[2:]).numel()  # Kw x Kh
-    bias_ops = 1 if m.bias is not None else 0
-
-    m.total_ops += calculate_conv2d_flops(
-        input_size = list(x.shape),
-        output_size = list(y.shape),
-        kernel_size = list(m.weight.shape),
-        groups = m.groups,
-        bias = m.bias
-    )
-    # N x Cout x H x W x  (Cin x Kw x Kh + bias)
-    # m.total_ops += calculate_conv(
-    #     bias_ops,
-    #     torch.zeros(m.weight.size()[2:]).numel(),
-    #     y.nelement(),
-    #     m.in_channels,
-    #     m.groups,
-    # )
-
-
-def count_convNd_ver2(m: _ConvNd, x, y: torch.Tensor):
-    x = x[0]
-
-    # N x H x W (exclude Cout)
-    output_size = torch.zeros((y.size()[:1] + y.size()[2:])).numel()
-    # # Cout x Cin x Kw x Kh
-    # kernel_ops = m.weight.nelement()
-    # if m.bias is not None:
-    #     # Cout x 1
-    #     kernel_ops += + m.bias.nelement()
-    # # x N x H x W x Cout x (Cin x Kw x Kh + bias)
-    # m.total_ops += torch.DoubleTensor([int(output_size * kernel_ops)])
-    m.total_ops += calculate_conv(m.bias.nelement(), m.weight.nelement(), output_size)
-
-
-def count_normalization(m: nn.modules.batchnorm._BatchNorm, x, y):
-    # TODO: add test cases
-    # https://github.com/Lyken17/pytorch-OpCounter/issues/124
-    # y = (x - mean) / sqrt(eps + var) * weight + bias
-    x = x[0]
-    # bn is by default fused in inference
-    flops = calculate_norm(x.numel())
-    if (getattr(m, 'affine', False) or getattr(m, 'elementwise_affine', False)):
-        flops *= 2
-    m.total_ops += flops
-
-
-# def count_layer_norm(m, x, y):
-#     x = x[0]
-#     m.total_ops += calculate_norm(x.numel())
-
-
-# def count_instance_norm(m, x, y):
-#     x = x[0]
-#     m.total_ops += calculate_norm(x.numel())
-
-
-def count_prelu(m, x, y):
-    x = x[0]
-
-    nelements = x.numel()
-    if not m.training:
-        m.total_ops += calculate_relu(nelements)
-
-
-def count_relu(m, x, y):
-    x = x[0]
-
-    nelements = x.numel()
-
-    m.total_ops += calculate_relu_flops(list(x.shape))
-
-
-def count_softmax(m, x, y):
-    x = x[0]
-    nfeatures = x.size()[m.dim]
-    batch_size = x.numel() // nfeatures
-
-    m.total_ops += calculate_softmax(batch_size, nfeatures)
-
-
-def count_avgpool(m, x, y):
-    # total_add = torch.prod(torch.Tensor([m.kernel_size]))
-    # total_div = 1
-    # kernel_ops = total_add + total_div
-    num_elements = y.numel()
-    m.total_ops += calculate_avgpool(num_elements)
-
-
-def count_adap_avgpool(m, x, y):
-    kernel = torch.div(
-        torch.DoubleTensor([*(x[0].shape[2:])]), 
-        torch.DoubleTensor([*(y.shape[2:])])
-    )
-    total_add = torch.prod(kernel)
-    num_elements = y.numel()
-    m.total_ops += calculate_adaptive_avg(total_add, num_elements)
-
-
-# TODO: verify the accuracy
-def count_upsample(m, x, y):
-    if m.mode not in (
-        "nearest",
-        "linear",
-        "bilinear",
-        "bicubic",
-    ):  # "trilinear"
-        logging.warning("mode %s is not implemented yet, take it a zero op" % m.mode)
-        m.total_ops += 0
-    else:
-        x = x[0]
-        m.total_ops += calculate_upsample(m.mode, y.nelement())
-
-
-# nn.Linear
-def count_linear(m, x, y):
-    # per output element
-    total_mul = m.in_features
-    # total_add = m.in_features - 1
-    # total_add += 1 if m.bias is not None else 0
-    num_elements = y.numel()
-
-    m.total_ops += calculate_linear(total_mul, num_elements)
-
-
-import torch
 import torch.nn as nn
-from torch.nn.utils.rnn import PackedSequence
+import torch
 
 
-def _count_rnn_cell(input_size, hidden_size, bias=True):
-    # h' = \tanh(W_{ih} x + b_{ih}  +  W_{hh} h + b_{hh})
-    total_ops = hidden_size * (input_size + hidden_size) + hidden_size
-    if bias:
-        total_ops += hidden_size * 2
 
-    return total_ops
-
-
-def count_rnn_cell(m: nn.RNNCell, x: torch.Tensor, y: torch.Tensor):
-    total_ops = _count_rnn_cell(m.input_size, m.hidden_size, m.bias)
-
-    batch_size = x[0].size(0)
-    total_ops *= batch_size
-
-    m.total_ops += torch.DoubleTensor([int(total_ops)])
-
-
-def _count_gru_cell(input_size, hidden_size, bias=True):
-    total_ops = 0
-    # r = \sigma(W_{ir} x + b_{ir} + W_{hr} h + b_{hr}) \\
-    # z = \sigma(W_{iz} x + b_{iz} + W_{hz} h + b_{hz}) \\
-    state_ops = (hidden_size + input_size) * hidden_size + hidden_size
-    if bias:
-        state_ops += hidden_size * 2
-    total_ops += state_ops * 2
-
-    # n = \tanh(W_{in} x + b_{in} + r * (W_{hn} h + b_{hn})) \\
-    total_ops += (hidden_size + input_size) * hidden_size + hidden_size
-    if bias:
-        total_ops += hidden_size * 2
-    # r hadamard : r * (~)
-    total_ops += hidden_size
-
-    # h' = (1 - z) * n + z * h
-    # hadamard hadamard add
-    total_ops += hidden_size * 3
-
-    return total_ops
-
-
-def count_gru_cell(m: nn.GRUCell, x: torch.Tensor, y: torch.Tensor):
-    total_ops = _count_gru_cell(m.input_size, m.hidden_size, m.bias)
-
-    batch_size = x[0].size(0)
-    total_ops *= batch_size
-
-    m.total_ops += torch.DoubleTensor([int(total_ops)])
-
-
-def _count_lstm_cell(input_size, hidden_size, bias=True):
-    total_ops = 0
-
-    # i = \sigma(W_{ii} x + b_{ii} + W_{hi} h + b_{hi}) \\
-    # f = \sigma(W_{if} x + b_{if} + W_{hf} h + b_{hf}) \\
-    # o = \sigma(W_{io} x + b_{io} + W_{ho} h + b_{ho}) \\
-    # g = \tanh(W_{ig} x + b_{ig} + W_{hg} h + b_{hg}) \\
-    state_ops = (input_size + hidden_size) * hidden_size + hidden_size
-    if bias:
-        state_ops += hidden_size * 2
-    total_ops += state_ops * 4
-
-    # c' = f * c + i * g \\
-    # hadamard hadamard add
-    total_ops += hidden_size * 3
-
-    # h' = o * \tanh(c') \\
-    total_ops += hidden_size
-
-    return total_ops
-
-
-def count_lstm_cell(m: nn.LSTMCell, x: torch.Tensor, y: torch.Tensor):
-    total_ops = _count_lstm_cell(m.input_size, m.hidden_size, m.bias)
-
-    batch_size = x[0].size(0)
-    total_ops *= batch_size
-
-    m.total_ops += torch.DoubleTensor([int(total_ops)])
-
-
-def count_rnn(m: nn.RNN, x, y):
-    bias = m.bias
-    input_size = m.input_size
-    hidden_size = m.hidden_size
-    num_layers = m.num_layers
-
-    if isinstance(x[0], PackedSequence):
-        batch_size = torch.max(x[0].batch_sizes)
-        num_steps = x[0].batch_sizes.size(0)
+@torch.no_grad()
+def count_ops_and_params(model, example_inputs):
+    global CUSTOM_MODULES_MAPPING
+    model = copy.deepcopy(model)
+    flops_model = add_flops_counting_methods(model)
+    flops_model.eval()
+    flops_model.start_flops_count(ost=sys.stdout, verbose=False,
+                                  ignore_list=[])
+    if isinstance(example_inputs, (tuple, list)):
+        _ = flops_model(*example_inputs)
     else:
-        if m.batch_first:
-            batch_size = x[0].size(0)
-            num_steps = x[0].size(1)
-        else:
-            batch_size = x[0].size(1)
-            num_steps = x[0].size(0)
+        _ = flops_model(example_inputs)
+    flops_count, params_count = flops_model.compute_average_flops_cost()
+    flops_model.stop_flops_count()
+    CUSTOM_MODULES_MAPPING = {}
+    return flops_count, params_count
 
-    total_ops = 0
-    if m.bidirectional:
-        total_ops += _count_rnn_cell(input_size, hidden_size, bias) * 2
+
+def empty_flops_counter_hook(module, input, output):
+    module.__flops__ += 0
+
+
+def upsample_flops_counter_hook(module, input, output):
+    output_size = output[0]
+    batch_size = output_size.shape[0]
+    output_elements_count = batch_size
+    for val in output_size.shape[1:]:
+        output_elements_count *= val
+    module.__flops__ += int(output_elements_count)
+
+
+def relu_flops_counter_hook(module, input, output):
+    active_elements_count = output.numel()
+    module.__flops__ += int(active_elements_count)
+
+
+def linear_flops_counter_hook(module, input, output):
+    input = input[0]
+    # pytorch checks dimensions, so here we don't care much
+    output_last_dim = output.shape[-1]
+    bias_flops = output_last_dim if module.bias is not None else 0
+    module.__flops__ += int(np.prod(input.shape) * output_last_dim + bias_flops)
+
+
+def pool_flops_counter_hook(module, input, output):
+    input = input[0]
+    module.__flops__ += int(np.prod(input.shape))
+
+
+def bn_flops_counter_hook(module, input, output):
+    input = input[0]
+
+    batch_flops = np.prod(input.shape)
+    if module.affine:
+        batch_flops *= 2
+    module.__flops__ += int(batch_flops)
+
+
+def conv_flops_counter_hook(conv_module, input, output):
+    # Can have multiple inputs, getting the first one
+    input = input[0]
+
+    batch_size = input.shape[0]
+    output_dims = list(output.shape[2:])
+
+    kernel_dims = list(conv_module.kernel_size)
+    in_channels = conv_module.in_channels
+    out_channels = conv_module.out_channels
+    groups = conv_module.groups
+
+    filters_per_channel = out_channels // groups
+    conv_per_position_flops = int(np.prod(kernel_dims)) * \
+        in_channels * filters_per_channel
+
+    active_elements_count = batch_size * int(np.prod(output_dims))
+
+    overall_conv_flops = conv_per_position_flops * active_elements_count
+
+    bias_flops = 0
+
+    if conv_module.bias is not None:
+
+        bias_flops = out_channels * active_elements_count
+
+    overall_flops = overall_conv_flops + bias_flops
+
+    conv_module.__flops__ += int(overall_flops)
+
+
+def rnn_flops(flops, rnn_module, w_ih, w_hh, input_size):
+    # matrix matrix mult ih state and internal state
+    flops += w_ih.shape[0]*w_ih.shape[1]
+    # matrix matrix mult hh state and internal state
+    flops += w_hh.shape[0]*w_hh.shape[1]
+    if isinstance(rnn_module, (nn.RNN, nn.RNNCell)):
+        # add both operations
+        flops += rnn_module.hidden_size
+    elif isinstance(rnn_module, (nn.GRU, nn.GRUCell)):
+        # hadamard of r
+        flops += rnn_module.hidden_size
+        # adding operations from both states
+        flops += rnn_module.hidden_size*3
+        # last two hadamard product and add
+        flops += rnn_module.hidden_size*3
+    elif isinstance(rnn_module, (nn.LSTM, nn.LSTMCell)):
+        # adding operations from both states
+        flops += rnn_module.hidden_size*4
+        # two hadamard product and add for C state
+        flops += rnn_module.hidden_size + rnn_module.hidden_size + rnn_module.hidden_size
+        # final hadamard
+        flops += rnn_module.hidden_size + rnn_module.hidden_size + rnn_module.hidden_size
+    return flops
+
+
+def rnn_flops_counter_hook(rnn_module, input, output):
+    """
+    Takes into account batch goes at first position, contrary
+    to pytorch common rule (but actually it doesn't matter).
+    If sigmoid and tanh are hard, only a comparison FLOPS should be accurate
+    """
+    flops = 0
+    # input is a tuple containing a sequence to process and (optionally) hidden state
+    inp = input[0]
+    batch_size = inp[0].shape[0]
+    seq_length = inp[0].shape[1]
+    num_layers = rnn_module.num_layers
+
+    for i in range(num_layers):
+        w_ih = rnn_module.__getattr__('weight_ih_l' + str(i))
+        w_hh = rnn_module.__getattr__('weight_hh_l' + str(i))
+        if i == 0:
+            input_size = rnn_module.input_size
+        else:
+            input_size = rnn_module.hidden_size
+        flops = rnn_flops(flops, rnn_module, w_ih, w_hh, input_size)
+        if rnn_module.bias:
+            b_ih = rnn_module.__getattr__('bias_ih_l' + str(i))
+            b_hh = rnn_module.__getattr__('bias_hh_l' + str(i))
+            flops += b_ih.shape[0] + b_hh.shape[0]
+
+    flops *= batch_size
+    flops *= seq_length
+    if rnn_module.bidirectional:
+        flops *= 2
+    rnn_module.__flops__ += int(flops)
+
+
+def rnn_cell_flops_counter_hook(rnn_cell_module, input, output):
+    flops = 0
+    inp = input[0]
+    batch_size = inp.shape[0]
+    w_ih = rnn_cell_module.__getattr__('weight_ih')
+    w_hh = rnn_cell_module.__getattr__('weight_hh')
+    input_size = inp.shape[1]
+    flops = rnn_flops(flops, rnn_cell_module, w_ih, w_hh, input_size)
+    if rnn_cell_module.bias:
+        b_ih = rnn_cell_module.__getattr__('bias_ih')
+        b_hh = rnn_cell_module.__getattr__('bias_hh')
+        flops += b_ih.shape[0] + b_hh.shape[0]
+
+    flops *= batch_size
+    rnn_cell_module.__flops__ += int(flops)
+
+
+def multihead_attention_counter_hook(multihead_attention_module, input, output):
+    flops = 0
+    q, k, v = input
+
+    batch_first = multihead_attention_module.batch_first \
+        if hasattr(multihead_attention_module, 'batch_first') else False
+    if batch_first:
+        batch_size = q.shape[0]
+        len_idx = 1
     else:
-        total_ops += _count_rnn_cell(input_size, hidden_size, bias)
+        batch_size = q.shape[1]
+        len_idx = 0
 
-    for i in range(num_layers - 1):
-        if m.bidirectional:
-            total_ops += _count_rnn_cell(hidden_size * 2, hidden_size, bias) * 2
-        else:
-            total_ops += _count_rnn_cell(hidden_size, hidden_size, bias)
+    dim_idx = 2
 
-    # time unroll
-    total_ops *= num_steps
-    # batch_size
-    total_ops *= batch_size
+    qdim = q.shape[dim_idx]
+    kdim = k.shape[dim_idx]
+    vdim = v.shape[dim_idx]
 
-    m.total_ops += torch.DoubleTensor([int(total_ops)])
+    qlen = q.shape[len_idx]
+    klen = k.shape[len_idx]
+    vlen = v.shape[len_idx]
 
+    num_heads = multihead_attention_module.num_heads
+    assert qdim == multihead_attention_module.embed_dim
 
-def count_gru(m: nn.GRU, x, y):
-    bias = m.bias
-    input_size = m.input_size
-    hidden_size = m.hidden_size
-    num_layers = m.num_layers
+    if multihead_attention_module.kdim is None:
+        assert kdim == qdim
+    if multihead_attention_module.vdim is None:
+        assert vdim == qdim
 
-    if isinstance(x[0], PackedSequence):
-        batch_size = torch.max(x[0].batch_sizes)
-        num_steps = x[0].batch_sizes.size(0)
-    else:
-        if m.batch_first:
-            batch_size = x[0].size(0)
-            num_steps = x[0].size(1)
-        else:
-            batch_size = x[0].size(1)
-            num_steps = x[0].size(0)
+    flops = 0
 
-    total_ops = 0
-    if m.bidirectional:
-        total_ops += _count_gru_cell(input_size, hidden_size, bias) * 2
-    else:
-        total_ops += _count_gru_cell(input_size, hidden_size, bias)
+    # Q scaling
+    flops += qlen * qdim
 
-    for i in range(num_layers - 1):
-        if m.bidirectional:
-            total_ops += _count_gru_cell(hidden_size * 2, hidden_size, bias) * 2
-        else:
-            total_ops += _count_gru_cell(hidden_size, hidden_size, bias)
+    # Initial projections
+    flops += (
+        (qlen * qdim * qdim)  # QW
+        + (klen * kdim * kdim)  # KW
+        + (vlen * vdim * vdim)  # VW
+    )
 
-    # time unroll
-    total_ops *= num_steps
-    # batch_size
-    total_ops *= batch_size
+    if multihead_attention_module.in_proj_bias is not None:
+        flops += (qlen + klen + vlen) * qdim
 
-    m.total_ops += torch.DoubleTensor([int(total_ops)])
+    # attention heads: scale, matmul, softmax, matmul
+    qk_head_dim = qdim // num_heads
+    v_head_dim = vdim // num_heads
 
+    head_flops = (
+        (qlen * klen * qk_head_dim)  # QK^T
+        + (qlen * klen)  # softmax
+        + (qlen * klen * v_head_dim)  # AV
+    )
 
-def count_lstm(m: nn.LSTM, x, y):
-    bias = m.bias
-    input_size = m.input_size
-    hidden_size = m.hidden_size
-    num_layers = m.num_layers
+    flops += num_heads * head_flops
 
-    if isinstance(x[0], PackedSequence):
-        batch_size = torch.max(x[0].batch_sizes)
-        num_steps = x[0].batch_sizes.size(0)
-    else:
-        if m.batch_first:
-            batch_size = x[0].size(0)
-            num_steps = x[0].size(1)
-        else:
-            batch_size = x[0].size(1)
-            num_steps = x[0].size(0)
+    # final projection, bias is always enabled
+    flops += qlen * vdim * (vdim + 1)
 
-    total_ops = 0
-    if m.bidirectional:
-        total_ops += _count_lstm_cell(input_size, hidden_size, bias) * 2
-    else:
-        total_ops += _count_lstm_cell(input_size, hidden_size, bias)
-
-    for i in range(num_layers - 1):
-        if m.bidirectional:
-            total_ops += _count_lstm_cell(hidden_size * 2, hidden_size, bias) * 2
-        else:
-            total_ops += _count_lstm_cell(hidden_size, hidden_size, bias)
-
-    # time unroll
-    total_ops *= num_steps
-    # batch_size
-    total_ops *= batch_size
-
-    m.total_ops += torch.DoubleTensor([int(total_ops)])
+    flops *= batch_size
+    multihead_attention_module.__flops__ += int(flops)
 
 
-default_dtype = torch.float64
+CUSTOM_MODULES_MAPPING = {}
 
-register_hooks = {
-    nn.ZeroPad2d: zero_ops,  # padding does not involve any multiplication.
-    nn.Conv1d: count_convNd,
-    nn.Conv2d: count_convNd,
-    nn.Conv3d: count_convNd,
-    nn.ConvTranspose1d: count_convNd,
-    nn.ConvTranspose2d: count_convNd,
-    nn.ConvTranspose3d: count_convNd,
-    nn.BatchNorm1d: count_normalization,
-    nn.BatchNorm2d: count_normalization,
-    nn.BatchNorm3d: count_normalization,
-    nn.LayerNorm: count_normalization,
-    nn.InstanceNorm1d: count_normalization,
-    nn.InstanceNorm2d: count_normalization,
-    nn.InstanceNorm3d: count_normalization,
-    nn.PReLU: count_prelu,
-    nn.Softmax: count_softmax,
-    nn.ReLU: zero_ops,
-    nn.ReLU6: zero_ops,
-    nn.LeakyReLU: count_relu,
-    nn.MaxPool1d: zero_ops,
-    nn.MaxPool2d: zero_ops,
-    nn.MaxPool3d: zero_ops,
-    nn.AdaptiveMaxPool1d: zero_ops,
-    nn.AdaptiveMaxPool2d: zero_ops,
-    nn.AdaptiveMaxPool3d: zero_ops,
-    nn.AvgPool1d: count_avgpool,
-    nn.AvgPool2d: count_avgpool,
-    nn.AvgPool3d: count_avgpool,
-    nn.AdaptiveAvgPool1d: count_adap_avgpool,
-    nn.AdaptiveAvgPool2d: count_adap_avgpool,
-    nn.AdaptiveAvgPool3d: count_adap_avgpool,
-    nn.Linear: count_linear,
-    nn.Dropout: zero_ops,
-    nn.Upsample: count_upsample,
-    nn.UpsamplingBilinear2d: count_upsample,
-    nn.UpsamplingNearest2d: count_upsample,
-    nn.RNNCell: count_rnn_cell,
-    nn.GRUCell: count_gru_cell,
-    nn.LSTMCell: count_lstm_cell,
-    nn.RNN: count_rnn,
-    nn.GRU: count_gru,
-    nn.LSTM: count_lstm,
-    nn.Sequential: zero_ops,
-    nn.PixelShuffle: zero_ops,
+MODULES_MAPPING = {
+    # convolutions
+    nn.Conv1d: conv_flops_counter_hook,
+    nn.Conv2d: conv_flops_counter_hook,
+    nn.Conv3d: conv_flops_counter_hook,
+    # activations
+    nn.ReLU: relu_flops_counter_hook,
+    nn.PReLU: relu_flops_counter_hook,
+    nn.ELU: relu_flops_counter_hook,
+    nn.LeakyReLU: relu_flops_counter_hook,
+    nn.ReLU6: relu_flops_counter_hook,
+    # poolings
+    nn.MaxPool1d: pool_flops_counter_hook,
+    nn.AvgPool1d: pool_flops_counter_hook,
+    nn.AvgPool2d: pool_flops_counter_hook,
+    nn.MaxPool2d: pool_flops_counter_hook,
+    nn.MaxPool3d: pool_flops_counter_hook,
+    nn.AvgPool3d: pool_flops_counter_hook,
+    nn.AdaptiveMaxPool1d: pool_flops_counter_hook,
+    nn.AdaptiveAvgPool1d: pool_flops_counter_hook,
+    nn.AdaptiveMaxPool2d: pool_flops_counter_hook,
+    nn.AdaptiveAvgPool2d: pool_flops_counter_hook,
+    nn.AdaptiveMaxPool3d: pool_flops_counter_hook,
+    nn.AdaptiveAvgPool3d: pool_flops_counter_hook,
+    # BNs
+    nn.BatchNorm1d: bn_flops_counter_hook,
+    nn.BatchNorm2d: bn_flops_counter_hook,
+    nn.BatchNorm3d: bn_flops_counter_hook,
+
+    nn.InstanceNorm1d: bn_flops_counter_hook,
+    nn.InstanceNorm2d: bn_flops_counter_hook,
+    nn.InstanceNorm3d: bn_flops_counter_hook,
+    nn.GroupNorm: bn_flops_counter_hook,
+    # FC
+    nn.Linear: linear_flops_counter_hook,
+    # Upscale
+    nn.Upsample: upsample_flops_counter_hook,
+    # Deconvolution
+    nn.ConvTranspose1d: conv_flops_counter_hook,
+    nn.ConvTranspose2d: conv_flops_counter_hook,
+    nn.ConvTranspose3d: conv_flops_counter_hook,
+    # RNN
+    nn.RNN: rnn_flops_counter_hook,
+    nn.GRU: rnn_flops_counter_hook,
+    nn.LSTM: rnn_flops_counter_hook,
+    nn.RNNCell: rnn_cell_flops_counter_hook,
+    nn.LSTMCell: rnn_cell_flops_counter_hook,
+    nn.GRUCell: rnn_cell_flops_counter_hook,
+    nn.MultiheadAttention: multihead_attention_counter_hook
 }
 
-if LooseVersion(torch.__version__) >= LooseVersion("1.1.0"):
-    register_hooks.update({nn.SyncBatchNorm: count_normalization})
+if hasattr(nn, 'GELU'):
+    MODULES_MAPPING[nn.GELU] = relu_flops_counter_hook
 
 
-def profile(
-    model: nn.Module,
-    inputs,
-    custom_ops=None,
-    verbose=True,
-    ret_layer_info=False,
-    report_missing=False,
-):
-    handler_collection = {}
-    types_collection = set()
-    if custom_ops is None:
-        custom_ops = {}
-    if report_missing:
-        # overwrite `verbose` option when enable report_missing
-        verbose = True
+import sys
+from functools import partial
+import torch.nn as nn
+import copy
 
-    def add_hooks(m: nn.Module):
-        if 'total_ops' in m._buffers:
-            return
+def accumulate_flops(self):
+    if is_supported_instance(self):
+        return self.__flops__
+    else:
+        sum = 0
+        for m in self.children():
+            sum += m.accumulate_flops()
+        return sum
 
-        m.register_buffer("total_ops", torch.zeros(1, dtype=torch.float64))
-        m.register_buffer("total_params", torch.zeros(1, dtype=torch.float64))
 
-        # for p in m.parameters():
-        #     m.total_params += torch.DoubleTensor([p.numel()])
+def get_model_parameters_number(model):
+    params_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return params_num
 
-        m_type = type(m)
 
-        fn = None
-        if m_type in custom_ops:
-            # if defined both op maps, use custom_ops to overwrite.
-            fn = custom_ops[m_type]
-            if m_type not in types_collection and verbose:
-                print("[INFO] Customize rule %s() %s." % (fn.__qualname__, m_type))
-        elif m_type in register_hooks:
-            fn = register_hooks[m_type]
-            if m_type not in types_collection and verbose:
-                print("[INFO] Register %s() for %s." % (fn.__qualname__, m_type))
-        else:
-            if m_type not in types_collection and report_missing:
-                print(
-                    "[WARN] Cannot find rule for %s. Treat it as zero Macs and zero Params."
-                    % m_type
-                )
+def add_flops_counting_methods(net_main_module):
+    # adding additional methods to the existing module object,
+    # this is done this way so that each function has access to self object
+    net_main_module.start_flops_count = start_flops_count.__get__(net_main_module)
+    net_main_module.stop_flops_count = stop_flops_count.__get__(net_main_module)
+    net_main_module.reset_flops_count = reset_flops_count.__get__(net_main_module)
+    net_main_module.compute_average_flops_cost = compute_average_flops_cost.__get__(
+                                                    net_main_module)
 
-        if fn is not None:
-            handler_collection[m] = (
-                m.register_forward_hook(fn),
-                m.register_forward_hook(count_parameters),
-            )
-        types_collection.add(m_type)
+    net_main_module.reset_flops_count()
 
-    prev_training_status = model.training
+    return net_main_module
 
-    model.eval()
-    model.apply(add_hooks)
 
-    with torch.no_grad():
-        model(*inputs)
+def compute_average_flops_cost(self):
+    """
+    A method that will be available after add_flops_counting_methods() is called
+    on a desired net object.
+    Returns current mean flops consumption per image.
+    """
 
-    def dfs_count(module: nn.Module, known: set(), prefix="\t"):
-        total_ops, total_params = module.total_ops.item(), 0
-        ret_dict = {}
-        for n, m in module.named_children():
-            next_dict = {}
-            if m in handler_collection and not isinstance(
-                m, (nn.Sequential, nn.ModuleList)
-            ):
-                m_ops, m_params = m.total_ops.item(), m.total_params.item()
+    for m in self.modules():
+        m.accumulate_flops = accumulate_flops.__get__(m)
+
+    flops_sum = self.accumulate_flops()
+
+    for m in self.modules():
+        if hasattr(m, 'accumulate_flops'):
+            del m.accumulate_flops
+
+    params_sum = get_model_parameters_number(self)
+    return flops_sum / self.__batch_counter__, params_sum
+
+
+def start_flops_count(self, **kwargs):
+    """
+    A method that will be available after add_flops_counting_methods() is called
+    on a desired net object.
+    Activates the computation of mean flops consumption per image.
+    Call it before you run the network.
+    """
+    add_batch_counter_hook_function(self)
+
+    seen_types = set()
+
+    def add_flops_counter_hook_function(module, ost, verbose, ignore_list):
+        if type(module) in ignore_list:
+            seen_types.add(type(module))
+            if is_supported_instance(module):
+                module.__params__ = 0
+        elif is_supported_instance(module):
+            if hasattr(module, '__flops_handle__'):
+                return
+            if type(module) in CUSTOM_MODULES_MAPPING:
+                handle = module.register_forward_hook(
+                                        CUSTOM_MODULES_MAPPING[type(module)])
             else:
-                m_ops, m_params, next_dict = dfs_count(m, known, prefix=prefix + "\t")
-            
-            if id(m) not in known:
-                ret_dict[n] = (m_ops, m_params, next_dict)
-                total_ops += m_ops
-                known.add(id(m))
-            total_params += m_params
-        return total_ops, total_params, ret_dict
+                handle = module.register_forward_hook(MODULES_MAPPING[type(module)])
+            module.__flops_handle__ = handle
+            seen_types.add(type(module))
+        else:
+            if verbose and not type(module) in (nn.Sequential, nn.ModuleList) and \
+               not type(module) in seen_types:
+                print('Warning: module ' + type(module).__name__ +
+                      ' is treated as a zero-op.', file=ost)
+            seen_types.add(type(module))
 
-    total_ops, total_params, ret_dict = dfs_count(model, set())
+    self.apply(partial(add_flops_counter_hook_function, **kwargs))
 
-    # reset model to original status
-    model.train(prev_training_status)
-    for m, (op_handler, params_handler) in handler_collection.items():
-        op_handler.remove()
-        params_handler.remove()
-        
-    for m in model.modules():
-        m._buffers.pop("total_ops")
-        m._buffers.pop("total_params")
 
-    if ret_layer_info:
-        return total_ops, total_params, ret_dict
-    return total_ops, total_params
+def stop_flops_count(self):
+    """
+    A method that will be available after add_flops_counting_methods() is called
+    on a desired net object.
+    Stops computing the mean flops consumption per image.
+    Call whenever you want to pause the computation.
+    """
+    remove_batch_counter_hook_function(self)
+    self.apply(remove_flops_counter_hook_function)
+    self.apply(remove_flops_counter_variables)
+
+
+def reset_flops_count(self):
+    """
+    A method that will be available after add_flops_counting_methods() is called
+    on a desired net object.
+    Resets statistics computed so far.
+    """
+    add_batch_counter_variables_or_reset(self)
+    self.apply(add_flops_counter_variable_or_reset)
+
+
+# ---- Internal functions
+def batch_counter_hook(module, input, output):
+    batch_size = 1
+    if len(input) > 0:
+        # Can have multiple inputs, getting the first one
+        input = input[0]
+        batch_size = len(input)
+    else:
+        pass
+        print('Warning! No positional inputs found for a module,'
+              ' assuming batch size is 1.')
+    module.__batch_counter__ += batch_size
+
+
+def add_batch_counter_variables_or_reset(module):
+
+    module.__batch_counter__ = 0
+
+
+def add_batch_counter_hook_function(module):
+    if hasattr(module, '__batch_counter_handle__'):
+        return
+
+    handle = module.register_forward_hook(batch_counter_hook)
+    module.__batch_counter_handle__ = handle
+
+
+def remove_batch_counter_hook_function(module):
+    if hasattr(module, '__batch_counter_handle__'):
+        module.__batch_counter_handle__.remove()
+        del module.__batch_counter_handle__
+
+
+def add_flops_counter_variable_or_reset(module):
+    if is_supported_instance(module):
+        if hasattr(module, '__flops__') or hasattr(module, '__params__'):
+            print('Warning: variables __flops__ or __params__ are already '
+                  'defined for the module' + type(module).__name__ +
+                  ' ptflops can affect your code!')
+            module.__ptflops_backup_flops__ = module.__flops__
+            module.__ptflops_backup_params__ = module.__params__
+        module.__flops__ = 0
+        module.__params__ = get_model_parameters_number(module)
+
+
+def is_supported_instance(module):
+    if type(module) in MODULES_MAPPING or type(module) in CUSTOM_MODULES_MAPPING:
+        return True
+    return False
+
+
+def remove_flops_counter_hook_function(module):
+    if is_supported_instance(module):
+        if hasattr(module, '__flops_handle__'):
+            module.__flops_handle__.remove()
+            del module.__flops_handle__
+
+
+def remove_flops_counter_variables(module):
+    if is_supported_instance(module):
+        if hasattr(module, '__flops__'):
+            del module.__flops__
+            if hasattr(module, '__ptflops_backup_flops__'):
+                module.__flops__ = module.__ptflops_backup_flops__
+        if hasattr(module, '__params__'):
+            del module.__params__
+            if hasattr(module, '__ptflops_backup_params__'):
+                module.__params__ = module.__ptflops_backup_params__

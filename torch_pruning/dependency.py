@@ -281,6 +281,12 @@ class DependencyGraph(object):
                     return False
         return True
 
+    def is_out_channel_pruner(self, pruner):
+        return function.is_out_channel_pruner(pruner)
+    
+    def is_in_channel_pruner(self, pruner):
+        return function.is_in_channel_pruner(pruner)
+
     def get_pruning_plan(self, module, pruning_fn, idxs):
         return self.get_pruning_group(module, pruning_fn, idxs)
 
@@ -492,10 +498,11 @@ class DependencyGraph(object):
             out = forward_fn(model, example_inputs)
         elif isinstance(example_inputs, dict):
             out = model(**example_inputs)
-        try:
-            out = model(*example_inputs)
-        except:
-            out = model(example_inputs)
+        else:
+            try:
+                out = model(*example_inputs)
+            except:
+                out = model(example_inputs)
 
         for hook in hooks:
             hook.remove()
@@ -634,13 +641,13 @@ class DependencyGraph(object):
             for in_node in fc_node.inputs:
                 for dep in fc_node.dependencies:
                     if dep.target == in_node:
-                        dep.index_mapping = _helpers._FlattenIndexTransform(
+                        dep.index_mapping = _helpers._FlattenIndexMapping(
                             stride=stride, reverse=True
                         )
 
                 for dep in in_node.dependencies:
                     if dep.target == fc_node:
-                        dep.index_mapping = _helpers._FlattenIndexTransform(
+                        dep.index_mapping = _helpers._FlattenIndexMapping(
                             stride=stride, reverse=False
                         )
 
@@ -660,14 +667,14 @@ class DependencyGraph(object):
             for dep in cat_node.dependencies:
                 if dep.target == in_node:
                     if cat_node.enable_index_mapping:
-                        dep.index_mapping = _helpers._ConcatIndexTransform(
+                        dep.index_mapping = _helpers._ConcatIndexMapping(
                             offset=offsets[i: i + 2], reverse=True
                         )
 
             for dep in in_node.dependencies:
                 if dep.target == cat_node:
                     if cat_node.enable_index_mapping:
-                        dep.index_mapping = _helpers._ConcatIndexTransform(
+                        dep.index_mapping = _helpers._ConcatIndexMapping(
                             offset=offsets[i: i + 2], reverse=False
                         )
 
@@ -687,13 +694,13 @@ class DependencyGraph(object):
             for dep in split_node.dependencies:
                 if dep.target == out_node:
                     if split_node.enable_index_mapping:
-                        dep.index_mapping = _helpers._SplitIndexTransform(
+                        dep.index_mapping = _helpers._SplitIndexMapping(
                             offset=offsets[i: i + 2], reverse=False
                         )
 
             for dep in out_node.dependencies:
                 if dep.target == split_node:
                     if split_node.enable_index_mapping:
-                        dep.index_mapping = _helpers._SplitIndexTransform(
+                        dep.index_mapping = _helpers._SplitIndexMapping(
                             offset=offsets[i: i + 2], reverse=True
                         )

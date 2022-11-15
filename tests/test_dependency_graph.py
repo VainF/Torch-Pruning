@@ -12,7 +12,7 @@ DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
 # 2. Select channels for pruning, here we prune the channels indexed by [2, 6, 9].
-pruning_idxs = pruning_idxs=[2, 6, 9, ...]
+pruning_idxs = pruning_idxs=[2, 6, 9]
 pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=pruning_idxs )
 
 # 3. prune all grouped layer that is coupled with model.conv1

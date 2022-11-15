@@ -6,6 +6,7 @@ from torchvision.models import densenet121, resnet18, googlenet, vgg16_bn
 import torch.nn as nn
 from torchvision.models.vision_transformer import VisionTransformer, vit_b_16
 import matplotlib.pyplot as plt
+
 class Net(nn.Module):
     def __init__(self):
         super().__init__()
@@ -32,9 +33,8 @@ if isinstance(
     unwrapped_parameters = [model.class_token, model.encoder.pos_embedding]
 
 DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1, 3, 224, 224), unwrapped_parameters=unwrapped_parameters)
-tp.utils.draw_computational_graph(DG, save_as='draw_comp_graph.pdf', title=None)
-tp.utils.draw_dependency_graph(DG, save_as='draw_dep_graph.pdf', title=None)
-tp.utils.draw_groups(DG, save_as='draw_groups.pdf', title=None)
+tp.utils.draw_dependency_graph(DG, save_as='draw_dep_graph.png', title=None)
+tp.utils.draw_groups(DG, save_as='draw_groups.png', title=None)
 
 
 
