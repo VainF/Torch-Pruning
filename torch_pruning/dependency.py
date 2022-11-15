@@ -188,7 +188,7 @@ class DependencyGroup(object):
         fmt += " " * 10 + "Pruning Group"
         fmt += "\n" + "-" * 32 + "\n"
         for i, (dep, idxs) in enumerate(self._group):
-            fmt += "[{}] {}, Num Indices={}\n".format(i, dep, len(idxs))
+            fmt += "[{}] {}, #Pruned={}\n".format(i, dep, len(idxs))
         fmt += "-" * 32 + "\n"
         return fmt
 

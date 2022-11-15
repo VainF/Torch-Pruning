@@ -19,5 +19,8 @@ pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, i
 if DG.check_pruning_group(pruning_group):
     pruning_group.exec()
 
+print("Pruning Group:")
+print(pruning_group)
+
 print("After pruning:")
 print(model)
