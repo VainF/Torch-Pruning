@@ -229,22 +229,22 @@ class GroupNormImportance(Importance):
             ]:
                 is_conv_flatten_linear = False
                 w = (layer.weight).transpose(0, 1).flatten(1)            
-                if (w.shape[0] != group_imp[0].shape[0]):  
+                if (w.shape[0] != group_norm.shape[0]):  
                     if (hasattr(dep, 'index_mapping') and isinstance(dep.index_mapping, _FlattenIndexMapping)):
                         #conv-flatten
                         w = w[idxs].view(
-                            group_imp[0].shape[0],
-                            w.shape[0] // group_imp[0].shape[0],
+                            group_norm.shape[0],
+                            w.shape[0] // group_norm.shape[0],
                             w.shape[1],
                         ).flatten(1)
                         is_conv_flatten_linear = True
                     elif ch_groups>1 and prune_fn==function.prune_conv_in_channels and layer.groups==1:
                         # non-grouped conv with group convs
-                        w = w.view(w.shape[0] // group_imp[0].shape[0],
-                                group_imp[0].shape[0], w.shape[1]).transpose(0, 1).flatten(1)           
+                        w = w.view(w.shape[0] // group_norm.shape[0],
+                                group_norm.shape[0], w.shape[1]).transpose(0, 1).flatten(1)           
                 local_norm = w.pow(2).sum(1)
                 if ch_groups>1:
-                    if len(local_norm)==len(group_imp[0]):
+                    if len(local_norm)==len(group_norm):
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
                 if not is_conv_flatten_linear:
