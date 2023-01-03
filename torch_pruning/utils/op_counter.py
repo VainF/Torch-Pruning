@@ -12,8 +12,6 @@ import numpy as np
 import torch.nn as nn
 import torch
 
-
-
 @torch.no_grad()
 def count_ops_and_params(model, example_inputs):
     global CUSTOM_MODULES_MAPPING

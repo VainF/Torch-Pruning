@@ -205,6 +205,7 @@ class DependencyGraph(object):
         self.REGISTERED_PRUNERS = function.PrunerBox.copy()  # shallow copy
         self.REGISTERED_PRUNERS.update(_dummy_pruners)
         self.CUSTOMIZED_PRUNERS = {}
+        self.IGNORED_LAYERS = []
 
     def build_dependency(
         self,
@@ -233,7 +234,7 @@ class DependencyGraph(object):
         self.model = model
         self._module2name = {module: name for (
             name, module) in model.named_modules()}
-
+    
         # user-defined nn.Parameters & customized modules
         if unwrapped_parameters is None:
             unwrapped_parameters = []
@@ -242,6 +243,13 @@ class DependencyGraph(object):
             for customized_module, customized_pruner in self.customized_pruners.items():
                 self.register_customized_layer(customized_module, customized_pruner)
         
+        # Ignore sub-modules of customized layers
+        for layer_type in self.CUSTOMIZED_PRUNERS.keys():
+            for m in self.model.modules():
+                if isinstance(m, layer_type):
+                    for sub_module in m.modules():
+                        if sub_module!=m: self.IGNORED_LAYERS.append(sub_module)
+
         # Build computational graph by tracing.
         self.module2node = self._trace(
             model, example_inputs, forward_fn, output_transform=output_transform
@@ -266,7 +274,7 @@ class DependencyGraph(object):
             pruner (tp.pruner.BasePruningFunc): a pruner for the given layer type.
         """
         self.CUSTOMIZED_PRUNERS[layer_type] = layer_pruner
-
+        
     def check_pruning_group(self, group):
         for dep, idxs in group:
             if function.is_out_channel_pruner(dep.handler):
@@ -490,7 +498,7 @@ class DependencyGraph(object):
         hooks = [
             m.register_forward_hook(_record_grad_fn)
             for m in model.modules()
-            if isinstance(m, registered_types)
+            if (isinstance(m, registered_types) and m not in self.IGNORED_LAYERS)
         ]
 
         # Feed forward and record gradient functions of prunable modules

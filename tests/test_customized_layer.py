@@ -17,11 +17,12 @@ class CustomizedLayer(nn.Module):
         self.in_dim = in_dim
         self.scale = nn.Parameter(torch.Tensor(self.in_dim))
         self.bias = nn.Parameter(torch.Tensor(self.in_dim))
+        self.fc = nn.Linear(self.in_dim, self.in_dim)
     
     def forward(self, x):
         norm = x.pow(2).sum(dim=1, keepdim=True).sqrt()
         x = torch.div(x, norm)
-        return x * self.scale + self.bias
+        return self.fc(x * self.scale + self.bias)
 
     def __repr__(self):
         return "CustomizedLayer(in_dim=%d)"%(self.in_dim)
@@ -52,11 +53,14 @@ class MyPruner(tp.pruner.BasePruningFunc):
 
     def prune_out_channels(self, layer: CustomizedLayer, idxs: Sequence[int]) -> nn.Module: 
         keep_idxs = list(set(range(layer.in_dim)) - set(idxs))
+        keep_idxs.sort()
         layer.in_dim = layer.in_dim-len(idxs)
         layer.scale = torch.nn.Parameter(layer.scale.data.clone()[keep_idxs])
         layer.bias = torch.nn.Parameter(layer.bias.data.clone()[keep_idxs])
+        tp.prune_linear_in_channels(layer.fc, idxs)
+        tp.prune_linear_out_channels(layer.fc, idxs)
         return layer
-    
+
     def get_out_channels(self, layer):
         return self.in_dim
     

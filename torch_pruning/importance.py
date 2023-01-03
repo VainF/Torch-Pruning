@@ -29,6 +29,8 @@ class MagnitudeImportance(Importance):
             group_imp = group_imp.max(dim=0)[0]
         elif self.group_reduction == "prod":
             group_imp = torch.prod(group_imp, dim=0)
+        elif self.group_reduction is None:
+            group_imp = group_imp[0]
         return group_imp
 
     @torch.no_grad()
@@ -40,7 +42,6 @@ class MagnitudeImportance(Importance):
             idxs.sort()
             layer = dep.target.module
             prune_fn = dep.handler
-            #print(dep)
             # Conv out_channels
             if prune_fn in [
                 function.prune_conv_out_channels,
@@ -104,7 +105,7 @@ class BNScaleImportance(MagnitudeImportance):
     """Learning Efficient Convolutional Networks through Network Slimming, 
     https://arxiv.org/abs/1708.06519
     """
-    def __init__(self, group_reduction="mean", normalizer=None):
+    def __init__(self, group_reduction=None, normalizer=None):
         super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer)
     
     def __call__(self, group, ch_groups=1):

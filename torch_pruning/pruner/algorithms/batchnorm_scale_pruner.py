@@ -13,7 +13,7 @@ class BNScalePruner(MetaPruner):
         importance,
         reg=1e-5,
         iterative_steps=1,
-        pruning_rate_scheduler: Callable = linear_scheduler,
+        iterative_sparsity_scheduler: Callable = linear_scheduler,
         ch_sparsity=0.5,
         ch_sparsity_dict=None,
         global_pruning=False,
@@ -29,7 +29,7 @@ class BNScalePruner(MetaPruner):
             example_inputs=example_inputs,
             importance=importance,
             iterative_steps=iterative_steps,
-            pruning_rate_scheduler=pruning_rate_scheduler,
+            iterative_sparsity_scheduler=iterative_sparsity_scheduler,
             ch_sparsity=ch_sparsity,
             ch_sparsity_dict=ch_sparsity_dict,
             global_pruning=global_pruning,
@@ -42,7 +42,7 @@ class BNScalePruner(MetaPruner):
         )
         self.reg = reg
 
-    def regularize(self, model, loss):
+    def regularize(self, model):
         for m in model.modules():
             if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)) and m.affine==True:
                 m.weight.grad.data.add_(self.reg*torch.sign(m.weight.data))

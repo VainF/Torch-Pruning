@@ -13,7 +13,7 @@ import torch.nn.functional as F
 import torch_pruning as tp
 import registry
 import engine.utils as utils
-from engine.utils import count_ops_and_params
+
 
 parser = argparse.ArgumentParser()
 
@@ -52,11 +52,11 @@ args = parser.parse_args()
 
 def progressive_pruning(pruner, model, speed_up, example_inputs):
     model.eval()
-    base_ops, _ = count_ops_and_params(model, example_inputs=example_inputs)
+    base_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
     current_speed_up = 1
     while current_speed_up < speed_up:
         pruner.step()
-        pruned_ops, _ = count_ops_and_params(model, example_inputs=example_inputs)
+        pruned_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
         current_speed_up = float(base_ops) / pruned_ops
     return current_speed_up
 
@@ -169,11 +169,11 @@ def get_pruner(model, example_inputs):
         imp = tp.importance.MagnitudeImportance(p=1)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "lamp":
-        imp = tp.importance.LAMPImportance(p=2, to_group=False)
+        imp = tp.importance.LAMPImportance(p=2)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "slim":
         sparsity_learning = True
-        imp = tp.importance.BNScaleImportance(to_group=False)
+        imp = tp.importance.BNScaleImportance()
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
     elif args.method == "group_norm":
         imp = tp.importance.GroupNormImportance(p=2,  normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
@@ -266,7 +266,7 @@ def main():
     # Training / Pruning / Testing
     example_inputs = train_dst[0][0].unsqueeze(0).to(args.device)
     if args.mode == "pretrain":
-        ops, params = count_ops_and_params(
+        ops, params = tp.utils.count_ops_and_params(
             model, example_inputs=example_inputs,
         )
         args.logger.info("Params: {:.2f} M".format(params / 1e6))
@@ -283,7 +283,7 @@ def main():
         model.eval()
         norm_recover = utils.MagnitudeRecover(model, reg=2*args.weight_decay)
         torch.save(norm_recover, os.path.join(args.output_dir, 'norm_recover.pth') )
-        ori_ops, ori_size = count_ops_and_params(model, example_inputs=example_inputs)
+        ori_ops, ori_size = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
         ori_acc, ori_val_loss = eval(model, test_loader, device=args.device)
         pruner = get_pruner(model, example_inputs=example_inputs)
 
@@ -315,7 +315,7 @@ def main():
         progressive_pruning(pruner, model, speed_up=args.speed_up, example_inputs=example_inputs)
         del pruner # remove reference
         args.logger.info(model)
-        pruned_ops, pruned_size = count_ops_and_params(model, example_inputs=example_inputs)
+        pruned_ops, pruned_size = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
         pruned_acc, pruned_val_loss = eval(model, test_loader, device=args.device)
         
         args.logger.info(
@@ -351,7 +351,7 @@ def main():
         )
     elif args.mode == "test":
         model.eval()
-        ops, params = count_ops_and_params(
+        ops, params = tp.utils.count_ops_and_params(
             model, example_inputs=example_inputs,
         )
         args.logger.info("Params: {:.2f} M".format(params / 1e6))

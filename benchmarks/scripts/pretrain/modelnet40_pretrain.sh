@@ -1,1 +1,0 @@
-python main.py --mode pretrain --dataset modelnet40 --model dgcnn --lr 0.1 --total-epochs 250 --lr-decay-milestones 100,150,200 --batch-size  32 --output-dir run/modelnet40
