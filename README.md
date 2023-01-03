@@ -40,6 +40,8 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. Dependency
 
+Parameters/layers in deep networks may be coupled and thus must be pruned simultaneouly. Torch-pruning models such relationships as dependency.
+
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
 |    Conv-Conv          |  <img src="assets/conv-conv.png" width="80%"> | AlexNet  |
