@@ -93,7 +93,6 @@ def train_model(
     save_state_dict_only=True,
     regularizer=None,
     device=None,
-    recover=None,
 ):
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -119,8 +118,6 @@ def train_model(
             loss.backward()
             if regularizer is not None:
                 regularizer(model) # for sparsity learning
-            if recover is not None:
-                recover(model)
             optimizer.step()
             if i % 10 == 0 and args.verbose:
                 args.logger.info(
@@ -281,8 +278,6 @@ def main():
         )
     elif args.mode == "prune":
         model.eval()
-        norm_recover = utils.MagnitudeRecover(model, reg=2*args.weight_decay)
-        torch.save(norm_recover, os.path.join(args.output_dir, 'norm_recover.pth') )
         ori_ops, ori_size = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
         ori_acc, ori_val_loss = eval(model, test_loader, device=args.device)
         pruner = get_pruner(model, example_inputs=example_inputs)
@@ -307,7 +302,6 @@ def main():
                 )
             args.logger.info("Loading sparsity model from {}...".format(reg_pth))
             model.load_state_dict( torch.load( reg_pth, map_location=args.device) )
-            norm_recover = torch.load( os.path.join(args.output_dir, 'norm_recover.pth') )
         
         # 1. Pruning
         model.eval()
@@ -347,7 +341,6 @@ def main():
             test_loader=test_loader,
             device=args.device,
             save_state_dict_only=False,
-            recover=norm_recover.regularize,
         )
     elif args.mode == "test":
         model.eval()
