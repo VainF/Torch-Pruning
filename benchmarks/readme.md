@@ -14,34 +14,34 @@
 | SFP  [[7]](#7)  | 93.59 | 93.36 | +0.23 |2.11x |
 | ResRep [[8]](#8) | 93.71 | 93.71 | +0.00 |2.12x |
 ||
-| Ours-L1 | 93.53 | 
-| Ours-BN | 93.53 |
-| Ours-Group | 93.53 |
+| Ours-L1 | 93.53 | 92.93 | -0.60 | 
+| Ours-BN | 93.53 | 93.29 | -0.24 |
+| Ours-Group | 93.53 | 93.91 | +0.38   |
 
 **Note 1:** $\text{speed up} = \frac{\text{Base MACs}}{\text{Pruned MACs}}$
 
-**Note 2:** Baseline methods are not implemented in this repo so far, because they require additional modifications to the standard models and training scripts.
+**Note 2:** Baseline methods are not implemented in this repo, because they require additional modifications to the standard models and training scripts.
 
-#### Pretraining
+#### - Pretraining
 ```python
 python main.py --mode pretrain --dataset cifar10 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
 ```
 
-#### L1-Norm Pruner
+#### - L1-Norm Pruner
 [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710)
 ```bash
 # bash scripts/prune/cifar/l1_norm_pruner.sh
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method l1 --speed-up 2.11 --global-pruning
 ```
 
-#### BN Pruner
+#### - BN Pruner
 [Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/abs/1708.06519)
 ```bash
 # bash scripts/prune/cifar/bn_pruner.sh
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method slim --speed-up 2.11 --global-pruning --reg 1e-5
 ```
 
-#### Group Pruner
+#### - Group Pruner
 ```bash
 # bash scripts/prune/cifar/group_lasso_pruner.sh
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_lasso --speed-up 2.11 --global-pruning --reg 5e-4
@@ -49,7 +49,7 @@ python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifa
 
 ## ResNet50 / ImageNet / 2.00 GFLOPs
 
-#### L1 Pruner
+#### - L1 Pruner
 ```python
 python -m torch.distributed.launch --nproc_per_node=4 --master_port 18119 --use_env main_imagenet.py --model resnet50 --epochs 90 --batch-size 64 --lr-step-size 30 --lr 0.01 --prune --method l1 --pretrained --output-dir run/imagenet/resnet50_sl --target-flops 2.00 --cache-dataset --print-freq 100 --workers 16 --data-path PATH_TO_IMAGENET --output-dir PATH_TO_OUTPUT_DIR # &> output.log
 ```

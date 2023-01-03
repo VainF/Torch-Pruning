@@ -173,12 +173,12 @@ def get_pruner(model, example_inputs):
         imp = tp.importance.BNScaleImportance()
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
     elif args.method == "group_norm":
-        imp = tp.importance.GroupNormImportance(p=2,  normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
-        pruner_entry = partial(tp.pruner.GroupNormPruner, soft_keeping_ratio=args.soft_keeping_ratio, global_pruning=args.global_pruning)
+        imp = tp.importance.GroupNormImportance(p=2)
+        pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)
     elif args.method == "group_sl":
         sparsity_learning = True
-        imp = tp.importance.GroupNormImportance(p=2, normalizer=tp.importance.RelativeNormalizer(args.soft_keeping_ratio))
-        pruner_entry = partial(tp.pruner.GroupNormPruner, soft_keeping_ratio=args.soft_keeping_ratio, reg=args.reg, global_pruning=args.global_pruning)
+        imp = tp.importance.GroupNormImportance(p=2)
+        pruner_entry = partial(tp.pruner.GroupNormPruner, reg=args.reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
     
