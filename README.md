@@ -7,27 +7,22 @@ Torch-Pruning is a general-purpose library for structural network pruning, which
 
 ### **Features:**
 * Channel pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
-* High-level pruners: LocalMagnitudePruner, GlobalMagnitudePruner, BNScalePruner, etc.
+* High-level pruners: MagnitudePruner, BNScalePruner, GroupPruner, etc.
 * Graph Tracing and dependency fixing.
 * Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 * Supported operations: split, concatenation, skip connection, flatten, etc.
 * Pruning strategies: Random, L1, L2, etc.
 * Low-level pruning [functions](torch_pruning/prune/structured.py)
+* [Benchmarks](benchmarks) and [tutorials](tutorials)
 
-### Updates
-**02/07/2022** The latest version is under development in branch [v1.0](https://github.com/VainF/Torch-Pruning/tree/v1.0).
-
-**24/03/2022** We are drafting a paper to provide more technical details about this repo, which will be released as soon as possible, together with a new version and some practical examples for yolo and other popular networks.
-
-### Plans:
-* High-level pruners like MagnitudeBasedPruner (:heavy_check_mark:), SensitivityBasedPruner, HessianBasedPruner and [Slimming Pruner (ICCV'17)](https://openaccess.thecvf.com/content_iccv_2017/html/Liu_Learning_Efficient_Convolutional_ICCV_2017_paper.html).
+### **Plans:**
+* More high-level pruners like FisherPruner, SoftPruner, GeometricPruner, etc.
 * Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
-* A pruning benchmark on CIFAR100 and ImageNet.
-* Some examples in detection and segmentation.
-* A paper about this repo: title (now we are here! :turtle:), abstract, introduction, methodology, experiments and conclusion.
+* Pruning benchmarks for CIFAR and ImageNet.
+* A paper about this repo (:heavy_check_mark:, will be released ASAP)
 
 ## How it works
-  
+
 Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the relation coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningClique` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
   
 ## Installation
@@ -64,7 +59,7 @@ DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
 # 2. Select channels for pruning, here we prune the channels indexed by [2, 6, 9].
-pruning_idxs = pruning_idxs=[2, 6, 9]
+pruning_idxs = [2, 6, 9]
 pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=pruning_idxs )
 
 # 3. prune all grouped layer that is coupled with model.conv1
