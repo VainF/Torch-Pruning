@@ -172,16 +172,3 @@ tp.prune_multihead_attention
 
 Please refer to [tests/test_customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_customized_layer.py).
 
-
-# Citation
-If you find this repo helpful, please cite:
-```
-@software{Fang_Torch-Pruning_2022,
-  author = {Fang, Gongfan},
-  month = {7},
-  title = {{Torch-Pruning}},
-  url = {https://github.com/VainF/Torch-Pruning},
-  version = {0.2.8},
-  year = {2022}
-}
-```
