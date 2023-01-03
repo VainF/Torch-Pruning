@@ -22,6 +22,8 @@
 
 **Note 2:** Baseline methods are not implemented in this repo, because they require additional modifications to the standard models and training scripts.
 
+Please refer to [run/prune](https://github.com/VainF/Torch-Pruning/tree/v1.0/benchmarks/run/cifar10/prune) for training logs.
+
 #### - Pretraining
 ```python
 python main.py --mode pretrain --dataset cifar10 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
