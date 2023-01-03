@@ -1,7 +1,7 @@
 # Benchmarks (Beta version)
 
 
-## ResNet-56 / CIFAR-10 / 2.11x
+## ResNet-56 / CIFAR-10 / 2.00x
 
 | Method | Base (%) | Pruned (%) | $\Delta$ Acc (%) | Speed Up |
 |:--    |:--:  |:--:    |:--: |:--:      |
@@ -14,9 +14,9 @@
 | SFP  [[7]](#7)  | 93.59 | 93.36 | +0.23 |2.11x |
 | ResRep [[8]](#8) | 93.71 | 93.71 | +0.00 |2.12x |
 ||
-| Ours-L1 | 93.53 | 92.93 | -0.60 | 
-| Ours-BN | 93.53 | 93.29 | -0.24 |
-| Ours-Group | 93.53 | 93.91 | +0.38   |
+| Ours-L1 | 93.53 | 92.93 | -0.60 | 2.12x |
+| Ours-BN | 93.53 | 93.29 | -0.24 | 2.12x |
+| Ours-Group | 93.53 | 93.91 | +0.38 | 2.13x |
 
 **Note 1:** $\text{speed up} = \frac{\text{Base MACs}}{\text{Pruned MACs}}$
 

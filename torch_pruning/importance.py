@@ -295,10 +295,5 @@ class GroupNormImportance(Importance):
                     local_norm = torch.cat([local_norm, local_norm_reverse], dim=0)
                 group_norm+=local_norm
         group_imp = group_norm**(1/self.p)
-        group_size = math.sqrt(group_size)
-        if self.normalizer is not None:
-            group_imp = self.normalizer(group_imp)
-        else:
-            k = int(0.25 * len(group_imp))
-            group_imp = group_imp / group_imp.topk(k=min(k, len(group_imp)), dim=0, largest=True)[0].mean()
+        group_imp = group_imp / group_imp.max()
         return group_imp 

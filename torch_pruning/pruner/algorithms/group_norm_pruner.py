@@ -128,12 +128,12 @@ class GroupNormPruner(MetaPruner):
             group_norm = group_norm.sqrt()
             base = 16
             scale = base**((group_norm.max() - group_norm) / (group_norm.max() - group_norm.min()))
-            if self.cnt%1000==0:
-                print("="*15)
-                print(group)
-                print("Group {}".format(i))
-                print(group_norm)
-                print(scale)
+            #if self.cnt%1000==0:
+            #    print("="*15)
+            #    print(group)
+            #    print("Group {}".format(i))
+            #    print(group_norm)
+            #    print(scale)
             
             # Update Gradient
             for dep, idxs in group:
