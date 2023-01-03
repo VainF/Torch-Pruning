@@ -6,13 +6,13 @@
 | Method | Base (%) | Pruned (%) | $\Delta$ Acc (%) | Speed Up |
 |:--    |:--:  |:--:    |:--: |:--:      |
 | NIPS [[1]](#1)  | -    | -      |-0.03 | 1.76x    |
-| Geometric | 93.59 | 93.26 | -0.33 | 1.70x |
-| Polar  | 93.80 | 93.83 | +0.03 |1.88x |
-| CP     | 92.80 | 91.80 | -1.00 |2.00x |
-| AMC    | 92.80 | 91.90 | -0.90 |2.00x |
-| HRank  | 93.26 | 92.17 | -0.09 |2.00x |
-| SFP    | 93.59 | 93.36 | +0.23 |2.11x |
-| ResRep | 93.71 | 93.71 | +0.00 |2.12x |
+| Geometric [[2]](#2) | 93.59 | 93.26 | -0.33 | 1.70x |
+| Polar [[3]](#3)  | 93.80 | 93.83 | +0.03 |1.88x |
+| CP  [[4]](#4)   | 92.80 | 91.80 | -1.00 |2.00x |
+| AMC [[5]](#5)   | 92.80 | 91.90 | -0.90 |2.00x |
+| HRank [[6]](#6) | 93.26 | 92.17 | -0.09 |2.00x |
+| SFP  [[7]](#7)  | 93.59 | 93.36 | +0.23 |2.11x |
+| ResRep [[8]](#8) | 93.71 | 93.71 | +0.00 |2.12x |
 ||
 | Ours-L1 | 93.53 | 
 | Ours-BN | 93.53 |
@@ -70,4 +70,6 @@ python -m torch.distributed.launch --nproc_per_node=4 --master_port 18119 --use_
 
 <a id="6">[6]</a> Hrank: Filter pruning using high-rank feature map.
 
-<a id="7">[7]</a> Resrep: Lossless cnn pruning via decoupling remembering and forgetting.
+<a id="7">[7]</a> Soft filter pruning for accelerating deep convolutional 929 neural networks
+
+<a id="8">[8]</a> Resrep: Lossless cnn pruning via decoupling remembering and forgetting.
