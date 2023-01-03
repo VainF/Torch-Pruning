@@ -4,17 +4,23 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import torch
 from torchvision.models import resnet18
 import torch_pruning as tp
-model = resnet18(pretrained=True)
 
-# pruning according to L1 Norm
-strategy = tp.strategy.L1Strategy() # or tp.strategy.RandomStrategy()
-# build layer dependency for resnet18
+model = resnet18(pretrained=True).eval()
+
+# 1. build dependency graph for resnet18
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
-# get a pruning plan according to the dependency graph. idxs is the indices of pruned filters.
-pruning_idxs = [0, 2, 6] #strategy(model.conv1.weight, amount=0.4) # or manually selected [0, 2, 6]
-pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs )
-print(pruning_plan)
-# execute this plan (prune the model)
-if DG.check_pruning_plan(pruning_plan):
-    pruning_plan.exec()
+
+# 2. Select channels for pruning, here we prune the channels indexed by [2, 6, 9].
+pruning_idxs = pruning_idxs=[2, 6, 9]
+pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=pruning_idxs )
+
+# 3. prune all grouped layer that is coupled with model.conv1
+if DG.check_pruning_group(pruning_group):
+    pruning_group.exec()
+
+print("Pruning Group:")
+print(pruning_group)
+
+print("After pruning:")
+print(model)

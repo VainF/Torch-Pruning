@@ -11,22 +11,20 @@ model = resnet18(pretrained=True)
 DG = tp.DependencyGraph()
 example_inputs = torch.randn(1,3,224,224)
 DG.build_dependency(model, example_inputs=example_inputs)
-pruning_idxs = list( range( tp.utils.count_prunable_out_channels(model.conv1) ))
-pruning_plan = DG.get_pruning_plan( model.conv1, tp.prune_conv_out_channel, idxs=pruning_idxs)
+pruning_idxs = list( range( DG.get_out_channels(model.conv1) ))
+pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=pruning_idxs)
 
-sensitivity_importance = tp.importance.SensitivityImportance(reduction='mean')
-out = model(example_inputs)
-loss = out.sum()
-sen_imp = sensitivity_importance(loss, pruning_plan)
-print(sen_imp)
+magnitude_importance = tp.importance.MagnitudeImportance(p=2)
+mag_imp = magnitude_importance(pruning_group)
+print("L-2 Norm, Group Mean: ", mag_imp)
 
-magnitude_importance = tp.importance.MagnitudeImportance(p=2, reduction='mean')
-mag_imp = magnitude_importance(pruning_plan)
-print(mag_imp)
+magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction='sum')
+mag_imp = magnitude_importance(pruning_group)
+print("L-2 Norm, Group Sum: ", mag_imp)
 
-bn_scale_importance = tp.importance.BNScaleImportance(reduction='mean')
-bn_imp = bn_scale_importance(pruning_plan)
-print(bn_imp)
+bn_scale_importance = tp.importance.BNScaleImportance()
+bn_imp = bn_scale_importance(pruning_group)
+print("BN Scaling, Group mean: ", mag_imp)
 
 
 

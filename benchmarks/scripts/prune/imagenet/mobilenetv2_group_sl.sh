@@ -1,0 +1,5 @@
+# 8 GPUs
+OMP_NUM_THREADS=4 python -m torch.distributed.launch --nproc_per_node=8 --master_port 18122 --use_env main_imagenet.py --model mobilenet_v2 --pretrained --epochs 150 --batch-size 32 --lr 0.0045 --wd 0.00004 --lr-step-size 1 --lr-gamma 0.98 --prune --cache-dataset --method group_sl --global-pruning --pretrained --target-flops 0.15 --output-dir run/imagenet/mobilenet_gsl --reg 1e-4 --sl-epochs 150 --sl-lr 0.0045 --sl-lr-step-size 1 --print-freq 100 --amp --max-ch-sparsity 0.7
+
+# 4 GPUs, 2048 bz, linear lr scaling
+CUDA_VISIBLE_DEVICES=4,5,6,7 OMP_NUM_THREADS=4 python -m torch.distributed.launch --nproc_per_node=4 --master_port 18122 --use_env main_imagenet.py --model mobilenet_v2 --pretrained --epochs 150 --batch-size 512 --lr 0.036 --wd 0.00004 --lr-step-size 1 --lr-gamma 0.98 --prune --cache-dataset --method group_sl --global-pruning --pretrained --target-flops 0.15 --output-dir run/imagenet/mobilenet_gsl --reg 1e-4 --sl-epochs 150 --sl-lr 0.036 --sl-lr-step-size 1 --print-freq 100 --amp --max-ch-sparsity 0.7

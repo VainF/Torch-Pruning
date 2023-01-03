@@ -1,18 +1,21 @@
 import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from torchvision.models.convnext import (
-    convnext_tiny,
-    convnext_small,
-    convnext_base,
-    convnext_large,
-)
+from torchvision.models.alexnet import alexnet
+
 from torchvision.models.vision_transformer import (
     vit_b_16,
     vit_b_32,
     vit_l_16,
     vit_l_32,
     vit_h_14,
+)
+
+from torchvision.models.convnext import (
+    convnext_tiny,
+    convnext_small,
+    convnext_base,
+    convnext_large,
 )
 
 from torchvision.models.alexnet import alexnet
@@ -40,12 +43,6 @@ from torchvision.models.inception import inception_v3
 from torchvision.models.mnasnet import mnasnet0_5, mnasnet0_75, mnasnet1_0, mnasnet1_3
 from torchvision.models.mobilenetv2 import mobilenet_v2
 from torchvision.models.mobilenetv3 import mobilenet_v3_large, mobilenet_v3_small
-from torchvision.models.convnext import (
-    convnext_tiny,
-    convnext_small,
-    convnext_base,
-    convnext_large,
-)
 from torchvision.models.regnet import (
     regnet_y_400mf,
     regnet_y_800mf,
@@ -55,13 +52,6 @@ from torchvision.models.regnet import (
     regnet_y_16gf,
     regnet_y_32gf,
     regnet_y_128gf,
-    regnet_x_400mf,
-    regnet_x_800mf,
-    regnet_x_1_6gf,
-    regnet_x_3_2gf,
-    regnet_x_8gf,
-    regnet_x_16gf,
-    regnet_x_32gf,
 )
 from torchvision.models.resnet import (
     resnet18,
@@ -121,13 +111,12 @@ if __name__ == "__main__":
     import torch_pruning as tp
     import random
 
-    def random_prune(model, example_inputs, output_transform):
+    def my_prune(model, example_inputs, output_transform):
         from torchvision.models.vision_transformer import VisionTransformer
         from torchvision.models.convnext import CNBlock, ConvNeXt
 
         ori_size = tp.utils.count_params(model)
         model.cpu().eval()
-        model = tp.helpers.gconv2convs(model)
         ignored_layers = []
         for m in model.modules():
             if isinstance(m, nn.Linear) and m.out_features == 1000:
@@ -135,36 +124,36 @@ if __name__ == "__main__":
             elif isinstance(m, nn.modules.linear.NonDynamicallyQuantizableLinear):
                 ignored_layers.append(m) # this module is used in Self-Attention
 
-        user_defined_parameters = None
+        unwrapped_parameters = None
         round_to = None
         if isinstance(
             model, VisionTransformer
-        ):  # Torchvision uses a static hidden_dim for reshape
+        ): 
             round_to = model.encoder.layers[0].num_heads
-            user_defined_parameters = [model.class_token, model.encoder.pos_embedding]
+            unwrapped_parameters = [model.class_token, model.encoder.pos_embedding]
         elif isinstance(model, ConvNeXt):
-            user_defined_parameters = []
+            unwrapped_parameters = []
             for m in model.modules():
                 if isinstance(m, CNBlock):
-                    user_defined_parameters.append(m.layer_scale)
-            tp.functional.prune_parameter.dim = 0
-
-        importance = tp.importance.MagnitudeImportance(p=2)
-        pruner = tp.pruner.LocalMagnitudePruner(
+                    unwrapped_parameters.append(m.layer_scale)
+            tp.function.PrunerBox[tp.ops.OPTYPE.PARAMETER].dim = 0
+        importance = tp.importance.MagnitudeImportance(p=1)
+        pruner = tp.pruner.MagnitudePruner(
             model,
             example_inputs=example_inputs,
             importance=importance,
-            total_steps=1,
+            iterative_steps=1,
             ch_sparsity=0.5,
             round_to=round_to,
-            user_defined_parameters=user_defined_parameters,
+            unwrapped_parameters=unwrapped_parameters,
             ignored_layers=ignored_layers,
         )
         pruner.step()
         if isinstance(
             model, VisionTransformer
-        ):  # Torchvision uses a static hidden_dim for reshape
+        ):  # Torchvision relies on the hidden_dim variable for forwarding, so we have to modify this varaible after pruning
             model.hidden_dim = model.conv_proj.out_channels
+            print(model.class_token.shape, model.encoder.pos_embedding.shape)
         print(model)
         with torch.no_grad():
             if isinstance(example_inputs, dict):
@@ -208,6 +197,6 @@ if __name__ == "__main__":
         else:
             output_transform = None
         print(model_name)
-        random_prune(
+        my_prune(
             model, example_inputs=example_inputs, output_transform=output_transform
         )

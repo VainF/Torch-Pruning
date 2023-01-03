@@ -5,10 +5,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="torch-pruning",
-    version="0.2.8",
+    version="v1.0.0",
     author="Gongfan Fang",
-    author_email="fgf@zju.edu.cn",
-    description="A pytorch toolkit for structured neural network pruning and automatic layer dependency maintaining.",
+    author_email="gongfan@u.nus.edu",
+    description="Structural Pruning for Model Acceleration.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/VainF/Torch-Pruning",
