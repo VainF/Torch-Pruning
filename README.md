@@ -26,7 +26,10 @@ Torch-Pruning is a general-purpose library for structural network pruning, which
 Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the relation coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningClique` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
   
 ## Installation
-
+```bash
+pip install torch-pruning # v1.0.0
+```
+or
 ```bash
 git clone https://github.com/VainF/Torch-Pruning.git
 ```
