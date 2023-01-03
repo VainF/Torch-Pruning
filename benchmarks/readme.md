@@ -5,7 +5,7 @@
 
 | Method | Base (%) | Pruned (%) | $\Delta$ Acc (%) | Speed Up |
 |:--    |:--:  |:--:    |:--: |:--:      |
-| NIPS   | -    | -      |-0.03 | 1.76x    |
+| NIPS [[1]](#1)  | -    | -      |-0.03 | 1.76x    |
 | Geometric | 93.59 | 93.26 | -0.33 | 1.70x |
 | Polar  | 93.80 | 93.83 | +0.03 |1.88x |
 | CP     | 92.80 | 91.80 | -1.00 |2.00x |
@@ -13,11 +13,13 @@
 | HRank  | 93.26 | 92.17 | -0.09 |2.00x |
 | SFP    | 93.59 | 93.36 | +0.23 |2.11x |
 | ResRep | 93.71 | 93.71 | +0.00 |2.12x |
-| Ours-L1 | 93.53 |
+| Ours-L1 | 93.53 | 
 | Ours-BN | 93.53 |
 | Ours-Group | 93.53 |
 
-Note: $\text{speed up} = \frac{\text{Base MACs}}{\text{Pruned MACs}}$ 
+**Note 1:** $\text{speed up} = \frac{\text{Base MACs}}{\text{Pruned MACs}}$
+
+**Note 2:** Baseline methods are not implemented in this repo so far, because they requires additional modifications to the standard models and training scripts.
 
 #### Pretraining
 ```python
@@ -52,3 +54,19 @@ python -m torch.distributed.launch --nproc_per_node=4 --master_port 18119 --use_
 ```
 
 **More results will be released soon!**
+
+## References
+
+<a id="1">[1]</a> Nisp: Pruning networks using neuron impor- tance score propagation. 
+
+<a id="2">[2]</a> Filter pruning via geometric median for deep con-volutional neural networks acceleration. 
+
+<a id="3">[3]</a> Neuron-level structured pruning using polarization regularizer.  
+
+<a id="4">[4]</a> Pruning Filters for Efficient ConvNets.
+
+<a id="5">[5]</a> Amc: Automl for model compression and ac- 933 celeration on mobile devices.
+
+<a id="6">[6]</a> Hrank: Filter pruning using high-rank feature map.
+
+<a id="7">[7]</a> Resrep: Lossless cnn pruning via decoupling remembering and forgetting.
