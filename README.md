@@ -170,3 +170,23 @@ tp.prune_multihead_attention
 
 Please refer to [tests/test_customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_customized_layer.py).
 
+### 5. Benchmarks
+
+Our results on {ResNet-56 / CIFAR-10 / 2.00x}
+
+| Method | Base (%) | Pruned (%) | $\Delta$ Acc (%) | Speed Up |
+|:--    |:--:  |:--:    |:--: |:--:      |
+| NIPS [[1]](#1)  | -    | -      |-0.03 | 1.76x    |
+| Geometric [[2]](#2) | 93.59 | 93.26 | -0.33 | 1.70x |
+| Polar [[3]](#3)  | 93.80 | 93.83 | +0.03 |1.88x |
+| CP  [[4]](#4)   | 92.80 | 91.80 | -1.00 |2.00x |
+| AMC [[5]](#5)   | 92.80 | 91.90 | -0.90 |2.00x |
+| HRank [[6]](#6) | 93.26 | 92.17 | -0.09 |2.00x |
+| SFP  [[7]](#7)  | 93.59 | 93.36 | +0.23 |2.11x |
+| ResRep [[8]](#8) | 93.71 | 93.71 | +0.00 |2.12x |
+||
+| Ours-L1 | 93.53 | 92.93 | -0.60 | 2.12x |
+| Ours-BN | 93.53 | 93.29 | -0.24 | 2.12x |
+| Ours-Group | 93.53 | 93.91 | +0.38 | 2.13x |
+
+Please refer to [benchmarks](benchmarks) for more details.
