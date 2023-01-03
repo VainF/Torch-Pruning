@@ -76,7 +76,7 @@ torch.save(model, 'model.pth') # save the model object
 model_loaded = torch.load('model.pth') # no load_state_dict
 ```
 
-In this example, pruning resnet.conv1 will affect several layers. Let's inspect the pruning group (with pruning_idxs=[2, 6, 9]):
+In this example, we directly manipulate the DependencyGraph for pruning, where resnet.conv1 is coupled with several layers. In this case, all coupled layers should be pruned simultaneously. Let's inspect the group (with pruning_idxs=[2, 6, 9]):
 
 ```
 --------------------------------
