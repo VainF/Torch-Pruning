@@ -20,7 +20,7 @@
 
 **Note 1:** $\text{speed up} = \frac{\text{Base MACs}}{\text{Pruned MACs}}$
 
-**Note 2:** Baseline methods are not implemented in this repo so far, because they requires additional modifications to the standard models and training scripts.
+**Note 2:** Baseline methods are not implemented in this repo so far, because they require additional modifications to the standard models and training scripts.
 
 #### Pretraining
 ```python
