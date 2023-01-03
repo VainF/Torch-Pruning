@@ -22,7 +22,7 @@
 
 **Note 2:** Baseline methods are not implemented in this repo, because they require additional modifications to the standard models and training scripts.
 
-Please refer to [run/prune](https://github.com/VainF/Torch-Pruning/tree/v1.0/benchmarks/run/cifar10/prune) for training logs.
+**Note 3:** Training logs are available at [run/prune](https://github.com/VainF/Torch-Pruning/tree/v1.0/benchmarks/run/cifar10/prune).
 
 #### - Pretraining
 ```python
