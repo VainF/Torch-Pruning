@@ -22,7 +22,7 @@
 
 **Note 2:** Baseline methods are not implemented in this repo, because they require additional modifications to the standard models and training scripts.
 
-**Note 3:** Donwload pretrained resnet-56 to reproduce our results: [dropbox](https://www.dropbox.com/sh/lr7gychu0kcmxo8/AAAUur64nhkQcSWE3GInC_7ja?dl=0)
+**Note 3:** Donwload pretrained resnet-56 to reproduce our results: [dropbox](https://www.dropbox.com/s/lcpwz24gcxmo1a7/cifar10_resnet56.pth?dl=0)
 
 **Note 4:** Training logs are available at [run/prune](https://github.com/VainF/Torch-Pruning/tree/v1.0/benchmarks/run/cifar10/prune).
 
