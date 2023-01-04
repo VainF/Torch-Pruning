@@ -20,11 +20,11 @@
 
 **Note 1:** $\text{speed up} = \frac{\text{Base MACs}}{\text{Pruned MACs}}$
 
-**Note 2:** Baseline methods are not implemented in this repo, because they may require additional modifications to the standard models and training scripts.
+**Note 2:** Baseline methods are not implemented in this repo, because they may require additional modifications to the standard models and training scripts. We are working to support more algorithms.
 
 **Note 3:** Donwload pretrained resnet-56 to reproduce our results: [dropbox](https://www.dropbox.com/s/lcpwz24gcxmo1a7/cifar10_resnet56.pth?dl=0)
 
-**Note 4:** Training logs are available at [run/prune](https://github.com/VainF/Torch-Pruning/tree/v1.0/benchmarks/run/cifar10/prune).
+**Note 4:** Training logs are available at [run/prune](https://github.com/VainF/Torch-Pruning/tree/v1.0/benchmarks/run/cifar10/prune). 
 
 #### - Pretraining
 ```python
