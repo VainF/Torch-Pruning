@@ -24,7 +24,7 @@
 
 **Note 3:** Donwload pretrained resnet-56 to reproduce our results: [dropbox](https://www.dropbox.com/s/lcpwz24gcxmo1a7/cifar10_resnet56.pth?dl=0)
 
-**Note 4:** Training logs are available at [run/prune](https://github.com/VainF/Torch-Pruning/tree/v1.0/benchmarks/run/cifar10/prune). 
+**Note 4:** Training logs are available at [run/prune](run/cifar10/prune). 
 
 #### - Pretraining
 ```python
