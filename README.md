@@ -41,7 +41,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. Dependency
 
-Dependency exists between parameters/layers, which forces them to be pruned simultaneouly. 
+Dependency exists between parameters/layers, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical way to group all coupled parameters, so that they can be correctly removed during pruning.
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
