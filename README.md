@@ -22,10 +22,6 @@ Torch-Pruning is a general-purpose library for structural network pruning, which
 * Pruning benchmarks for CIFAR and ImageNet.
 * A paper about this repo (:heavy_check_mark:, will be released ASAP)
 
-## How it works
-
-Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningClique` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
-  
 ## Installation
 ```bash
 pip install torch-pruning # v1.0.0
@@ -39,9 +35,10 @@ git clone https://github.com/VainF/Torch-Pruning.git
   
 Here we provide a quick start for Torch-Pruning. More explained details can be found in [tutorals](./tutorials/)
 
-### 0. Dependency
+### 0. How it works
 
-Dependency exists between parameters/layers, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical way to group all coupled parameters, so that they can be correctly removed during pruning.
+Dependency exists between parameters/layers, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical way to group all coupled parameters, so that they can be correctly removed during pruning. To be exact, Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningClique` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. We visualize some dependencies in modern nerual networks:
+  
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
