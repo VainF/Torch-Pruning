@@ -51,7 +51,7 @@ python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifa
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_lasso --speed-up 2.11 --global-pruning --reg 5e-4
 ```
 
-## ResNet50 / ImageNet / 2.00 GFLOPs
+## ResNet50 / ImageNet / 2.00 GMACs
 
 #### - L1 Pruner
 ```python
