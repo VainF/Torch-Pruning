@@ -18,12 +18,13 @@ Torch-Pruning is a general-purpose library for structural network pruning, which
 ### **Plans:**
 * More high-level pruners like FisherPruner, SoftPruner, GeometricPruner, etc.
 * Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
+* More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
 * Pruning benchmarks for CIFAR and ImageNet.
 * A paper about this repo (:heavy_check_mark:, will be released ASAP)
 
 ## How it works
 
-Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the relation coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningClique` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
+Torch-Pruning will forward your model with a fake inputs and trace the computational graph just like ``torch.jit``. A dependency graph will be established to record the coupling between layers. Torch-pruning will collect all affected layers according by propogating your pruning operations through the whole graph, and then return a `PruningClique` for pruning. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. 
   
 ## Installation
 ```bash
