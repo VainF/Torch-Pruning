@@ -143,27 +143,34 @@ for i in range(iterative_steps):
 You can also try to prune your model manually with low-level functions. 
 
 ```python
-tp.prune_conv_out_channel( model.conv1, idxs=[2,6,9] )
+tp.prune_conv_out_channels( model.conv1, idxs=[2,6,9] )
 
 # fix the broken dependencies manually
-tp.prune_batchnorm( model.bn1, idxs=[2,6,9] )
-tp.prune_conv_in_channel( model.layer2[0].conv1, idxs=[2,6,9] )
+tp.prune_batchnorm_out_channels( model.bn1, idxs=[2,6,9] )
+tp.prune_conv_in_channels( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
 
 The following pruning functions are available:
 ```python
-tp.prune_conv_in_channel
-tp.prune_conv_out_channel
-tp.prune_depthwise_conv_out_channels
-tp.prune_batchnorm 
-tp.prune_linear_in_channel 
-tp.prune_linear_out_channel 
-tp.prune_prelu
-tp.prune_layernorm 
-tp.prune_embedding 
-tp.prune_parameter
-tp.prune_multihead_attention
+tp.prune_conv_out_channels,
+tp.prune_conv_in_channels,
+tp.prune_depthwise_conv_out_channels,
+tp.prune_depthwise_conv_in_channels,
+tp.prune_batchnorm_out_channels,
+tp.prune_batchnorm_in_channels,
+tp.prune_linear_out_channels,
+tp.prune_linear_in_channels,
+tp.prune_prelu_out_channels,
+tp.prune_prelu_in_channels,
+tp.prune_layernorm_out_channels,
+tp.prune_layernorm_in_channels,
+tp.prune_embedding_out_channels,
+tp.prune_embedding_in_channels,
+tp.prune_parameter_out_channels,
+tp.prune_parameter_in_channels,
+tp.prune_multihead_attention_out_channels,
+tp.prune_multihead_attention_in_channels,
 ```
 
 ### 4. Customized Layers
