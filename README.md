@@ -3,7 +3,7 @@
 <img src="assets/intro.jpg" width="45%">
 </div>
 
-Torch-Pruning (TP) is a general-purpose library for structural network pruning, which supports a large variaty of nerual networks like Vision Transformers, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, etc. Please refer to [tests/test_torchvision_models.py](tests/test_torchvision_models.py) for more details about prunable models. Unlike the [``torch.nn.utils.prune``](https://pytorch.org/docs/stable/generated/torch.nn.utils.prune.global_unstructured.html) that only zeroizes parameters, Torch-pruning, powered by a graph algorithm termed as ``DepGraph``, physically removes parameters from your models. 
+Torch-Pruning (TP) is a general-purpose library for structural network pruning, which supports a large variaty of nerual networks like Vision Transformers, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, etc. Please refer to [tests/test_torchvision_models.py](tests/test_torchvision_models.py) for more details about prunable models. Unlike the [``torch.nn.utils.prune``](https://pytorch.org/docs/stable/generated/torch.nn.utils.prune.global_unstructured.html) that only zeroizes parameters, Torch-pruning, powered by a graph algorithm termed as ``DepGraph``, will physically remove parameters from your models.
 
 Please refer to our paper for more technical details: [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900)
 
