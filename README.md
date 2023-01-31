@@ -20,7 +20,7 @@ Please refer to our paper for more technical details: [DepGraph: Towards Any Str
 * More high-level pruners like FisherPruner, SoftPruner, GeometricPruner, etc.
 * Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 * More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
-* Pruning benchmarks for CIFAR and ImageNet.
+* Pruning benchmarks for CIFAR, ImageNet and COCO.
 
 ## Installation
 ```bash
