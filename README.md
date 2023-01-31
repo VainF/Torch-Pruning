@@ -1,18 +1,19 @@
-<div align="center"> <h1>Torch-Pruning <br> <h3>Structural Pruning for Model Acceleration<h3> </h1> </div>
+<div align="center"> <h1>Torch-Pruning <br> <h3>Towards Any Structural Pruning<h3> </h1> </div>
 <div align="center">
 <img src="assets/intro.jpg" width="45%">
 </div>
 
-Torch-Pruning is a general-purpose library for structural network pruning, which supports a large variaty of nerual networks like Vision Transformers, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, etc. Please refer to [tests/test_torchvision_models.py](tests/test_torchvision_models.py) for more details about prunable models.
+Torch-Pruning (TP) is a general-purpose library for structural network pruning, which supports a large variaty of nerual networks like Vision Transformers, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, etc. Please refer to [tests/test_torchvision_models.py](tests/test_torchvision_models.py) for more details about prunable models. Unlike the [``torch.nn.utils.prune``](https://pytorch.org/docs/stable/generated/torch.nn.utils.prune.global_unstructured.html) that only zeroizes parameters, Torch-pruning, powered by an graph algorithm termed as ``DependencyGraph``, physically removes parameters from your models. 
+
+Please refer to our paper for more technical details: [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900)
 
 ### **Features:**
-* Channel pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
-* High-level pruners: MagnitudePruner, BNScalePruner, GroupPruner, etc.
-* Graph Tracing and dependency fixing.
+* Structural (Channel) pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
+* High-level pruners: MagnitudePruner, BNScalePruner, GroupPruner, RandomPruner, etc.
+* Graph Tracing and dependency modeling.
 * Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 * Supported operations: split, concatenation, skip connection, flatten, etc.
-* Pruning strategies: Random, L1, L2, etc.
-* Low-level pruning [functions](torch_pruning/prune/structured.py)
+* [Low-level pruning functions](torch_pruning/prune/structured.py)
 * [Benchmarks](benchmarks) and [tutorials](tutorials)
 
 ### **Plans:**
@@ -20,7 +21,6 @@ Torch-Pruning is a general-purpose library for structural network pruning, which
 * Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 * More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
 * Pruning benchmarks for CIFAR and ImageNet.
-* A paper about this repo (:heavy_check_mark:, will be released ASAP)
 
 ## Installation
 ```bash
