@@ -309,7 +309,7 @@ class DependencyGraph(object):
         Args:
             module (nn.Module): the module to be pruned.
             pruning_fn (Callable): the pruning function.
-            idxs (list or tuple): the indices of paramters to be pruned.
+            idxs (list or tuple): the indices of parameters to be pruned.
         """
         if isinstance(module, ops.TORCH_CONV) and module.groups == module.out_channels:
             pruning_fn = function.prune_depthwise_conv_out_channels
