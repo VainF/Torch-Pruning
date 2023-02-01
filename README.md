@@ -198,7 +198,7 @@ Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 
 Please refer to [benchmarks](benchmarks) for more details.
 
-### Citation
+## Citation
 ```
 @article{fang2023depgraph,
   title={DepGraph: Towards Any Structural Pruning},
