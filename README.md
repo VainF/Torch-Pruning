@@ -197,3 +197,13 @@ Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 | Ours-Group | 93.53 | 93.91 | +0.38 | 2.13x |
 
 Please refer to [benchmarks](benchmarks) for more details.
+
+### Citation
+```
+@article{fang2023depgraph,
+  title={DepGraph: Towards Any Structural Pruning},
+  author={Fang, Gongfan and Ma, Xinyin and Song, Mingli and Mi, Michael Bi and Wang, Xinchao},
+  journal={arXiv preprint arXiv:2301.12900},
+  year={2023}
+}
+```
