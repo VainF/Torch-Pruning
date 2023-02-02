@@ -37,7 +37,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. How it works
 
-Dependency in complicated network structures, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical mechanism to group parameters with inter-depenedency, so that they can be correctly removed for acceleration. To be exact, Torch-Pruning will forward your model with a fake input and trace the computation to establish a dependency graph, recording the coupling between all layers. When you prune a layer, Torch-pruning will also prune those coupled layers for you by returning a `Group`. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. We illustrate some dependencies in modern nerual networks as the following:
+Dependency emerges in complicated network structures, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical mechanism to group parameters with inter-depenedency, so that they can be correctly removed for acceleration. To be exact, Torch-Pruning will forward your model with a fake input and trace the computation to establish a dependency graph, recording the coupling between all layers. When you prune a layer, Torch-pruning will also prune those coupled layers for you by returning a `Group`. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. We illustrate some dependencies in modern nerual networks as the following:
   
 
 |  Dependency           |  Visualization  |  Example   |
