@@ -13,7 +13,7 @@ Please refer to our paper for more technical details: [DepGraph: Towards Any Str
 * Graph Tracing and dependency modeling.
 * Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 * Supported operations: split, concatenation, skip connection, flatten, etc.
-* [Low-level pruning functions](torch_pruning/prune/structured.py)
+* [Low-level pruning functions](https://github.com/VainF/Torch-Pruning/blob/master/torch_pruning/pruner/function.py)
 * [Benchmarks](benchmarks) and [tutorials](tutorials)
 
 ### **Plans:**
