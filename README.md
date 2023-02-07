@@ -3,16 +3,16 @@
 <img src="assets/intro.jpg" width="45%">
 </div>
 
-Torch-Pruning (TP) is a general-purpose library for structural network pruning, which supports a large variaty of nerual networks like Vision Transformers, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, etc. Please refer to [tests/test_torchvision_models.py](tests/test_torchvision_models.py) for more details about prunable models. Different from the [torch.nn.utils.prune](https://pytorch.org/docs/stable/generated/torch.nn.utils.prune.global_unstructured.html) that only zeroizes parameters, Torch-pruning, powered by a graph algorithm termed as ``DepGraph``, will remove parameters and sub-structures from your models physically.
+Torch-Pruning (TP) is a general-purpose library for structural network pruning, which supports a large variaty of nerual networks like Vision Transformers, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, etc. Please refer to [tests/test_torchvision_models.py](tests/test_torchvision_models.py) for more prunable models. Different from the [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that only zeroizes parameters, Torch-Pruning, powered by a graph algorithm ``DepGraph``, physically removes parameters and sub-structures from your models. 
 
-Please refer to our paper for more technical details: [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900)
+Please refer to our preprint paper for more technical details: [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900)
 
 ### **Features:**
 * Structural (Channel) pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
 * High-level pruners: MagnitudePruner, BNScalePruner, GroupPruner, RandomPruner, etc.
 * Graph Tracing and dependency modeling.
 * Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
-* Supported operations: split, concatenation, skip connection, flatten, etc.
+* Supported operations: split, concatenation, skip connection, flatten, all element-wise ops, etc.
 * [Low-level pruning functions](https://github.com/VainF/Torch-Pruning/blob/master/torch_pruning/pruner/function.py)
 * [Benchmarks](benchmarks) and [tutorials](tutorials)
 
@@ -20,6 +20,7 @@ Please refer to our paper for more technical details: [DepGraph: Towards Any Str
 * More high-level pruners like FisherPruner, SoftPruner, GeometricPruner, etc.
 * Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 * More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
+* Examples for GNNs and RNNs.
 * Pruning benchmarks for CIFAR, ImageNet and COCO.
 
 ## Installation
@@ -37,8 +38,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. How it works
 
-Dependency emerges in complicated network structures, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical mechanism to group parameters with inter-depenedency, so that they can be correctly removed for acceleration. To be exact, Torch-Pruning will forward your model with a fake input and trace the computation to establish a dependency graph, recording the coupling between all layers. When you prune a layer, Torch-pruning will also prune those coupled layers for you by returning a `Group`. All pruning indices will be automatically transformed if there are operations like ``torch.split`` or ``torch.cat``. We illustrate some dependencies in modern nerual networks as the following:
-  
+Dependency emerges in complicated network structures, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical mechanism to group parameters with inter-depenedency, so that they can be correctly removed for acceleration. To be exact, Torch-Pruning will forward your model with a fake input and trace the network to establish a dependency graph, recording the dependency between layers. When you prune a single layer, Torch-pruning will also group those coupled layers by returning a `Group`. All pruning indices will be automatically transformed and aligned if there are operations like ``torch.split`` or ``torch.cat``. We illustrate some dependencies in modern nerual networks as the following, where all highlighted channels and parameters will be removed together.
 
 |  Dependency           |  Visualization  |  Example   |
 | :------------------:  | :------------:  | :-----:    |
@@ -61,20 +61,19 @@ model = resnet18(pretrained=True).eval()
 DG = tp.DependencyGraph()
 DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
-# 2. Select channels for pruning, here we prune the channels indexed by [2, 6, 9].
+# 2. Specify the to-be-pruned channels. Here we prune those channels indexed by [2, 6, 9].
 pruning_idxs = [2, 6, 9]
 pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=pruning_idxs )
 
-# 3. prune all grouped layer that is coupled with model.conv1
-if DG.check_pruning_group(pruning_group):
+# 3. prune all grouped layer that is coupled with model.conv1 (included).
+if DG.check_pruning_group(pruning_group): # avoid full pruning, i.e., channels=0.
     pruning_group.exec()
 
 # 4. save & load the pruned model 
 torch.save(model, 'model.pth') # save the model object
 model_loaded = torch.load('model.pth') # no load_state_dict
 ```
-
-In this example, we directly manipulate the DependencyGraph for pruning, where resnet.conv1 is coupled with several layers. In this case, all coupled layers should be pruned simultaneously. Let's inspect the group (with pruning_idxs=[2, 6, 9]):
+This example shows the basic pipeline of pruning with DependencyGraph. Note that resnet.conv1 is coupled with several layers. Let's inspect the group and check how a pruning operation "triggers" other ones. 
 
 ```
 --------------------------------
@@ -101,7 +100,7 @@ In this example, we directly manipulate the DependencyGraph for pruning, where r
 
 ### 2. High-level Pruners
 
-We provide some model-level pruners in this repo for convenience. You can specify the channel sparsity to prune the whole model and fintune it using your own training code. Please refer to [tests/test_pruner.py](tests/test_pruner.py) for more details. More examples can be found in [benchmarks/main.py](benchmarks/main.py).
+Based on DependencyGraph, we provide some high-level pruners in this repo for easy pruning. You can specify the channel sparsity to prune the whole model and fintune it using your own training code. Please refer to [tests/test_pruner.py](tests/test_pruner.py) for more details. More examples can be found in [benchmarks/main.py](benchmarks/main.py). 
 
 ```python
 import torch
@@ -110,7 +109,7 @@ import torch_pruning as tp
 
 model = resnet18(pretrained=True)
 
-# Global metrics
+# Importance criteria
 example_inputs = torch.randn(1, 3, 224, 224)
 imp = tp.importance.MagnitudeImportance(p=2)
 
@@ -119,7 +118,7 @@ for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m) # DO NOT prune the final classifier!
 
-iterative_steps = 5
+iterative_steps = 5 # progressive pruning
 pruner = tp.pruner.MagnitudePruner(
     model,
     example_inputs,
@@ -140,7 +139,7 @@ for i in range(iterative_steps):
 
 ### 3. Low-level pruning functions
 
-You can also try to prune your model manually with low-level functions. 
+Is is also possible to prune your model manually with low-level functions. But it would be quite effort-cunsuming since you need to carefully handle the dependency.
 
 ```python
 tp.prune_conv_out_channels( model.conv1, idxs=[2,6,9] )
@@ -194,7 +193,7 @@ Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 ||
 | Ours-L1 | 93.53 | 92.93 | -0.60 | 2.12x |
 | Ours-BN | 93.53 | 93.29 | -0.24 | 2.12x |
-| Ours-Group | 93.53 | 93.91 | +0.38 | 2.13x |
+| Ours-Group | 93.53 | *93.91 | +0.38 | 2.13x |
 
 Please refer to [benchmarks](benchmarks) for more details.
 
