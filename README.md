@@ -39,11 +39,18 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. How it works
 
-Dependency emerges in complicated network structures, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical mechanism to group parameters with inter-depenedency, so that they can be correctly removed for acceleration. To be exact, Torch-Pruning will forward your model with a fake input and trace the network to establish a dependency graph, recording the dependency between layers. When you prune a single layer, Torch-pruning will also group those coupled layers by returning a `Group`. All pruning indices will be automatically transformed and aligned if there are operations like ``torch.split`` or ``torch.cat``. We illustrate some dependencies in modern nerual networks as the following, where all highlighted channels and parameters will be removed together.
+Dependency emerges in complicated network structures, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical mechanism to group parameters with inter-depenedency, so that they can be correctly removed for acceleration. To be exact, Torch-Pruning will forward your model with a fake input and trace the network to establish a dependency graph, recording the dependency between layers. When you prune a single layer, Torch-pruning will also group those coupled layers by returning a `Group`. All pruning indices will be automatically transformed and aligned if there are operations like ``torch.split`` or ``torch.cat``. We illustrate some dependencies in modern nerual networks as the following, where all highlighted channels and parameters will be removed together. 
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
 </div>
+
+With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. In our paper, we sparsify groups to learn consistent sparsity across coupled layers.
+
+<div align="center">
+<img src="assets/group_sparsity.png" width="80%">
+</div>
+
 
 ### 1. A minimal example
 
