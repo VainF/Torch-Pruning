@@ -9,7 +9,7 @@ Please refer to our preprint paper for more technical details: [DepGraph: Toward
 
 ### **Features:**
 * Structural (Channel) pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
-* High-level pruners: MagnitudePruner, BNScalePruner, GroupPruner, RandomPruner, etc.
+* High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupPruner](https://arxiv.org/abs/2301.12900) (a simple pruner used in our paper), RandomPruner, etc.
 * Graph Tracing and dependency modeling.
 * Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 * Supported operations: split, concatenation, skip connection, flatten, all element-wise ops, etc.
