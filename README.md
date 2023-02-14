@@ -41,13 +41,9 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 Dependency emerges in complicated network structures, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical mechanism to group parameters with inter-depenedency, so that they can be correctly removed for acceleration. To be exact, Torch-Pruning will forward your model with a fake input and trace the network to establish a dependency graph, recording the dependency between layers. When you prune a single layer, Torch-pruning will also group those coupled layers by returning a `Group`. All pruning indices will be automatically transformed and aligned if there are operations like ``torch.split`` or ``torch.cat``. We illustrate some dependencies in modern nerual networks as the following, where all highlighted channels and parameters will be removed together.
 
-|  Dependency           |  Visualization  |  Example   |
-| :------------------:  | :------------:  | :-----:    |
-|    Conv-Conv          |  <img src="assets/conv-conv.png" width="80%"> | AlexNet  |
-|    Conv-FC (Global Pooling or Flatten) |  <img src="assets/conv-fc.png" width="80%">   | ResNet, VGG    |  
-|    Skip Connection    | <img src="assets/residual.png" width="80%">   | ResNet
-|    Concatenation      | <img src="assets/concat.png" width="80%">     | DenseNet, ASPP |
-|    Split              | <img src="assets/split.png" width="80%">      | torch.chunk |
+<div align="center">
+<img src="assets/dep.png" width="100%">
+</div>
 
 ### 1. A minimal example
 
