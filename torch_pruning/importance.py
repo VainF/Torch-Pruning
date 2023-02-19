@@ -61,7 +61,10 @@ class MagnitudeImportance(Importance):
                 function.prune_linear_in_channels,
             ]:
                 is_conv_flatten_linear = False
-                w = (layer.weight).transpose(0, 1).flatten(1)            
+                if isinstance(layer, nn.ConvTranspose2d):
+                    w = (layer.weight).flatten(1)  
+                else:
+                    w = (layer.weight).transpose(0, 1).flatten(1)             
                 if (w.shape[0] != group_imp[0].shape[0]):  
                     if (hasattr(dep, 'index_mapping') and isinstance(dep.index_mapping, _FlattenIndexMapping)):
                         #conv-flatten
@@ -229,7 +232,10 @@ class GroupNormImportance(Importance):
                 function.prune_linear_in_channels,
             ]:
                 is_conv_flatten_linear = False
-                w = (layer.weight).transpose(0, 1).flatten(1)            
+                if isinstance(layer, nn.ConvTranspose2d):
+                    w = (layer.weight).flatten(1)  
+                else:
+                    w = (layer.weight).transpose(0, 1).flatten(1)             
                 if (w.shape[0] != group_norm.shape[0]):  
                     if (hasattr(dep, 'index_mapping') and isinstance(dep.index_mapping, _FlattenIndexMapping)):
                         #conv-flatten
