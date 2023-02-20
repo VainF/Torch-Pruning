@@ -23,6 +23,7 @@ Please refer to our preprint paper for more technical details: [DepGraph: Toward
 * Examples for GNNs and RNNs.
 * Pruning benchmarks for CIFAR, ImageNet and COCO.
 * Block/Layer/Depth Pruning
+* GANs / Detectors
 
 ## Installation
 ```bash
