@@ -78,7 +78,8 @@ if DG.check_pruning_group(pruning_group): # avoid full pruning, i.e., channels=0
 torch.save(model, 'model.pth') # save the model object
 model_loaded = torch.load('model.pth') # no load_state_dict
 ```
-This example shows the basic pipeline of pruning with DependencyGraph. Note that resnet.conv1 is coupled with several layers. Let's inspect the group and check how a pruning operation "triggers" other ones. 
+  
+This example demonstrates the fundamental pruning pipeline using DepGraph. Note that resnet.conv1 is coupled with several layers. Let' inspect the resulting group and observe how a pruning operation can "trigger" other ones.
 
 ```
 --------------------------------
