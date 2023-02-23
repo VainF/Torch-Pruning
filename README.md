@@ -3,9 +3,9 @@
 <img src="assets/intro.jpg" width="45%">
 </div>
 
-Torch-Pruning (TP) is a general-purpose library for structural network pruning, which supports a large variaty of nerual networks like Vision Transformers, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, etc. Please refer to [tests/test_torchvision_models.py](tests/test_torchvision_models.py) for more prunable models. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that ony zeroizes parameters via masking, Torch-Pruning will physically removes parameters and sub-structures from your models, under the guidance of a graph algorithm called ``DepGraph``.
+Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including Vision Transformers, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, and more. To explore prunable models, please refer to [tests/test_torchvision_models.py](tests/test_torchvision_models.py) for more prunable models. Unlike [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html), which only zeroizes parameters through masking, Torch-Pruning employs a graph algorithm called DepGraph to physically remove parameters (channels) from your models. 
 
-Please refer to our preprint paper for more technical details: [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900)
+For more technical details, please refer to our preprint paper : [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900)
 
 ### **Features:**
 * Structural (Channel) pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
@@ -40,7 +40,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. How it works
 
-Dependency emerges in complicated network structures, which forces a group of parameters to be pruned simultaneouly. This works provides an automatical mechanism to group parameters with inter-depenedency, so that they can be correctly removed for acceleration. To be exact, Torch-Pruning will forward your model with a fake input and trace the network to establish a dependency graph, recording the dependency between layers. When you prune a single layer, Torch-pruning will also group those coupled layers by returning a `Group`. All pruning indices will be automatically transformed and aligned if there are operations like ``torch.split`` or ``torch.cat``. We illustrate some dependencies in modern nerual networks as the following, where all highlighted channels and parameters will be removed together. 
+In complex network structures, dependencies can arise among groups of parameters, necessitating their simultaneous pruning. Our work addresses this challenge by providing an automated mechanism for grouping parameters to facilitate their efficient removal for acceleration. Specifically, Torch-Pruning accomplishes this by forwarding your model with a fake input, tracing the network to establish a dependency graph, and recording the dependencies between layers. When you prune a single layer, Torch-Pruning identifies and groups the associated inter-dependent layers by returning a `Group`. Moreover, any pruning indices will be automatically transformed and aligned if operations like torch.split or torch.cat are present. 
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
@@ -105,7 +105,7 @@ This example shows the basic pipeline of pruning with DependencyGraph. Note that
 
 ### 2. High-level Pruners
 
-Based on DependencyGraph, we provide some high-level pruners in this repo for easy pruning. You can specify the channel sparsity to prune the whole model and fintune it using your own training code. Please refer to [tests/test_pruner.py](tests/test_pruner.py) for more details. More examples can be found in [benchmarks/main.py](benchmarks/main.py). 
+Leveraging the DependencyGraph, we developed several high-level pruners in this repository to facilitate effortless pruning. By specifying the desired channel sparsity, you can prune the entire model and fine-tune it using your own training code. For detailed information on this process, we encourage you to consult the [tests/test_pruner.py](tests/test_pruner.py) file. Additionally, you can find more practical examples in [benchmarks/main.py](benchmarks/main.py).
 
 ```python
 import torch
@@ -144,7 +144,7 @@ for i in range(iterative_steps):
 
 ### 3. Low-level pruning functions
 
-Is is also possible to prune your model manually with low-level functions. But it would be quite effort-cunsuming since you need to carefully handle the dependency.
+While it is possible to manually prune your model using low-level functions, this approach can be quite laborious, as it requires careful management of the associated dependencies. As a result, we recommend utilizing the aforementioned high-level pruners to streamline the pruning process.
 
 ```python
 tp.prune_conv_out_channels( model.conv1, idxs=[2,6,9] )
