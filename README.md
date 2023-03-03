@@ -10,14 +10,14 @@ For more technical details, please refer to our preprint paper : [DepGraph: Towa
 ### **Features:**
 * Structural (Channel) pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
 * High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupPruner](https://arxiv.org/abs/2301.12900) (a simple pruner used in our paper), RandomPruner, etc.
-* Graph Tracing and dependency modeling.
+* Graph tracing and dependency modeling.
 * Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 * Supported operations: split, concatenation, skip connection, flatten, all element-wise ops, etc.
 * [Low-level pruning functions](https://github.com/VainF/Torch-Pruning/blob/master/torch_pruning/pruner/function.py)
 * [Benchmarks](benchmarks) and [tutorials](tutorials)
 
 ### **Plans:**
-* GANs and Detectors
+* GANs and Detectors (We are working on the pruning of YOLO series)
 * More high-level pruners like FisherPruner, SoftPruner, GeometricPruner, GrowingReg, etc.
 * More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
 * Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
