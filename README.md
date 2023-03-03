@@ -17,13 +17,13 @@ For more technical details, please refer to our preprint paper : [DepGraph: Towa
 * [Benchmarks](benchmarks) and [tutorials](tutorials)
 
 ### **Plans:**
+* GANs and Detectors
 * More high-level pruners like FisherPruner, SoftPruner, GeometricPruner, GrowingReg, etc.
-* Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 * More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
+* Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 * Examples for GNNs and RNNs.
 * Pruning benchmarks for CIFAR, ImageNet and COCO.
 * Block/Layer/Depth Pruning
-* GANs/Detectors
 
 ## Installation
 ```bash
