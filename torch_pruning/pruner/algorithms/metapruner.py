@@ -94,7 +94,7 @@ class MetaPruner():
             for module in ch_sparsity_dict:
                 sparsity = ch_sparsity_dict[module]
                 for submodule in module.modules():
-                    prunable_types = [ ops.type2class(prunable_type) for prunable_type in self.DG.REGISTERED_PRUNERS.keys() ]
+                    prunable_types = tuple([ ops.type2class(prunable_type) for prunable_type in self.DG.REGISTERED_PRUNERS.keys() ])
                     if isinstance(submodule, prunable_types):
                         self.ch_sparsity_dict[submodule] = self.iterative_sparsity_scheduler(
                             sparsity, self.iterative_steps
