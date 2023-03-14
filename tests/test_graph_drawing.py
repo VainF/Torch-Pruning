@@ -22,7 +22,7 @@ class Net(nn.Module):
         x += skip
         return x
 
-model = densenet121() #densenet121() #resnet18() #densenet121()
+model = densenet121() #densenet121() #resnet18() #densenet121() # Net()
 
 unwrapped_parameters = None
 round_to = None
