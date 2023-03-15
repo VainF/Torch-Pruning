@@ -24,3 +24,9 @@ print(pruning_group)
 
 print("After pruning:")
 print(model)
+
+groups = list(DG.get_all_groups())
+print("Num groups: %d"%(len(groups)))
+
+for g in groups:
+    print(g)

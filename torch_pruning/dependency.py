@@ -377,6 +377,35 @@ class DependencyGraph(object):
             merged_group.add_and_merge(dep, idxs)
         return merged_group
 
+    def get_all_groups(self, root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR, ops.TORCH_BATCHNORM)):
+        visited_layers = []
+        for m in self.module2node.keys():
+            if m in self.IGNORED_LAYERS:
+                continue
+            
+            if not isinstance(m, tuple(root_module_types)):
+                continue
+        
+            pruner = self.REGISTERED_PRUNERS.get(ops.module2type(m), None)
+            if pruner is None or pruner.get_out_channels(m) is None:
+                continue
+
+            if m in visited_layers:
+                continue
+
+            layer_channels = pruner.get_out_channels(m) 
+            group = self.get_pruning_group(m, pruner.prune_out_channels, list(range(layer_channels)))
+            prunable_group = True
+            for dep, _ in group:
+                module = dep.target.module
+                pruning_fn = dep.handler
+                if function.is_out_channel_pruner(pruning_fn):
+                    visited_layers.append(module)
+                    if module in self.IGNORED_LAYERS:
+                        prunable_group = False
+            if prunable_group:
+                yield group
+
     def get_module_pruner(self, module):
         return self.REGISTERED_PRUNERS.get(ops.module2type(module), None)
 
