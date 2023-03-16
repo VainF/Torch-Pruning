@@ -208,7 +208,7 @@ Please refer to [benchmarks](benchmarks) for more details.
 @article{fang2023depgraph,
   title={DepGraph: Towards Any Structural Pruning},
   author={Fang, Gongfan and Ma, Xinyin and Song, Mingli and Mi, Michael Bi and Wang, Xinchao},
-  journal={CVPR},
+  journal={The Thirty-Fourth IEEE/CVF Conference on Computer Vision and Pattern Recognition},
   year={2023}
 }
 ```
