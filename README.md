@@ -7,6 +7,8 @@ Torch-Pruning (TP) is a versatile library that enables structural network prunin
 
 For more technical details, please refer to our preprint paper : [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900)
 
+Please do not hesitate to open a discussion or issue if you encounter any problems with the library or have any questions related to the paper. We are always happy to assist you and address any concerns you may have.
+
 ### **Features:**
 * Structural (Channel) pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
 * High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupPruner](https://arxiv.org/abs/2301.12900) (a simple pruner used in our paper), RandomPruner, etc.
