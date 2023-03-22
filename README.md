@@ -51,7 +51,7 @@ In complex network structures, dependencies can arise among groups of parameters
 <img src="assets/dep.png" width="100%">
 </div>
 
-With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. In our paper, we craft a simple [GroupPruner](https://arxiv.org/abs/2301.12900) to learn consistent sparsity across coupled layers.
+With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. In our paper, we craft a simple [GroupPruner](https://arxiv.org/abs/2301.12900) (c) to learn consistent sparsity across coupled layers.
 
 <div align="center">
 <img src="assets/group_sparsity.png" width="80%">
