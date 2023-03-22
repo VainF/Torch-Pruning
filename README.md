@@ -7,7 +7,7 @@ Torch-Pruning (TP) is a versatile library that enables structural network prunin
 
 For more technical details, please refer to our preprint paper: 
 
-> [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900)   
+> [**DepGraph: Towards Any Structural Pruning**](https://arxiv.org/abs/2301.12900)   
 > [Gongfan Fang](https://fangggf.github.io/), [Xinyin Ma](https://horseee.github.io/), [Mingli Song](https://person.zju.edu.cn/en/msong), [Michael Bi Mi](https://dblp.org/pid/317/0937.html), [Xinchao Wang](https://sites.google.com/site/sitexinchaowang/)   
 
 Please do not hesitate to open a discussion or issue if you encounter any problems with the library or have any questions related to the paper. We are always happy to assist you and address any concerns you may have.
