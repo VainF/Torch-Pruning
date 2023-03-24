@@ -149,7 +149,7 @@ for i in range(iterative_steps):
     # ...
 ```
 
-All high-level pruners support interactive pruning:
+All high-level pruners support interactive pruning. You can use ``pruner.step(interactive=True)`` to get all groups and interactively prune them by calling ``group.prune()``. This feature is useful if you want to control/monitor the pruning process.
 
 ```python
 for i in range(iterative_steps):
