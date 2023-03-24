@@ -111,7 +111,7 @@ class Dependency(Edge):
         return str(self)
 
     def __str__(self):
-        return "[DEP] {} on {} => {} on {}".format(
+        return "{} on {} => {} on {}".format(
             "None" if self.trigger is None else self.trigger.__name__,
             self.source.name,
             self.handler.__name__,
@@ -206,7 +206,10 @@ class Group(object):
         fmt += " " * 10 + "Pruning Group"
         fmt += "\n" + "-" * 32 + "\n"
         for i, (dep, idxs) in enumerate(self._group):
-            fmt += "[{}] {}, idxs={}\n".format(i, dep, idxs)
+            if i==0:
+                fmt += "[{}] {}, idxs={} (Pruning Root)\n".format(i, dep, idxs)
+            else:
+                fmt += "[{}] {}, idxs={}\n".format(i, dep, idxs)
         fmt += "-" * 32 + "\n"
         return fmt
 
