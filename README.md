@@ -149,6 +149,21 @@ for i in range(iterative_steps):
     # ...
 ```
 
+All high-level pruners support interactive pruning:
+
+```python
+for i in range(iterative_steps):
+    for group in pruner.step(interactive=True):
+        print(group) 
+        # do whatever you like with the group 
+        # ...
+        group.prune() # you should manually call the group.prune()
+    macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
+    # finetune your model here
+    # finetune(model)
+    # ...
+```
+
 ### 3. Low-level pruning functions
 
 While it is possible to manually prune your model using low-level functions, this approach can be quite laborious, as it requires careful management of the associated dependencies. As a result, we recommend utilizing the aforementioned high-level pruners to streamline the pruning process.

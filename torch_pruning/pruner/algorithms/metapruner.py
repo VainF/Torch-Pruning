@@ -141,13 +141,21 @@ class MetaPruner():
         """
         pass
 
-    def step(self):
+    def step(self, interactive=False):
         if self.global_pruning:
-            self.prune_global()
+            for group in self.prune_global():
+                if interactive:
+                    yield group
+                else:
+                    group.prune()
         else:
-            self.prune_local()
+            for group in self.prune_local():
+                if interactive:
+                    yield group
+                else:
+                    group.prune()
         self.current_step += 1
-
+        
     def estimate_importance(self, group, ch_groups=1):
         return self.importance(group, ch_groups=ch_groups)
 
@@ -185,7 +193,6 @@ class MetaPruner():
     def prune_local(self):
         if self.current_step >= self.iterative_steps:
             return
-        pruned_groups = []
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             # check pruning rate
             if self._check_sparsity(group):
@@ -217,14 +224,11 @@ class MetaPruner():
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs.tolist())
                 if self.DG.check_pruning_group(group):
-                    pruned_groups.append(group)
-                    group.prune()
-        return pruned_groups
+                    yield group
 
     def prune_global(self):
         if self.current_step >= self.iterative_steps:
             return
-        pruned_groups = []
         global_importance = []
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_sparsity(group):
@@ -262,6 +266,4 @@ class MetaPruner():
             group = self.DG.get_pruning_group(
                 module, pruning_fn, pruning_indices.tolist())
             if self.DG.check_pruning_group(group):
-                pruned_groups.append(group)
-                group.prune()
-        return pruned_groups
+                yield group
