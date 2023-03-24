@@ -10,7 +10,7 @@ For more technical details, please refer to our preprint paper:
 > [**DepGraph: Towards Any Structural Pruning**](https://arxiv.org/abs/2301.12900)   
 > [Gongfan Fang](https://fangggf.github.io/), [Xinyin Ma](https://horseee.github.io/), [Mingli Song](https://person.zju.edu.cn/en/msong), [Michael Bi Mi](https://dblp.org/pid/317/0937.html), [Xinchao Wang](https://sites.google.com/site/sitexinchaowang/)   
 
-Please do not hesitate to open a discussion or issue if you encounter any problems with the library or have any questions related to the paper. We are always happy to assist you and address any concerns you may have.
+Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or have any questions related to the paper. We are always happy to assist you and address any concerns you may have.
 
 ### **Features:**
 * Structural (Channel) pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
@@ -86,7 +86,7 @@ torch.save(model, 'model.pth') # save the model object
 model_loaded = torch.load('model.pth') # no load_state_dict
 ```
   
-This example demonstrates the fundamental pruning pipeline using DepGraph. Note that resnet.conv1 is coupled with several layers. Let's print the resulting group and observe how a pruning operation "triggers" other ones. 
+This example demonstrates the fundamental pruning pipeline using DepGraph. Note that resnet.conv1 is coupled with several layers. Let's print the resulting group and observe how a pruning operation "triggers" other ones. In the following example, ``A => B`` means the pruning operation ``A`` triggers the pruning operation ``B``. Operation [0] refers to the pruning root specified by ``DG.get_pruning_group``.
 
 ```
 --------------------------------
