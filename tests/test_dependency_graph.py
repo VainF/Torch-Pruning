@@ -15,12 +15,12 @@ DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 pruning_idxs = pruning_idxs=[2, 6, 9]
 pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=pruning_idxs )
 
+print("Pruning Group:")
+print(pruning_group.details()) # or print(pruning_group)
+
 # 3. prune all grouped layer that is coupled with model.conv1
 if DG.check_pruning_group(pruning_group):
     pruning_group.prune()
-
-print("Pruning Group:")
-print(pruning_group.details()) # or print(pruning_group)
 
 print("After pruning:")
 print(model)
