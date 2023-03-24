@@ -153,7 +153,7 @@ All high-level pruners support interactive pruning. You can use ``pruner.step(in
 
 ```python
 for i in range(iterative_steps):
-    for group in pruner.step(interactive=True):
+    for group in pruner.step(interactive=True): # Warning: groups must be handled sequentially. Do not keep them as a list.
         print(group) 
         # do whatever you like with the group 
         # ...
