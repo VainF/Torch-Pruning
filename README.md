@@ -36,7 +36,7 @@ pip install torch-pruning # v1.0.0
 ```
 or
 ```bash
-git clone https://github.com/VainF/Torch-Pruning.git
+git clone https://github.com/VainF/Torch-Pruning.git # recommended
 ```
 
 ## Quickstart
