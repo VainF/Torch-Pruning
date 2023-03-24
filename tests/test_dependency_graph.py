@@ -17,16 +17,16 @@ pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, i
 
 # 3. prune all grouped layer that is coupled with model.conv1
 if DG.check_pruning_group(pruning_group):
-    pruning_group.exec()
+    pruning_group.prune()
 
 print("Pruning Group:")
-print(pruning_group)
+print(pruning_group.details()) # or print(pruning_group)
 
 print("After pruning:")
 print(model)
 
-groups = list(DG.get_all_groups())
-print("Num groups: %d"%(len(groups)))
+#groups = list(DG.get_all_groups())
+#print("Num groups: %d"%(len(groups)))
 
-for g in groups:
-    print(g)
+#for g in groups:
+#    print(g)

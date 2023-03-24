@@ -1,6 +1,7 @@
 import typing
 import warnings
 from numbers import Number
+from collections import namedtuple
 
 import torch
 import torch.nn as nn
@@ -8,7 +9,7 @@ import torch.nn as nn
 from .pruner import function
 from . import _helpers, utils, ops
 
-__all__ = ["Dependency", "DependencyGroup", "DependencyGraph"]
+__all__ = ["Dependency", "Group", "DependencyGraph"]
 
 
 class Node(object):
@@ -132,27 +133,29 @@ class Dependency(Edge):
         return hash((self.source, self.target, self.trigger, self.handler))
 
 
-class DependencyGroup(object):
-    """Dependency group that contains coupled dependencies.
-    It is an iterable list that contains the dependencies and corresponding indices as follows:
+GroupItem = namedtuple('GroupItem', ['dep', 'idxs'])
+
+
+class Group(object):
+    """A group that contains dependencies and pruning indices.   
+
+    Each element is defined as a namedtuple('GroupItem', ['dep', 'idxs']).
+
+    A group is a iterable list 
     [ [Dep1, Indices1], [Dep2, Indices2], ..., [DepK, IndicesK] ]
-    It is easy to access nn.modules with, for exmaple, ``group[1][0].target.module``
     """
 
     def __init__(self):
         self._group = list()
 
-    def exec(self):
+    def prune(self):
         """Prune all coupled layers in the group
         """
         for dep, idxs in self._group:
             dep(idxs)
 
-    def __call__(self):
-        return self.exec()
-
     def add_dep(self, dep, idxs):
-        self._group.append((dep, idxs))
+        self._group.append(GroupItem(dep=dep, idxs=idxs))
 
     def __getitem__(self, k):
         return self._group[k]
@@ -193,9 +196,26 @@ class DependencyGroup(object):
         fmt += " " * 10 + "Pruning Group"
         fmt += "\n" + "-" * 32 + "\n"
         for i, (dep, idxs) in enumerate(self._group):
-            fmt += "[{}] {}, #Pruned={}\n".format(i, dep, len(idxs))
+            fmt += "[{}] {}, #idxs={}\n".format(i, dep, len(idxs))
         fmt += "-" * 32 + "\n"
         return fmt
+
+    def details(self):
+        fmt = ""
+        fmt += "\n" + "-" * 32 + "\n"
+        fmt += " " * 10 + "Pruning Group"
+        fmt += "\n" + "-" * 32 + "\n"
+        for i, (dep, idxs) in enumerate(self._group):
+            fmt += "[{}] {}, idxs={}\n".format(i, dep, idxs)
+        fmt += "-" * 32 + "\n"
+        return fmt
+
+    def exec(self):
+        """old interface, replaced by group.prune()"""
+        self.prune()
+
+    def __call__(self):
+        return self.prune()
 
 
 class DependencyGraph(object):
@@ -283,11 +303,11 @@ class DependencyGraph(object):
         """
         self.CUSTOMIZED_PRUNERS[layer_type] = layer_pruner
 
-    def check_pruning_group(self, group: DependencyGroup) -> bool:
+    def check_pruning_group(self, group: Group) -> bool:
         """check the group to avoid over-pruning. Return True if there are sufficient prunable elements.
 
         Args:
-            group (DependencyGroup): a depenedency group
+            group (Group): a depenedency group
         """
 
         for dep, idxs in group:
@@ -309,7 +329,7 @@ class DependencyGraph(object):
     def is_in_channel_pruner(self, pruner: function.BasePruningFunc) -> bool:
         return function.is_in_channel_pruner(pruner)
 
-    def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]) -> DependencyGroup:
+    def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]) -> Group:
         """ An alias of DependencyGraph.get_pruning_group for compatibility.
         """
         return self.get_pruning_group(module, pruning_fn, idxs)
@@ -319,7 +339,7 @@ class DependencyGraph(object):
         module: nn.Module,
         pruning_fn: typing.Callable,
         idxs: typing.Union[list, tuple],
-    ) -> DependencyGroup:
+    ) -> Group:
         """Get the pruning group of pruning_fn.
 
         Args:
@@ -333,7 +353,7 @@ class DependencyGraph(object):
             idxs = [idxs]
 
         self.update_index_mapping()
-        group = DependencyGroup()
+        group = Group()
         #  the user pruning operation
         root_node = self.module2node[module]
         group.add_dep(
@@ -372,20 +392,21 @@ class DependencyGraph(object):
         _fix_dependency_graph_non_recursive(*group[0])
 
         # merge pruning ops
-        merged_group = DependencyGroup()
+        merged_group = Group()
         for dep, idxs in group.items:
             merged_group.add_and_merge(dep, idxs)
         return merged_group
 
-    def get_all_groups(self, root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR, ops.TORCH_BATCHNORM)):
+    def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
         visited_layers = []
+        ignored_layers = ignored_layers+self.IGNORED_LAYERS
         for m in self.module2node.keys():
-            if m in self.IGNORED_LAYERS:
+            if m in ignored_layers:
                 continue
-            
+
             if not isinstance(m, tuple(root_module_types)):
                 continue
-        
+
             pruner = self.REGISTERED_PRUNERS.get(ops.module2type(m), None)
             if pruner is None or pruner.get_out_channels(m) is None:
                 continue
@@ -393,15 +414,16 @@ class DependencyGraph(object):
             if m in visited_layers:
                 continue
 
-            layer_channels = pruner.get_out_channels(m) 
-            group = self.get_pruning_group(m, pruner.prune_out_channels, list(range(layer_channels)))
+            layer_channels = pruner.get_out_channels(m)
+            group = self.get_pruning_group(
+                m, pruner.prune_out_channels, list(range(layer_channels)))
             prunable_group = True
             for dep, _ in group:
                 module = dep.target.module
                 pruning_fn = dep.handler
                 if function.is_out_channel_pruner(pruning_fn):
                     visited_layers.append(module)
-                    if module in self.IGNORED_LAYERS:
+                    if module in ignored_layers:
                         prunable_group = False
             if prunable_group:
                 yield group
@@ -460,9 +482,6 @@ class DependencyGraph(object):
         return ch
 
     def _build_dependency(self, module2node):
-
-        # 1) Inter-layer Dependency
-        # 2) Intra-layer Dependency
 
         for _, node in module2node.items():
             ###########################################
@@ -589,7 +608,7 @@ class DependencyGraph(object):
             if module is None:  # a new module
                 if not hasattr(grad_fn, "name"):
                     # we treat all unknwon modules as element-wise operations by default,
-                    # which does not modify the dimension of features.
+                    # which does not modify the #dimension/#channel of features.
                     # If you have some customized layers, please register it with DependencyGraph.register_customized_layer
                     module = ops._ElementWiseOp("Unknown")
                     if self.verbose:

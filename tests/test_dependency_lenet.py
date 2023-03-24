@@ -48,7 +48,7 @@ pruning_group = DG.get_pruning_group( model.conv2, tp.prune_conv_out_channels, i
 print(pruning_group)
 # execute this group (prune the model)
 if DG.check_pruning_group(pruning_group):
-    pruning_group.exec()
+    pruning_group.prune()
 
 print("The pruned model: \n", model)
 print("Output:", model(torch.randn(1,1,28,28)).shape)

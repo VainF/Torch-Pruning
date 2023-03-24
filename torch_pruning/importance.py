@@ -15,7 +15,7 @@ class Importance(abc.ABC):
         raise NotImplementedError
 
 class MagnitudeImportance(Importance):
-    def __init__(self, p=1, group_reduction="mean", normalizer=None):
+    def __init__(self, p=2, group_reduction="mean", normalizer=None):
         self.p = p
         self.group_reduction = group_reduction
         self.normalizer = normalizer
@@ -29,8 +29,12 @@ class MagnitudeImportance(Importance):
             group_imp = group_imp.max(dim=0)[0]
         elif self.group_reduction == "prod":
             group_imp = torch.prod(group_imp, dim=0)
-        elif self.group_reduction is None:
+        elif self.group_reduction=='first':
             group_imp = group_imp[0]
+        elif self.group_reduction is None:
+            group_imp = group_imp
+        else: 
+            raise NotImplementedError
         return group_imp
 
     @torch.no_grad()
@@ -48,11 +52,11 @@ class MagnitudeImportance(Importance):
                 function.prune_linear_out_channels,
             ]:
                 w = layer.weight.data[idxs].flatten(1)
-                local_norm = w.pow(2).sum(1)
-                #print(local_norm.shape, layer, idxs, ch_groups)
+                local_norm = w.abs().pow(self.p).sum(1)
                 if ch_groups>1:
                     local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
+                #print(local_norm.shape)
                 group_imp.append(local_norm)
 
             # Conv in_channels
@@ -78,23 +82,25 @@ class MagnitudeImportance(Importance):
                         # non-grouped conv with group convs
                         w = w.view(w.shape[0] // group_imp[0].shape[0],
                                 group_imp[0].shape[0], w.shape[1]).transpose(0, 1).flatten(1)           
-                local_norm = w.pow(2).sum(1)
+                local_norm = w.abs().pow(self.p).sum(1)
                 if ch_groups>1:
                     if len(local_norm)==len(group_imp[0]):
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
                 if not is_conv_flatten_linear:
                     local_norm = local_norm[idxs]
+                #print(local_norm.shape)
                 group_imp.append(local_norm)
             # BN
             elif prune_fn == function.prune_batchnorm_out_channels:
                 # regularize BN
                 if layer.affine:
                     w = layer.weight.data[idxs]
-                    local_norm = w.pow(2)
+                    local_norm = w.abs().pow(self.p)
                     if ch_groups>1:
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                         local_norm = local_norm.repeat(ch_groups)
+                    #print(local_norm.shape)
                     group_imp.append(local_norm)
 
         group_imp = torch.stack(group_imp, dim=0)
@@ -108,7 +114,7 @@ class BNScaleImportance(MagnitudeImportance):
     """Learning Efficient Convolutional Networks through Network Slimming, 
     https://arxiv.org/abs/1708.06519
     """
-    def __init__(self, group_reduction=None, normalizer=None):
+    def __init__(self, group_reduction='mean', normalizer=None):
         super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer)
     
     def __call__(self, group, ch_groups=1):
@@ -148,8 +154,8 @@ class LAMPImportance(MagnitudeImportance):
                 function.prune_linear_out_channels,
             ]:
                 w = (layer.weight)[idxs]
-                local_imp = self.lamp(torch.norm(
-                    torch.flatten(w, 1), dim=1, p=self.p))
+                local_imp = torch.norm(
+                    torch.flatten(w, 1), dim=1, p=self.p)
                 group_imp.append(local_imp)
 
             elif prune_fn in [
@@ -165,20 +171,20 @@ class LAMPImportance(MagnitudeImportance):
                         w.shape[0] // group_imp[0].shape[0],
                         w.shape[1],
                     ).flatten(1)
-                local_imp = self.lamp(torch.norm(w, dim=1, p=self.p))
+                local_imp = torch.norm(w, dim=1, p=self.p)
                 group_imp.append(local_imp)
 
             elif prune_fn == function.prune_batchnorm_out_channels:
                 if layer.affine is not None:
                     w = (layer.weight)[idxs].view(-1, 1)
-                    local_imp = self.lamp(torch.norm(w, dim=1, p=self.p))
+                    local_imp = torch.norm(w, dim=1, p=self.p)
                     group_imp.append(local_imp)
 
         group_imp = torch.stack(group_imp, dim=0)
         group_imp = self._reduce(group_imp)
         if self.normalizer is not None:
             group_imp = self.normalizer(group, group_imp)
-        return group_imp
+        return self.lamp(group_imp)
 
     def lamp(self, imp):
         argsort_idx = torch.argsort(imp, dim=0, descending=True).tolist()
@@ -218,7 +224,7 @@ class GroupNormImportance(Importance):
                 function.prune_linear_out_channels,
             ]:
                 w = layer.weight.data[idxs].flatten(1)
-                local_norm = w.pow(2).sum(1)
+                local_norm = w.abs().pow(self.p).sum(1)
                 #print(local_norm.shape, layer, idxs, ch_groups)
                 if ch_groups>1:
                     local_norm = local_norm.view(ch_groups, -1).sum(0)
@@ -249,7 +255,7 @@ class GroupNormImportance(Importance):
                         # non-grouped conv with group convs
                         w = w.view(w.shape[0] // group_norm.shape[0],
                                 group_norm.shape[0], w.shape[1]).transpose(0, 1).flatten(1)           
-                local_norm = w.pow(2).sum(1)
+                local_norm = w.abs().pow(self.p).sum(1)
                 if ch_groups>1:
                     if len(local_norm)==len(group_norm):
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
@@ -262,7 +268,7 @@ class GroupNormImportance(Importance):
                 # regularize BN
                 if layer.affine:
                     w = layer.weight.data[idxs]
-                    local_norm = w.pow(2)
+                    local_norm = w.abs().pow(self.p)
                     if ch_groups>1:
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                         local_norm = local_norm.repeat(ch_groups)
@@ -285,19 +291,19 @@ class GroupNormImportance(Importance):
                 else:
                     postfix = ['']
 
-                local_norm+=getattr(layer, 'weight_hh_l0')[expanded_idxs].pow(2).sum(1).view(4, -1).sum(0)
-                local_norm+=getattr(layer, 'weight_hh_l0')[:, _idxs].pow(2).sum(0)
-                local_norm+=getattr(layer, 'weight_ih_l0')[expanded_idxs].pow(2).sum(1).view(4, -1).sum(0)
+                local_norm+=getattr(layer, 'weight_hh_l0')[expanded_idxs].abs().pow(self.p).sum(1).view(4, -1).sum(0)
+                local_norm+=getattr(layer, 'weight_hh_l0')[:, _idxs].abs().pow(self.p).sum(0)
+                local_norm+=getattr(layer, 'weight_ih_l0')[expanded_idxs].abs().pow(self.p).sum(1).view(4, -1).sum(0)
                 if layer.bidirectional:
-                    local_norm_reverse+=getattr(layer, 'weight_hh_l0')[expanded_idxs].pow(2).sum(1).view(4, -1).sum(0)
-                    local_norm_reverse+=getattr(layer, 'weight_hh_l0')[:, _idxs].pow(2).sum(0)
-                    local_norm_reverse+=getattr(layer, 'weight_ih_l0')[expanded_idxs].pow(2).sum(1).view(4, -1).sum(0)
+                    local_norm_reverse+=getattr(layer, 'weight_hh_l0')[expanded_idxs].abs().pow(self.p).sum(1).view(4, -1).sum(0)
+                    local_norm_reverse+=getattr(layer, 'weight_hh_l0')[:, _idxs].abs().pow(self.p).sum(0)
+                    local_norm_reverse+=getattr(layer, 'weight_ih_l0')[expanded_idxs].abs().pow(self.p).sum(1).view(4, -1).sum(0)
                     local_norm = torch.cat([local_norm, local_norm_reverse], dim=0)
                 group_norm += local_norm
             elif prune_fn == function.prune_lstm_in_channels:
-                local_norm=getattr(layer, 'weight_ih_l0')[:, idxs].pow(2).sum(0)
+                local_norm=getattr(layer, 'weight_ih_l0')[:, idxs].abs().pow(self.p).sum(0)
                 if layer.bidirectional:
-                    local_norm_reverse+=getattr(layer, 'weight_ih_l0_reverse')[:, idxs].pow(2).sum(0)
+                    local_norm_reverse+=getattr(layer, 'weight_ih_l0_reverse')[:, idxs].abs().pow(self.p).sum(0)
                     local_norm = torch.cat([local_norm, local_norm_reverse], dim=0)
                 group_norm+=local_norm
         group_imp = group_norm**(1/self.p)

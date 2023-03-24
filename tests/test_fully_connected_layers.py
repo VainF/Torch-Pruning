@@ -34,7 +34,7 @@ pruning_group = DG.get_pruning_group( model.fc1, tp.prune_linear_out_channels, i
 print(pruning_group)
 
 # execute the group (prune the model)
-pruning_group.exec()
+pruning_group.prune()
 print(model)
 
 print("The pruned model: \n", model)

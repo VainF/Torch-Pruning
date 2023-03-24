@@ -38,7 +38,7 @@ pruning_group = DG.get_pruning_group(
 print(pruning_group)
 
 # execute this group (prune the model)
-pruning_group.exec()
+pruning_group.prune()
 
 print(model)
 

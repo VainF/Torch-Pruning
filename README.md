@@ -77,7 +77,7 @@ pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, i
 
 # 3. prune all grouped layers that are coupled with model.conv1 (included).
 if DG.check_pruning_group(pruning_group): # avoid full pruning, i.e., channels=0.
-    pruning_group.exec()
+    pruning_group.prune()
 
 # 4. save & load the pruned model 
 torch.save(model, 'model.pth') # save the model object
