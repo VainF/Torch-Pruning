@@ -206,7 +206,7 @@ class Group(object):
         fmt += " " * 10 + "Pruning Group"
         fmt += "\n" + "-" * 32 + "\n"
         for i, (dep, idxs) in enumerate(self._group):
-            if i==0:
+            if i==0: 
                 fmt += "[{}] {}, idxs={} (Pruning Root)\n".format(i, dep, idxs)
             else:
                 fmt += "[{}] {}, idxs={}\n".format(i, dep, idxs)
