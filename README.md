@@ -75,6 +75,8 @@ DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 pruning_idxs = [2, 6, 9]
 pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=pruning_idxs )
 
+print(pruning_group.details())  # or print(pruning_group)
+
 # 3. prune all grouped layers that are coupled with model.conv1 (included).
 if DG.check_pruning_group(pruning_group): # avoid full pruning, i.e., channels=0.
     pruning_group.prune()
