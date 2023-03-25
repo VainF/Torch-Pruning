@@ -288,7 +288,7 @@ class DependencyGraph(object):
 
         # Build dependency graph
         self._build_dependency(self.module2node)
-
+        
         # Update index mapping for torch.cat/split/chunck/...
         self.update_index_mapping()
         return self
@@ -751,6 +751,7 @@ class DependencyGraph(object):
 
         offsets = [0]
         for ch in chs:
+            if ch is None: return
             offsets.append(offsets[-1] + ch)
         split_node.module.offsets = offsets
 
