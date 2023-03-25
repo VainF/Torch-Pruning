@@ -45,7 +45,7 @@ class GroupNormPruner(MetaPruner):
             output_transform=output_transform,
         )
         self.reg = reg
-        self.groups = list(self.get_all_groups())
+        self.groups = list(self.DG.get_all_groups())
         self.soft_keeping_ratio = soft_keeping_ratio
         self.cnt = 0
 
