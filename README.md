@@ -23,7 +23,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 * [Benchmarks](benchmarks) and [tutorials](tutorials)
 
 ### **Plans:**
-* A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility (~60%, not finished yet).
+* A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility (~60%, not finished yet).
 * GANs and Detectors (We are working on the pruning of YOLO series)
 * More high-level pruners like FisherPruner, SoftPruner, GeometricPruner, GrowingReg, etc.
 * More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
