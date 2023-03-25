@@ -151,6 +151,7 @@ for i in range(iterative_steps):
     # ...
 ```
 
+#### Interactive pruning
 All high-level pruners support interactive pruning. You can use ``pruner.step(interactive=True)`` to get all groups and interactively prune them by calling ``group.prune()``. This feature is useful if you want to control/monitor the pruning process.
 
 ```python
@@ -165,6 +166,21 @@ for i in range(iterative_steps):
     # finetune(model)
     # ...
 ```
+#### Sparse Training
+Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/batchnorm_scale_pruner.py#L45) and [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/group_norm_pruner.py#L53) requires sparse training before pruning. This can be easily achieved by inserting just one line of code ``pruner.regularize(model)`` in your training script. The pruner will update the gradient of trainable parameters.
+```python
+for epoch in range(epochs):
+    model.train()
+    for i, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        out = model(data)
+        loss = F.cross_entropy(out, target)
+        loss.backward()
+        pruner.regularize(model) # <== for sparse learning
+        optimizer.step()
+```
+
 
 ### 3. Low-level pruning functions
 
