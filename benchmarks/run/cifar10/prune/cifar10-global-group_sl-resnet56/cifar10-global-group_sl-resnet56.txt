@@ -504,3 +504,1184 @@
 [03/25 17:08:50] cifar10-global-group_sl-resnet56 INFO: device: cuda
 [03/25 17:08:50] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
 [03/25 17:08:57] cifar10-global-group_sl-resnet56 INFO: Regularizing...
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: reg: 0.0005
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: sl_restore: False
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 17:11:31] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 17:11:35] cifar10-global-group_sl-resnet56 INFO: Regularizing...
+[03/25 17:12:06] cifar10-global-group_sl-resnet56 INFO: Epoch 0/100, Acc=0.4195, Val Loss=1.6036, lr=0.0100
+[03/25 17:12:36] cifar10-global-group_sl-resnet56 INFO: Epoch 1/100, Acc=0.5399, Val Loss=1.2749, lr=0.0100
+[03/25 17:13:08] cifar10-global-group_sl-resnet56 INFO: Epoch 2/100, Acc=0.6195, Val Loss=1.0736, lr=0.0100
+[03/25 17:13:39] cifar10-global-group_sl-resnet56 INFO: Epoch 3/100, Acc=0.6653, Val Loss=0.9375, lr=0.0100
+[03/25 17:14:11] cifar10-global-group_sl-resnet56 INFO: Epoch 4/100, Acc=0.6856, Val Loss=0.9092, lr=0.0100
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: sl_restore: False
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 17:14:32] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 17:14:36] cifar10-global-group_sl-resnet56 INFO: Regularizing...
+[03/25 17:15:06] cifar10-global-group_sl-resnet56 INFO: Epoch 0/100, Acc=0.4248, Val Loss=1.5400, lr=0.0100
+[03/25 17:15:37] cifar10-global-group_sl-resnet56 INFO: Epoch 1/100, Acc=0.5060, Val Loss=1.3604, lr=0.0100
+[03/25 17:16:07] cifar10-global-group_sl-resnet56 INFO: Epoch 2/100, Acc=0.5851, Val Loss=1.1506, lr=0.0100
+[03/25 17:16:38] cifar10-global-group_sl-resnet56 INFO: Epoch 3/100, Acc=0.6414, Val Loss=1.0306, lr=0.0100
+[03/25 17:17:08] cifar10-global-group_sl-resnet56 INFO: Epoch 4/100, Acc=0.6724, Val Loss=0.9352, lr=0.0100
+[03/25 17:17:40] cifar10-global-group_sl-resnet56 INFO: Epoch 5/100, Acc=0.6637, Val Loss=0.9901, lr=0.0100
+[03/25 17:18:10] cifar10-global-group_sl-resnet56 INFO: Epoch 6/100, Acc=0.7481, Val Loss=0.7482, lr=0.0100
+[03/25 17:18:41] cifar10-global-group_sl-resnet56 INFO: Epoch 7/100, Acc=0.7621, Val Loss=0.6972, lr=0.0100
+[03/25 17:19:12] cifar10-global-group_sl-resnet56 INFO: Epoch 8/100, Acc=0.7714, Val Loss=0.6837, lr=0.0100
+[03/25 17:19:42] cifar10-global-group_sl-resnet56 INFO: Epoch 9/100, Acc=0.7634, Val Loss=0.7190, lr=0.0100
+[03/25 17:20:13] cifar10-global-group_sl-resnet56 INFO: Epoch 10/100, Acc=0.7776, Val Loss=0.6545, lr=0.0100
+[03/25 17:20:44] cifar10-global-group_sl-resnet56 INFO: Epoch 11/100, Acc=0.7908, Val Loss=0.6050, lr=0.0100
+[03/25 17:21:15] cifar10-global-group_sl-resnet56 INFO: Epoch 12/100, Acc=0.7785, Val Loss=0.6862, lr=0.0100
+[03/25 17:21:46] cifar10-global-group_sl-resnet56 INFO: Epoch 13/100, Acc=0.7779, Val Loss=0.6862, lr=0.0100
+[03/25 17:22:17] cifar10-global-group_sl-resnet56 INFO: Epoch 14/100, Acc=0.8042, Val Loss=0.5854, lr=0.0100
+[03/25 17:22:47] cifar10-global-group_sl-resnet56 INFO: Epoch 15/100, Acc=0.7988, Val Loss=0.6152, lr=0.0100
+[03/25 17:23:17] cifar10-global-group_sl-resnet56 INFO: Epoch 16/100, Acc=0.7643, Val Loss=0.7869, lr=0.0100
+[03/25 17:23:49] cifar10-global-group_sl-resnet56 INFO: Epoch 17/100, Acc=0.8263, Val Loss=0.5142, lr=0.0100
+[03/25 17:24:19] cifar10-global-group_sl-resnet56 INFO: Epoch 18/100, Acc=0.8144, Val Loss=0.5355, lr=0.0100
+[03/25 17:24:50] cifar10-global-group_sl-resnet56 INFO: Epoch 19/100, Acc=0.8189, Val Loss=0.5668, lr=0.0100
+[03/25 17:25:20] cifar10-global-group_sl-resnet56 INFO: Epoch 20/100, Acc=0.8103, Val Loss=0.5891, lr=0.0100
+[03/25 17:25:51] cifar10-global-group_sl-resnet56 INFO: Epoch 21/100, Acc=0.8405, Val Loss=0.4894, lr=0.0100
+[03/25 17:26:21] cifar10-global-group_sl-resnet56 INFO: Epoch 22/100, Acc=0.8109, Val Loss=0.5748, lr=0.0100
+[03/25 17:26:52] cifar10-global-group_sl-resnet56 INFO: Epoch 23/100, Acc=0.8353, Val Loss=0.4933, lr=0.0100
+[03/25 17:27:23] cifar10-global-group_sl-resnet56 INFO: Epoch 24/100, Acc=0.8180, Val Loss=0.5831, lr=0.0100
+[03/25 17:27:53] cifar10-global-group_sl-resnet56 INFO: Epoch 25/100, Acc=0.8407, Val Loss=0.4914, lr=0.0100
+[03/25 17:28:24] cifar10-global-group_sl-resnet56 INFO: Epoch 26/100, Acc=0.8325, Val Loss=0.5233, lr=0.0100
+[03/25 17:28:54] cifar10-global-group_sl-resnet56 INFO: Epoch 27/100, Acc=0.8333, Val Loss=0.5148, lr=0.0100
+[03/25 17:29:25] cifar10-global-group_sl-resnet56 INFO: Epoch 28/100, Acc=0.8253, Val Loss=0.5637, lr=0.0100
+[03/25 17:29:55] cifar10-global-group_sl-resnet56 INFO: Epoch 29/100, Acc=0.8407, Val Loss=0.4873, lr=0.0100
+[03/25 17:30:26] cifar10-global-group_sl-resnet56 INFO: Epoch 30/100, Acc=0.8413, Val Loss=0.4991, lr=0.0100
+[03/25 17:30:57] cifar10-global-group_sl-resnet56 INFO: Epoch 31/100, Acc=0.8312, Val Loss=0.5607, lr=0.0100
+[03/25 17:31:28] cifar10-global-group_sl-resnet56 INFO: Epoch 32/100, Acc=0.8297, Val Loss=0.5229, lr=0.0100
+[03/25 17:31:59] cifar10-global-group_sl-resnet56 INFO: Epoch 33/100, Acc=0.8448, Val Loss=0.5089, lr=0.0100
+[03/25 17:32:29] cifar10-global-group_sl-resnet56 INFO: Epoch 34/100, Acc=0.8611, Val Loss=0.4330, lr=0.0100
+[03/25 17:33:00] cifar10-global-group_sl-resnet56 INFO: Epoch 35/100, Acc=0.8469, Val Loss=0.4885, lr=0.0100
+[03/25 17:33:30] cifar10-global-group_sl-resnet56 INFO: Epoch 36/100, Acc=0.8487, Val Loss=0.4933, lr=0.0100
+[03/25 17:34:01] cifar10-global-group_sl-resnet56 INFO: Epoch 37/100, Acc=0.8580, Val Loss=0.4551, lr=0.0100
+[03/25 17:34:32] cifar10-global-group_sl-resnet56 INFO: Epoch 38/100, Acc=0.8656, Val Loss=0.4344, lr=0.0100
+[03/25 17:35:02] cifar10-global-group_sl-resnet56 INFO: Epoch 39/100, Acc=0.8588, Val Loss=0.4653, lr=0.0100
+[03/25 17:35:33] cifar10-global-group_sl-resnet56 INFO: Epoch 40/100, Acc=0.8689, Val Loss=0.4110, lr=0.0100
+[03/25 17:36:03] cifar10-global-group_sl-resnet56 INFO: Epoch 41/100, Acc=0.8403, Val Loss=0.5092, lr=0.0100
+[03/25 17:36:34] cifar10-global-group_sl-resnet56 INFO: Epoch 42/100, Acc=0.8501, Val Loss=0.4994, lr=0.0100
+[03/25 17:37:05] cifar10-global-group_sl-resnet56 INFO: Epoch 43/100, Acc=0.8577, Val Loss=0.4592, lr=0.0100
+[03/25 17:37:36] cifar10-global-group_sl-resnet56 INFO: Epoch 44/100, Acc=0.8613, Val Loss=0.4420, lr=0.0100
+[03/25 17:38:07] cifar10-global-group_sl-resnet56 INFO: Epoch 45/100, Acc=0.8347, Val Loss=0.5586, lr=0.0100
+[03/25 17:38:37] cifar10-global-group_sl-resnet56 INFO: Epoch 46/100, Acc=0.8635, Val Loss=0.4485, lr=0.0100
+[03/25 17:39:08] cifar10-global-group_sl-resnet56 INFO: Epoch 47/100, Acc=0.8564, Val Loss=0.4729, lr=0.0100
+[03/25 17:39:39] cifar10-global-group_sl-resnet56 INFO: Epoch 48/100, Acc=0.8527, Val Loss=0.4887, lr=0.0100
+[03/25 17:40:10] cifar10-global-group_sl-resnet56 INFO: Epoch 49/100, Acc=0.8610, Val Loss=0.4659, lr=0.0100
+[03/25 17:40:41] cifar10-global-group_sl-resnet56 INFO: Epoch 50/100, Acc=0.8577, Val Loss=0.4820, lr=0.0100
+[03/25 17:41:12] cifar10-global-group_sl-resnet56 INFO: Epoch 51/100, Acc=0.8455, Val Loss=0.5355, lr=0.0100
+[03/25 17:41:43] cifar10-global-group_sl-resnet56 INFO: Epoch 52/100, Acc=0.8355, Val Loss=0.5868, lr=0.0100
+[03/25 17:42:14] cifar10-global-group_sl-resnet56 INFO: Epoch 53/100, Acc=0.8643, Val Loss=0.4544, lr=0.0100
+[03/25 17:42:45] cifar10-global-group_sl-resnet56 INFO: Epoch 54/100, Acc=0.8339, Val Loss=0.5948, lr=0.0100
+[03/25 17:43:16] cifar10-global-group_sl-resnet56 INFO: Epoch 55/100, Acc=0.8775, Val Loss=0.3981, lr=0.0100
+[03/25 17:43:46] cifar10-global-group_sl-resnet56 INFO: Epoch 56/100, Acc=0.8628, Val Loss=0.4705, lr=0.0100
+[03/25 17:44:17] cifar10-global-group_sl-resnet56 INFO: Epoch 57/100, Acc=0.8773, Val Loss=0.4202, lr=0.0100
+[03/25 17:44:48] cifar10-global-group_sl-resnet56 INFO: Epoch 58/100, Acc=0.8656, Val Loss=0.4528, lr=0.0100
+[03/25 17:45:19] cifar10-global-group_sl-resnet56 INFO: Epoch 59/100, Acc=0.8689, Val Loss=0.4705, lr=0.0100
+[03/25 17:45:49] cifar10-global-group_sl-resnet56 INFO: Epoch 60/100, Acc=0.8977, Val Loss=0.3478, lr=0.0010
+[03/25 17:46:20] cifar10-global-group_sl-resnet56 INFO: Epoch 61/100, Acc=0.9003, Val Loss=0.3473, lr=0.0010
+[03/25 17:46:51] cifar10-global-group_sl-resnet56 INFO: Epoch 62/100, Acc=0.9010, Val Loss=0.3474, lr=0.0010
+[03/25 17:47:22] cifar10-global-group_sl-resnet56 INFO: Epoch 63/100, Acc=0.9007, Val Loss=0.3471, lr=0.0010
+[03/25 17:47:53] cifar10-global-group_sl-resnet56 INFO: Epoch 64/100, Acc=0.9013, Val Loss=0.3559, lr=0.0010
+[03/25 17:48:23] cifar10-global-group_sl-resnet56 INFO: Epoch 65/100, Acc=0.9027, Val Loss=0.3549, lr=0.0010
+[03/25 17:48:54] cifar10-global-group_sl-resnet56 INFO: Epoch 66/100, Acc=0.9044, Val Loss=0.3543, lr=0.0010
+[03/25 17:49:24] cifar10-global-group_sl-resnet56 INFO: Epoch 67/100, Acc=0.9023, Val Loss=0.3564, lr=0.0010
+[03/25 17:49:55] cifar10-global-group_sl-resnet56 INFO: Epoch 68/100, Acc=0.9034, Val Loss=0.3602, lr=0.0010
+[03/25 17:50:25] cifar10-global-group_sl-resnet56 INFO: Epoch 69/100, Acc=0.9047, Val Loss=0.3622, lr=0.0010
+[03/25 17:50:56] cifar10-global-group_sl-resnet56 INFO: Epoch 70/100, Acc=0.9045, Val Loss=0.3692, lr=0.0010
+[03/25 17:51:27] cifar10-global-group_sl-resnet56 INFO: Epoch 71/100, Acc=0.9025, Val Loss=0.3689, lr=0.0010
+[03/25 17:51:57] cifar10-global-group_sl-resnet56 INFO: Epoch 72/100, Acc=0.9042, Val Loss=0.3730, lr=0.0010
+[03/25 17:52:28] cifar10-global-group_sl-resnet56 INFO: Epoch 73/100, Acc=0.9024, Val Loss=0.3757, lr=0.0010
+[03/25 17:52:59] cifar10-global-group_sl-resnet56 INFO: Epoch 74/100, Acc=0.9019, Val Loss=0.3804, lr=0.0010
+[03/25 17:53:29] cifar10-global-group_sl-resnet56 INFO: Epoch 75/100, Acc=0.9013, Val Loss=0.3814, lr=0.0010
+[03/25 17:54:00] cifar10-global-group_sl-resnet56 INFO: Epoch 76/100, Acc=0.9014, Val Loss=0.3857, lr=0.0010
+[03/25 17:54:30] cifar10-global-group_sl-resnet56 INFO: Epoch 77/100, Acc=0.9003, Val Loss=0.3872, lr=0.0010
+[03/25 17:55:01] cifar10-global-group_sl-resnet56 INFO: Epoch 78/100, Acc=0.9028, Val Loss=0.3815, lr=0.0010
+[03/25 17:55:31] cifar10-global-group_sl-resnet56 INFO: Epoch 79/100, Acc=0.9004, Val Loss=0.3897, lr=0.0010
+[03/25 17:56:02] cifar10-global-group_sl-resnet56 INFO: Epoch 80/100, Acc=0.9015, Val Loss=0.3881, lr=0.0001
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: reg: 1e-05
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: sl_restore: False
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 17:56:25] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 17:56:28] cifar10-global-group_sl-resnet56 INFO: Regularizing...
+[03/25 17:56:33] cifar10-global-group_sl-resnet56 INFO: Epoch 81/100, Acc=0.9028, Val Loss=0.3835, lr=0.0001
+[03/25 17:57:00] cifar10-global-group_sl-resnet56 INFO: Epoch 0/100, Acc=0.4130, Val Loss=1.6183, lr=0.0100
+[03/25 17:57:04] cifar10-global-group_sl-resnet56 INFO: Epoch 82/100, Acc=0.9025, Val Loss=0.3853, lr=0.0001
+[03/25 17:57:30] cifar10-global-group_sl-resnet56 INFO: Epoch 1/100, Acc=0.5145, Val Loss=1.3449, lr=0.0100
+[03/25 17:57:35] cifar10-global-group_sl-resnet56 INFO: Epoch 83/100, Acc=0.9030, Val Loss=0.3842, lr=0.0001
+[03/25 17:58:01] cifar10-global-group_sl-resnet56 INFO: Epoch 2/100, Acc=0.5964, Val Loss=1.1211, lr=0.0100
+[03/25 17:58:06] cifar10-global-group_sl-resnet56 INFO: Epoch 84/100, Acc=0.9033, Val Loss=0.3867, lr=0.0001
+[03/25 17:58:31] cifar10-global-group_sl-resnet56 INFO: Epoch 3/100, Acc=0.6432, Val Loss=1.0083, lr=0.0100
+[03/25 17:58:37] cifar10-global-group_sl-resnet56 INFO: Epoch 85/100, Acc=0.9027, Val Loss=0.3854, lr=0.0001
+[03/25 17:59:02] cifar10-global-group_sl-resnet56 INFO: Epoch 4/100, Acc=0.6570, Val Loss=0.9934, lr=0.0100
+[03/25 17:59:08] cifar10-global-group_sl-resnet56 INFO: Epoch 86/100, Acc=0.9039, Val Loss=0.3870, lr=0.0001
+[03/25 17:59:34] cifar10-global-group_sl-resnet56 INFO: Epoch 5/100, Acc=0.7092, Val Loss=0.8387, lr=0.0100
+[03/25 17:59:38] cifar10-global-group_sl-resnet56 INFO: Epoch 87/100, Acc=0.9034, Val Loss=0.3865, lr=0.0001
+[03/25 18:00:05] cifar10-global-group_sl-resnet56 INFO: Epoch 6/100, Acc=0.7317, Val Loss=0.7867, lr=0.0100
+[03/25 18:00:10] cifar10-global-group_sl-resnet56 INFO: Epoch 88/100, Acc=0.9034, Val Loss=0.3846, lr=0.0001
+[03/25 18:00:35] cifar10-global-group_sl-resnet56 INFO: Epoch 7/100, Acc=0.7552, Val Loss=0.7123, lr=0.0100
+[03/25 18:00:41] cifar10-global-group_sl-resnet56 INFO: Epoch 89/100, Acc=0.9034, Val Loss=0.3867, lr=0.0001
+[03/25 18:01:05] cifar10-global-group_sl-resnet56 INFO: Epoch 8/100, Acc=0.7462, Val Loss=0.7458, lr=0.0100
+[03/25 18:01:12] cifar10-global-group_sl-resnet56 INFO: Epoch 90/100, Acc=0.9040, Val Loss=0.3851, lr=0.0001
+[03/25 18:01:37] cifar10-global-group_sl-resnet56 INFO: Epoch 9/100, Acc=0.7774, Val Loss=0.6730, lr=0.0100
+[03/25 18:01:43] cifar10-global-group_sl-resnet56 INFO: Epoch 91/100, Acc=0.9040, Val Loss=0.3873, lr=0.0001
+[03/25 18:02:08] cifar10-global-group_sl-resnet56 INFO: Epoch 10/100, Acc=0.7783, Val Loss=0.6537, lr=0.0100
+[03/25 18:02:14] cifar10-global-group_sl-resnet56 INFO: Epoch 92/100, Acc=0.9044, Val Loss=0.3856, lr=0.0001
+[03/25 18:02:39] cifar10-global-group_sl-resnet56 INFO: Epoch 11/100, Acc=0.7959, Val Loss=0.6053, lr=0.0100
+[03/25 18:02:44] cifar10-global-group_sl-resnet56 INFO: Epoch 93/100, Acc=0.9038, Val Loss=0.3900, lr=0.0001
+[03/25 18:03:10] cifar10-global-group_sl-resnet56 INFO: Epoch 12/100, Acc=0.7949, Val Loss=0.6313, lr=0.0100
+[03/25 18:03:16] cifar10-global-group_sl-resnet56 INFO: Epoch 94/100, Acc=0.9032, Val Loss=0.3888, lr=0.0001
+[03/25 18:03:40] cifar10-global-group_sl-resnet56 INFO: Epoch 13/100, Acc=0.8127, Val Loss=0.5634, lr=0.0100
+[03/25 18:03:47] cifar10-global-group_sl-resnet56 INFO: Epoch 95/100, Acc=0.9035, Val Loss=0.3880, lr=0.0001
+[03/25 18:04:11] cifar10-global-group_sl-resnet56 INFO: Epoch 14/100, Acc=0.8000, Val Loss=0.6050, lr=0.0100
+[03/25 18:04:17] cifar10-global-group_sl-resnet56 INFO: Epoch 96/100, Acc=0.9039, Val Loss=0.3878, lr=0.0001
+[03/25 18:04:42] cifar10-global-group_sl-resnet56 INFO: Epoch 15/100, Acc=0.7995, Val Loss=0.6040, lr=0.0100
+[03/25 18:04:49] cifar10-global-group_sl-resnet56 INFO: Epoch 97/100, Acc=0.9040, Val Loss=0.3904, lr=0.0001
+[03/25 18:05:13] cifar10-global-group_sl-resnet56 INFO: Epoch 16/100, Acc=0.8149, Val Loss=0.5735, lr=0.0100
+[03/25 18:05:19] cifar10-global-group_sl-resnet56 INFO: Epoch 98/100, Acc=0.9045, Val Loss=0.3903, lr=0.0001
+[03/25 18:05:44] cifar10-global-group_sl-resnet56 INFO: Epoch 17/100, Acc=0.8167, Val Loss=0.5492, lr=0.0100
+[03/25 18:05:51] cifar10-global-group_sl-resnet56 INFO: Epoch 99/100, Acc=0.9033, Val Loss=0.3903, lr=0.0001
+[03/25 18:05:51] cifar10-global-group_sl-resnet56 INFO: Best Acc=0.9047
+[03/25 18:05:51] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 18:05:51] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 18:06:15] cifar10-global-group_sl-resnet56 INFO: Epoch 18/100, Acc=0.8227, Val Loss=0.5282, lr=0.0100
+[03/25 18:06:45] cifar10-global-group_sl-resnet56 INFO: Epoch 19/100, Acc=0.8185, Val Loss=0.5685, lr=0.0100
+[03/25 18:07:16] cifar10-global-group_sl-resnet56 INFO: Epoch 20/100, Acc=0.8244, Val Loss=0.5412, lr=0.0100
+[03/25 18:07:47] cifar10-global-group_sl-resnet56 INFO: Epoch 21/100, Acc=0.8387, Val Loss=0.4931, lr=0.0100
+[03/25 18:08:18] cifar10-global-group_sl-resnet56 INFO: Epoch 22/100, Acc=0.8298, Val Loss=0.5301, lr=0.0100
+[03/25 18:08:49] cifar10-global-group_sl-resnet56 INFO: Epoch 23/100, Acc=0.8250, Val Loss=0.5634, lr=0.0100
+[03/25 18:09:20] cifar10-global-group_sl-resnet56 INFO: Epoch 24/100, Acc=0.8369, Val Loss=0.5037, lr=0.0100
+[03/25 18:09:50] cifar10-global-group_sl-resnet56 INFO: Epoch 25/100, Acc=0.8309, Val Loss=0.5356, lr=0.0100
+[03/25 18:10:21] cifar10-global-group_sl-resnet56 INFO: Epoch 26/100, Acc=0.8346, Val Loss=0.5402, lr=0.0100
+[03/25 18:10:52] cifar10-global-group_sl-resnet56 INFO: Epoch 27/100, Acc=0.8508, Val Loss=0.4747, lr=0.0100
+[03/25 18:11:22] cifar10-global-group_sl-resnet56 INFO: Epoch 28/100, Acc=0.8489, Val Loss=0.4636, lr=0.0100
+[03/25 18:11:53] cifar10-global-group_sl-resnet56 INFO: Epoch 29/100, Acc=0.8567, Val Loss=0.4518, lr=0.0100
+[03/25 18:12:24] cifar10-global-group_sl-resnet56 INFO: Epoch 30/100, Acc=0.8251, Val Loss=0.5978, lr=0.0100
+[03/25 18:12:54] cifar10-global-group_sl-resnet56 INFO: Epoch 31/100, Acc=0.8481, Val Loss=0.5019, lr=0.0100
+[03/25 18:13:25] cifar10-global-group_sl-resnet56 INFO: Epoch 32/100, Acc=0.8417, Val Loss=0.5393, lr=0.0100
+[03/25 18:13:55] cifar10-global-group_sl-resnet56 INFO: Epoch 33/100, Acc=0.8357, Val Loss=0.5567, lr=0.0100
+[03/25 18:14:26] cifar10-global-group_sl-resnet56 INFO: Epoch 34/100, Acc=0.8429, Val Loss=0.5114, lr=0.0100
+[03/25 18:14:56] cifar10-global-group_sl-resnet56 INFO: Epoch 35/100, Acc=0.8572, Val Loss=0.4727, lr=0.0100
+[03/25 18:15:27] cifar10-global-group_sl-resnet56 INFO: Epoch 36/100, Acc=0.8515, Val Loss=0.4939, lr=0.0100
+[03/25 18:15:57] cifar10-global-group_sl-resnet56 INFO: Epoch 37/100, Acc=0.8464, Val Loss=0.5299, lr=0.0100
+[03/25 18:16:28] cifar10-global-group_sl-resnet56 INFO: Epoch 38/100, Acc=0.8412, Val Loss=0.5583, lr=0.0100
+[03/25 18:16:59] cifar10-global-group_sl-resnet56 INFO: Epoch 39/100, Acc=0.8519, Val Loss=0.5164, lr=0.0100
+[03/25 18:17:30] cifar10-global-group_sl-resnet56 INFO: Epoch 40/100, Acc=0.8596, Val Loss=0.4796, lr=0.0100
+[03/25 18:18:02] cifar10-global-group_sl-resnet56 INFO: Epoch 41/100, Acc=0.8600, Val Loss=0.4909, lr=0.0100
+[03/25 18:18:33] cifar10-global-group_sl-resnet56 INFO: Epoch 42/100, Acc=0.8580, Val Loss=0.4808, lr=0.0100
+[03/25 18:19:04] cifar10-global-group_sl-resnet56 INFO: Epoch 43/100, Acc=0.8595, Val Loss=0.4926, lr=0.0100
+[03/25 18:19:34] cifar10-global-group_sl-resnet56 INFO: Epoch 44/100, Acc=0.8627, Val Loss=0.4648, lr=0.0100
+[03/25 18:20:05] cifar10-global-group_sl-resnet56 INFO: Epoch 45/100, Acc=0.8609, Val Loss=0.4793, lr=0.0100
+[03/25 18:20:36] cifar10-global-group_sl-resnet56 INFO: Epoch 46/100, Acc=0.8692, Val Loss=0.4588, lr=0.0100
+[03/25 18:21:07] cifar10-global-group_sl-resnet56 INFO: Epoch 47/100, Acc=0.8665, Val Loss=0.4836, lr=0.0100
+[03/25 18:21:38] cifar10-global-group_sl-resnet56 INFO: Epoch 48/100, Acc=0.8639, Val Loss=0.4794, lr=0.0100
+[03/25 18:22:09] cifar10-global-group_sl-resnet56 INFO: Epoch 49/100, Acc=0.8597, Val Loss=0.5081, lr=0.0100
+[03/25 18:22:39] cifar10-global-group_sl-resnet56 INFO: Epoch 50/100, Acc=0.8591, Val Loss=0.5072, lr=0.0100
+[03/25 18:23:10] cifar10-global-group_sl-resnet56 INFO: Epoch 51/100, Acc=0.8646, Val Loss=0.4884, lr=0.0100
+[03/25 18:23:41] cifar10-global-group_sl-resnet56 INFO: Epoch 52/100, Acc=0.8688, Val Loss=0.4954, lr=0.0100
+[03/25 18:24:12] cifar10-global-group_sl-resnet56 INFO: Epoch 53/100, Acc=0.8608, Val Loss=0.5237, lr=0.0100
+[03/25 18:24:42] cifar10-global-group_sl-resnet56 INFO: Epoch 54/100, Acc=0.8623, Val Loss=0.5318, lr=0.0100
+[03/25 18:25:13] cifar10-global-group_sl-resnet56 INFO: Epoch 55/100, Acc=0.8695, Val Loss=0.5005, lr=0.0100
+[03/25 18:25:43] cifar10-global-group_sl-resnet56 INFO: Epoch 56/100, Acc=0.8616, Val Loss=0.5608, lr=0.0100
+[03/25 18:26:14] cifar10-global-group_sl-resnet56 INFO: Epoch 57/100, Acc=0.8628, Val Loss=0.5224, lr=0.0100
+[03/25 18:26:45] cifar10-global-group_sl-resnet56 INFO: Epoch 58/100, Acc=0.8705, Val Loss=0.5030, lr=0.0100
+[03/25 18:27:15] cifar10-global-group_sl-resnet56 INFO: Epoch 59/100, Acc=0.8720, Val Loss=0.4881, lr=0.0100
+[03/25 18:27:46] cifar10-global-group_sl-resnet56 INFO: Epoch 60/100, Acc=0.8881, Val Loss=0.4163, lr=0.0010
+[03/25 18:28:17] cifar10-global-group_sl-resnet56 INFO: Epoch 61/100, Acc=0.8897, Val Loss=0.4153, lr=0.0010
+[03/25 18:28:48] cifar10-global-group_sl-resnet56 INFO: Epoch 62/100, Acc=0.8909, Val Loss=0.4169, lr=0.0010
+[03/25 18:29:19] cifar10-global-group_sl-resnet56 INFO: Epoch 63/100, Acc=0.8890, Val Loss=0.4207, lr=0.0010
+[03/25 18:29:50] cifar10-global-group_sl-resnet56 INFO: Epoch 64/100, Acc=0.8907, Val Loss=0.4239, lr=0.0010
+[03/25 18:30:20] cifar10-global-group_sl-resnet56 INFO: Epoch 65/100, Acc=0.8929, Val Loss=0.4278, lr=0.0010
+[03/25 18:30:51] cifar10-global-group_sl-resnet56 INFO: Epoch 66/100, Acc=0.8908, Val Loss=0.4363, lr=0.0010
+[03/25 18:31:22] cifar10-global-group_sl-resnet56 INFO: Epoch 67/100, Acc=0.8901, Val Loss=0.4438, lr=0.0010
+[03/25 18:31:52] cifar10-global-group_sl-resnet56 INFO: Epoch 68/100, Acc=0.8916, Val Loss=0.4381, lr=0.0010
+[03/25 18:32:23] cifar10-global-group_sl-resnet56 INFO: Epoch 69/100, Acc=0.8911, Val Loss=0.4469, lr=0.0010
+[03/25 18:32:54] cifar10-global-group_sl-resnet56 INFO: Epoch 70/100, Acc=0.8916, Val Loss=0.4496, lr=0.0010
+[03/25 18:33:25] cifar10-global-group_sl-resnet56 INFO: Epoch 71/100, Acc=0.8931, Val Loss=0.4499, lr=0.0010
+[03/25 18:33:55] cifar10-global-group_sl-resnet56 INFO: Epoch 72/100, Acc=0.8914, Val Loss=0.4526, lr=0.0010
+[03/25 18:34:26] cifar10-global-group_sl-resnet56 INFO: Epoch 73/100, Acc=0.8904, Val Loss=0.4569, lr=0.0010
+[03/25 18:34:56] cifar10-global-group_sl-resnet56 INFO: Epoch 74/100, Acc=0.8903, Val Loss=0.4590, lr=0.0010
+[03/25 18:35:27] cifar10-global-group_sl-resnet56 INFO: Epoch 75/100, Acc=0.8929, Val Loss=0.4583, lr=0.0010
+[03/25 18:35:58] cifar10-global-group_sl-resnet56 INFO: Epoch 76/100, Acc=0.8924, Val Loss=0.4684, lr=0.0010
+[03/25 18:36:29] cifar10-global-group_sl-resnet56 INFO: Epoch 77/100, Acc=0.8924, Val Loss=0.4653, lr=0.0010
+[03/25 18:37:00] cifar10-global-group_sl-resnet56 INFO: Epoch 78/100, Acc=0.8911, Val Loss=0.4678, lr=0.0010
+[03/25 18:37:31] cifar10-global-group_sl-resnet56 INFO: Epoch 79/100, Acc=0.8910, Val Loss=0.4683, lr=0.0010
+[03/25 18:38:01] cifar10-global-group_sl-resnet56 INFO: Epoch 80/100, Acc=0.8913, Val Loss=0.4699, lr=0.0001
+[03/25 18:38:33] cifar10-global-group_sl-resnet56 INFO: Epoch 81/100, Acc=0.8921, Val Loss=0.4699, lr=0.0001
+[03/25 18:39:03] cifar10-global-group_sl-resnet56 INFO: Epoch 82/100, Acc=0.8926, Val Loss=0.4686, lr=0.0001
+[03/25 18:39:35] cifar10-global-group_sl-resnet56 INFO: Epoch 83/100, Acc=0.8912, Val Loss=0.4698, lr=0.0001
+[03/25 18:40:06] cifar10-global-group_sl-resnet56 INFO: Epoch 84/100, Acc=0.8934, Val Loss=0.4698, lr=0.0001
+[03/25 18:40:36] cifar10-global-group_sl-resnet56 INFO: Epoch 85/100, Acc=0.8925, Val Loss=0.4692, lr=0.0001
+[03/25 18:41:07] cifar10-global-group_sl-resnet56 INFO: Epoch 86/100, Acc=0.8920, Val Loss=0.4696, lr=0.0001
+[03/25 18:41:37] cifar10-global-group_sl-resnet56 INFO: Epoch 87/100, Acc=0.8930, Val Loss=0.4721, lr=0.0001
+[03/25 18:42:08] cifar10-global-group_sl-resnet56 INFO: Epoch 88/100, Acc=0.8924, Val Loss=0.4711, lr=0.0001
+[03/25 18:42:38] cifar10-global-group_sl-resnet56 INFO: Epoch 89/100, Acc=0.8923, Val Loss=0.4698, lr=0.0001
+[03/25 18:43:09] cifar10-global-group_sl-resnet56 INFO: Epoch 90/100, Acc=0.8931, Val Loss=0.4714, lr=0.0001
+[03/25 18:43:40] cifar10-global-group_sl-resnet56 INFO: Epoch 91/100, Acc=0.8913, Val Loss=0.4741, lr=0.0001
+[03/25 18:44:10] cifar10-global-group_sl-resnet56 INFO: Epoch 92/100, Acc=0.8932, Val Loss=0.4735, lr=0.0001
+[03/25 18:44:41] cifar10-global-group_sl-resnet56 INFO: Epoch 93/100, Acc=0.8929, Val Loss=0.4725, lr=0.0001
+[03/25 18:45:11] cifar10-global-group_sl-resnet56 INFO: Epoch 94/100, Acc=0.8934, Val Loss=0.4747, lr=0.0001
+[03/25 18:45:42] cifar10-global-group_sl-resnet56 INFO: Epoch 95/100, Acc=0.8923, Val Loss=0.4738, lr=0.0001
+[03/25 18:46:13] cifar10-global-group_sl-resnet56 INFO: Epoch 96/100, Acc=0.8927, Val Loss=0.4719, lr=0.0001
+[03/25 18:46:43] cifar10-global-group_sl-resnet56 INFO: Epoch 97/100, Acc=0.8923, Val Loss=0.4731, lr=0.0001
+[03/25 18:47:14] cifar10-global-group_sl-resnet56 INFO: Epoch 98/100, Acc=0.8936, Val Loss=0.4741, lr=0.0001
+[03/25 18:47:44] cifar10-global-group_sl-resnet56 INFO: Epoch 99/100, Acc=0.8937, Val Loss=0.4725, lr=0.0001
+[03/25 18:47:44] cifar10-global-group_sl-resnet56 INFO: Best Acc=0.8937
+[03/25 18:47:44] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_1e-05.pth...
+[03/25 18:47:44] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:05:05] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:05:08] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:05:08] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:05:25] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:05:29] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:05:29] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:06:08] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:06:12] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:06:12] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:06:43] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:06:46] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:06:46] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:07:12] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:07:16] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:07:16] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:07:40] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:07:44] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:07:44] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:08:04] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:08:08] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:08:08] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:08:20] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:08:23] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:08:23] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:08:40] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:08:43] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:08:43] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:10:00] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:10:03] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:10:03] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:10:27] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:10:31] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:10:31] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:11:31] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:11:34] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:11:34] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:12:44] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:12:48] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:12:48] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:13:04] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:13:08] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:13:08] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:13:30] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:13:34] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:13:34] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:14:18] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:14:22] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:14:22] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:14:45] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:14:49] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:14:49] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:15:18] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:15:22] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:15:22] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:17:18] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:17:22] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:17:22] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:17:27] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:17:30] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:17:30] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:17:41] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:17:44] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:17:44] cifar10-global-group_sl-resnet56 INFO: Pruning...
+[03/25 19:17:54] cifar10-global-group_sl-resnet56 INFO: ResNet(
+  (conv1): Conv2d(3, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+  (bn1): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (relu): ReLU(inplace=True)
+  (layer1): Sequential(
+    (0): BasicBlock(
+      (conv1): Conv2d(7, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(1, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(1, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (1): BasicBlock(
+      (conv1): Conv2d(7, 4, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(4, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(4, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (2): BasicBlock(
+      (conv1): Conv2d(7, 5, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(5, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(5, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (3): BasicBlock(
+      (conv1): Conv2d(7, 6, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(6, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(6, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (4): BasicBlock(
+      (conv1): Conv2d(7, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(3, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(3, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (5): BasicBlock(
+      (conv1): Conv2d(7, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(9, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (6): BasicBlock(
+      (conv1): Conv2d(7, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(8, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (7): BasicBlock(
+      (conv1): Conv2d(7, 14, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(14, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(14, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (8): BasicBlock(
+      (conv1): Conv2d(7, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(8, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (layer2): Sequential(
+    (0): BasicBlock(
+      (conv1): Conv2d(7, 20, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(20, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(20, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (downsample): Sequential(
+        (0): Conv2d(7, 30, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): Conv2d(30, 19, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(19, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(19, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (2): BasicBlock(
+      (conv1): Conv2d(30, 20, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(20, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(20, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (3): BasicBlock(
+      (conv1): Conv2d(30, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(16, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (4): BasicBlock(
+      (conv1): Conv2d(30, 22, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(22, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(22, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (5): BasicBlock(
+      (conv1): Conv2d(30, 20, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(20, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(20, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (6): BasicBlock(
+      (conv1): Conv2d(30, 14, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(14, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(14, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (7): BasicBlock(
+      (conv1): Conv2d(30, 15, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(15, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(15, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (8): BasicBlock(
+      (conv1): Conv2d(30, 23, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(23, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(23, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (layer3): Sequential(
+    (0): BasicBlock(
+      (conv1): Conv2d(30, 46, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(46, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(46, 60, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (downsample): Sequential(
+        (0): Conv2d(30, 60, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): Conv2d(60, 57, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(57, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(57, 60, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (2): BasicBlock(
+      (conv1): Conv2d(60, 54, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(54, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(54, 60, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (3): BasicBlock(
+      (conv1): Conv2d(60, 46, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(46, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(46, 60, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (4): BasicBlock(
+      (conv1): Conv2d(60, 54, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(54, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(54, 60, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (5): BasicBlock(
+      (conv1): Conv2d(60, 51, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(51, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(51, 60, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (6): BasicBlock(
+      (conv1): Conv2d(60, 50, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(50, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(50, 60, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (7): BasicBlock(
+      (conv1): Conv2d(60, 45, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(45, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(45, 60, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (8): BasicBlock(
+      (conv1): Conv2d(60, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(32, 60, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (avgpool): AvgPool2d(kernel_size=8, stride=8, padding=0)
+  (fc): Linear(in_features=60, out_features=10, bias=True)
+)
+[03/25 19:17:55] cifar10-global-group_sl-resnet56 INFO: Params: 0.86 M => 0.56 M (65.19%)
+[03/25 19:17:55] cifar10-global-group_sl-resnet56 INFO: FLOPs: 127.12 M => 60.20 M (47.36%, 2.11X )
+[03/25 19:17:55] cifar10-global-group_sl-resnet56 INFO: Acc: 0.1007 => 0.1000
+[03/25 19:17:55] cifar10-global-group_sl-resnet56 INFO: Val Loss: 731.0731 => 7.1505
+[03/25 19:17:55] cifar10-global-group_sl-resnet56 INFO: Finetuning...
+[03/25 19:18:09] cifar10-global-group_sl-resnet56 INFO: Epoch 0/100, Acc=0.7798, Val Loss=0.7112, lr=0.0100
+[03/25 19:18:23] cifar10-global-group_sl-resnet56 INFO: Epoch 1/100, Acc=0.8145, Val Loss=0.5631, lr=0.0100
+[03/25 19:18:37] cifar10-global-group_sl-resnet56 INFO: Epoch 2/100, Acc=0.8173, Val Loss=0.5822, lr=0.0100
+[03/25 19:18:51] cifar10-global-group_sl-resnet56 INFO: Epoch 3/100, Acc=0.8403, Val Loss=0.4972, lr=0.0100
+[03/25 19:19:05] cifar10-global-group_sl-resnet56 INFO: Epoch 4/100, Acc=0.8545, Val Loss=0.4557, lr=0.0100
+[03/25 19:19:18] cifar10-global-group_sl-resnet56 INFO: Epoch 5/100, Acc=0.8483, Val Loss=0.4637, lr=0.0100
+[03/25 19:19:32] cifar10-global-group_sl-resnet56 INFO: Epoch 6/100, Acc=0.8314, Val Loss=0.5453, lr=0.0100
+[03/25 19:19:46] cifar10-global-group_sl-resnet56 INFO: Epoch 7/100, Acc=0.8269, Val Loss=0.5448, lr=0.0100
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: mode: prune
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: model: resnet56
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: verbose: False
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: dataset: cifar10
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: batch_size: 128
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: total_epochs: 100
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: lr_decay_milestones: 60,80
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: lr_decay_gamma: 0.1
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: lr: 0.01
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: restore: None
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-group_sl-resnet56
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: method: group_sl
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: speed_up: 2.11
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: max_sparsity: 1.0
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: soft_keeping_ratio: 0.0
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: reg: 0.0001
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: weight_decay: 0.0005
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: seed: None
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: global_pruning: True
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: sl_total_epochs: 100
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: sl_lr: 0.01
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: sl_reg_warmup: 0
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: sl_restore: True
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: iterative_steps: 400
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: logger: <Logger cifar10-global-group_sl-resnet56 (DEBUG)>
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: device: cuda
+[03/25 19:21:16] cifar10-global-group_sl-resnet56 INFO: num_classes: 10
+[03/25 19:21:20] cifar10-global-group_sl-resnet56 INFO: Loading sparsity model from run/cifar10/prune/cifar10-global-group_sl-resnet56/reg_cifar10_resnet56_group_sl_0.0001.pth...
+[03/25 19:21:20] cifar10-global-group_sl-resnet56 INFO: Pruning...

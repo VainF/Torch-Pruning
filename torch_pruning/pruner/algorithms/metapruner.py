@@ -143,16 +143,16 @@ class MetaPruner():
 
     def step(self, interactive=False):
         if self.global_pruning:
-            for group in self.prune_global():
-                if interactive:
-                    yield group
-                else:
+            if interactive:
+                return self.prune_global()
+            else:
+                for group in self.prune_global():
                     group.prune()
         else:
-            for group in self.prune_local():
-                if interactive:
-                    yield group
-                else:
+            if interactive:
+                return self.prune_local()
+            else:
+                for group in self.prune_local():
                     group.prune()
         self.current_step += 1
         

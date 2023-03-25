@@ -55,9 +55,10 @@ def progressive_pruning(pruner, model, speed_up, example_inputs):
     base_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
     current_speed_up = 1
     while current_speed_up < speed_up:
-        pruner.step()
+        pruner.step(interactive=False)
         pruned_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
         current_speed_up = float(base_ops) / pruned_ops
+        #print(current_speed_up)
     return current_speed_up
 
 def eval(model, test_loader, device=None):
