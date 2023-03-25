@@ -3,7 +3,8 @@
 <img src="assets/intro.png" width="45%">
 </div>
 
-Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including Vision Transformers, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, and more. Unlike [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html), which only zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from your models. To explore more prunable models, please refer to [tests/test_torchvision_models.py](tests/test_torchvision_models.py).
+Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including Vision Transformers, FasterRCNN, SSD, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, and more. Unlike [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that only zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [tests/test_torchvision_models.py](https://github.com/VainF/Torch-Pruning/blob/master/benchmarks/prunability/torchvision_pruning.py). TP is compatible with **73/85=85.8%** models from Torchvision 0.13.1.
+
 
 For more technical details, please refer to our preprint paper: 
 
@@ -22,6 +23,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 * [Benchmarks](benchmarks) and [tutorials](tutorials)
 
 ### **Plans:**
+* A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility (~60%, not finished yet).
 * GANs and Detectors (We are working on the pruning of YOLO series)
 * More high-level pruners like FisherPruner, SoftPruner, GeometricPruner, GrowingReg, etc.
 * More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
