@@ -86,7 +86,6 @@ class Dependency(Edge):
         index_mapping: typing.Callable = None,
     ):
         """Layer dependency (Edge of DepGraph) in structral neural network pruning. 
-
         Args:
             trigger (Callable): a pruning function that triggers this dependency
             handler (Callable): a pruning function that can fix the broken dependency
@@ -138,9 +137,7 @@ GroupItem = namedtuple('GroupItem', ['dep', 'idxs'])
 
 class Group(object):
     """A group that contains dependencies and pruning indices.   
-
     Each element is defined as a namedtuple('GroupItem', ['dep', 'idxs']).
-
     A group is a iterable list 
     [ [Dep1, Indices1], [Dep2, Indices2], ..., [DepK, IndicesK] ]
     """
@@ -248,7 +245,6 @@ class DependencyGraph(object):
         verbose: bool = True,
     ):
         """Build a dependency graph through tracing.
-
         Args:
             model (class): the model to be pruned.
             example_inputs (torch.Tensor or List): dummy inputs for tracing.
@@ -299,7 +295,6 @@ class DependencyGraph(object):
         layer_pruner: function.BasePruningFunc,
     ):
         """Register a customized pruner
-
         Args:
             layer_type (class): the type of target layer
             pruner (tp.pruner.BasePruningFunc): a pruner for the specified layer type.
@@ -308,7 +303,6 @@ class DependencyGraph(object):
 
     def check_pruning_group(self, group: Group) -> bool:
         """check the group to avoid over-pruning. Return True if there are sufficient prunable elements.
-
         Args:
             group (Group): a depenedency group
         """
@@ -344,7 +338,6 @@ class DependencyGraph(object):
         idxs: typing.Union[list, tuple],
     ) -> Group:
         """Get the pruning group of pruning_fn.
-
         Args:
             module (nn.Module): the to-be-pruned module/layer.
             pruning_fn (Callable): the pruning function.
