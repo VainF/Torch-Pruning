@@ -142,6 +142,7 @@ class MetaPruner():
         pass
 
     def step(self, interactive=False):
+        self.current_step += 1
         if self.global_pruning:
             if interactive:
                 return self.prune_global()
@@ -154,7 +155,7 @@ class MetaPruner():
             else:
                 for group in self.prune_local():
                     group.prune()
-        self.current_step += 1
+        
         
     def estimate_importance(self, group, ch_groups=1):
         return self.importance(group, ch_groups=ch_groups)
