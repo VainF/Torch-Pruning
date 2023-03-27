@@ -143,7 +143,6 @@ class MetaPruner():
 
     def step(self, interactive=False):
         self.current_step += 1
-        print(self.current_step)
         if self.global_pruning:
             if interactive:
                 return self.prune_global()
