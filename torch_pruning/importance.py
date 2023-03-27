@@ -56,7 +56,6 @@ class MagnitudeImportance(Importance):
                 if ch_groups>1:
                     local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
-                #print(local_norm.shape)
                 group_imp.append(local_norm)
 
             # Conv in_channels
@@ -68,28 +67,17 @@ class MagnitudeImportance(Importance):
                 if isinstance(layer, nn.ConvTranspose2d):
                     w = (layer.weight).flatten(1)  
                 else:
-                    w = (layer.weight).transpose(0, 1).flatten(1)             
-                if (w.shape[0] != group_imp[0].shape[0]):  
-                    if (hasattr(dep, 'index_mapping') and isinstance(dep.index_mapping, _FlattenIndexMapping)):
-                        #conv-flatten
-                        w = w[idxs].view(
-                            group_imp[0].shape[0],
-                            w.shape[0] // group_imp[0].shape[0],
-                            w.shape[1],
-                        ).flatten(1)
-                        is_conv_flatten_linear = True
-                    elif ch_groups>1 and prune_fn==function.prune_conv_in_channels and layer.groups==1:
-                        # non-grouped conv with group convs
-                        w = w.view(w.shape[0] // group_imp[0].shape[0],
-                                group_imp[0].shape[0], w.shape[1]).transpose(0, 1).flatten(1)           
+                    w = (layer.weight).transpose(0, 1).flatten(1)     
+                if ch_groups>1 and prune_fn==function.prune_conv_in_channels and layer.groups==1:
+                    # non-grouped conv and group convs
+                    w = w.view(w.shape[0] // group_imp[0].shape[0],
+                            group_imp[0].shape[0], w.shape[1]).transpose(0, 1).flatten(1)       
                 local_norm = w.abs().pow(self.p).sum(1)
                 if ch_groups>1:
                     if len(local_norm)==len(group_imp[0]):
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
-                if not is_conv_flatten_linear:
-                    local_norm = local_norm[idxs]
-                #print(local_norm.shape)
+                local_norm = local_norm[idxs]
                 group_imp.append(local_norm)
             # BN
             elif prune_fn == function.prune_batchnorm_out_channels:
@@ -103,7 +91,15 @@ class MagnitudeImportance(Importance):
                     #print(local_norm.shape)
                     group_imp.append(local_norm)
 
-        group_imp = torch.stack(group_imp, dim=0)
+        min_imp_size = min([len(imp) for imp in group_imp])
+        aligned_group_imp = []
+        for imp in group_imp:
+            if len(imp)>min_imp_size and len(imp)%min_imp_size==0:
+                imp = imp.view(len(imp) // min_imp_size, min_imp_size).sum(0)
+                aligned_group_imp.append(imp)
+            elif len(imp)==min_imp_size:
+                aligned_group_imp.append(imp)
+        group_imp = torch.stack(aligned_group_imp, dim=0)
         group_imp = self._reduce(group_imp)
         if self.normalizer is not None:
             group_imp = self.normalizer(group, group_imp)
@@ -124,10 +120,9 @@ class BNScaleImportance(MagnitudeImportance):
             if isinstance(module, (ops.TORCH_BATCHNORM)) and module.affine:
                 local_imp = torch.abs(module.weight.data)
                 if ch_groups>1:
-                    local_imp = local_imp.view(ch_groups, -1).sum(0)
+                    local_imp = local_imp.view(ch_groups, -1).mean(0)
                     local_imp = local_imp.repeat(ch_groups)
                 group_imp.append(local_imp)
-
         group_imp = torch.stack(group_imp, dim=0)
         group_imp = self._reduce(group_imp)
         if self.normalizer is not None:

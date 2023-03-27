@@ -6,7 +6,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath
 ###########################################
 # Prunable Models
 ############################################
-
 from torchvision.models.alexnet import alexnet
 
 from torchvision.models.vision_transformer import (
@@ -262,7 +261,7 @@ if __name__ == "__main__":
 
         try:
             my_prune(
-                model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
+                    model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
             )
             successful.append(model_name)
         except Exception as e:

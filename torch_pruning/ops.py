@@ -1,4 +1,3 @@
-from pickletools import optimize
 import torch.nn as nn
 from enum import IntEnum
 
@@ -33,6 +32,13 @@ class _SplitOp(nn.Module):
     def __repr__(self):
         return "_SplitOp({})".format(self.offsets)
 
+class _ReshapeOp(nn.Module):
+    def __init__(self):
+        super(_ReshapeOp, self).__init__()
+
+    def __repr__(self):
+        return "_Reshape()"
+
 
 class _ElementWiseOp(nn.Module):
     def __init__(self, grad_fn):
@@ -64,6 +70,8 @@ class DummyPruner(object):
 class ConcatPruner(DummyPruner):
     pass
 
+class ReshapePruner(DummyPruner):
+    pass
 
 class SplitPruner(DummyPruner):
     pass
@@ -104,6 +112,7 @@ class OPTYPE(IntEnum):
     PARAMETER = 11  # nn.Parameter
     MHA = 12
     LSTM = 13
+    RESHAPE = 14
 
 
 def module2type(module):
@@ -134,6 +143,8 @@ def module2type(module):
         return OPTYPE.MHA
     elif isinstance(module, TORCH_LSTM):
         return OPTYPE.LSTM
+    elif isinstance(module, _ReshapeOp):
+        return OPTYPE.RESHAPE
     else:
         return OPTYPE.ELEMENTWISE
 
@@ -163,6 +174,8 @@ def type2class(op_type):
         return TORCH_MHA
     elif op_type == OPTYPE.LSTM:
         return TORCH_LSTM
+    elif OPTYPE == OPTYPE.RESHAPE:
+        return _ReshapeOp
     else:
         return _ElementWiseOp
 

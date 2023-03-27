@@ -225,6 +225,7 @@ class DependencyGraph(object):
             ops.OPTYPE.CONCAT: ops.ConcatPruner(),
             ops.OPTYPE.SPLIT: ops.SplitPruner(),
             ops.OPTYPE.ELEMENTWISE: ops.ElementWisePruner(),
+            ops.OPTYPE.RESHAPE: ops.ReshapePruner(),
             ops.OPTYPE.CUSTOMIZED: None,
         }
         self.REGISTERED_PRUNERS = function.PrunerBox.copy()  # shallow copy
@@ -455,7 +456,10 @@ class DependencyGraph(object):
             ch = 0
             for in_node in node.inputs:
                 if node.type == ops.OPTYPE.CONCAT:
-                    ch += self._infer_out_channels_recursively(in_node)
+                    sub_ch = self._infer_out_channels_recursively(in_node)
+                    if sub_ch is None:
+                        return None
+                    ch += sub_ch
                 else:
                     ch = self._infer_out_channels_recursively(in_node)
             if ch == 0:
@@ -470,7 +474,10 @@ class DependencyGraph(object):
             ch = 0
             for out_node in node.outputs:
                 if node.type == ops.OPTYPE.SPLIT:
-                    ch += self._infer_in_channels_recursively(out_node)
+                    sub_ch = self._infer_in_channels_recursively(out_node)
+                    if sub_ch is None:
+                        return None
+                    ch += sub_ch
                 else:
                     ch = self._infer_in_channels_recursively(out_node)
             if ch == 0:
@@ -616,6 +623,8 @@ class DependencyGraph(object):
                     module = ops._ConcatOp()
                 elif "split" in grad_fn.name().lower():
                     module = ops._SplitOp()
+                elif "view" in grad_fn.name().lower() or 'reshape' in grad_fn.name().lower():
+                    module = ops._ReshapeOp()
                 else:
                     # treate other ops as element-wise ones, like Add, Sub, Div, Mul.
                     module = ops._ElementWiseOp(grad_fn.name())
@@ -672,9 +681,11 @@ class DependencyGraph(object):
         """ update all index mapping after pruning
         """
         for module, node in self.module2node.items():
-            if node.type == ops.OPTYPE.LINEAR:
+            #if node.type == ops.OPTYPE.LINEAR:
                 # for Conv-Flatten-Linear (e.g., VGG)
-                self._update_flatten_index_mapping(node)
+            #    self._update_flatten_index_mapping(node)
+            if node.type == ops.OPTYPE.RESHAPE:
+                self._update_reshape_index_mapping(node)
             if node.type == ops.OPTYPE.CONCAT:
                 self._update_concat_index_mapping(node)
             if node.type == ops.OPTYPE.SPLIT:
@@ -708,6 +719,58 @@ class DependencyGraph(object):
                             stride=stride, reverse=False
                         )
 
+    def _update_reshape_index_mapping(self, reshape_node: Node):
+        
+        in_channels = None
+        for n in reshape_node.inputs:
+            in_channels = self._infer_out_channels_recursively(n)
+            if in_channels is not None:  # =0 if there is a residual connection to model inputs
+                break
+            
+        out_channels = None
+        for n in reshape_node.outputs:
+            out_channels = self._infer_in_channels_recursively(n)
+            if out_channels is not None:  # =0 if there is a residual connection to model inputs
+                break
+        
+        if out_channels is None or in_channels is None: return
+        if out_channels==in_channels: return
+
+        # Only Supports 2D/4D tensors
+        if len(reshape_node.grad_fn._saved_self_sizes)!=1 and len(reshape_node.grad_fn._saved_self_sizes)!=4:
+            return
+        
+        # Flatten
+        if out_channels > in_channels:
+             for in_node in reshape_node.inputs:
+                for dep in reshape_node.dependencies:
+                    if dep.target == in_node:
+                        dep.index_mapping = _helpers._FlattenIndexMapping(
+                            stride=out_channels // in_channels, reverse=True
+                        )
+
+                for dep in in_node.dependencies:
+                    if dep.target == reshape_node:
+                        dep.index_mapping = _helpers._FlattenIndexMapping(
+                            stride=out_channels // in_channels, reverse=False
+                        )
+        else: # 1D -> 2D
+            for out_node in reshape_node.outputs:
+                for dep in reshape_node.dependencies:
+                    if dep.target == out_node:
+                        dep.index_mapping = _helpers._FlattenIndexMapping(
+                            stride=in_channels // out_channels, reverse=True
+                        )
+
+                for dep in out_node.dependencies:
+                    if dep.target == reshape_node:
+                        dep.index_mapping = _helpers._FlattenIndexMapping(
+                            stride=in_channels // out_channels, reverse=False
+                        )
+        #print(in_channels, out_channels)
+        #print(reshape_node.grad_fn._saved_self_sizes)
+        #print('------')
+        
     def _update_concat_index_mapping(self, cat_node: Node):
         if cat_node.type != ops.OPTYPE.CONCAT:
             return
