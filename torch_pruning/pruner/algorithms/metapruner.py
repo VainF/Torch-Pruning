@@ -143,6 +143,7 @@ class MetaPruner():
 
     def step(self, interactive=False):
         self.current_step += 1
+        print(self.current_step)
         if self.global_pruning:
             if interactive:
                 return self.prune_global()
@@ -192,7 +193,7 @@ class MetaPruner():
         return 1  # no channel grouping
 
     def prune_local(self):
-        if self.current_step >= self.iterative_steps:
+        if self.current_step > self.iterative_steps:
             return
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             # check pruning rate
@@ -228,7 +229,7 @@ class MetaPruner():
                     yield group
 
     def prune_global(self):
-        if self.current_step >= self.iterative_steps:
+        if self.current_step > self.iterative_steps:
             return
         global_importance = []
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
