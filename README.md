@@ -21,6 +21,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 * Supported operations: split, concatenation, skip connection, flatten, all element-wise ops, etc.
 * [Low-level pruning functions](https://github.com/VainF/Torch-Pruning/blob/master/torch_pruning/pruner/function.py)
 * [Benchmarks](benchmarks) and [tutorials](tutorials)
+* A [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for structrual pruning.
 
 ### **Plans:**
 * A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility (~60%, not finished yet).
