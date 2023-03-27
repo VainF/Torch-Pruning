@@ -16,7 +16,6 @@ class Net(nn.Module):
         x = F.relu(self.conv1T1(x))
         x = F.relu(self.conv1T2(x))
         x = torch.flatten(x, 1)
-        print(x.shape)
         x = self.final(x)
         return x
 
@@ -38,12 +37,9 @@ pruner = tp.pruner.MagnitudePruner(
 
 base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
 for i in range(iterative_steps):
-    for g in pruner.step(interactive=True):
-        print(g)
-        g.prune()
+    pruner.step()
     macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
     print(model)
-    print(model(example_inputs).shape)
     print(
         "  Iter %d/%d, Params: %.2f M => %.2f M"
         % (i+1, iterative_steps, base_nparams / 1e6, nparams / 1e6)
