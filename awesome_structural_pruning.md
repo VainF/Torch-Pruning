@@ -57,6 +57,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 
 | Title | Authors | Venue | Code | 
 |:--    |:--:  |:--:    |:--: |
+| [Structured Pruning Learns Compact and Accurate Models](https://arxiv.org/abs/2204.00408) | Mengzhou Xia | ACL'22 | [pytorch](https://github.com/princeton-nlp/CoFiPruning) | 
 
 <br>
 
