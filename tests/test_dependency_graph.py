@@ -25,6 +25,12 @@ if DG.check_pruning_group(pruning_group):
 print("After pruning:")
 print(model)
 
+for group in DG.get_all_groups():
+    # handle groups in sequential order
+    idxs = [2,4,6] # my pruning indices
+    group.prune(idxs=idxs)
+print(model)
+
 #groups = list(DG.get_all_groups())
 #print("Num groups: %d"%(len(groups)))
 

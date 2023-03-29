@@ -144,12 +144,19 @@ class Group(object):
 
     def __init__(self):
         self._group = list()
+        self._DG = None
 
-    def prune(self):
+    def prune(self, idxs=None):
         """Prune all coupled layers in the group
         """
-        for dep, idxs in self._group:
-            dep(idxs)
+        if idxs is not None:
+            module = self._group[0].dep.target.module
+            pruning_fn = self._group[0].dep.handler
+            new_group = self._DG.get_pruning_group(module, pruning_fn, idxs)
+            new_group.prune()
+        else:
+            for dep, idxs in self._group:
+                dep(idxs)
 
     def add_dep(self, dep, idxs):
         self._group.append(GroupItem(dep=dep, idxs=idxs))
@@ -392,6 +399,7 @@ class DependencyGraph(object):
         merged_group = Group()
         for dep, idxs in group.items:
             merged_group.add_and_merge(dep, idxs)
+        merged_group._DG = self
         return merged_group
 
     def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
