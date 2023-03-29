@@ -119,7 +119,7 @@ For more details about grouping, please refer to [tutorials/2 - Exploring Depend
 #### How to scan all groups:
 Just like what we do in the [MetaPruner](https://github.com/VainF/Torch-Pruning/blob/b607ae3aa61b9dafe19d2c2364f7e4984983afbf/torch_pruning/pruner/algorithms/metapruner.py#L197), one can use ``DG.get_all_groups(ignored_layers, root_module_types)`` to iterate all groups. Specifically, all groups will all begin with a layer that matches the type specified by the "root_module_types" parameter.
 ```python
-for group in self.DG.get_all_groups():
+for group in DG.get_all_groups():
     # handle groups in sequential order
     print(group)
     # ...
