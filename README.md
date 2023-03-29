@@ -116,6 +116,17 @@ This example demonstrates the fundamental pruning pipeline using DepGraph. Note 
 ```
 For more details about grouping, please refer to [tutorials/2 - Exploring Dependency Groups](https://github.com/VainF/Torch-Pruning/blob/master/tutorials/2%20-%20Exploring%20Dependency%20Groups.ipynb)
 
+#### How to scan all groups:
+Just like what we do in the [MetaPruner](https://github.com/VainF/Torch-Pruning/blob/b607ae3aa61b9dafe19d2c2364f7e4984983afbf/torch_pruning/pruner/algorithms/metapruner.py#L197), one can use ``DG.get_all_groups(ignored_layers, root_module_types)`` to iterate all groups. Specifically, all groups will all begin with a layer that matches the type specified by the "root_module_types" parameter.
+```python
+for group in self.DG.get_all_groups():
+    # handle groups in sequential order
+    print(group)
+    # ...
+```
+
+
+
 ### 2. High-level Pruners
 
 Leveraging the DependencyGraph, we developed several high-level pruners in this repository to facilitate effortless pruning. By specifying the desired channel sparsity, you can prune the entire model and fine-tune it using your own training code. For detailed information on this process, we encourage you to consult the [tests/test_pruner.py](tests/test_pruner.py) file. Additionally, you can find more practical examples in [benchmarks/main.py](benchmarks/main.py).
