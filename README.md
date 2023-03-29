@@ -117,13 +117,13 @@ This example demonstrates the fundamental pruning pipeline using DepGraph. Note 
 For more details about grouping, please refer to [tutorials/2 - Exploring Dependency Groups](https://github.com/VainF/Torch-Pruning/blob/master/tutorials/2%20-%20Exploring%20Dependency%20Groups.ipynb)
 
 #### How to scan all groups:
-Just like what we do in the [MetaPruner](https://github.com/VainF/Torch-Pruning/blob/b607ae3aa61b9dafe19d2c2364f7e4984983afbf/torch_pruning/pruner/algorithms/metapruner.py#L197), one can use ``DG.get_all_groups(ignored_layers, root_module_types)`` to iterate all groups. Specifically, all groups will all begin with a layer that matches the type specified by the "root_module_types" parameter. These groups contain full ``idxs`` that covers all prunable parameters.
+Just like what we do in the [MetaPruner](https://github.com/VainF/Torch-Pruning/blob/b607ae3aa61b9dafe19d2c2364f7e4984983afbf/torch_pruning/pruner/algorithms/metapruner.py#L197), one can use ``DG.get_all_groups(ignored_layers, root_module_types)`` to iterate all groups. Specifically, all groups will all begin with a layer that matches the type specified by the "root_module_types" parameter. These groups contain a full index list ``idxs=[0,1,2,3,...,K]`` that covers all prunable parameters. If you are intended to prune partial channels/dimensions, you can use ``group.prune(idxs=idxs)``.
 
 ```python
 for group in DG.get_all_groups():
     # handle groups in sequential order
     idxs = [2,4,6] # your pruning indices
-    group.prune(idxs=idxs) # group.prune()
+    group.prune(idxs=idxs) # by default, the group internally maintain a full idxs=[0,1,2,...,K]
     print(group)
 ```
 
