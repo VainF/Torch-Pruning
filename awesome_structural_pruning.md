@@ -21,6 +21,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 | [ResNet Can Be Pruned 60x: Introducing Network Purification and Unused Path Removal (P-RM) after Weight Pruning](https://arxiv.org/pdf/1905.00136.pdf) | Xiaolong Ma | ICML'19 | N/A |
 | [Neural Pruning via Growing Regularization](https://arxiv.org/abs/2012.09243) | Huan Wang | ICLR'21 | [pytorch](https://github.com/mingsun-tse/regularization-pruning) |
 | [Group Fisher Pruning for Practical Network Compression](https://arxiv.org/abs/2108.00708) |  Liyang Liu | ICML'21 | [pytorch](https://github.com/jshilong/FisherPruning) | 
+| [Only Train Once: A One-Shot Neural Network Training And Pruning Framework](https://papers.nips.cc/paper/2021/hash/a376033f78e144f494bfc743c0be3330-Abstract.html) | Tianyi Chen | NeurIPS'21 |  [pytorch](https://github.com/tianyic/only_train_once) |
 | [OTOV2: AUTOMATIC, GENERIC, USER-FRIENDLY](https://openreview.net/pdf?id=7ynoX1ojPMt) | Tianyi Chen | ICLR'23 | [pytorch](https://github.com/tianyic/only_train_once) |
 | [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900) | Gongfan Fang | CVPR'23 | [pytorch](https://github.com/VainF/Torch-Pruning) |
 
