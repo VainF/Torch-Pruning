@@ -82,5 +82,5 @@ Welcome to the resource list for structural pruning, which is continually being 
 | [Discussion - How to get the index of the pruned channel(s) when using High-level Pruners?](https://github.com/VainF/Torch-Pruning/discussions/116#discussioncomment-5426178) | [Torch-Pruning](https://github.com/VainF/Torch-Pruning) |
 | [Issue - How to get all groups of a network](https://github.com/VainF/Torch-Pruning/issues/109) |[Torch-Pruning](https://github.com/VainF/Torch-Pruning)| 
 | [Issue - 论文中图3(b)的剪枝方案是怎么推出的 (in Chinese)](https://github.com/VainF/Torch-Pruning/issues/115) | [Torch-Pruning](https://github.com/VainF/Torch-Pruning) |
-| [Global Pruning v.s. Local Pruning](https://www.cs.princeton.edu/courses/archive/spring21/cos598D/lectures/pruning.pdf) | Lecture Notes |
+| [Global Pruning v.s. Local Pruning](https://www.cs.princeton.edu/courses/archive/spring21/cos598D/lectures/pruning.pdf) | Lecture Notes (Princeton) |
 | [CVPR 2023 \| DepGraph：任意架构的结构化剪枝，CNN、Transformer、GNN等都适用！(In Chinese)](https://mp.weixin.qq.com/s/Ux-yuaKokGGhUkfF491ZYw) | CVer |
