@@ -24,11 +24,12 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 * A [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for structrual pruning.
 
 ### **Plans:**
-* A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility (~60%, not finished yet).
+* A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
 * GANs and Detectors (We are working on the pruning of YOLO series)
-* More high-level pruners like FisherPruner, SoftPruner, GeometricPruner, GrowingReg, etc.
+* Pruning from Scratch / at Initialization.
+* More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243), etc.
 * More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
-* Support more Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
+* More Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 * Examples for GNNs and RNNs.
 * Pruning benchmarks for CIFAR, ImageNet and COCO.
 * Block/Layer/Depth Pruning
