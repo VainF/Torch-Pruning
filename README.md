@@ -123,7 +123,7 @@ Just like what we do in the [MetaPruner](https://github.com/VainF/Torch-Pruning/
 for group in DG.get_all_groups():
     # handle groups in sequential order
     idxs = [2,4,6] # your pruning indices
-    group.prune(idxs=idxs) # by default, the group internally maintain a full idxs=[0,1,2,...,K]
+    group.prune(idxs=idxs)
     print(group)
 ```
 
