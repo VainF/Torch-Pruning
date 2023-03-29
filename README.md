@@ -154,21 +154,6 @@ for i in range(iterative_steps):
     # ...
 ```
 
-#### Interactive pruning
-All high-level pruners support interactive pruning. You can use ``pruner.step(interactive=True)`` to get all groups and interactively prune them by calling ``group.prune()``. This feature is useful if you want to control/monitor the pruning process.
-
-```python
-for i in range(iterative_steps):
-    for group in pruner.step(interactive=True): # Warning: groups must be handled sequentially. Do not keep them as a list.
-        print(group) 
-        # do whatever you like with the group 
-        # ...
-        group.prune() # you should manually call the group.prune()
-    macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
-    # finetune your model here
-    # finetune(model)
-    # ...
-```
 #### Sparse Training
 Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/batchnorm_scale_pruner.py#L45) and [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/group_norm_pruner.py#L53) require sparse training before pruning. This can be easily achieved by inserting just one line of code ``pruner.regularize(model)`` in your training script. The pruner will update the gradient of trainable parameters.
 ```python
@@ -183,6 +168,23 @@ for epoch in range(epochs):
         pruner.regularize(model) # <== for sparse learning
         optimizer.step()
 ```
+
+#### Interactive Pruning
+All high-level pruners support interactive pruning. You can use ``pruner.step(interactive=True)`` to get all groups and interactively prune them by calling ``group.prune()``. This feature is useful if you want to control/monitor the pruning process.
+
+```python
+for i in range(iterative_steps):
+    for group in pruner.step(interactive=True): # Warning: groups must be handled sequentially. Do not keep them as a list.
+        print(group) 
+        # do whatever you like with the group 
+        # ...
+        group.prune() # you should manually call the group.prune()
+    macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
+    # finetune your model here
+    # finetune(model)
+    # ...
+```
+
 
 
 ### 3. Low-level pruning functions
