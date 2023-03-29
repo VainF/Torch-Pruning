@@ -36,7 +36,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 
 ## Installation
 ```bash
-pip install torch-pruning # v1.0.0
+pip install torch-pruning # v1.1.0
 ```
 or
 ```bash
