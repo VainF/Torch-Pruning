@@ -39,6 +39,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 
 | Title | Authors | Venue | Code | 
 |:--    |:--:  |:--:    |:--: |
+| [GAN Compression: Efficient Architectures for Interactive Conditional GANs](https://arxiv.org/abs/2003.08936) | Muyang Li | CVPR'20 | [pytorch](https://github.com/mit-han-lab/gan-compression-dynamic) |
 
 <br>
 
