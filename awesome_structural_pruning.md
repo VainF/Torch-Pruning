@@ -1,6 +1,6 @@
 # Awesome Structural Pruning
 
-Welcome to the resource list for structural pruning, which is continually being updated. If you have any useful resources, papers, or repositories related to structural pruning and would like to share them with other users, please feel free to open a new pull request.
+Welcome to the resource list for structural pruning, which is continually being updated. If you have any useful resources, papers, or repositories related to structural pruning and would like to share them with other users, please feel free to open a new pull request or issue.
 
 <br>
 
