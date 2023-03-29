@@ -193,6 +193,7 @@ for i in range(iterative_steps):
         # do whatever you like with the group 
         # ...
         group.prune() # you should manually call the group.prune()
+        # group.prune(idxs=[0, 2, 6]) # you can even change the pruning behaviour with the idxs parameter
     macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
     # finetune your model here
     # finetune(model)
