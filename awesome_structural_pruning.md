@@ -19,9 +19,10 @@ Welcome to the resource list for structural pruning, which is continually being 
 |:--    |:--:  |:--:    |:--: |
 | [Gate Decorator: Global Filter Pruning Method for Accelerating Deep Convolutional Neural Networks](https://arxiv.org/abs/1909.08174) | Zhonghui You | NeurIPS'19 | [pytorch](https://github.com/youzhonghui/gate-decorator-pruning) |
 | [ResNet Can Be Pruned 60x: Introducing Network Purification and Unused Path Removal (P-RM) after Weight Pruning](https://arxiv.org/pdf/1905.00136.pdf) | Xiaolong Ma | ICML'19 | N/A |
-| [Neural Pruning via Growing Regularization]() | Huan Wang | ICLR'21 | [pytorch](https://github.com/mingsun-tse/regularization-pruning) |
+| [Neural Pruning via Growing Regularization](https://arxiv.org/abs/2012.09243) | Huan Wang | ICLR'21 | [pytorch](https://github.com/mingsun-tse/regularization-pruning) |
 | [Group Fisher Pruning for Practical Network Compression](https://arxiv.org/abs/2108.00708) |  Liyang Liu | ICML'21 | [pytorch](https://github.com/jshilong/FisherPruning) | 
-| [DepGraph: Towards Any Structural Pruning]() | Gongfan Fang | CVPR'23 | [pytorch](https://github.com/VainF/Torch-Pruning) |
+| [OTOV2: AUTOMATIC, GENERIC, USER-FRIENDLY](https://openreview.net/pdf?id=7ynoX1ojPMt) | Tianyi Chen | ICLR'23 | [pytorch](https://github.com/tianyic/only_train_once) |
+| [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900) | Gongfan Fang | CVPR'23 | [pytorch](https://github.com/VainF/Torch-Pruning) |
 
 <br>
 
@@ -49,7 +50,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 | [Width & Depth Pruning for Vision Transformers](https://ojs.aaai.org/index.php/AAAI/article/view/20222) | Fang Yu | AAAI'22 | N/A |
 | [Chasing Sparsity in Vision Transformers: An End-to-End Exploration](https://arxiv.org/abs/2106.04533) | Tianlong Chen | NeurIPS'21 | [pytorch](https://github.com/VITA-Group/SViTE) |
 | [CP-ViT: Cascade Vision Transformer Pruning via Progressive Sparsity Prediction](https://arxiv.org/abs/2203.04570) | Zhuoran Song | Preprint  | [pytorch](https://github.com/ok858ok/CP-ViT) |
-| [DepGraph: Towards Any Structural Pruning]() | Gongfan Fang | CVPR'23 | [pytorch](https://github.com/VainF/Torch-Pruning) |
+| [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900) | Gongfan Fang | CVPR'23 | [pytorch](https://github.com/VainF/Torch-Pruning) |
 
 <br>
 
@@ -65,7 +66,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 
 | Title | Authors | Venue | Code | 
 |:--    |:--:  |:--:    |:--: |
-| [DepGraph: Towards Any Structural Pruning]() | Gongfan Fang | CVPR'23 | [pytorch](https://github.com/VainF/Torch-Pruning) |
+| [DepGraph: Towards Any Structural Pruning](https://arxiv.org/abs/2301.12900) | Gongfan Fang | CVPR'23 | [pytorch](https://github.com/VainF/Torch-Pruning) |
 
 
 <br>
