@@ -75,7 +75,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 
 ### 8. Misc
 
-| Title | Type |
+| Title | Source |
 |:--    | :-- |
 | [Issue - Does the tool support to prune the yolov5/v7/v8?](https://github.com/VainF/Torch-Pruning/issues/100) | [Torch-Pruning](https://github.com/VainF/Torch-Pruning) |
 | [Issue - How can we transfer schedular and optimizer from original model to pruned model](https://github.com/VainF/Torch-Pruning/issues/120) | [Torch-Pruning](https://github.com/VainF/Torch-Pruning) |
