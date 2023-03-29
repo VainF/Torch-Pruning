@@ -5,13 +5,12 @@
 
 Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including Vision Transformers, FasterRCNN, SSD, ResNet, DenseNet, RegNet, ResNext, FCN, DeepLab, VGG, and more. Unlike [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that only zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [benchmarks/prunability](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/prunability). So far, TP is compatible with **73/85=85.8%** models from Torchvision 0.13.1. Besides, a  [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for practical structural pruning is continuesly being updated.
 
-
 For more technical details, please refer to our preprint paper: 
 
 > [**DepGraph: Towards Any Structural Pruning**](https://arxiv.org/abs/2301.12900)   
 > [Gongfan Fang](https://fangggf.github.io/), [Xinyin Ma](https://horseee.github.io/), [Mingli Song](https://person.zju.edu.cn/en/msong), [Michael Bi Mi](https://dblp.org/pid/317/0937.html), [Xinchao Wang](https://sites.google.com/site/sitexinchaowang/)   
 
-Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or have any questions related to the paper. We are always happy to assist you and address any concerns you may have.
+Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or have any questions related to the paper. We are always happy to assist you and address any concerns you may have. 
 
 ### **Features:**
 * Structural (Channel) pruning for [CNNs](tests/test_torchvision_models.py) (e.g. ResNet, DenseNet, Deeplab) and [Transformers](tests/test_torchvision_models.py) (e.g. ViT)
