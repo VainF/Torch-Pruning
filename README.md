@@ -23,7 +23,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 * A [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for structrual pruning.
 
 ### **Plans:**
-**We have a wealth of ideas, but unfortunately, only a handful of contributors at the moment. We hope to attract more talented guys to join us in bringing these ideas to fruition and making Torch-Pruning an practical library.**
+**We have a wealth of ideas, but unfortunately, only a handful of contributors at the moment. We hope to attract more talented guys to join us in bringing these ideas to fruition and making Torch-Pruning a practical library.**
 * A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
 * GANs and Detectors (We are working on the pruning of YOLO series)
 * Pruning from Scratch / at Initialization.
