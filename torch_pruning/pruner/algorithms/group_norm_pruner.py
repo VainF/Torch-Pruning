@@ -71,7 +71,7 @@ class GroupNormPruner(MetaPruner):
                 ]:
                     w = layer.weight.data[idxs].flatten(1)
                     local_norm = w.pow(2).sum(1)
-                    #print(local_norm.shape, layer, idxs, ch_groups)
+                    # print(local_norm.shape, layer, idxs, ch_groups)
                     if ch_groups > 1:
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                         local_norm = local_norm.repeat(ch_groups)
@@ -83,7 +83,7 @@ class GroupNormPruner(MetaPruner):
                     function.prune_conv_in_channels,
                     function.prune_linear_in_channels,
                 ]:
-                    w = (layer.weight).transpose(0, 1).flatten(1)
+                    w = layer.weight.transpose(0, 1).flatten(1)
                     if (
                         w.shape[0] != group_norm.shape[0]
                     ):
@@ -169,6 +169,6 @@ class GroupNormPruner(MetaPruner):
                         layer.weight.grad.data[idxs] += self.reg * g
 
                         b = layer.bias.data[idxs]
-                        g = b * scale #/ group_norm * group_size
+                        g = b * scale  # / group_norm * group_size
                         layer.bias.grad.data[idxs]+=self.reg * g
         self.cnt += 1
