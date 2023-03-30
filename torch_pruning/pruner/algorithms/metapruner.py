@@ -7,7 +7,7 @@ from ..import function
 from ... import ops, dependency
 
 
-class MetaPruner():
+class MetaPruner:
     """
         Meta Pruner for structural pruning.
 
@@ -79,8 +79,9 @@ class MetaPruner():
         )
 
         self.ignored_layers = []
-        for layer in ignored_layers:
-            self.ignored_layers.extend(list(layer.modules()))
+        if ignored_layers:
+            for layer in ignored_layers:
+                self.ignored_layers.extend(list(layer.modules()))
 
         self.iterative_steps = iterative_steps
         self.iterative_sparsity_scheduler = iterative_sparsity_scheduler
@@ -155,8 +156,7 @@ class MetaPruner():
             else:
                 for group in self.prune_local():
                     group.prune()
-        
-        
+
     def estimate_importance(self, group, ch_groups=1):
         return self.importance(group, ch_groups=ch_groups)
 

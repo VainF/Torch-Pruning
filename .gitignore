@@ -22,3 +22,4 @@ torch_pruning_v1.0
 torch_pruning_bak
 *.log
 .ipynb_checkpoints
+.idea/
