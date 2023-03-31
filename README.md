@@ -27,7 +27,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 * A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
 * More Detectors (We are working on the pruning of YOLO series such as YOLOv7 :heavy_check_mark:, Yolov8)
 * Pruning from Scratch / at Initialization.
-* Language and Speech and Generative Models.
+* Language, Speech and Generative Models.
 * More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243), etc.
 * More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
 * More Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
