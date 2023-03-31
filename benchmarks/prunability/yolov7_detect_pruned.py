@@ -65,8 +65,8 @@ def detect(save_img=False):
     pruner.step()
     pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(model, example_inputs)
     print(model)
-    print("Before Pruning: MACs=%f G, #Params=%f"%(base_macs/1e9, base_nparams/1e9))
-    print("After Pruning: MACs=%f G, #Params=%f"%(pruned_macs/1e9, pruned_nparams/1e9))
+    print("Before Pruning: MACs=%f G, #Params=%f G"%(base_macs/1e9, base_nparams/1e9))
+    print("After Pruning: MACs=%f G, #Params=%f G"%(pruned_macs/1e9, pruned_nparams/1e9))
     ####################################################################################
     
     stride = int(model.stride.max())  # model stride
