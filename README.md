@@ -25,14 +25,14 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 ### **Plans:**
 **We have a wealth of ideas, but unfortunately, only a handful of contributors at the moment. We hope to attract more talented guys to join us in bringing these ideas to fruition and making Torch-Pruning a practical library.**
 * A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
-* GANs and Detectors (We are working on the pruning of YOLO series)
+* More Detectors (We are working on the pruning of YOLO series such as YOLOv7 :heavy_check_mark:, Yolov8)
 * Pruning from Scratch / at Initialization.
+* Language and Speech and Generative Models.
 * More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243), etc.
 * More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
 * More Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
-* Examples for GNNs and RNNs.
-* Pruning benchmarks for CIFAR, ImageNet and COCO.
 * Block/Layer/Depth Pruning
+* Pruning benchmarks for CIFAR, ImageNet and COCO.
 
 ## Installation
 ```bash
