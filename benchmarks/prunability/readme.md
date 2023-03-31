@@ -29,3 +29,51 @@ cd yolov7
 python yolov7_detect_pruned.py --weights yolov7.pt --conf 0.25 --img-size 640 --source inference/images/horses.jpg
 ```
 
+Outputs:
+```
+Model(
+  (model): Sequential(
+    (0): Conv(
+      (conv): Conv2d(3, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (act): SiLU(inplace=True)
+    )
+...
+    (104): RepConv(
+      (act): SiLU(inplace=True)
+      (rbr_reparam): Conv2d(512, 1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    )
+    (105): Detect(
+      (m): ModuleList(
+        (0): Conv2d(256, 255, kernel_size=(1, 1), stride=(1, 1))
+        (1): Conv2d(512, 255, kernel_size=(1, 1), stride=(1, 1))
+        (2): Conv2d(1024, 255, kernel_size=(1, 1), stride=(1, 1))
+      )
+    )
+  )
+)
+
+
+Model(
+  (model): Sequential(
+    (0): Conv(
+      (conv): Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (act): SiLU(inplace=True)
+    )
+...
+    (104): RepConv(
+      (act): SiLU(inplace=True)
+      (rbr_reparam): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    )
+    (105): Detect(
+      (m): ModuleList(
+        (0): Conv2d(128, 255, kernel_size=(1, 1), stride=(1, 1))
+        (1): Conv2d(256, 255, kernel_size=(1, 1), stride=(1, 1))
+        (2): Conv2d(512, 255, kernel_size=(1, 1), stride=(1, 1))
+      )
+    )
+  )
+)
+Before Pruning: MACs=6.413721 G, #Params=0.036905
+After Pruning: MACs=1.639895 G, #Params=0.009347
+```
+
