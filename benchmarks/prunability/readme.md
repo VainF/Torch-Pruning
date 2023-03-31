@@ -15,3 +15,15 @@ Successful Pruning: 73 Models
 Unsuccessful Pruning: 12 Models
  ['fcos_resnet50_fpn', 'raft_large', 'shufflenet_v2_x0_5', 'shufflenet_v2_x1_0', 'shufflenet_v2_x1_5', 'shufflenet_v2_x2_0', 'swin_t', 'swin_s', 'swin_b', 'keypointrcnn_resnet50_fpn', 'maskrcnn_resnet50_fpn_v2', 'retinanet_resnet50_fpn_v2']
 ```
+
+## YOLO v7
+
+This script provides a basic example of pruning YOLOv7, but it does not include any code for fine-tuning. As such, it is intended as a starting point for those interested in exploring YOLOv7 pruning, and further work will be needed to fintune the pruned model's performance after pruning.
+
+```bash
+git clone https://github.com/WongKinYiu/yolov7.git
+cp yolov7_detect_pruned.py yolov7/
+
+python detect_pruned.py --weights yolov7.pt --conf 0.25 --img-size 640 --source inference/images/horses.jpg
+```
+
