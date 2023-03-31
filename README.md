@@ -13,26 +13,26 @@ For more technical details, please refer to our preprint paper:
 Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or have any questions related to the paper. We are always happy to assist you and address any concerns you may have. 
 
 ### **Features:**
-* Structural (Channel) pruning for [CNNs](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L19) (e.g. ResNet, DenseNet, Deeplab), [Transformers](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L11) (e.g. ViT) and Detectors (e.g. [Yolov7](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/prunability/yolov7_train_pruned.py), [FasterRCNN, SSD](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L92))
-* High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupPruner](https://arxiv.org/abs/2301.12900) (a simple pruner used in our paper), RandomPruner, etc.
-* Graph tracing and dependency modeling.
-* Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
-* Supported operations: split, concatenation, skip connection, flatten, all element-wise ops, etc.
-* [Low-level pruning functions](https://github.com/VainF/Torch-Pruning/blob/master/torch_pruning/pruner/function.py)
-* [Benchmarks](benchmarks) and [tutorials](tutorials)
-* A [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for structrual pruning.
+- [x] Structural (Channel) pruning for [CNNs](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L19) (e.g. ResNet, DenseNet, Deeplab), [Transformers](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L11) (e.g. ViT) and Detectors (e.g. [Yolov7](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/prunability/yolov7_train_pruned.py), [FasterRCNN, SSD](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L92))
+- [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupPruner](https://arxiv.org/abs/2301.12900) (a simple pruner used in our paper), RandomPruner, etc.
+- [x] Graph tracing and dependency modeling.
+- [x] Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
+- [x] Supported operations: split, concatenation, skip connection, flatten, all element-wise ops, etc.
+- [x] [Low-level pruning functions](https://github.com/VainF/Torch-Pruning/blob/master/torch_pruning/pruner/function.py)
+- [x] [Benchmarks](benchmarks) and [tutorials](tutorials)
+- [x] A [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for structrual pruning.
 
 ### **Plans:**
 **We have a wealth of ideas, but unfortunately, only a handful of contributors at the moment. We hope to attract more talented guys to join us in bringing these ideas to fruition and making Torch-Pruning a practical library.**
-* A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
-* More Detectors (We are working on the pruning of YOLO series such as YOLOv7 :heavy_check_mark:, YOLOv8)
-* Pruning from Scratch / at Initialization.
-* Language, Speech and Generative Models.
-* More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243), etc.
-* More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
-* More Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
-* Block/Layer/Depth Pruning
-* Pruning benchmarks for CIFAR, ImageNet and COCO.
+- [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
+- [ ] More Detectors (We are working on the pruning of YOLO series such as YOLOv7 :heavy_check_mark:, YOLOv8)
+- [ ] Pruning from Scratch / at Initialization [ ].
+- [ ] Language, Speech and Generative Models.
+- [ ] More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243), etc.
+- [ ] More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
+- [ ] More Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
+- [ ] Block/Layer/Depth Pruning
+- [ ] Pruning benchmarks for CIFAR, ImageNet and COCO.
 
 ## Installation
 ```bash
