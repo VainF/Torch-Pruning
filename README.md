@@ -15,18 +15,18 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 ### **Features:**
 - [x] Structural (Channel) pruning for [CNNs](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L19) (e.g. ResNet, DenseNet, Deeplab), [Transformers](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L11) (e.g. ViT) and Detectors (e.g. [Yolov7](https://github.com/VainF/Torch-Pruning/blob/7c079d6963909f5204ba68b974016cb739caec14/benchmarks/prunability/yolov7_train_pruned.py#L102), [FasterRCNN, SSD](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L92))
 - [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupPruner](https://arxiv.org/abs/2301.12900) (a simple pruner used in our paper), RandomPruner, etc.
-- [x] Graph tracing and dependency modeling.
+- [x] Computational Graph Tracing and Dependency Modeling.
 - [x] Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
-- [x] Supported operations: split, concatenation, skip connection, flatten, all element-wise ops, etc.
+- [x] Supported operations: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops, etc.
 - [x] [Low-level pruning functions](https://github.com/VainF/Torch-Pruning/blob/master/torch_pruning/pruner/function.py)
 - [x] [Benchmarks](benchmarks) and [tutorials](tutorials)
-- [x] A [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for structrual pruning.
+- [x] A [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for practical structrual pruning.
 
 ### **Plans:**
 **We have a wealth of ideas, but unfortunately, only a handful of contributors at the moment. We hope to attract more talented guys to join us in bringing these ideas to fruition and making Torch-Pruning a practical library.**
 - [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
 - [ ] More Detectors (We are working on the pruning of YOLO series such as YOLOv7 :heavy_check_mark:, YOLOv8)
-- [ ] Pruning from Scratch / at Initialization [ ].
+- [ ] Pruning from Scratch / at Initialization.
 - [ ] Language, Speech and Generative Models.
 - [ ] More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243), etc.
 - [ ] More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
@@ -49,7 +49,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. How it works
 
-In complex network structures, dependencies can arise among groups of parameters, necessitating their simultaneous pruning. Our work addresses this challenge by providing an automated mechanism for grouping parameters to facilitate their efficient removal for acceleration. Specifically, Torch-Pruning accomplishes this by forwarding your model with a fake input, tracing the network to establish a graph, and recording the dependencies between layers. When you prune a single layer, Torch-Pruning identifies and groups all coupled layers by returning a `Group`. Moreover, all pruning indices will be automatically transformed and aligned if operations like torch.split or torch.cat are present. 
+In complex network structures, dependencies can arise among groups of parameters, necessitating their simultaneous pruning. Our work addresses this challenge by providing an automated mechanism for grouping parameters to facilitate their efficient removal for acceleration. Specifically, Torch-Pruning accomplishes this by forwarding your model with a fake input, tracing the network to establish a graph, and recording the dependencies between layers. When you prune a single layer, Torch-Pruning identifies and groups all coupled layers by returning a `tp.Group`. Moreover, all pruning indices will be automatically aligned if operations like torch.split or torch.cat are present. 
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
@@ -90,7 +90,7 @@ torch.save(model, 'model.pth') # save the model object
 model_loaded = torch.load('model.pth') # no load_state_dict
 ```
   
-This example demonstrates the fundamental pruning pipeline using DepGraph. Note that resnet.conv1 is coupled with several layers. Let's print the resulting group and observe how a pruning operation "triggers" other ones. In the following example, ``A => B`` means the pruning operation ``A`` triggers the pruning operation ``B``. group[0] refers to the pruning root specified by ``DG.get_pruning_group``.
+This example demonstrates the fundamental pruning pipeline using DepGraph. Note that resnet.conv1 is coupled with several layers. Let's print the resulting group and observe how a pruning operation "triggers" other ones. In the following outputs, ``A => B`` means the pruning operation ``A`` triggers the pruning operation ``B``. group[0] refers to the pruning root specified by ``DG.get_pruning_group``.
 
 ```
 --------------------------------
@@ -117,7 +117,7 @@ This example demonstrates the fundamental pruning pipeline using DepGraph. Note 
 For more details about grouping, please refer to [tutorials/2 - Exploring Dependency Groups](https://github.com/VainF/Torch-Pruning/blob/master/tutorials/2%20-%20Exploring%20Dependency%20Groups.ipynb)
 
 #### How to scan all groups:
-Just like what we do in the [MetaPruner](https://github.com/VainF/Torch-Pruning/blob/b607ae3aa61b9dafe19d2c2364f7e4984983afbf/torch_pruning/pruner/algorithms/metapruner.py#L197), one can use ``DG.get_all_groups(ignored_layers, root_module_types)`` to iterate all groups. Specifically, each group will begin with a layer that matches the type specified by the "root_module_types" parameter. These groups contain a full index list ``idxs=[0,1,2,3,...,K]`` that covers all prunable parameters. If you are intended to prune partial channels/dimensions, you can use ``group.prune(idxs=idxs)``.
+Just like what we do in the [MetaPruner](https://github.com/VainF/Torch-Pruning/blob/b607ae3aa61b9dafe19d2c2364f7e4984983afbf/torch_pruning/pruner/algorithms/metapruner.py#L197), one can use ``DG.get_all_groups(ignored_layers, root_module_types)`` to scan all groups sequentially. Each group will begin with a layer that matches a type in the "root_module_types" parameter. By default, these groups contain a full index list ``idxs=[0,1,2,3,...,K]`` that covers all prunable parameters. If you are intended to prune only partial channels/dimensions, you can use ``group.prune(idxs=idxs)``.
 
 ```python
 for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[nn.Conv2d, nn.Linear]):
