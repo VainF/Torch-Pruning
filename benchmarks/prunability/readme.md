@@ -18,7 +18,7 @@ Unsuccessful Pruning: 12 Models
 
 ## YOLO v7
 
-This script (adapted from [yolov7 - detect.py](https://github.com/WongKinYiu/yolov7/blob/main/detect.py)) provides a basic example of pruning YOLOv7, but it does not include any code for fine-tuning. As such, it is intended as a starting point for those interested in exploring YOLOv7 pruning, and further work are required to fintune the pruned model's performance using the [official training script](https://github.com/WongKinYiu/yolov7/blob/main/train.py). 
+This script (adapted from [yolov7 - detect.py](https://github.com/WongKinYiu/yolov7/blob/main/detect.py)) provides a basic example of pruning YOLOv7, but it does not include any code for fine-tuning. As such, it is intended as a starting point for those interested in exploring YOLOv7 pruning, and further efforts are required to fintune the pruned model's performance using the [official training script](https://github.com/WongKinYiu/yolov7/blob/main/train.py). 
 
 ```bash
 git clone https://github.com/WongKinYiu/yolov7.git
