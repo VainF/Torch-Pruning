@@ -1,4 +1,4 @@
-# Please put this script under official yolov7 repo.
+# Please put this script under official yolov7 repo: https://github.com/WongKinYiu/yolov7
 # python detect_pruned.py --weights yolov7.pt --conf 0.25 --img-size 640 --source inference/images/horses.jpg &> output.log
 
 import argparse
