@@ -37,7 +37,8 @@ def detect(save_img=False):
     # Load model
     model = attempt_load(weights, map_location=device)  # load FP32 model
     print(model)
-
+    
+    ################################################################################
     # Pruning
     example_inputs = torch.randn(1, 3, 224, 224).to(device)
     imp = tp.importance.MagnitudeImportance(p=2) # L2 norm pruning
@@ -65,7 +66,8 @@ def detect(save_img=False):
     pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(model, example_inputs)
     print("After Pruning: MACs=%f, #Params=%f"%(pruned_macs, pruned_nparams))
     print(model)
-
+    ####################################################################################
+    
     stride = int(model.stride.max())  # model stride
     imgsz = check_img_size(imgsz, s=stride)  # check img_size
 
