@@ -18,13 +18,14 @@ Unsuccessful Pruning: 12 Models
 
 ## YOLO v7
 
-This script (adapted from [yolov7 - detect.py](https://github.com/WongKinYiu/yolov7/blob/main/detect.py)) provides a basic example of pruning YOLOv7, but it does not include any code for fine-tuning. As such, it is intended as a starting point for those interested in exploring YOLOv7 pruning, and further work are required to fintune the pruned model's performance using the [official training script](https://github.com/WongKinYiu/yolov7/blob/main/train.py). 
+This script (adapted from [yolov7 - detect.py](https://github.com/WongKinYiu/yolov7/blob/main/detect.py)) provides a basic example of pruning YOLOv7, but it does not include any code for fine-tuning. As such, it is intended as a starting point for those interested in exploring YOLOv7 pruning, and further efforts are required to fintune the pruned model's performance using the [official training script](https://github.com/WongKinYiu/yolov7/blob/main/train.py). 
 
 ```bash
 git clone https://github.com/WongKinYiu/yolov7.git
 cp yolov7_detect_pruned.py yolov7/
 
-cd yolov7
+# We only prune and test the YOLOv7 model in this script. COCO dataset is not required.
+cd yolov7 
 python yolov7_detect_pruned.py --weights yolov7.pt --conf 0.25 --img-size 640 --source inference/images/horses.jpg
 ```
 
