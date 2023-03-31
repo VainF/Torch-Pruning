@@ -337,7 +337,7 @@ class ParameterPruner(BasePruningFunc):
         keep_idxs = list(set(range(tensor.data.shape[self.dim])) - set(idxs))
         keep_idxs.sort()
         tensor.data = torch.index_select(
-            tensor.data, self.dim, torch.LongTensor(keep_idxs))
+            tensor.data, self.dim, torch.LongTensor(keep_idxs).to(tensor.device))
         return tensor
 
     prune_in_channels = prune_out_channels

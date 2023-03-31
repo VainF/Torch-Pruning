@@ -292,7 +292,7 @@ class DependencyGraph(object):
 
         # Build dependency graph
         self._build_dependency(self.module2node)
-        
+
         # Update index mapping for torch.cat/split/chunck/...
         self.update_index_mapping()
         return self
@@ -597,13 +597,17 @@ class DependencyGraph(object):
             for node in module2node.values():
                 if node.type in (ops.OPTYPE.CONCAT, ops.OPTYPE.SPLIT):
                     stack = [node]
+                    visited = set()
                     while len(stack) > 0:
                         n = stack.pop(-1)
+                        visited.add(n)
                         if n.type == ops.OPTYPE.PARAMETER and len(n.module.shape) == 3:
                             node.enable_index_mapping = False
                             break
                         else:
-                            stack.extend(n.inputs)
+                            for ni in n.inputs:
+                                if ni not in visited:
+                                    stack.append(ni)
         return module2node
 
     def _trace_computational_graph(self, module2node, grad_fn_root, gradfn2module, reused):
