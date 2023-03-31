@@ -80,7 +80,7 @@ Model(
     )
   )
 )
-Before Pruning: MACs=6.413721 G, #Params=0.036905
-After Pruning: MACs=1.639895 G, #Params=0.009347
+Before Pruning: MACs=6.413721 G, #Params=0.036905 G
+After Pruning: MACs=1.639895 G, #Params=0.009347 G
 ```
 
