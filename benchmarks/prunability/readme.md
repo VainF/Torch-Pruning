@@ -24,6 +24,6 @@ This script provides a basic example of pruning YOLOv7, but it does not include 
 git clone https://github.com/WongKinYiu/yolov7.git
 cp yolov7_detect_pruned.py yolov7/
 
-python detect_pruned.py --weights yolov7.pt --conf 0.25 --img-size 640 --source inference/images/horses.jpg
+python yolov7_detect_pruned.py --weights yolov7.pt --conf 0.25 --img-size 640 --source inference/images/horses.jpg
 ```
 
