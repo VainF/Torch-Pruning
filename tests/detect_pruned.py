@@ -40,7 +40,7 @@ def detect(save_img=False):
 
     # Pruning
     example_inputs = torch.randn(1, 3, 224, 224).to(device)
-    imp = tp.importance.MagnitudeImportance(p=2)
+    imp = tp.importance.MagnitudeImportance(p=2) # L2 norm pruning
 
     ignored_layers = []
     from models.yolo import Detect
