@@ -18,15 +18,22 @@ Unsuccessful Pruning: 12 Models
 
 ## YOLO v7
 
-This script (adapted from [yolov7 - detect.py](https://github.com/WongKinYiu/yolov7/blob/main/detect.py)) provides a basic example of pruning YOLOv7, but it does not include any code for fine-tuning. As such, it is intended as a starting point for those interested in exploring YOLOv7 pruning, and further efforts are required to fintune the pruned model's performance using the [official training script](https://github.com/WongKinYiu/yolov7/blob/main/train.py). 
+The following scripts (adapted from [yolov7/detect.py](https://github.com/WongKinYiu/yolov7/blob/main/detect.py) and [yolov7/train.py](https://github.com/WongKinYiu/yolov7/blob/main/train.py)) provides the basic examples of pruning YOLOv7.
+
+Note: [yolov7_detect_pruned.py](https://github.com/VainF/Torch-Pruning/blob/master/benchmarks/prunability/yolov7_detect_pruned.py) does not include any code for fine-tuning. 
 
 ```bash
 git clone https://github.com/WongKinYiu/yolov7.git
 cp yolov7_detect_pruned.py yolov7/
-
-# We only prune and test the YOLOv7 model in this script. COCO dataset is not required.
+cp yolov7_train_pruned.py yolov7/
 cd yolov7 
+
+# Test only: We only prune and test the YOLOv7 model in this script. COCO dataset is not required.
 python yolov7_detect_pruned.py --weights yolov7.pt --conf 0.25 --img-size 640 --source inference/images/horses.jpg
+
+# Training with pruned yolov7 (The training part is not validated)
+# Please download the pretrained yolov7_training.pt from https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7.pt.
+python yolov7_train_pruned.py --workers 8 --device 0 --batch-size 1 --data data/coco.yaml --img 640 640 --cfg cfg/training/yolov7.yaml --weights 'yolov7_training.pt' --name yolov7 --hyp data/hyp.scratch.p5.yaml
 ```
 
 Outputs:
