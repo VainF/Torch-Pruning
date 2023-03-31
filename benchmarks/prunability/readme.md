@@ -36,7 +36,7 @@ python yolov7_detect_pruned.py --weights yolov7.pt --conf 0.25 --img-size 640 --
 python yolov7_train_pruned.py --workers 8 --device 0 --batch-size 1 --data data/coco.yaml --img 640 640 --cfg cfg/training/yolov7.yaml --weights 'yolov7_training.pt' --name yolov7 --hyp data/hyp.scratch.p5.yaml
 ```
 
-Outputs:
+Outputs of yolov7_detect_pruned.py:
 ```
 Model(
   (model): Sequential(
