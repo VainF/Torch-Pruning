@@ -1,4 +1,4 @@
-# Awesome Structural Pruning
+# Practical Structural Pruning
 
 Welcome to the resource list for structural pruning, which is continually being updated. If you have any useful resources, papers, or repositories related to structural pruning and would like to share them with other users, please feel free to open a new pull request or issue.
 
@@ -18,7 +18,6 @@ Welcome to the resource list for structural pruning, which is continually being 
 | Title | Authors | Venue | Code | 
 |:--    |:--:  |:--:    |:--: |
 | [Gate Decorator: Global Filter Pruning Method for Accelerating Deep Convolutional Neural Networks](https://arxiv.org/abs/1909.08174) | Zhonghui You | NeurIPS'19 | [pytorch](https://github.com/youzhonghui/gate-decorator-pruning) |
-| [ResNet Can Be Pruned 60x: Introducing Network Purification and Unused Path Removal (P-RM) after Weight Pruning](https://arxiv.org/pdf/1905.00136.pdf) | Xiaolong Ma | ICML'19 | N/A |
 | [Neural Pruning via Growing Regularization](https://arxiv.org/abs/2012.09243) | Huan Wang | ICLR'21 | [pytorch](https://github.com/mingsun-tse/regularization-pruning) |
 | [Group Fisher Pruning for Practical Network Compression](https://arxiv.org/abs/2108.00708) |  Liyang Liu | ICML'21 | [pytorch](https://github.com/jshilong/FisherPruning) | 
 | [Only Train Once: A One-Shot Neural Network Training And Pruning Framework](https://papers.nips.cc/paper/2021/hash/a376033f78e144f494bfc743c0be3330-Abstract.html) | Tianyi Chen | NeurIPS'21 |  [pytorch](https://github.com/tianyic/only_train_once) |
@@ -29,9 +28,11 @@ Welcome to the resource list for structural pruning, which is continually being 
 
 ### 3. YOLO
 
-| Title | Authors | Venue | Code | 
-|:--    |:--:  |:--:    |:--: |
-| [Performance-aware Approximation of Global Channel Pruning for Multitask CNNs](https://arxiv.org/abs/1909.08174) | Hancheng Ye | TPAMI'23 | [pytorch](https://github.com/HankYe/PAGCP) |
+| Type | Title | Authors | Venue | Code | 
+|:--:   |:--    |:--:  |:--:    |:--: |
+| YOLOv5 | [Performance-aware Approximation of Global Channel Pruning for Multitask CNNs](https://arxiv.org/abs/1909.08174) | Hancheng Ye | TPAMI'23 | [pytorch](https://github.com/HankYe/PAGCP) |
+| YOLOv7 | [Torch-Pruning: benchmarks/prunability/yolov7](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/prunability) | - | - | [pytorch](https://github.com/VainF/Torch-Pruning/blob/master/benchmarks/prunability/yolov7_train_pruned.py) |
+
 
 <br>
 

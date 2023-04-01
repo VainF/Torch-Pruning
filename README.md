@@ -3,7 +3,7 @@
 <img src="assets/intro.png" width="45%">
 </div>
 
-Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including **Vision Transformers, Yolov7, FasterRCNN, SSD, ResNet, DenseNet, ConvNext, RegNet, ResNext, FCN, DeepLab, VGG**, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [benchmarks/prunability](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/prunability). So far, TP is compatible with **73/85=85.8%** models from Torchvision 0.13.1. In this repo, a [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for practical structural pruning is continuesly being updated.
+Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including **Vision Transformers, Yolov7, FasterRCNN, SSD, ResNet, DenseNet, ConvNext, RegNet, ResNext, FCN, DeepLab, VGG**, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [benchmarks/prunability](benchmarks/prunability). So far, TP is compatible with **73/85=85.8%** models from Torchvision 0.13.1. In this repo, a [resource list](practical_structural_pruning.md) for practical structural pruning is continuesly being updated.
 
 For more technical details, please refer to our preprint paper: 
 
@@ -13,14 +13,15 @@ For more technical details, please refer to our preprint paper:
 Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or have any questions related to the paper. We are always happy to assist you and address any concerns you may have. 
 
 ### **Features:**
-- [x] Structural (Channel) pruning for [CNNs](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L19) (e.g. ResNet, DenseNet, Deeplab), [Transformers](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L11) (e.g. ViT) and Detectors (e.g. [Yolov7](https://github.com/VainF/Torch-Pruning/blob/7c079d6963909f5204ba68b974016cb739caec14/benchmarks/prunability/yolov7_train_pruned.py#L102), [FasterRCNN, SSD](https://github.com/VainF/Torch-Pruning/blob/cb8006ade8b31100392576f8e8cb3ae1d7e74abf/benchmarks/prunability/torchvision_pruning.py#L92))
+- [x] Structural (Channel) pruning for [CNNs](benchmarks/prunability/torchvision_pruning.py#L19) (e.g. ResNet, DenseNet, Deeplab), [Transformers](benchmarks/prunability/torchvision_pruning.py#L11) (e.g. ViT) and Detectors (e.g. [Yolov7](benchmarks/prunability/yolov7_train_pruned.py#L102), [FasterRCNN, SSD](benchmarks/prunability/torchvision_pruning.py#L92))
 - [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupPruner](https://arxiv.org/abs/2301.12900) (a simple pruner used in our paper), RandomPruner, etc.
 - [x] Computational Graph Tracing and Dependency Modeling.
 - [x] Supported modules: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 - [x] Supported operations: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops, etc.
-- [x] [Low-level pruning functions](https://github.com/VainF/Torch-Pruning/blob/master/torch_pruning/pruner/function.py)
+- [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
 - [x] [Benchmarks](benchmarks) and [tutorials](tutorials)
-- [x] A [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for practical structrual pruning.
+- [x] A [resource list](practical_structural_pruning.md) for practical structrual pruning.
+- [x] Automatical pruning of unwrapped nn.Parameter that does not belong to any standard layers or ops.
 
 ### **Plans:**
 **We have a wealth of ideas, but unfortunately, only a handful of contributors at the moment. We hope to attract more talented guys to join us in bringing these ideas to fruition and making Torch-Pruning a practical library.**
