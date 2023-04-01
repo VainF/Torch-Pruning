@@ -40,8 +40,6 @@ print(pruning_group)
 # execute this group (prune the model)
 pruning_group.prune()
 
-print(model)
-
 print("The pruned model: \n", model)
 print("Output:")
 for o in model(torch.randn(1, 128), torch.randn(1, 64)):

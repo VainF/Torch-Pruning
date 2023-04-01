@@ -155,25 +155,25 @@ if __name__ == "__main__":
                 model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.backbone.fpn, model.roi_heads
             ])
 
+        # For ViT: Rounding the number of channels to the nearest multiple of num_heads
+        round_to = None
+        if isinstance( model, VisionTransformer): round_to = model.encoder.layers[0].num_heads
+
         #########################################
-        # Register unwrapped nn.Parameters
+        # (Optional) Register unwrapped nn.Parameters 
+        # TP will automatically detect unwrapped parameters and prune the last dim for you by default.
+        # If you want to prune other dims, you can register them here.
         #########################################
         unwrapped_parameters = None
-        round_to = None
-        if model_name=='ssd300_vgg16':
-            unwrapped_parameters=[model.backbone.scale_weight]
-            tp.function.PrunerBox[tp.ops.OPTYPE.PARAMETER].dim = 0
-        if isinstance(
-            model, VisionTransformer
-        ): 
-            round_to = model.encoder.layers[0].num_heads
-            unwrapped_parameters = [model.class_token, model.encoder.pos_embedding]
-        elif isinstance(model, ConvNeXt):
-            unwrapped_parameters = []
-            for m in model.modules():
-                if isinstance(m, CNBlock):
-                    unwrapped_parameters.append(m.layer_scale)
-            tp.function.PrunerBox[tp.ops.OPTYPE.PARAMETER].dim = 0
+        #if model_name=='ssd300_vgg16':
+        #    unwrapped_parameters=[ (model.backbone.scale_weight, 0) ] # pruning the 0-th dim of scale_weight
+        #if isinstance( model, VisionTransformer):
+        #    unwrapped_parameters = [ (model.class_token, 0), (model.encoder.pos_embedding, 0)]
+        #elif isinstance(model, ConvNeXt):
+        #    unwrapped_parameters = []
+        #    for m in model.modules():
+        #        if isinstance(m, CNBlock):
+        #            unwrapped_parameters.append( (m.layer_scale, 0) )
 
         #########################################
         # Build network pruners
@@ -227,6 +227,10 @@ if __name__ == "__main__":
     successful = []
     unsuccessful = []
     for model_name, entry in entries.items():
+        if 'swin' in model_name.lower(): # stuck
+            unsuccessful.append(model_name)
+            continue
+
         if not callable(entry):
             continue
         if "inception" in model_name:

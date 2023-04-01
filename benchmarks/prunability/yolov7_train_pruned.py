@@ -115,8 +115,7 @@ def train(hyp, opt, device, tb_writer=None):
     unwrapped_parameters = []
     for m in model.modules():
         if isinstance(m, (ImplicitA,ImplicitM)):
-            unwrapped_parameters.append(m.implicit)
-            tp.function.PrunerBox[tp.ops.OPTYPE.PARAMETER].dim = 1
+            unwrapped_parameters.append((m.implicit,1)) # pruning 1st dimension of implicit matrix
 
     iterative_steps = 1 # progressive pruning
     pruner = tp.pruner.MagnitudePruner(

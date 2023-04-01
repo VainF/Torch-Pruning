@@ -29,6 +29,7 @@ class Node(object):
         # For Dependency Graph
         self.dependencies = []  # Adjacency List
         self.enable_index_mapping = True
+        self.pruning_dim = -1
 
     @property
     def name(self):
@@ -100,6 +101,7 @@ class Dependency(Edge):
         self.index_mapping = index_mapping
 
     def __call__(self, idxs: list):
+        self.handler.__self__.pruning_dim = self.target.pruning_dim
         result = self.handler(
             self.target.module,
             idxs,
@@ -224,6 +226,7 @@ class Group(object):
     def __call__(self):
         return self.prune()
 
+UnwrappedParameters = namedtuple('UnwrappedParameters', ['parameters', 'pruning_dim'])
 
 class DependencyGraph(object):
 
@@ -247,7 +250,7 @@ class DependencyGraph(object):
         forward_fn: typing.Callable[[
             torch.nn.Module, typing.Union[torch.Tensor, typing.Sequence]], torch.Tensor] = None,
         output_transform: typing.Callable = None,
-        unwrapped_parameters: typing.List[nn.Parameter] = None,
+        unwrapped_parameters: typing.Dict[nn.Parameter, int] = None,
         customized_pruners: typing.Dict[typing.Any,
                                         function.BasePruningFunc] = None,
         verbose: bool = True,
@@ -268,10 +271,34 @@ class DependencyGraph(object):
         self._module2name = {module: name for (
             name, module) in model.named_modules()}
 
-        # user-defined nn.Parameters & customized modules
+        # Detect unwrapped nn.parameters
+        wrapped_parameters = []
+        prunable_module_types = self.REGISTERED_PRUNERS.keys()
+        for m in self.model.modules():
+            op_type = ops.module2type(m)
+            if ( op_type in prunable_module_types and op_type!=ops.OPTYPE.ELEMENTWISE ) or m.__class__ in self.CUSTOMIZED_PRUNERS.keys():
+                wrapped_parameters.extend(list(m.parameters()))
+        unwrapped_detected = []
+        param_to_name = {}
+        for name, p in self.model.named_parameters():
+            is_wrapped = False
+            for p_wrapped in wrapped_parameters:
+                if p is p_wrapped:
+                    is_wrapped = True
+                    break
+            if not is_wrapped:
+                unwrapped_detected.append(p)
+                param_to_name[p] = name
         if unwrapped_parameters is None:
             unwrapped_parameters = []
+
+        unwrapped_detected = list( set(unwrapped_detected) - set([p for (p, _) in unwrapped_parameters]) )
+        if len(unwrapped_detected)>0:
+            warnings.warn("Unwrapped parameters detected: {}.\n\n DepGraph requires an unwrapped_parameter list to determine the pruning_dim of nn.Parameters. By default, the last dim of a parameter matrix will be pruned.".format([param_to_name[p] for p in unwrapped_detected]))
+        for p in unwrapped_detected:
+            unwrapped_parameters.append( UnwrappedParameters(parameters=p, pruning_dim=-1) ) # prune the last dim by daufault
         self.unwrapped_parameters = unwrapped_parameters
+        # Register customized pruners
         if customized_pruners is not None:
             for customized_module, customized_pruner in self.customized_pruners.items():
                 self.register_customized_layer(
@@ -674,12 +701,11 @@ class DependencyGraph(object):
                             and "accumulategrad" in f[0].name().lower()
                         ):  # a leaf variable.
                             is_unwrapped_param = False
-                            for (j, p) in enumerate(self.unwrapped_parameters):
+                            for (j, (p, dim)) in enumerate(self.unwrapped_parameters):
                                 if f[0].variable is p:
                                     is_unwrapped_param = True
                                     gradfn2module[f[0]] = p
-                                    self._module2name[p] = "UnwrappedParameter_{}".format(
-                                        j)
+                                    self._module2name[p] = "UnwrappedParameter_{}".format(j)
                             if not is_unwrapped_param:
                                 continue
                         input_node = create_node_if_not_exists(f[0])
@@ -687,6 +713,9 @@ class DependencyGraph(object):
                         input_node.add_output(node)
                         processing_stack.append(f[0])
             visited.add(grad_fn)
+        
+        for (param, dim) in self.unwrapped_parameters:
+            module2node[param].pruning_dim = dim
         return module2node
 
     def update_index_mapping(self):

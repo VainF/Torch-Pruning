@@ -39,8 +39,8 @@ __all__=[
 class BasePruningFunc(ABC):
     TARGET_MODULES = ops.TORCH_OTHERS  # None
 
-    def __init__(self, dim=1):
-        self.dim = dim
+    def __init__(self, pruning_dim=1):
+        self.pruning_dim = pruning_dim
 
     @abstractclassmethod
     def prune_out_channels(self, layer: nn.Module, idxs: Sequence[int]):
@@ -194,15 +194,15 @@ class BatchnormPruner(BasePruningFunc):
 class LayernormPruner(BasePruningFunc):
     TARGET_MODULES = ops.TORCH_LAYERNORM
 
-    def __init__(self, metrcis=None, dim=-1):
+    def __init__(self, metrcis=None, pruning_dim=-1):
         super().__init__(metrcis)
-        self.dim = dim
+        self.pruning_dim = pruning_dim
 
     def check(self, layer, idxs):
-        layer.dim = self.dim
+        layer.dim = self.pruning_dim
 
     def prune_out_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
-        pruning_dim = self.dim
+        pruning_dim = self.pruning_dim
         if len(layer.normalized_shape) < -pruning_dim:
             return layer
         num_features = layer.normalized_shape[pruning_dim]
@@ -224,10 +224,10 @@ class LayernormPruner(BasePruningFunc):
     prune_in_channels = prune_out_channels
 
     def get_out_channels(self, layer):
-        return layer.normalized_shape[self.dim]
+        return layer.normalized_shape[self.pruning_dim]
 
     def get_in_channels(self, layer):
-        return layer.normalized_shape[self.dim]
+        return layer.normalized_shape[self.pruning_dim]
 
 class PReLUPruner(BasePruningFunc):
     TARGET_MODULES = ops.TORCH_PRELU
@@ -330,23 +330,23 @@ class LSTMPruner(BasePruningFunc):
 
 class ParameterPruner(BasePruningFunc):
     TARGET_MODULES = ops.TORCH_PARAMETER
-    def __init__(self, dim=-1):
-        super().__init__(dim=dim)
+    def __init__(self, pruning_dim=-1):
+        super().__init__(pruning_dim=pruning_dim)
         
     def prune_out_channels(self, tensor, idxs: list) -> nn.Module:
-        keep_idxs = list(set(range(tensor.data.shape[self.dim])) - set(idxs))
+        keep_idxs = list(set(range(tensor.data.shape[self.pruning_dim])) - set(idxs))
         keep_idxs.sort()
         tensor.data = torch.index_select(
-            tensor.data, self.dim, torch.LongTensor(keep_idxs).to(tensor.device))
+            tensor.data, self.pruning_dim, torch.LongTensor(keep_idxs).to(tensor.device))
         return tensor
 
     prune_in_channels = prune_out_channels
 
     def get_out_channels(self, parameter):
-        return parameter.shape[self.dim]
+        return parameter.shape[self.pruning_dim]
 
     def get_in_channels(self, parameter):
-        return parameter.shape[self.dim]
+        return parameter.shape[self.pruning_dim]
 
 
 class MultiheadAttentionPruner(BasePruningFunc):
