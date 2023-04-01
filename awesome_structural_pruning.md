@@ -29,9 +29,11 @@ Welcome to the resource list for structural pruning, which is continually being 
 
 ### 3. YOLO
 
-| Title | Authors | Venue | Code | 
-|:--    |:--:  |:--:    |:--: |
-| [Performance-aware Approximation of Global Channel Pruning for Multitask CNNs](https://arxiv.org/abs/1909.08174) | Hancheng Ye | TPAMI'23 | [pytorch](https://github.com/HankYe/PAGCP) |
+| Type | Title | Authors | Venue | Code | 
+|:--:   |:--    |:--:  |:--:    |:--: |
+| YOLOv5 | [Performance-aware Approximation of Global Channel Pruning for Multitask CNNs](https://arxiv.org/abs/1909.08174) | Hancheng Ye | TPAMI'23 | [pytorch](https://github.com/HankYe/PAGCP) |
+| YOLOv7 | [Torch-Pruning: benchmarks/prunability/yolov7](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/prunability) | - | - | [pytorch](https://github.com/VainF/Torch-Pruning/blob/master/benchmarks/prunability/yolov7_train_pruned.py) |
+
 
 <br>
 
