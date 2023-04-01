@@ -21,6 +21,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 - [x] [Low-level pruning functions](https://github.com/VainF/Torch-Pruning/blob/master/torch_pruning/pruner/function.py)
 - [x] [Benchmarks](benchmarks) and [tutorials](tutorials)
 - [x] A [resource list](https://github.com/VainF/Torch-Pruning/blob/master/awesome_structural_pruning.md) for practical structrual pruning.
+- [x] Automatical pruning of unwrapped nn.Parameter that does not belong to any standard layers or ops.
 
 ### **Plans:**
 **We have a wealth of ideas, but unfortunately, only a handful of contributors at the moment. We hope to attract more talented guys to join us in bringing these ideas to fruition and making Torch-Pruning a practical library.**
