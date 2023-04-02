@@ -23,6 +23,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 | Modified-Yolov4Tiny-RaspberryPi | [project](https://github.com/benedettaliberatori/Modified-Yolov4Tiny-RaspberryPi) |
 | model_pruning | [project](https://github.com/liugt123/model_prune) |
 
+<br>
 
 ### 1. Benchmark & Survey & Awesome List
 
