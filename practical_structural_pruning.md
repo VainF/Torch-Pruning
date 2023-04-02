@@ -5,7 +5,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 <br>
 
 ### 0. Projects/Papers that use Torch-Pruning
-| Ttle | URL | 
+| Title | URL | 
 |:--    | :--: |
 | Pruning-for-YOLOX | [project](https://github.com/YINYIPENG-EN/Pruning_for_YOLOX) |
 | mobile-yolov5-pruning-distillation | [project](https://github.com/Syencil/mobile-yolov5-pruning-distillation) |
