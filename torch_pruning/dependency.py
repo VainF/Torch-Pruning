@@ -778,8 +778,13 @@ class DependencyGraph(object):
         if out_channels==in_channels: return
 
         # Only Supports 2D/4D tensors
-        if len(reshape_node.grad_fn._saved_self_sizes)!=1 and len(reshape_node.grad_fn._saved_self_sizes)!=4:
-            return
+        if hasattr(reshape_node.grad_fn, '_saved_self_sizes'): 
+            if len(reshape_node.grad_fn._saved_self_sizes)!=1 and len(reshape_node.grad_fn._saved_self_sizes)!=4:
+                return
+        else: # old pytorch versions
+            # TODO: shape verification
+            pass
+
         
         # Flatten
         if out_channels > in_channels:
