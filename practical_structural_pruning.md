@@ -21,6 +21,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 | Melanoma detection CNN using PyTorch | [project](https://github.com/98munozpatricia/Melanoma/tree/7d9899d0a45bb2939718ffbe6c69319155dac763) |
 | KamalEngine | [project](https://github.com/zju-vipa/KamalEngine/tree/0276eb062595d52472090fbcbcedcd76db8cfd44) |
 | Modified-Yolov4Tiny-RaspberryPi | [project](https://github.com/benedettaliberatori/Modified-Yolov4Tiny-RaspberryPi) |
+| model_pruning | [project](https://github.com/liugt123/model_prune) |
 
 
 ### 1. Benchmark & Survey & Awesome List
