@@ -97,7 +97,7 @@ def train_model(
         model.parameters(),
         lr=lr,
         momentum=0.9,
-        weight_decay=weight_decay,
+        weight_decay=weight_decay if pruner is None else 0,
     )
     milestones = [int(ms) for ms in lr_decay_milestones.split(",")]
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
