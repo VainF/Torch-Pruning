@@ -259,7 +259,7 @@ Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 ||
 | Ours-L1 | 93.53 | 92.93 | -0.60 | 2.12x |
 | Ours-BN | 93.53 | 93.29 | -0.24 | 2.12x |
-| Ours-Group | 93.53 | *93.91 | +0.38 | 2.13x |
+| Ours-Group | 93.53 | 93.77 | +0.38 | 2.13x |
 
 Please refer to [benchmarks](benchmarks) for more details.
 

@@ -1,7 +1,7 @@
 # Benchmarks (Beta version)
 
 
-## ResNet-56 / CIFAR-10 / 2.00x
+## 1. ResNet-56 / CIFAR-10 / 2.00x
 
 | Method | Base (%) | Pruned (%) | $\Delta$ Acc (%) | Speed Up |
 |:--    |:--:  |:--:    |:--: |:--:      |
@@ -16,7 +16,15 @@
 ||
 | Ours-L1 | 93.53 | 92.93 | -0.60 | 2.12x |
 | Ours-BN | 93.53 | 93.29 | -0.24 | 2.12x |
-| Ours-Group | 93.53 | 93.91 | +0.38 | 2.13x |
+| **Ours-Group** | 93.53 | **93.77** | +0.38 | 2.13x |
+||
+| GBN [[9]](#9) | 93.10 |  92.77 | -0.33 | 2.51× |
+| AFP [[10]](#10)  | 93.93 | 92.94 | -0.99 | 2.56× |
+| C-SGD [[11]](#11) | 93.39 | 93.44 | +0.05 | 2.55× |
+| GReg-1 [[12]](#12)  | 93.36 | 93.18 | -0.18 | 2.55× |
+| GReg-2 [[12]](#12)  | 93.36 | 93.36 | -0.00 | 2.55× |
+||
+| **Ours-Group** | 93.53 | **93.64** | +0.11 | 2.57× |
 
 **Note 1:** $\text{speed up} = \frac{\text{Base MACs}}{\text{Pruned MACs}}$
 
@@ -34,24 +42,50 @@ python main.py --mode pretrain --dataset cifar10 --model resnet56 --lr 0.1 --tot
 #### - L1-Norm Pruner
 [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710)
 ```bash
-# bash scripts/prune/cifar/l1_norm_pruner.sh
+# 2.11x
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method l1 --speed-up 2.11 --global-pruning
 ```
 
 #### - BN Pruner
 [Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/abs/1708.06519)
 ```bash
-# bash scripts/prune/cifar/bn_pruner.sh
+# 2.11x
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method slim --speed-up 2.11 --global-pruning --reg 1e-5
 ```
 
 #### - Group Pruner (this work)
 ```bash
-# bash scripts/prune/cifar/group_lasso_pruner.sh
+# 2.11x
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_sl --speed-up 2.11 --global-pruning --reg 5e-4
+
+# 2.55x
+python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_sl --speed-up 2.55 --global-pruning --reg 5e-4
 ```
 
-## ResNet50 / ImageNet / 2.00 GMACs
+## 2. VGG-19 / CIFAR-100 / 8.8x
+
+| Method | Base (%) | Pruned (%) | $\Delta$ Acc (%) | Speed Up |
+|:--    |:--:  |:--:    |:--: |:--:      |
+| OBD [[13]](#13) | 73.34 | 60.70 | -12.64 | 5.73x |
+| OBD [[13]](#13) | 73.34 | 60.66 | -12.68 | 6.09x |
+| EigenD [[13]](#13) | 73.34 | 65.18 | -8.16 |  8.80× |
+| GReg-1 [[12]](#12) | 74.02 | 67.55 | -6.67 | 8.84× |
+| GReg-2 [[12]](#12) | 74.02 | 67.75 | -6.27 | 8.84× |
+||
+| Ours | 73.50 | 70.39  | -3.11 | 8.92× |
+
+#### - Pretraining
+```python
+python main.py --mode pretrain --dataset vgg19 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
+```
+
+#### - Group Pruner (this work)
+```bash
+# 8.84x
+python main.py --mode prune --model vgg19 --batch-size 128 --restore run/cifar10/pretrain/cifar100_vgg19.pth --dataset cifar100  --method group_sl --speed-up 8.84 --global-pruning --reg 5e-4
+```
+
+## 3. ResNet50 / ImageNet / 2.00 GMACs
 
 #### - L1 Pruner
 ```python
@@ -77,3 +111,13 @@ python -m torch.distributed.launch --nproc_per_node=4 --master_port 18119 --use_
 <a id="7">[7]</a> Soft filter pruning for accelerating deep convolutional 929 neural networks
 
 <a id="8">[8]</a> Resrep: Lossless cnn pruning via decoupling remembering and forgetting.
+
+<a id="9">[9]</a> Gate decorator: Global filter pruning method for accelerating deep convolutional neural networks.
+
+<a id="10">[10]</a> Auto-balanced filter pruning for efficient convolutional neural networks.
+
+<a id="11">[11]</a> Centripetal sgd for pruning very deep convolutional networks with complicated structure
+
+<a id="12">[12]</a> Neural pruning via growing regularization
+
+<a id="13">[13]</a>  Eigendamage: Structured pruning in the kroneckerfactored eigenbasis.
