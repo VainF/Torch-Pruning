@@ -578,7 +578,7 @@ class DependencyGraph(object):
             else:
                 visited[module] += 1
             
-            if len(outputs)==3:
+            if isinstance(module, ops.TORCH_LINEAR) and len(inputs[0].shape)==3:
                 self._2d_4d=False
 
             if isinstance(outputs, tuple):
