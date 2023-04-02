@@ -94,7 +94,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 <br>
 
 
-### 9. Misc
+### 8. Misc
 
 | Title | Source |
 |:--    | :-- |
