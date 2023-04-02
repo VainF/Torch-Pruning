@@ -28,9 +28,9 @@
 
 **Note 2:** Baseline methods are not implemented in this repo, because they may require additional modifications to the standard models and training scripts. We are working to support more algorithms.
 
-**Note 3:** Donwload pretrained resnet-56 to reproduce our results: [dropbox](https://www.dropbox.com/s/lcpwz24gcxmo1a7/cifar10_resnet56.pth?dl=0)
+**Note 3:** Donwload pretrained resnet-56 to reproduce our results: [dropbox](https://www.dropbox.com/sh/71s2rlt5zr83i4v/AAAjBCwslVf89TjJ49NHl0Epa?dl=0)
 
-**Note 4:** Training logs are available at [run/prune](run/cifar10/prune). 
+**Note 4:** Training logs are available at [run/](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/run). 
 
 #### - Pretraining
 ```python
