@@ -270,6 +270,7 @@ class DependencyGraph(object):
         self.model = model
         self._module2name = {module: name for (
             name, module) in model.named_modules()}
+        
 
         # Detect unwrapped nn.parameters
         wrapped_parameters = []
@@ -570,12 +571,15 @@ class DependencyGraph(object):
         model.eval()
         gradfn2module = {}
         visited = {}
-
+        self._2d_4d = True # CNNs or Transformer, only for pytorch<=1.8
         def _record_grad_fn(module, inputs, outputs):
             if module not in visited:
                 visited[module] = 1
             else:
                 visited[module] += 1
+            
+            if len(outputs)==3:
+                self._2d_4d=False
 
             if isinstance(outputs, tuple):
                 outputs = outputs[0]
@@ -782,10 +786,9 @@ class DependencyGraph(object):
             if len(reshape_node.grad_fn._saved_self_sizes)!=1 and len(reshape_node.grad_fn._saved_self_sizes)!=4:
                 return
         else: # old pytorch versions
-            # TODO: shape verification
-            pass
+            if not self._2d_4d:
+                return 
 
-        
         # Flatten
         if out_channels > in_channels:
              for in_node in reshape_node.inputs:
