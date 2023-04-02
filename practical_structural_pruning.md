@@ -10,18 +10,18 @@ Welcome to the resource list for structural pruning, which is continually being 
 | Pruning-for-YOLOX | [project](https://github.com/YINYIPENG-EN/Pruning_for_YOLOX) |
 | mobile-yolov5-pruning-distillation | [project](https://github.com/Syencil/mobile-yolov5-pruning-distillation) |
 | YOLOX-pruning | [project](https://github.com/lizexu123/YOLOX-pruning) |
-| Vision Model Compression | [project](https://github.com/ashutoshsameer/vision-model-compression) |
+| Vision Model Compression (ResNet-18, VGG-16) | [project](https://github.com/ashutoshsameer/vision-model-compression) |
 | Ladder Side-Tuning (LST) | [project](https://github.com/ylsung/Ladder-Side-Tuning/tree/c09bf673e6b5f9e10bac40aa144b820cf6fbdec6), [NeurIPS'22](https://openreview.net/forum?id=isPnnaTZaP5) |
 | LAASP | [project](https://github.com/ghimiredhikura/LAASP-FilterPruning/tree/63e84c07031f85ef155954b02f9cb9b56ed8c6d8) |
 | Magnitude and Similarity based Variable Rate Filter Pruning for Efficient Convolution Neural Networks | [project](https://github.com/ghimiredhikura/MSVFP-FilterPruning) |
 | Resnet50-pruning | [projects](https://github.com/wxy1234567/Resnet50-pruning) |
 | Performance-aware Approximation of Global Channel Pruning for Multitask CNNs | [project](https://github.com/HankYe/PAGCP), [TPAMI'23](https://arxiv.org/abs/1909.08174) |
 | yolov5-pruning | [project](https://github.com/jylink/yolov5-pruning/tree/9b039785efa1a6f6323cceb24815fa06fbf01b89) |
-| Model-Pruning | [project](https://github.com/ChaeyeonSeo/Models-pruning) |
+| Model-Pruning (MobileNetv1/v2/v3, VGG16, and EfficientNet-b0) | [project](https://github.com/ChaeyeonSeo/Models-pruning) |
 | Melanoma detection CNN using PyTorch | [project](https://github.com/98munozpatricia/Melanoma/tree/7d9899d0a45bb2939718ffbe6c69319155dac763) |
-| KamalEngine | [project](https://github.com/zju-vipa/KamalEngine/tree/0276eb062595d52472090fbcbcedcd76db8cfd44) |
+| KamalEngine (Model Reuse) | [project](https://github.com/zju-vipa/KamalEngine/tree/0276eb062595d52472090fbcbcedcd76db8cfd44) |
 | Modified-Yolov4Tiny-RaspberryPi | [project](https://github.com/benedettaliberatori/Modified-Yolov4Tiny-RaspberryPi) |
-| model_pruning | [project](https://github.com/liugt123/model_prune) |
+| model_pruning (ResNet18+CIFAR-10) | [project](https://github.com/liugt123/model_prune) |
 
 <br>
 
