@@ -14,7 +14,7 @@ Torch-Pruning (TP)是一个通用的结构化网络剪枝框架, 支持如**Visi
 
 ### **特性:**
 - [x] 结构化(通道)剪枝: 支持[CNNs](benchmarks/prunability/torchvision_pruning.py#L19) (例如ResNet, DenseNet, Deeplab), [Transformers](benchmarks/prunability/torchvision_pruning.py#L11) (e.g. ViT)和各类检测器 (例如[Yolov7](benchmarks/prunability/yolov7_train_pruned.py#L102), [FasterRCNN, SSD](benchmarks/prunability/torchvision_pruning.py#L92))
-- [x] 高层次剪枝器(High-level pruners): [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupPruner](https://arxiv.org/abs/2301.12900) (论文所使用的组剪枝器), RandomPruner等  
+- [x] 高层次剪枝器(High-level pruners): [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900) (论文所使用的组剪枝器), RandomPruner等  
 - [x] 计算图构建和依赖建模
 - [x] 支持的基础模块: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [自定义层(customized modules)](tests/test_customized_layer.py).
 - [x] 支持的操作: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops等
@@ -55,7 +55,7 @@ git clone https://github.com/VainF/Torch-Pruning.git # recommended
 <img src="assets/dep.png" width="100%">
 </div>
 
-利用DepGraph, 我们可以比较轻松地设计出各种组级别重要性评估指标(group-level criteria), 用于一组参数的重要性. 这不同于过去仅用于单层的重要性评估. 在我们的论文中, 我们构造了一种简单的组剪枝器[GroupPruner](https://github.com/VainF/Torch-Pruning/blob/745f6d6bafba7432474421a8c1e5ce3aad25a5ef/torch_pruning/pruner/algorithms/group_norm_pruner.py#L8) (如下图c所示).该剪枝器通过组级别的稀疏来学习到具有一致重要性的耦合参数, 确保被移除的参数均具有较小的重要性得分.
+利用DepGraph, 我们可以比较轻松地设计出各种组级别重要性评估指标(group-level criteria), 用于一组参数的重要性. 这不同于过去仅用于单层的重要性评估. 在我们的论文中, 我们构造了一种简单的组剪枝器[GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/745f6d6bafba7432474421a8c1e5ce3aad25a5ef/torch_pruning/pruner/algorithms/group_norm_pruner.py#L8) (如下图c所示).该剪枝器通过组级别的稀疏来学习到具有一致重要性的耦合参数, 确保被移除的参数均具有较小的重要性得分.
 
 <div align="center">
 <img src="assets/group_sparsity.png" width="80%">
