@@ -3,7 +3,7 @@
 <img src="assets/intro.png" width="45%">
 </div>
 
-Torch-Pruning (TP)是一个通用的结构化网络剪枝框架, 支持**Vision Transformers, Yolov7, FasterRCNN, SSD, ResNet, DenseNet, ConvNext, RegNet, ResNext, FCN, DeepLab, VGG**等常见神经网络. 不同于[torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html)中利用掩码(Masking)实现的“模拟剪枝”, Torch-Pruning设计了一种名为DepGraph的非深度图算法, “物理”地移除模型中的耦合参数和通道. 更多的可剪枝模型请见[benchmarks/prunability](benchmarks/prunability). 目前, Torch-Pruning已经覆盖了 **73/85=85.8%** 的Torchvision预训练模型(v0.13.1). 除此以外, 本项目还提供了一组资源列表[resource list](practical_structural_pruning.md)用于分享Torch-Pruning的各种应用以及可实践的论文.
+Torch-Pruning (TP)是一个通用的结构化网络剪枝框架, 支持**Vision Transformers, Yolov7, FasterRCNN, SSD, ResNet, DenseNet, ConvNext, RegNet, ResNext, FCN, DeepLab, VGG**等常见神经网络. 不同于[torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html)中利用掩码(Masking)实现的“模拟剪枝”, Torch-Pruning设计了一种名为DepGraph的非深度图算法, “物理”地移除模型中的耦合参数和通道. 更多的可剪枝模型请见[benchmarks/prunability](benchmarks/prunability). 目前, Torch-Pruning已经覆盖了 **77/85=90.6%** 的Torchvision预训练模型(v0.13.1). 除此以外, 本项目还提供了一组资源列表[resource list](practical_structural_pruning.md)用于分享Torch-Pruning的各种应用以及可实践的论文.
 
 更多技术细节请参考我们的论文： 
 
@@ -24,7 +24,7 @@ Torch-Pruning (TP)是一个通用的结构化网络剪枝框架, 支持**Vision 
 - [x] 非标准层的nn.Parameter自动剪枝
 
 ### **后续开发计划:**
-- [ ] 剪枝适配性基准线, 覆盖 [Torchvision](https://pytorch.org/vision/stable/models.html) (**73/85=85.8%**, :heavy_check_mark:)和[timm](https://github.com/huggingface/pytorch-image-models)等常见模型库.
+- [ ] 剪枝适配性基准线, 覆盖 [Torchvision](https://pytorch.org/vision/stable/models.html) (**77/85=90.6%** , :heavy_check_mark:)和[timm](https://github.com/huggingface/pytorch-image-models)等常见模型库.
 - [ ] 检测器支持 (我们正在开发yolo系列的相关支持, 例如YOLOv7 :heavy_check_mark:, YOLOv8)
 - [ ] Pruning from Scratch / at Initialization.
 - [ ] 语言、语音、生成式模型剪枝
