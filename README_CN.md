@@ -3,7 +3,7 @@
 <img src="assets/intro.png" width="45%">
 </div>
 
-Torch-Pruning (TP)是一个通用的结构化网络剪枝框架, 支持如**Vision Transformers, Yolov7, FasterRCNN, SSD, ResNet, DenseNet, ConvNext, RegNet, ResNext, FCN, DeepLab, VGG**等常见神经网络. 不同于[torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html)中用掩码(Masking)实现的“模拟剪枝”, Torch-Pruning设计了一种名为DepGraph的非深度图算法, 从而“物理”地移除模型中的耦合参数和通道. 更多经过测试的可剪枝模型可见[benchmarks/prunability](benchmarks/prunability). 目前, Torch-Pruning已经覆盖了 **73/85=85.8%** 的Torchvision预训练模型(v0.13.1). 除此以外, 我们还提供了一组资源列表[resource list](practical_structural_pruning.md)用于分享Torch-Pruning的各种应用以及可实践的论文.
+Torch-Pruning (TP)是一个通用的结构化网络剪枝框架, 支持**Vision Transformers, Yolov7, FasterRCNN, SSD, ResNet, DenseNet, ConvNext, RegNet, ResNext, FCN, DeepLab, VGG**等常见神经网络. 不同于[torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html)中利用掩码(Masking)实现的“模拟剪枝”, Torch-Pruning设计了一种名为DepGraph的非深度图算法, “物理”地移除模型中的耦合参数和通道. 更多的可剪枝模型请见[benchmarks/prunability](benchmarks/prunability). 目前, Torch-Pruning已经覆盖了 **73/85=85.8%** 的Torchvision预训练模型(v0.13.1). 除此以外, 本项目还提供了一组资源列表[resource list](practical_structural_pruning.md)用于分享Torch-Pruning的各种应用以及可实践的论文.
 
 更多技术细节请参考我们的论文： 
 
@@ -24,7 +24,7 @@ Torch-Pruning (TP)是一个通用的结构化网络剪枝框架, 支持如**Visi
 - [x] 非标准层的nn.Parameter自动剪枝
 
 ### **后续开发计划:**
-- [ ] 剪枝适配性基准线, 覆盖 [Torchvision](https://pytorch.org/vision/stable/models.html) (**73/85=85.8**, :heavy_check_mark:)和[timm](https://github.com/huggingface/pytorch-image-models)等常见模型库.
+- [ ] 剪枝适配性基准线, 覆盖 [Torchvision](https://pytorch.org/vision/stable/models.html) (**73/85=85.8%**, :heavy_check_mark:)和[timm](https://github.com/huggingface/pytorch-image-models)等常见模型库.
 - [ ] 检测器支持 (我们正在开发yolo系列的相关支持, 例如YOLOv7 :heavy_check_mark:, YOLOv8)
 - [ ] Pruning from Scratch / at Initialization.
 - [ ] 语言、语音、生成式模型剪枝
@@ -49,7 +49,7 @@ git clone https://github.com/VainF/Torch-Pruning.git # recommended
 
 ### 0. 工作原理
 
-在复杂的网络结构中, 参数之间可能存在依赖关系, 这种依赖要求算法对它们进行分组剪枝, 并且对分组内的参数进行同步裁剪以保证结构正确性. 我们的工作通过提供一种自动化机制来对参数进行自动分组, 以便于正确地移除耦合参数.具体而言, Torch-Pruning使用伪输入来运行您的模型, 跟踪网络计算图, 并记录层之间的依赖关系.当您剪枝某个层时, Torch-Pruning会识别和分组所有耦合层, 并包含这些层信息的``tp.Group``.此外, 如果存在像 torch.split 或 torch.cat 这样的操作, 所有剪枝索引都将自动对齐.
+在复杂的网络结构中, 参数之间可能存在依赖关系, 这种依赖要求算法对这类参数进行同步移除以保证结构正确性，这就涉及到耦合参数的分组问题. 我们的工作通过提供一种自动化机制来对参数进行分组. 具体而言, Torch-Pruning使用伪输入来运行您的模型, 跟踪网络计算图, 并记录层之间的依赖关系. 当您剪枝某一层时, Torch-Pruning会识别所有耦合层, 并返回包含这些耦合信息的``tp.Group``.此外, 如果存在像 torch.split 或 torch.cat 这样的操作, 所有剪枝索引都将自动对齐.
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
