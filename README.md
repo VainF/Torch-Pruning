@@ -3,6 +3,8 @@
 <img src="assets/intro.png" width="45%">
 </div>
 
+[[中文README (README in Chinese)]](README_CN.md)
+
 Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including **Vision Transformers, Yolov7, FasterRCNN, SSD, ResNet, DenseNet, ConvNext, RegNet, ResNext, FCN, DeepLab, VGG**, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [benchmarks/prunability](benchmarks/prunability). So far, TP is compatible with **73/85=85.8%** models from Torchvision 0.13.1. In this repo, a [resource list](practical_structural_pruning.md) for practical structural pruning is continuesly being updated.
 
 For more technical details, please refer to our preprint paper: 
