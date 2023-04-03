@@ -39,7 +39,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 
 ## Installation
 ```bash
-pip install torch-pruning # v1.1.2
+pip install torch-pruning # v1.1.3
 ```
 or
 ```bash
