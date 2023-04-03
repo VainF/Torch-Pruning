@@ -4,7 +4,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import torch_pruning as tp
 
-model = alexnet(pretrained=True)
+model = alexnet()
 print("Before pruning: ")
 print(model.features[:4])
 print(model.features[0].weight.shape)

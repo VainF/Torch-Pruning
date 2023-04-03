@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import torch
 from torchvision.models import resnet18
 import torch_pruning as tp
-model = resnet18(pretrained=True)
+model = resnet18()
 
 # Global metrics
 

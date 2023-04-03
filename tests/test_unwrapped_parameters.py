@@ -6,7 +6,7 @@ import torch
 from torchvision.models import convnext_base as entry
 import torch_pruning as tp
 
-model = entry(pretrained=False)
+model = entry()
 print(model)
 # Global metrics
 example_inputs = torch.randn(1, 3, 224, 224)
@@ -18,11 +18,11 @@ for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m)
 
-#from torchvision.models.convnext import CNBlock, ConvNeXt
-#unwrapped_parameters = []
-#for m in model.modules():
-#    if isinstance(m, CNBlock):
-#        unwrapped_parameters.append( (m.layer_scale, 0) )
+from torchvision.models.convnext import CNBlock, ConvNeXt
+unwrapped_parameters = []
+for m in model.modules():
+    if isinstance(m, CNBlock):
+        unwrapped_parameters.append( (m.layer_scale, 0) )
 
 iterative_steps = 5
 pruner = tp.pruner.MagnitudePruner(

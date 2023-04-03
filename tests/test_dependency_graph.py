@@ -5,7 +5,7 @@ import torch
 from torchvision.models import resnet18
 import torch_pruning as tp
 
-model = resnet18(pretrained=True).eval()
+model = resnet18().eval()
 
 # 1. build dependency graph for resnet18
 DG = tp.DependencyGraph()

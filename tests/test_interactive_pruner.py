@@ -6,7 +6,7 @@ import torch
 from torchvision.models import resnet18 as entry
 import torch_pruning as tp
 
-model = entry(pretrained=True)
+model = entry()
 print(model)
 # Global metrics
 example_inputs = torch.randn(1, 3, 224, 224)
