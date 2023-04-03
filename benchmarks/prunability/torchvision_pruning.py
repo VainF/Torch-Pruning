@@ -23,7 +23,6 @@ from torchvision.models.convnext import (
     convnext_large,
 )
 
-from torchvision.models.alexnet import alexnet
 from torchvision.models.densenet import (
     densenet121,
     densenet169,
@@ -97,27 +96,23 @@ from torchvision.models.detection.faster_rcnn import (
     fasterrcnn_mobilenet_v3_large_320_fpn,
     fasterrcnn_mobilenet_v3_large_fpn
 )
+from torchvision.models.detection.fcos import fcos_resnet50_fpn
+from torchvision.models.detection.keypoint_rcnn import keypointrcnn_resnet50_fpn
+from torchvision.models.detection.mask_rcnn import maskrcnn_resnet50_fpn_v2
+from torchvision.models.detection.retinanet import retinanet_resnet50_fpn_v2
 
 ###########################################
 # Failue cases in this script
 ############################################
-from torchvision.models.detection.fcos import fcos_resnet50_fpn # TODO: Support GroupNorm
 from torchvision.models.optical_flow import raft_large
+from torchvision.models.swin_transformer import swin_t, swin_s, swin_b # TODO: support Swin ops 
 from torchvision.models.shufflenetv2 import ( # TODO: support channel shuffling
     shufflenet_v2_x0_5,
     shufflenet_v2_x1_0,
     shufflenet_v2_x1_5,
     shufflenet_v2_x2_0,
 )
-from torchvision.models.swin_transformer import swin_t, swin_s, swin_b # TODO: support ops in Swin
 
-from torchvision.models.detection.fcos import fcos_resnet50_fpn
-from torchvision.models.detection.keypoint_rcnn import keypointrcnn_resnet50_fpn
-from torchvision.models.detection.mask_rcnn import maskrcnn_resnet50_fpn_v2
-from torchvision.models.detection.retinanet import retinanet_resnet50_fpn_v2
-from torchvision.models.detection.keypoint_rcnn import keypointrcnn_resnet50_fpn
-from torchvision.models.detection.mask_rcnn import maskrcnn_resnet50_fpn_v2
-from torchvision.models.detection.retinanet import retinanet_resnet50_fpn_v2
 
 if __name__ == "__main__":
 
@@ -154,7 +149,14 @@ if __name__ == "__main__":
             ignored_layers.extend([
                 model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.backbone.fpn, model.roi_heads
             ])
-
+        if model_name=='fcos_resnet50_fpn':
+            ignored_layers.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg ,model.head.regression_head.bbox_ctrness])
+        if model_name=='keypointrcnn_resnet50_fpn':
+            ignored_layers.extend([model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.roi_heads.box_predictor, model.roi_heads.keypoint_predictor])
+        if model_name=='maskrcnn_resnet50_fpn_v2':
+            ignored_layers.extend([model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.roi_heads.box_predictor, model.roi_heads.mask_predictor])
+        if model_name=='retinanet_resnet50_fpn_v2':
+            ignored_layers.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg])
         # For ViT: Rounding the number of channels to the nearest multiple of num_heads
         round_to = None
         if isinstance( model, VisionTransformer): round_to = model.encoder.layers[0].num_heads
@@ -253,6 +255,8 @@ if __name__ == "__main__":
             model = entry(weights_backbone=None, trainable_backbone_layers=5) # TP does not support FrozenBN.
         elif 'fcos' in model_name:
             model = entry(weights_backbone=None, trainable_backbone_layers=5) # TP does not support FrozenBN.
+        elif 'rcnn' in model_name:
+            model = entry(weights=None, weights_backbone=None, trainable_backbone_layers=5) # TP does not support FrozenBN.
         else:
             model = entry()
 
@@ -260,12 +264,13 @@ if __name__ == "__main__":
             output_transform = lambda x: x["out"]
         else:
             output_transform = None
+
         print(model_name)
 
 
         try:
             my_prune(
-                    model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
+                model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
             )
             successful.append(model_name)
         except Exception as e:
