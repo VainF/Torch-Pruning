@@ -3,11 +3,7 @@
 
 name: Test
 
-on:
-  push:
-    paths:
-      - 'torch_pruning'
-      - 'tests'
+on: workflow_dispatch
 
 permissions:
   contents: read
