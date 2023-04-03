@@ -19,38 +19,40 @@ class Net(nn.Module):
         x = self.final(x)
         return x
 
-model = Net()
-example_inputs = torch.randn(1, 512)
-imp = tp.importance.MagnitudeImportance()
-ignored_layers = [model.final]
+def test_reshape():
+    model = Net()
+    example_inputs = torch.randn(1, 512)
+    imp = tp.importance.MagnitudeImportance()
+    ignored_layers = [model.final]
 
-iterative_steps = 5
-pruner = tp.pruner.MagnitudePruner(
-    model,
-    example_inputs,
-    importance=imp,
-    iterative_steps=iterative_steps,
-    ch_sparsity=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
-    ignored_layers=ignored_layers,
-    root_module_types=[nn.ConvTranspose2d, nn.Linear],
-)
-
-base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
-for i in range(iterative_steps):
-    pruner.step()
-    macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
-    print(model)
-    print(
-        "  Iter %d/%d, Params: %.2f M => %.2f M"
-        % (i+1, iterative_steps, base_nparams / 1e6, nparams / 1e6)
+    iterative_steps = 5
+    pruner = tp.pruner.MagnitudePruner(
+        model,
+        example_inputs,
+        importance=imp,
+        iterative_steps=iterative_steps,
+        ch_sparsity=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+        ignored_layers=ignored_layers,
+        root_module_types=[nn.ConvTranspose2d, nn.Linear],
     )
-    print(
-        "  Iter %d/%d, MACs: %.2f G => %.2f G"
-        % (i+1, iterative_steps, base_macs / 1e9, macs / 1e9)
-    )
-    # finetune your model here
-    # finetune(model)
-    # ...
 
+    base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
+    for i in range(iterative_steps):
+        pruner.step()
+        macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
+        print(model)
+        print(
+            "  Iter %d/%d, Params: %.2f M => %.2f M"
+            % (i+1, iterative_steps, base_nparams / 1e6, nparams / 1e6)
+        )
+        print(
+            "  Iter %d/%d, MACs: %.2f G => %.2f G"
+            % (i+1, iterative_steps, base_macs / 1e9, macs / 1e9)
+        )
+        # finetune your model here
+        # finetune(model)
+        # ...
 
+if __name__=='__main__':
+    test_reshape()
 

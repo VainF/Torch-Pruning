@@ -24,23 +24,26 @@ class FullyConnectedNet(nn.Module):
         x3 = F.relu(self.fc3(torch.cat([x1, x2], dim=1)))
         return x1, x2, x3
 
-model = FullyConnectedNet([128, 64], [32, 32])
+def test_multi_io():
+    model = FullyConnectedNet([128, 64], [32, 32])
 
+    # Build dependency graph
+    DG = tp.DependencyGraph()
+    DG.build_dependency(model, example_inputs={'x1': torch.randn(1, 128), 'x2': torch.randn(1, 64)})
 
-# Build dependency graph
-DG = tp.DependencyGraph()
-DG.build_dependency(model, example_inputs={'x1': torch.randn(1, 128), 'x2': torch.randn(1, 64)})
+    # get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
+    pruning_group = DG.get_pruning_group(
+        model.fc1, tp.prune_linear_out_channels, idxs=[0, 2, 4]
+    )
+    print(pruning_group)
 
-# get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
-pruning_group = DG.get_pruning_group(
-    model.fc1, tp.prune_linear_out_channels, idxs=[0, 2, 4]
-)
-print(pruning_group)
+    # execute this group (prune the model)
+    pruning_group.prune()
 
-# execute this group (prune the model)
-pruning_group.prune()
+    print("The pruned model: \n", model)
+    print("Output:")
+    for o in model(torch.randn(1, 128), torch.randn(1, 64)):
+        print('\t', o.shape)
 
-print("The pruned model: \n", model)
-print("Output:")
-for o in model(torch.randn(1, 128), torch.randn(1, 64)):
-    print('\t', o.shape)
+if __name__=='__main__':
+    test_multi_io()

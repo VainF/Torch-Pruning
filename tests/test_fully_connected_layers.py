@@ -23,19 +23,23 @@ class FullyConnectedNet(nn.Module):
         x = self.fc3(x)
         return x
 
-model = FullyConnectedNet(128, 10, 256)
+def test_fc():
+    model = FullyConnectedNet(128, 10, 256)
 
-# Build dependency graph
-DG = tp.DependencyGraph()
-DG.build_dependency(model, example_inputs=torch.randn(1,128))
+    # Build dependency graph
+    DG = tp.DependencyGraph()
+    DG.build_dependency(model, example_inputs=torch.randn(1,128))
 
-# get a pruning group according to the dependency graph.
-pruning_group = DG.get_pruning_group( model.fc1, tp.prune_linear_out_channels, idxs=[0, 4, 6] )
-print(pruning_group)
+    # get a pruning group according to the dependency graph.
+    pruning_group = DG.get_pruning_group( model.fc1, tp.prune_linear_out_channels, idxs=[0, 4, 6] )
+    print(pruning_group)
 
-# execute the group (prune the model)
-pruning_group.prune()
-print(model)
+    # execute the group (prune the model)
+    pruning_group.prune()
+    print(model)
 
-print("The pruned model: \n", model)
-print("Output:", model(torch.randn(1,128)).shape)
+    print("The pruned model: \n", model)
+    print("Output:", model(torch.randn(1,128)).shape)
+
+if __name__=='__main__':
+    test_fc()

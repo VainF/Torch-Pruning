@@ -67,27 +67,31 @@ class MyPruner(tp.pruner.BasePruningFunc):
     # identical functions
     prune_in_channels = prune_out_channels
     get_in_channels = get_out_channels
-        
-model = FullyConnectedNet(128, 10, 256)
 
-DG = tp.DependencyGraph()
+def test_customization():
+    model = FullyConnectedNet(128, 10, 256)
 
-# 1. Register your customized layer
-my_pruner = MyPruner()
-DG.register_customized_layer(
-    CustomizedLayer, 
-    my_pruner)
+    DG = tp.DependencyGraph()
 
-# 2. Build dependency graph
-DG.build_dependency(model, example_inputs=torch.randn(1,128))
+    # 1. Register your customized layer
+    my_pruner = MyPruner()
+    DG.register_customized_layer(
+        CustomizedLayer, 
+        my_pruner)
 
-# 3. get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
-pruning_group = DG.get_pruning_group( model.fc1, tp.prune_linear_out_channels, idxs=[0, 1, 6] )
-print(pruning_group)
+    # 2. Build dependency graph
+    DG.build_dependency(model, example_inputs=torch.randn(1,128))
 
-# 4. execute this group (prune the model)
-pruning_group.prune()
-print("The pruned model:\n", model)
-print("Output: ", model(torch.randn(1,128)).shape)
+    # 3. get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
+    pruning_group = DG.get_pruning_group( model.fc1, tp.prune_linear_out_channels, idxs=[0, 1, 6] )
+    print(pruning_group)
 
-assert model.fc1.out_features==253 and model.customized_layer.in_dim==253 and model.fc2.in_features==253
+    # 4. execute this group (prune the model)
+    pruning_group.prune()
+    print("The pruned model:\n", model)
+    print("Output: ", model(torch.randn(1,128)).shape)
+
+    assert model.fc1.out_features==253 and model.customized_layer.in_dim==253 and model.fc2.in_features==253
+
+if __name__=='__main__':
+    test_customization()
