@@ -5,7 +5,7 @@
 
 [[中文README | README in Chinese]](README_CN.md)
 
-Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including **Vision Transformers, Yolov7, FasterRCNN, SSD, ResNet, DenseNet, ConvNext, RegNet, ResNext, FCN, DeepLab, VGG**, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [benchmarks/prunability](benchmarks/prunability). So far, TP is compatible with **73/85=85.8%** models from Torchvision 0.13.1. In this repo, a [resource list](practical_structural_pruning.md) for practical structural pruning is continuesly being updated.
+Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including **Vision Transformers, Yolov7, FasterRCNN, SSD, KeypointRCNN, MaskRCNN, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, FCN, DeepLab**, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [benchmarks/prunability](benchmarks/prunability). So far, TP is compatible with **77/85=90.6%** models from Torchvision 0.13.1. In this repo, a [resource list](practical_structural_pruning.md) for practical structural pruning is continuesly being updated.
 
 For more technical details, please refer to our preprint paper: 
 
@@ -27,7 +27,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 
 ### **Plans:**
 **We have a wealth of ideas, but unfortunately, only a handful of contributors at the moment. We hope to attract more talented guys to join us in bringing these ideas to fruition and making Torch-Pruning a practical library.**
-- [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**73/85=85.8**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
+- [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**77/85=90.6%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
 - [ ] More Detectors (We are working on the pruning of YOLO series such as YOLOv7 :heavy_check_mark:, YOLOv8)
 - [ ] Pruning from Scratch / at Initialization.
 - [ ] Language, Speech and Generative Models.
