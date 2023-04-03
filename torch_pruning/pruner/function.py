@@ -34,6 +34,10 @@ __all__=[
     'prune_parameter_in_channels',
     'prune_multihead_attention_out_channels',
     'prune_multihead_attention_in_channels',
+    'prune_groupnorm_out_channels',
+    'prune_groupnorm_in_channels',
+    'prune_instancenorm_out_channels',
+    'prune_instancenorm_in_channels',
 ]
 
 class BasePruningFunc(ABC):
@@ -228,6 +232,45 @@ class LayernormPruner(BasePruningFunc):
 
     def get_in_channels(self, layer):
         return layer.normalized_shape[self.pruning_dim]
+
+class GroupNormPruner(BasePruningFunc):
+    def prune_out_channels(self, layer: nn.PReLU, idxs: list) -> nn.Module:
+        keep_idxs = list(set(range(layer.num_channels)) - set(idxs))
+        keep_idxs.sort()
+        layer.num_channels = layer.num_channels-len(idxs)
+        if layer.affine:
+            layer.weight = torch.nn.Parameter(
+                layer.weight.data.clone()[keep_idxs])
+            layer.bias = torch.nn.Parameter(layer.bias.data.clone()[keep_idxs])
+        return layer
+    
+    prune_in_channels = prune_out_channels
+
+    def get_out_channels(self, layer):
+        return layer.num_channels
+
+    def get_in_channels(self, layer):
+        return layer.num_channels
+
+class InstanceNormPruner(BasePruningFunc):
+    def prune_out_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
+        keep_idxs = list(set(range(layer.num_features)) - set(idxs))
+        keep_idxs.sort()
+        layer.num_features = layer.num_features-len(idxs)
+        if layer.affine:
+            layer.weight = torch.nn.Parameter(
+                layer.weight.data.clone()[keep_idxs])
+            layer.bias = torch.nn.Parameter(layer.bias.data.clone()[keep_idxs])
+        return layer
+
+    prune_in_channels = prune_out_channels
+
+    def get_out_channels(self, layer):
+        return layer.num_features
+
+    def get_in_channels(self, layer):
+        return layer.num_features
+
 
 class PReLUPruner(BasePruningFunc):
     TARGET_MODULES = ops.TORCH_PRELU
@@ -430,9 +473,10 @@ PrunerBox = {
     ops.OPTYPE.EMBED: EmbeddingPruner(),
     ops.OPTYPE.PARAMETER: ParameterPruner(),
     ops.OPTYPE.MHA: MultiheadAttentionPruner(),
-    ops.OPTYPE.LSTM: LSTMPruner()
+    ops.OPTYPE.LSTM: LSTMPruner(),
+    ops.OPTYPE.GN: GroupNormPruner(),
+    ops.OPTYPE.IN: InstanceNormPruner(),
 }
-
 
 def is_out_channel_pruner(fn):
     return fn in tuple(p.prune_out_channels for p in PrunerBox.values())
@@ -472,3 +516,9 @@ prune_multihead_attention_in_channels = PrunerBox[ops.OPTYPE.MHA].prune_in_chann
 
 prune_lstm_out_channels = PrunerBox[ops.OPTYPE.LSTM].prune_out_channels
 prune_lstm_in_channels = PrunerBox[ops.OPTYPE.LSTM].prune_in_channels
+
+prune_groupnorm_out_channels = PrunerBox[ops.OPTYPE.GN].prune_out_channels
+prune_groupnorm_in_channels = PrunerBox[ops.OPTYPE.GN].prune_in_channels
+
+prune_instancenorm_out_channels = PrunerBox[ops.OPTYPE.IN].prune_out_channels
+prune_instancenorm_in_channels = PrunerBox[ops.OPTYPE.IN].prune_in_channels

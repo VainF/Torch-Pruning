@@ -85,6 +85,8 @@ class ElementWisePruner(DummyPruner):
 TORCH_CONV = nn.modules.conv._ConvNd
 TORCH_BATCHNORM = nn.modules.batchnorm._BatchNorm
 TORCH_LAYERNORM = nn.modules.normalization.LayerNorm
+TORCH_GROUPNORM = nn.GroupNorm
+TORCH_INSTANCENORM = nn.modules.instancenorm._InstanceNorm
 TORCH_PRELU = nn.PReLU
 TORCH_LINEAR = nn.Linear
 TORCH_EMBED = nn.Embedding
@@ -113,6 +115,8 @@ class OPTYPE(IntEnum):
     MHA = 12
     LSTM = 13
     RESHAPE = 14
+    GN = 15  # nn.GroupNorm
+    IN = 16  # nn.InstanceNorm
 
 
 def module2type(module):
@@ -143,6 +147,10 @@ def module2type(module):
         return OPTYPE.MHA
     elif isinstance(module, TORCH_LSTM):
         return OPTYPE.LSTM
+    elif isinstance(module, TORCH_GROUPNORM):
+        return OPTYPE.GN
+    elif isinstance(module, TORCH_INSTANCENORM):
+        return OPTYPE.IN
     elif isinstance(module, _ReshapeOp):
         return OPTYPE.RESHAPE
     else:
@@ -172,6 +180,10 @@ def type2class(op_type):
         return TORCH_PARAMETER
     elif op_type == OPTYPE.MHA:
         return TORCH_MHA
+    elif op_type == OPTYPE.GN:
+        return TORCH_GROUPNORM
+    elif op_type == OPTYPE.IN:
+        return TORCH_INSTANCENORM
     elif op_type == OPTYPE.LSTM:
         return TORCH_LSTM
     elif OPTYPE == OPTYPE.RESHAPE:

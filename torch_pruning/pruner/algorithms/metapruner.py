@@ -113,13 +113,15 @@ class MetaPruner:
                             sparsity, self.iterative_steps
                         )
 
-        # detect group convs
+        # detect group convs & group norms
         for m in self.model.modules():
             if isinstance(m, ops.TORCH_CONV) \
                 and m.groups > 1 \
                     and m.groups != m.out_channels:
                 self.channel_groups[m] = m.groups
-
+            if isinstance(m, ops.TORCH_GROUPNORM):
+                self.channel_groups[m] = m.num_groups
+        
         if self.global_pruning:
             initial_total_channels = 0
             for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
