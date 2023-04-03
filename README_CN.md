@@ -117,7 +117,7 @@ model_loaded = torch.load('model.pth') # 不需要使用load_state_dict, 因为�
 更多细节请参考[tutorials/2 - Exploring Dependency Groups](https://github.com/VainF/Torch-Pruning/blob/master/tutorials/2%20-%20Exploring%20Dependency%20Groups.ipynb)
 
 #### 如何遍历所有分组:
-正如我们在[MetaPruner](https://github.com/VainF/Torch-Pruning/blob/b607ae3aa61b9dafe19d2c2364f7e4984983afbf/torch_pruning/pruner/algorithms/metapruner.py#L197)中所实现的, 我们可以利用``DG.get_all_groups(ignored_layers, root_module_types)``来按顺序扫描所有的分组. 每个分组都会以一个"root_module_types"中所指定的层作为起点. 默认情况下,  这些组包含了完整的剪枝索引``idxs=[0,1,2,3,...,K]``, 这个索引列表包含了所有的剪枝参数. 如果我们希望剪枝部分参数或者通道, 我们需要使用``group.prune(idxs=idxs)``来进行指定.
+正如我们在[MetaPruner](https://github.com/VainF/Torch-Pruning/blob/b607ae3aa61b9dafe19d2c2364f7e4984983afbf/torch_pruning/pruner/algorithms/metapruner.py#L197)中所实现的, 我们可以利用``DG.get_all_groups(ignored_layers, root_module_types)``来按顺序扫描所有的分组. 每个分组都会以一个"root_module_types"中所指定的层作为起点. 默认情况下,  这些组包含了完整的剪枝索引``idxs=[0,1,2,3,...,K]``, 这个索引列表包含了所有的剪枝参数. 如果我们希望对一个group进行剪枝, 我们需要使用``group.prune(idxs=idxs)``来指定修剪的通道/维度.
 
 ```python
 for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[nn.Conv2d, nn.Linear]):
