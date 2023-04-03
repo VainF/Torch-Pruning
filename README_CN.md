@@ -14,7 +14,7 @@ Torch-Pruning (TP)是一个通用的结构化网络剪枝框架, 支持如**Visi
 
 ### **特性:**
 - [x] 结构化(通道)剪枝: 支持[CNNs](benchmarks/prunability/torchvision_pruning.py#L19) (例如ResNet, DenseNet, Deeplab), [Transformers](benchmarks/prunability/torchvision_pruning.py#L11) (e.g. ViT)和各类检测器 (例如[Yolov7](benchmarks/prunability/yolov7_train_pruned.py#L102), [FasterRCNN, SSD](benchmarks/prunability/torchvision_pruning.py#L92))
-- [x] 上层剪枝器(High-level pruners): [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900) (论文所使用的组剪枝器), RandomPruner等  
+- [x] 高级剪枝器(High-level pruners): [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900) (论文所使用的组剪枝器), RandomPruner等  
 - [x] 计算图构建和依赖建模
 - [x] 支持的基础模块: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [自定义层(customized modules)](tests/test_customized_layer.py).
 - [x] 支持的操作: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops等
@@ -28,7 +28,7 @@ Torch-Pruning (TP)是一个通用的结构化网络剪枝框架, 支持如**Visi
 - [ ] 检测器支持 (我们正在开发yolo系列的相关支持, 例如YOLOv7 :heavy_check_mark:, YOLOv8)
 - [ ] Pruning from Scratch / at Initialization.
 - [ ] 语言、语音、生成式模型剪枝
-- [ ] 更多的上层剪枝器, 例如[FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243)等.
+- [ ] 更多的高级剪枝器, 例如[FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243)等.
 - [ ] 更多的标准层: GroupNorm, InstanceNorm, Shuffle Layers, etc.
 - [ ] 更多的Transformer网络: Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 - [ ] Block/Layer/Depth Pruning
@@ -129,7 +129,7 @@ for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[
 
 
 
-### 2. 上层剪枝器（High-level Pruners）
+### 2. 高级剪枝器（High-level Pruners）
 
 利用 DependencyGraph, 我们在项目中开发了几个高级剪枝器, 以便实现一键式剪枝.通过指定所需的通道稀疏性, 您可以对整个模型进行修剪, 并使用自己的训练代码进行微调.关于此过程的详细信息, 我们建议您查阅[Tutorial-1](https://github.com/VainF/Torch-Pruning/blob/master/tutorials/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), 该文档演示了如何基于Torch-Pruning快速实现一个经典的[slimming算法](https://arxiv.org/abs/1708.06519).此外, 您可以在[benchmarks/main.py](benchmarks/main.py)中找到更多实用的示例.
 
@@ -184,7 +184,7 @@ for epoch in range(epochs):
 ```
 
 #### 交互式剪枝
-所有的上层剪枝器都支持交互式剪枝. 你可以利用``pruner.step(interactive=True)``来获得所有的待剪枝分组, 并根据需要调用``group.prune()``来完成修剪. 这一功能可以用于控制/监控整个剪枝过程.
+所有的高级剪枝器都支持交互式剪枝. 你可以利用``pruner.step(interactive=True)``来获得所有的待剪枝分组, 并根据需要调用``group.prune()``来完成修剪. 这一功能可以用于控制/监控整个剪枝过程.
 
 ```python
 for i in range(iterative_steps):
@@ -204,7 +204,7 @@ for i in range(iterative_steps):
 
 ### 3. 底层剪枝函数（Low-level pruning functions）
 
-虽然使用低级函数可以手动修剪模型, 但这种方法可能非常繁琐, 因为它需要手动管理相关依赖项.因此, 我们建议利用前面提到的上层剪枝器来简化剪枝过程.
+虽然使用低级函数可以手动修剪模型, 但这种方法可能非常繁琐, 因为它需要手动管理相关依赖项.因此, 我们建议利用前面提到的高级剪枝器来简化剪枝过程.
 
 ```python
 tp.prune_conv_out_channels( model.conv1, idxs=[2,6,9] )
