@@ -8,7 +8,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 | Title | URL | 
 |:--    | :--: |
 | Performance-aware Approximation of Global Channel Pruning for Multitask CNNs | [project](https://github.com/HankYe/PAGCP), [TPAMI'23](https://arxiv.org/abs/1909.08174) |
-| Ladder Side-Tuning (LST) | [project](https://github.com/ylsung/Ladder-Side-Tuning/tree/c09bf673e6b5f9e10bac40aa144b820cf6fbdec6), [NeurIPS'22](https://openreview.net/forum?id=isPnnaTZaP5) |
+|LST: Ladder Side-Tuning for Parameter and Memory Efficient Transfer Learning | [project](https://github.com/ylsung/Ladder-Side-Tuning/tree/c09bf673e6b5f9e10bac40aa144b820cf6fbdec6), [NeurIPS'22](https://openreview.net/forum?id=isPnnaTZaP5) |
 | mobile-yolov5-pruning-distillation | [project](https://github.com/Syencil/mobile-yolov5-pruning-distillation) |
 | Pruning-for-YOLOX | [project](https://github.com/YINYIPENG-EN/Pruning_for_YOLOX) |
 | YOLOX-pruning | [project](https://github.com/lizexu123/YOLOX-pruning) |
