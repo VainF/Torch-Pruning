@@ -7,15 +7,15 @@ Welcome to the resource list for structural pruning, which is continually being 
 ### 0. Projects/Papers that use Torch-Pruning
 | Title | URL | 
 |:--    | :--: |
-| Pruning-for-YOLOX | [project](https://github.com/YINYIPENG-EN/Pruning_for_YOLOX) |
+| Performance-aware Approximation of Global Channel Pruning for Multitask CNNs | [project](https://github.com/HankYe/PAGCP), [TPAMI'23](https://arxiv.org/abs/1909.08174) |
+| Ladder Side-Tuning (LST) | [project](https://github.com/ylsung/Ladder-Side-Tuning/tree/c09bf673e6b5f9e10bac40aa144b820cf6fbdec6), [NeurIPS'22](https://openreview.net/forum?id=isPnnaTZaP5) |
 | mobile-yolov5-pruning-distillation | [project](https://github.com/Syencil/mobile-yolov5-pruning-distillation) |
+| Pruning-for-YOLOX | [project](https://github.com/YINYIPENG-EN/Pruning_for_YOLOX) |
 | YOLOX-pruning | [project](https://github.com/lizexu123/YOLOX-pruning) |
 | Vision Model Compression (ResNet-18, VGG-16) | [project](https://github.com/ashutoshsameer/vision-model-compression) |
-| Ladder Side-Tuning (LST) | [project](https://github.com/ylsung/Ladder-Side-Tuning/tree/c09bf673e6b5f9e10bac40aa144b820cf6fbdec6), [NeurIPS'22](https://openreview.net/forum?id=isPnnaTZaP5) |
 | LAASP | [project](https://github.com/ghimiredhikura/LAASP-FilterPruning/tree/63e84c07031f85ef155954b02f9cb9b56ed8c6d8) |
 | Magnitude and Similarity based Variable Rate Filter Pruning for Efficient Convolution Neural Networks | [project](https://github.com/ghimiredhikura/MSVFP-FilterPruning) |
 | Resnet50-pruning | [projects](https://github.com/wxy1234567/Resnet50-pruning) |
-| Performance-aware Approximation of Global Channel Pruning for Multitask CNNs | [project](https://github.com/HankYe/PAGCP), [TPAMI'23](https://arxiv.org/abs/1909.08174) |
 | yolov5-pruning | [project](https://github.com/jylink/yolov5-pruning/tree/9b039785efa1a6f6323cceb24815fa06fbf01b89) |
 | Model-Pruning (MobileNetv1/v2/v3, VGG16, and EfficientNet-b0) | [project](https://github.com/ChaeyeonSeo/Models-pruning) |
 | Melanoma detection CNN using PyTorch | [project](https://github.com/98munozpatricia/Melanoma/tree/7d9899d0a45bb2939718ffbe6c69319155dac763) |
@@ -107,3 +107,4 @@ Welcome to the resource list for structural pruning, which is continually being 
 | [Issue - 论文中图3(b)的剪枝方案是怎么推出的 (in Chinese)](https://github.com/VainF/Torch-Pruning/issues/115) | [Torch-Pruning](https://github.com/VainF/Torch-Pruning) |
 | [Model Compression - the Pruning Approaches](https://www.cs.princeton.edu/courses/archive/spring21/cos598D/lectures/pruning.pdf) | Lecture Notes (Princeton) |
 | [CVPR 2023 \| DepGraph：任意架构的结构化剪枝，CNN、Transformer、GNN等都适用！(In Chinese)](https://mp.weixin.qq.com/s/Ux-yuaKokGGhUkfF491ZYw) | CVer |
+| [CVPR 2023 | DepGraph 通用结构化剪枝 (In Chinese)](https://zhuanlan.zhihu.com/p/619146631?) | Zhihu |
