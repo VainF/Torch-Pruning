@@ -5,7 +5,7 @@
 
 [[中文README | README in Chinese]](README_CN.md)
 
-Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including **Vision Transformers, Yolov7, FasterRCNN, SSD, KeypointRCNN, MaskRCNN, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, FCN, DeepLab**, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [benchmarks/prunability](benchmarks/prunability). Currently, TP is able to work with approximately **77/85=90.6%** of the models from Torchvision 0.13.1. Check out the [practical_structural_pruning.md](practical_structural_pruning.md) for an up-to-date list of practical structural pruning techniques for different models.
+Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including **Vision Transformers, Yolov7, FasterRCNN, SSD, KeypointRCNN, MaskRCNN, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, FCN, DeepLab**, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [benchmarks/prunability](benchmarks/prunability). Currently, TP is able to work with approximately **77/85=90.6%** of the models from Torchvision 0.13.1. Check out [practical_structural_pruning.md](practical_structural_pruning.md) for an up-to-date list of practical structural pruning techniques for different models.
   
 For more technical details, please refer to our preprint paper: 
 
@@ -73,14 +73,10 @@ import torch_pruning as tp
 model = resnet18(pretrained=True).eval()
 
 # 1. build dependency graph for resnet18
-DG = tp.DependencyGraph()
-DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
+DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
 # 2. Specify the to-be-pruned channels. Here we prune those channels indexed by [2, 6, 9].
-pruning_idxs = [2, 6, 9]
-pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=pruning_idxs )
-
-print(pruning_group.details())  # or print(pruning_group)
+pruning_group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )
 
 # 3. prune all grouped layers that are coupled with model.conv1 (included).
 if DG.check_pruning_group(pruning_group): # avoid full pruning, i.e., channels=0.
