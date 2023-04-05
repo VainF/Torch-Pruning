@@ -23,10 +23,8 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 - [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
 - [x] [Benchmarks](benchmarks) and [tutorials](tutorials)
 - [x] A [resource list](practical_structural_pruning.md) for practical structrual pruning.
-- [x] Automatical pruning of unwrapped nn.Parameter that does not belong to any standard layers or ops.
 
 ### **Plans:**
-**We have a wealth of ideas, but unfortunately, only a handful of contributors at the moment. We hope to attract more talented guys to join us in bringing these ideas to fruition and making Torch-Pruning a practical library.**
 - [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**77/85=90.6%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
 - [ ] More Detectors (We are working on the pruning of YOLO series such as YOLOv7 :heavy_check_mark:, YOLOv8)
 - [ ] Pruning from Scratch / at Initialization.
@@ -52,7 +50,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. How it works
 
-In complex network structures, dependencies can arise among groups of parameters, necessitating their simultaneous pruning. Our work addresses this challenge by providing an automated mechanism for grouping parameters to facilitate their efficient removal for acceleration. Specifically, Torch-Pruning accomplishes this by forwarding your model with a fake input, tracing the network to establish a graph, and recording the dependencies between layers. When you prune a single layer, Torch-Pruning identifies and groups all coupled layers by returning a `tp.Group`. Moreover, all pruning indices will be automatically aligned if operations like torch.split or torch.cat are present. 
+In complex network structures, dependencies can arise among groups of parameters, necessitating their simultaneous pruning. Our work addresses this challenge by providing an automated mechanism for grouping parameters to facilitate their removal for acceleration. Specifically, Torch-Pruning accomplishes this by forwarding your model with a fake input, tracing the network to establish a graph, and recording the dependencies between layers. When you prune a single layer, Torch-Pruning identifies and groups all coupled layers by returning a `tp.Group`. Moreover, all pruning indices will be automatically aligned if operations like torch.split or torch.cat are present. 
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
