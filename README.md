@@ -5,8 +5,8 @@
 
 [[中文README | README in Chinese]](README_CN.md)
 
-Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including **Vision Transformers, Yolov7, FasterRCNN, SSD, KeypointRCNN, MaskRCNN, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, FCN, DeepLab**, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [benchmarks/prunability](benchmarks/prunability). So far, TP is compatible with **77/85=90.6%** models from Torchvision 0.13.1. In this repo, a [resource list](practical_structural_pruning.md) for practical structural pruning is continuesly being updated.
-
+Torch-Pruning (TP) is a versatile library that enables structural network pruning for a wide range of neural networks, including **Vision Transformers, Yolov7, FasterRCNN, SSD, KeypointRCNN, MaskRCNN, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, FCN, DeepLab**, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. To explore more prunable models, please refer to [benchmarks/prunability](benchmarks/prunability). Currently, TP is able to work with approximately **77/85=90.6%** of the models from Torchvision 0.13.1. Check out the [practical_structural_pruning.md](practical_structural_pruning.md) for an up-to-date list of practical structural pruning techniques for different models.
+  
 For more technical details, please refer to our preprint paper: 
 
 > [**DepGraph: Towards Any Structural Pruning**](https://arxiv.org/abs/2301.12900)   
@@ -192,8 +192,8 @@ for i in range(iterative_steps):
         print(group) 
         # do whatever you like with the group 
         # ...
-        group.prune() # you should manually call the group.prune()
-        # group.prune(idxs=[0, 2, 6]) # you can even change the pruning behaviour with the idxs parameter
+        group.prune() # remeber to call the group.prune()
+        # group.prune(idxs=[0, 2, 6]) # It is even possible to change the pruning behaviour with the idxs parameter
     macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
     # finetune your model here
     # finetune(model)
