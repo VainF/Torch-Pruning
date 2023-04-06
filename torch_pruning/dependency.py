@@ -294,8 +294,8 @@ class DependencyGraph(object):
             unwrapped_parameters = []
 
         unwrapped_detected = list( set(unwrapped_detected) - set([p for (p, _) in unwrapped_parameters]) )
-        if len(unwrapped_detected)>0:
-            warnings.warn("Unwrapped parameters detected: {}.\n\n DepGraph requires an unwrapped_parameter list to determine the pruning_dim of nn.Parameters. By default, the last dim of a parameter matrix will be pruned.".format([param_to_name[p] for p in unwrapped_detected]))
+        if len(unwrapped_detected)>0 and self.verbose:
+            warnings.warn("Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last dimension of a parameter. If you wish to customize the pruning behavior, please provide an unwrapped_parameters argument.".format([param_to_name[p] for p in unwrapped_detected]))
         for p in unwrapped_detected:
             unwrapped_parameters.append( UnwrappedParameters(parameters=p, pruning_dim=-1) ) # prune the last dim by daufault
         self.unwrapped_parameters = unwrapped_parameters
