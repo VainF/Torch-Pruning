@@ -12,8 +12,6 @@ from typing import Callable, Sequence, Tuple, Dict
 
 __all__=[
     'BasePruningFunc',
-    'is_out_channel_pruner',
-    'is_in_channel_pruner',
     'PrunerBox',
 
     'prune_conv_out_channels',
@@ -477,14 +475,6 @@ PrunerBox = {
     ops.OPTYPE.GN: GroupNormPruner(),
     ops.OPTYPE.IN: InstanceNormPruner(),
 }
-
-def is_out_channel_pruner(fn):
-    return fn in tuple(p.prune_out_channels for p in PrunerBox.values())
-
-
-def is_in_channel_pruner(fn):
-    return fn in tuple(p.prune_in_channels for p in PrunerBox.values())
-
 
 # Alias
 prune_conv_out_channels = PrunerBox[ops.OPTYPE.CONV].prune_out_channels

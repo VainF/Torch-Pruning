@@ -87,7 +87,8 @@ def test_customization():
     print(pruning_group)
 
     # 4. execute this group (prune the model)
-    pruning_group.prune()
+    if DG.check_pruning_group(pruning_group):
+        pruning_group.prune()
     print("The pruned model:\n", model)
     print("Output: ", model(torch.randn(1,128)).shape)
 
