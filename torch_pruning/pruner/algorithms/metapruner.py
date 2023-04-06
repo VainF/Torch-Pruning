@@ -166,17 +166,18 @@ class MetaPruner:
         for dep, _ in group:
             module = dep.target.module
             pruning_fn = dep.handler
-            if function.is_out_channel_pruner(pruning_fn):
+            if self.DG.is_out_channel_pruning_fn(pruning_fn):
                 target_sparsity = self.get_target_sparsity(module)
                 layer_out_ch = self.DG.get_out_channels(module)
-
+                if layer_out_ch is None: continue
                 if layer_out_ch < self.layer_init_out_ch[module] * (
                     1 - self.max_ch_sparsity
                 ) or layer_out_ch == 1:
                     return False
 
-            elif function.is_in_channel_pruner(pruning_fn):
+            elif self.DG.is_in_channel_pruning_fn(pruning_fn):
                 layer_in_ch = self.DG.get_in_channels(module)
+                if layer_in_ch is None: continue
                 if layer_in_ch < self.layer_init_in_ch[module] * (
                     1 - self.max_ch_sparsity
                 ) or layer_in_ch == 1:
@@ -188,7 +189,6 @@ class MetaPruner:
             return self.channel_groups
         for dep, _ in group:
             module = dep.target.module
-            # and function.is_out_channel_pruner(dep.handler):
             if module in self.channel_groups:
                 return self.channel_groups[module]
         return 1  # no channel grouping

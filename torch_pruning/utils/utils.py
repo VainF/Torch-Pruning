@@ -39,7 +39,7 @@ def draw_computational_graph(DG, save_as, title='Computational Graph', figsize=(
         for out_node in node.outputs:
             G[module2idx[out_node.module], module2idx[node.module]] = fill_value
             G[module2idx[node.module], module2idx[out_node.module]] = fill_value
-        pruner = DG.get_module_pruner(module)
+        pruner = DG.get_pruner_of_module(module)
     fig, ax = plt.subplots(figsize=(figsize))
     ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Blues'))
     # plt.hlines(y=np.arange(0, n_nodes)+0.5, xmin=np.full(n_nodes, 0)-0.5, xmax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
@@ -60,19 +60,19 @@ def draw_groups(DG, save_as, title='Group', figsize=(16, 16), dpi=200, cmap=None
     G = np.zeros((n_nodes, n_nodes))
     fill_value = 10
     for i, (module, node) in enumerate(DG.module2node.items()):
-        pruning_fn = DG.get_module_pruner(module).prune_out_channels
+        pruning_fn = DG.get_pruner_of_module(module).prune_out_channels
         prunable_ch = DG.get_out_channels(module)
         if prunable_ch is None: continue
         group = DG.get_pruning_group(module, pruning_fn, list(range(prunable_ch)))
         grouped_idxs = []
         for dep, _ in group:
             source, target, trigger, handler = dep.source, dep.target, dep.trigger, dep.handler
-            if DG.is_out_channel_pruner(trigger):
+            if DG.is_out_channel_pruning_fn(trigger):
                 grouped_idxs.append(node2idx[source]*2+1)
             else:
                 grouped_idxs.append(node2idx[source]*2)
 
-            if DG.is_out_channel_pruner(handler):
+            if DG.is_out_channel_pruning_fn(handler):
                 grouped_idxs.append(node2idx[target]*2+1)
             else:
                 grouped_idxs.append(node2idx[target]*2)
@@ -107,12 +107,12 @@ def draw_dependency_graph(DG, save_as, title='Group', figsize=(16, 16), dpi=200,
             source = dep.source
             target = dep.target
 
-            if DG.is_out_channel_pruner(trigger):
+            if DG.is_out_channel_pruning_fn(trigger):
                 G[2*node2idx[source]+1, 2*node2idx[target]] = fill_value
             else:
                 G[2*node2idx[source], 2*node2idx[target]+1] = fill_value
 
-        pruner = DG.get_module_pruner(module)
+        pruner = DG.get_pruner_of_module(module)
         if pruner.prune_out_channels == pruner.prune_in_channels:
             G[2*node2idx[node], 2*node2idx[node]+1] = fill_value
 

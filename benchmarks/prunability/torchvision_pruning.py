@@ -1,5 +1,5 @@
 import os, sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))))
 
 # torchvision==0.13.1
 
@@ -146,8 +146,9 @@ if __name__ == "__main__":
         if 'ssd' in model_name:
             ignored_layers.append(model.head)
         if model_name=='raft_large':
-            ignored_layers.append(model.update_block.flow_head)
-            ignored_layers.append(model.mask_predictor)
+            ignored_layers.extend(
+                [model.corr_block, model.update_block, model.mask_predictor]
+            )
         if 'fasterrcnn' in model_name:
             ignored_layers.extend([
                 model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.backbone.fpn, model.roi_heads
@@ -200,6 +201,7 @@ if __name__ == "__main__":
         # Pruning 
         #########################################
         print("==============Before pruning=================")
+        print("Model Name: {}".format(model_name))
         print(model)
         pruner.step()
         if isinstance(
@@ -220,7 +222,7 @@ if __name__ == "__main__":
                 out = model(example_inputs)
             if output_transform:
                 out = output_transform(out)
-            print(model_name)
+            print("Summary for {} Prunning: ".format(model_name))
             print("  Params: %s => %s" % (ori_size, tp.utils.count_params(model)))
             if isinstance(out, (dict,list,tuple)):
                 print("  Output:")
@@ -269,19 +271,15 @@ if __name__ == "__main__":
         else:
             output_transform = None
 
-        print(model_name)
-
-
-        #try:
-        my_prune(
-            model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
-        )
-        successful.append(model_name)
-        #except Exception as e:
-        #    print(e)
-        #    unsuccessful.append(model_name)
+        try:
+            my_prune(
+                model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
+            )
+            successful.append(model_name)
+        except Exception as e:
+            print(e)
+            unsuccessful.append(model_name)
         print("Successful Pruning: %d Models\n"%(len(successful)), successful)
         print("")
         print("Unsuccessful Pruning: %d Models\n"%(len(unsuccessful)), unsuccessful)
-
-
+        sys.stdout.flush()

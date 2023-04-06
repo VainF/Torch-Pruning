@@ -344,23 +344,27 @@ class DependencyGraph(object):
         """
 
         for dep, idxs in group:
-            if function.is_out_channel_pruner(dep.handler):
+            if self.is_out_channel_pruning_fn(dep.handler):
                 prunable_chs = self.get_out_channels(
                     dep.target.module)
+                if prunable_chs is None: continue
                 if prunable_chs <= len(idxs):
                     return False
-            if function.is_in_channel_pruner(dep.handler):
+            if self.is_in_channel_pruning_fn(dep.handler):
                 prunable_in_chs = self.get_in_channels(
                     dep.target.module)
+                if prunable_in_chs is None: continue
                 if prunable_in_chs <= len(idxs):
                     return False
         return True
 
-    def is_out_channel_pruner(self, pruner: function.BasePruningFunc) -> bool:
-        return function.is_out_channel_pruner(pruner)
-
-    def is_in_channel_pruner(self, pruner: function.BasePruningFunc) -> bool:
-        return function.is_in_channel_pruner(pruner)
+    def is_out_channel_pruning_fn(self, fn: typing.Callable) -> bool:
+        return (fn in tuple(p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None) ) or \
+            (fn in tuple(p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values()) )
+    
+    def is_in_channel_pruning_fn(self, fn: typing.Callable) -> bool:
+        return (fn in tuple(p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None) ) or \
+            (fn in tuple(p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values()) )
 
     def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]) -> Group:
         """ An alias of DependencyGraph.get_pruning_group for compatibility.
@@ -454,24 +458,25 @@ class DependencyGraph(object):
             for dep, _ in group:
                 module = dep.target.module
                 pruning_fn = dep.handler
-                if function.is_out_channel_pruner(pruning_fn):
+                if self.is_out_channel_pruning_fn(pruning_fn):
                     visited_layers.append(module)
                     if module in ignored_layers:
                         prunable_group = False
             if prunable_group:
                 yield group
 
-    def get_module_pruner(self, module):
-        return self.REGISTERED_PRUNERS.get(ops.module2type(module), None)
+    def get_pruner_of_module(self, module):
+        p = self.CUSTOMIZED_PRUNERS.get(module.__class__, None)
+        if p is None:
+            p = self.REGISTERED_PRUNERS.get(ops.module2type(module), None)
+        return p
 
     def get_out_channels(self, module_or_node):
         if isinstance(module_or_node, Node):
             module = module_or_node.module
         else:
             module = module_or_node
-        p = self.CUSTOMIZED_PRUNERS.get(module, None)
-        if p is None:
-            p = self.REGISTERED_PRUNERS.get(ops.module2type(module), None)
+        p = self.get_pruner_of_module(module)
         if p is None:
             return None
         return p.get_out_channels(module)
@@ -481,9 +486,7 @@ class DependencyGraph(object):
             module = module_or_node.module
         else:
             module = module_or_node
-        p = self.CUSTOMIZED_PRUNERS.get(module, None)
-        if p is None:
-            p = self.REGISTERED_PRUNERS.get(ops.module2type(module), None)
+        p = self.get_pruner_of_module(module)
         if p is None:
             return None
         return p.get_in_channels(module)
@@ -531,32 +534,16 @@ class DependencyGraph(object):
             # Rule 1) - Inter-layer Dependency
             ###########################################
             for in_node in node.inputs:
-                handler = self.CUSTOMIZED_PRUNERS.get(in_node.class_type)
-                if handler is None:
-                    handler = self.REGISTERED_PRUNERS.get(in_node.type)
-                handler = handler.prune_out_channels
-
-                trigger = self.CUSTOMIZED_PRUNERS.get(node.class_type)
-                if trigger is None:
-                    trigger = self.REGISTERED_PRUNERS.get(node.type)
-                trigger = trigger.prune_in_channels
-
+                handler = self.get_pruner_of_module(in_node.module).prune_out_channels
+                trigger = self.get_pruner_of_module(node.module).prune_in_channels
                 dep = Dependency(
                     trigger=trigger, handler=handler, source=node, target=in_node
                 )
                 node.dependencies.append(dep)
 
             for out_node in node.outputs:
-                trigger = self.CUSTOMIZED_PRUNERS.get(node.class_type)
-                if trigger is None:
-                    trigger = self.REGISTERED_PRUNERS.get(node.type)
-                trigger = trigger.prune_out_channels
-
-                handler = self.CUSTOMIZED_PRUNERS.get(out_node.class_type)
-                if handler is None:
-                    handler = self.REGISTERED_PRUNERS.get(out_node.type)
-                handler = handler.prune_in_channels
-
+                trigger = self.get_pruner_of_module(node.module).prune_out_channels
+                handler = self.get_pruner_of_module(out_node.module).prune_in_channels
                 dep = Dependency(
                     trigger=trigger, handler=handler, source=node, target=out_node
                 )
