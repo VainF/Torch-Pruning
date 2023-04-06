@@ -53,7 +53,7 @@ python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifa
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method slim --speed-up 2.11 --global-pruning --reg 1e-5
 ```
 
-#### - Group Pruner with Sparse Learning (Ours)
+#### - Group Pruner (This Work)
 ```bash
 # 2.11x without sparse learning (Ours w/o SL)
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_norm --speed-up 2.11 --global-pruning
@@ -86,7 +86,7 @@ python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifa
 python main.py --mode pretrain --dataset vgg19 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
 ```
 
-#### - Group Pruner
+#### - Group Pruner (This Work)
 ```bash
 # 8.84x without sparse learning (Ours w/o SL)
 python main.py --mode prune --model vgg19 --batch-size 128 --restore run/cifar10/pretrain/cifar100_vgg19.pth --dataset cifar100  --method group_norm --speed-up 8.84 --global-pruning
