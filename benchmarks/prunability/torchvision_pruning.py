@@ -222,7 +222,7 @@ if __name__ == "__main__":
                 out = model(example_inputs)
             if output_transform:
                 out = output_transform(out)
-            print("Summary for {} Prunning: ".format(model_name))
+            print("{} Pruning: ".format(model_name))
             print("  Params: %s => %s" % (ori_size, tp.utils.count_params(model)))
             if isinstance(out, (dict,list,tuple)):
                 print("  Output:")
