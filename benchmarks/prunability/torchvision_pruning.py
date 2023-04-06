@@ -6,6 +6,18 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath
 ###########################################
 # Prunable Models
 ############################################
+from torchvision.models.detection.ssdlite import ssdlite320_mobilenet_v3_large
+from torchvision.models.detection.ssd import ssd300_vgg16
+from torchvision.models.detection.faster_rcnn import (
+    fasterrcnn_resnet50_fpn, 
+    fasterrcnn_resnet50_fpn_v2, 
+    fasterrcnn_mobilenet_v3_large_320_fpn,
+    fasterrcnn_mobilenet_v3_large_fpn
+)
+from torchvision.models.detection.fcos import fcos_resnet50_fpn
+from torchvision.models.detection.keypoint_rcnn import keypointrcnn_resnet50_fpn
+from torchvision.models.detection.mask_rcnn import maskrcnn_resnet50_fpn_v2
+from torchvision.models.detection.retinanet import retinanet_resnet50_fpn_v2
 from torchvision.models.alexnet import alexnet
 
 from torchvision.models.vision_transformer import (
@@ -88,18 +100,7 @@ from torchvision.models.vgg import (
     vgg19_bn,
 )
 
-from torchvision.models.detection.ssdlite import ssdlite320_mobilenet_v3_large
-from torchvision.models.detection.ssd import ssd300_vgg16
-from torchvision.models.detection.faster_rcnn import (
-    fasterrcnn_resnet50_fpn, 
-    fasterrcnn_resnet50_fpn_v2, 
-    fasterrcnn_mobilenet_v3_large_320_fpn,
-    fasterrcnn_mobilenet_v3_large_fpn
-)
-from torchvision.models.detection.fcos import fcos_resnet50_fpn
-from torchvision.models.detection.keypoint_rcnn import keypointrcnn_resnet50_fpn
-from torchvision.models.detection.mask_rcnn import maskrcnn_resnet50_fpn_v2
-from torchvision.models.detection.retinanet import retinanet_resnet50_fpn_v2
+
 
 ###########################################
 # Failue cases in this script
@@ -124,9 +125,11 @@ if __name__ == "__main__":
     import random
 
     def my_prune(model, example_inputs, output_transform, model_name):
+        
         from torchvision.models.vision_transformer import VisionTransformer
         from torchvision.models.convnext import CNBlock, ConvNeXt
 
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         ori_size = tp.utils.count_params(model)
         model.cpu().eval()
         ignored_layers = []
@@ -138,8 +141,8 @@ if __name__ == "__main__":
         for m in model.modules():
             if isinstance(m, nn.Linear) and m.out_features == 1000:
                 ignored_layers.append(m)
-            elif isinstance(m, nn.modules.linear.NonDynamicallyQuantizableLinear):
-                ignored_layers.append(m) # this module is used in Self-Attention
+            #elif isinstance(m, nn.modules.linear.NonDynamicallyQuantizableLinear):
+            #    ignored_layers.append(m) # this module is used in Self-Attention
         if 'ssd' in model_name:
             ignored_layers.append(model.head)
         if model_name=='raft_large':
@@ -150,7 +153,7 @@ if __name__ == "__main__":
                 model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.backbone.fpn, model.roi_heads
             ])
         if model_name=='fcos_resnet50_fpn':
-            ignored_layers.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg ,model.head.regression_head.bbox_ctrness])
+            ignored_layers.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg, model.head.regression_head.bbox_ctrness])
         if model_name=='keypointrcnn_resnet50_fpn':
             ignored_layers.extend([model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.roi_heads.box_predictor, model.roi_heads.keypoint_predictor])
         if model_name=='maskrcnn_resnet50_fpn_v2':
@@ -196,6 +199,7 @@ if __name__ == "__main__":
         #########################################
         # Pruning 
         #########################################
+        print("==============Before pruning=================")
         print(model)
         pruner.step()
         if isinstance(
@@ -203,8 +207,8 @@ if __name__ == "__main__":
         ):  # Torchvision relies on the hidden_dim variable for forwarding, so we have to modify this varaible after pruning
             model.hidden_dim = model.conv_proj.out_channels
             print(model.class_token.shape, model.encoder.pos_embedding.shape)
+        print("==============After pruning=================")
         print(model)
-
 
         #########################################
         # Testing 
@@ -268,14 +272,14 @@ if __name__ == "__main__":
         print(model_name)
 
 
-        try:
-            my_prune(
-                model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
-            )
-            successful.append(model_name)
-        except Exception as e:
-            print(e)
-            unsuccessful.append(model_name)
+        #try:
+        my_prune(
+            model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
+        )
+        successful.append(model_name)
+        #except Exception as e:
+        #    print(e)
+        #    unsuccessful.append(model_name)
         print("Successful Pruning: %d Models\n"%(len(successful)), successful)
         print("")
         print("Unsuccessful Pruning: %d Models\n"%(len(unsuccessful)), unsuccessful)

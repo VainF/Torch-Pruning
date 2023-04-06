@@ -474,7 +474,9 @@ class DependencyGraph(object):
             module = module_or_node.module
         else:
             module = module_or_node
-        p = function.PrunerBox.get(ops.module2type(module), None)
+        p = self.CUSTOMIZED_PRUNERS.get(module, None)
+        if p is None:
+            p = self.REGISTERED_PRUNERS.get(ops.module2type(module), None)
         if p is None:
             return None
         return p.get_out_channels(module)
@@ -484,7 +486,9 @@ class DependencyGraph(object):
             module = module_or_node.module
         else:
             module = module_or_node
-        p = function.PrunerBox.get(ops.module2type(module), None)
+        p = self.CUSTOMIZED_PRUNERS.get(module, None)
+        if p is None:
+            p = self.REGISTERED_PRUNERS.get(ops.module2type(module), None)
         if p is None:
             return None
         return p.get_in_channels(module)
@@ -532,14 +536,14 @@ class DependencyGraph(object):
             # Rule 1) - Inter-layer Dependency
             ###########################################
             for in_node in node.inputs:
-                handler = self.REGISTERED_PRUNERS.get(in_node.type)
+                handler = self.CUSTOMIZED_PRUNERS.get(in_node.class_type)
                 if handler is None:
-                    handler = self.CUSTOMIZED_PRUNERS[in_node.class_type]
+                    handler = self.REGISTERED_PRUNERS.get(in_node.type)
                 handler = handler.prune_out_channels
 
-                trigger = self.REGISTERED_PRUNERS.get(node.type)
+                trigger = self.CUSTOMIZED_PRUNERS.get(node.class_type)
                 if trigger is None:
-                    trigger = self.CUSTOMIZED_PRUNERS[node.class_type]
+                    trigger = self.REGISTERED_PRUNERS.get(node.type)
                 trigger = trigger.prune_in_channels
 
                 dep = Dependency(
@@ -548,14 +552,14 @@ class DependencyGraph(object):
                 node.dependencies.append(dep)
 
             for out_node in node.outputs:
-                trigger = self.REGISTERED_PRUNERS.get(node.type)
+                trigger = self.CUSTOMIZED_PRUNERS.get(node.class_type)
                 if trigger is None:
-                    trigger = self.CUSTOMIZED_PRUNERS[node.class_type]
+                    trigger = self.REGISTERED_PRUNERS.get(node.type)
                 trigger = trigger.prune_out_channels
 
-                handler = self.REGISTERED_PRUNERS.get(out_node.type)
+                handler = self.CUSTOMIZED_PRUNERS.get(out_node.class_type)
                 if handler is None:
-                    handler = self.CUSTOMIZED_PRUNERS[out_node.class_type]
+                    handler = self.REGISTERED_PRUNERS.get(out_node.type)
                 handler = handler.prune_in_channels
 
                 dep = Dependency(
@@ -770,7 +774,14 @@ class DependencyGraph(object):
                         )
 
     def _update_reshape_index_mapping(self, reshape_node: Node):
-        
+        # Only Supports 2D/4D tensors
+        if hasattr(reshape_node.grad_fn, '_saved_self_sizes'): 
+            if len(reshape_node.grad_fn._saved_self_sizes)!=1 and len(reshape_node.grad_fn._saved_self_sizes)!=4:
+                return
+        else: # old pytorch versions
+            if not self._2d_4d:
+                return 
+            
         in_channels = None
         for n in reshape_node.inputs:
             in_channels = self._infer_out_channels_recursively(n)
@@ -785,14 +796,6 @@ class DependencyGraph(object):
         
         if out_channels is None or in_channels is None: return
         if out_channels==in_channels: return
-
-        # Only Supports 2D/4D tensors
-        if hasattr(reshape_node.grad_fn, '_saved_self_sizes'): 
-            if len(reshape_node.grad_fn._saved_self_sizes)!=1 and len(reshape_node.grad_fn._saved_self_sizes)!=4:
-                return
-        else: # old pytorch versions
-            if not self._2d_4d:
-                return 
 
         # Flatten
         if out_channels > in_channels:
