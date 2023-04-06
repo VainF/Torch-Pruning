@@ -138,7 +138,7 @@ VisionTransformer(
     (head): Linear(in_features=384, out_features=1000, bias=True)
   )
 )
-Summary for vit_b_32 Prunning: 
+Summary for vit_b_32 Pruning: 
   Params: 88224232 => 22878952
   Output: torch.Size([1, 1000])
 ------------------------------------------------------
