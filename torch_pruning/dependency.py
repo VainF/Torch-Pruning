@@ -250,7 +250,7 @@ class DependencyGraph(object):
         forward_fn: typing.Callable[[
             torch.nn.Module, typing.Union[torch.Tensor, typing.Sequence]], torch.Tensor] = None,
         output_transform: typing.Callable = None,
-        unwrapped_parameters: UnwrappedParameters = None,
+        unwrapped_parameters: typing.Dict[nn.Parameter, int] = None,
         customized_pruners: typing.Dict[typing.Any,
                                         function.BasePruningFunc] = None,
         verbose: bool = True,
@@ -294,8 +294,8 @@ class DependencyGraph(object):
             unwrapped_parameters = []
 
         unwrapped_detected = list( set(unwrapped_detected) - set([p for (p, _) in unwrapped_parameters]) )
-        if len(unwrapped_detected)>0 and self.verbose==True:
-            warnings.warn("Unwrapped parameters detected: {}.\n\n. By default, Torch-Pruning prunes the last dim of a parameter matrix. If you want to customize this behaviour, please provide a unwrapped_parameter list".format([param_to_name[p] for p in unwrapped_detected]))
+        if len(unwrapped_detected)>0:
+            warnings.warn("Unwrapped parameters detected: {}.\n\n DepGraph requires an unwrapped_parameter list to determine the pruning_dim of nn.Parameters. By default, the last dim of a parameter matrix will be pruned.".format([param_to_name[p] for p in unwrapped_detected]))
         for p in unwrapped_detected:
             unwrapped_parameters.append( UnwrappedParameters(parameters=p, pruning_dim=-1) ) # prune the last dim by daufault
         self.unwrapped_parameters = unwrapped_parameters
@@ -344,28 +344,23 @@ class DependencyGraph(object):
         """
 
         for dep, idxs in group:
-            if self.is_out_channel_pruner(dep.handler):
+            if function.is_out_channel_pruner(dep.handler):
                 prunable_chs = self.get_out_channels(
                     dep.target.module)
-                if prunable_chs is None: continue
                 if prunable_chs <= len(idxs):
                     return False
-            if self.is_in_channel_pruner(dep.handler):
+            if function.is_in_channel_pruner(dep.handler):
                 prunable_in_chs = self.get_in_channels(
                     dep.target.module)
-                if prunable_in_chs is None: continue
                 if prunable_in_chs <= len(idxs):
                     return False
         return True
 
-    def is_out_channel_pruner(self, fn: typing.Callable) -> bool:
-        return (fn in tuple(p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None)) or \
-            (fn in tuple(p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values()))
+    def is_out_channel_pruner(self, pruner: function.BasePruningFunc) -> bool:
+        return function.is_out_channel_pruner(pruner)
 
-    def is_in_channel_pruner(self, fn: typing.Callable) -> bool:
-        return (fn in tuple(p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None)) or \
-            (fn in tuple(p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values()))
-
+    def is_in_channel_pruner(self, pruner: function.BasePruningFunc) -> bool:
+        return function.is_in_channel_pruner(pruner)
 
     def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]) -> Group:
         """ An alias of DependencyGraph.get_pruning_group for compatibility.
@@ -459,7 +454,7 @@ class DependencyGraph(object):
             for dep, _ in group:
                 module = dep.target.module
                 pruning_fn = dep.handler
-                if self.is_out_channel_pruner(pruning_fn):
+                if function.is_out_channel_pruner(pruning_fn):
                     visited_layers.append(module)
                     if module in ignored_layers:
                         prunable_group = False
