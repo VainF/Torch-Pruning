@@ -16,6 +16,136 @@ Unsuccessful Pruning: 8 Models
  ['raft_large', 'swin_t', 'swin_s', 'swin_b', 'shufflenet_v2_x0_5', 'shufflenet_v2_x1_0', 'shufflenet_v2_x1_5', 'shufflenet_v2_x2_0']
 ```
 
+#### Vision Transfomer Example
+```
+==============Before pruning=================
+Model Name: vit_b_32
+VisionTransformer(
+  (conv_proj): Conv2d(3, 768, kernel_size=(32, 32), stride=(32, 32))
+  (encoder): Encoder(
+    (dropout): Dropout(p=0.0, inplace=False)
+    (layers): Sequential(
+      (encoder_layer_0): EncoderBlock(
+        (ln_1): LayerNorm((768,), eps=1e-06, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=768, out_features=768, bias=True)
+        )
+        (dropout): Dropout(p=0.0, inplace=False)
+        (ln_2): LayerNorm((768,), eps=1e-06, elementwise_affine=True)
+        (mlp): MLPBlock(
+          (0): Linear(in_features=768, out_features=3072, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=3072, out_features=768, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+      )
+...
+      (encoder_layer_10): EncoderBlock(
+        (ln_1): LayerNorm((768,), eps=1e-06, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=768, out_features=768, bias=True)
+        )
+        (dropout): Dropout(p=0.0, inplace=False)
+        (ln_2): LayerNorm((768,), eps=1e-06, elementwise_affine=True)
+        (mlp): MLPBlock(
+          (0): Linear(in_features=768, out_features=3072, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=3072, out_features=768, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (encoder_layer_11): EncoderBlock(
+        (ln_1): LayerNorm((768,), eps=1e-06, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=768, out_features=768, bias=True)
+        )
+        (dropout): Dropout(p=0.0, inplace=False)
+        (ln_2): LayerNorm((768,), eps=1e-06, elementwise_affine=True)
+        (mlp): MLPBlock(
+          (0): Linear(in_features=768, out_features=3072, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=3072, out_features=768, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+      )
+    )
+    (ln): LayerNorm((768,), eps=1e-06, elementwise_affine=True)
+  )
+  (heads): Sequential(
+    (head): Linear(in_features=768, out_features=1000, bias=True)
+  )
+)
+torch.Size([1, 1, 384]) torch.Size([1, 50, 384])
+==============After pruning=================
+VisionTransformer(
+  (conv_proj): Conv2d(3, 384, kernel_size=(32, 32), stride=(32, 32))
+  (encoder): Encoder(
+    (dropout): Dropout(p=0.0, inplace=False)
+    (layers): Sequential(
+      (encoder_layer_0): EncoderBlock(
+        (ln_1): LayerNorm((384,), eps=1e-06, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=384, out_features=384, bias=True)
+        )
+        (dropout): Dropout(p=0.0, inplace=False)
+        (ln_2): LayerNorm((384,), eps=1e-06, elementwise_affine=True)
+        (mlp): MLPBlock(
+          (0): Linear(in_features=384, out_features=1536, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1536, out_features=384, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+      )
+...
+      (encoder_layer_10): EncoderBlock(
+        (ln_1): LayerNorm((384,), eps=1e-06, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=384, out_features=384, bias=True)
+        )
+        (dropout): Dropout(p=0.0, inplace=False)
+        (ln_2): LayerNorm((384,), eps=1e-06, elementwise_affine=True)
+        (mlp): MLPBlock(
+          (0): Linear(in_features=384, out_features=1536, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1536, out_features=384, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+      )
+      (encoder_layer_11): EncoderBlock(
+        (ln_1): LayerNorm((384,), eps=1e-06, elementwise_affine=True)
+        (self_attention): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=384, out_features=384, bias=True)
+        )
+        (dropout): Dropout(p=0.0, inplace=False)
+        (ln_2): LayerNorm((384,), eps=1e-06, elementwise_affine=True)
+        (mlp): MLPBlock(
+          (0): Linear(in_features=384, out_features=1536, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1536, out_features=384, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+      )
+    )
+    (ln): LayerNorm((384,), eps=1e-06, elementwise_affine=True)
+  )
+  (heads): Sequential(
+    (head): Linear(in_features=384, out_features=1000, bias=True)
+  )
+)
+Summary for vit_b_32 Prunning: 
+  Params: 88224232 => 22878952
+  Output: torch.Size([1, 1000])
+------------------------------------------------------
+```
+
+
+
 ## YOLO v7
 
 The following scripts (adapted from [yolov7/detect.py](https://github.com/WongKinYiu/yolov7/blob/main/detect.py) and [yolov7/train.py](https://github.com/WongKinYiu/yolov7/blob/main/train.py)) provide the basic examples of pruning YOLOv7. It is important to note that the training part has not been validated yet due to the time-consuming training process.
