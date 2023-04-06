@@ -15,14 +15,16 @@
 | ResRep [[8]](#8) | 93.71 | 93.71 | +0.00 |2.12x |
 | Ours-L1 | 93.53 | 92.93 | -0.60 | 2.12x |
 | Ours-BN | 93.53 | 93.29 | -0.24 | 2.12x |
-| **Ours-Group** | 93.53 | **93.77** | +0.38 | 2.13x |
+| Ours w/o SL | 93.53 |  93.36 | -0.17 | 2.51x |
+| **Ours** | 93.53 | **93.77** | +0.38 | 2.13x |
 ||
-| GBN [[9]](#9) | 93.10 |  92.77 | -0.33 | 2.51× |
-| AFP [[10]](#10)  | 93.93 | 92.94 | -0.99 | 2.56× |
-| C-SGD [[11]](#11) | 93.39 | 93.44 | +0.05 | 2.55× |
-| GReg-1 [[12]](#12)  | 93.36 | 93.18 | -0.18 | 2.55× |
-| GReg-2 [[12]](#12)  | 93.36 | 93.36 | -0.00 | 2.55× |
-| **Ours-Group** | 93.53 | **93.64** | +0.11 | 2.57× |
+| GBN [[9]](#9) | 93.10 |  92.77 | -0.33 | 2.51x |
+| AFP [[10]](#10)  | 93.93 | 92.94 | -0.99 | 2.56x |
+| C-SGD [[11]](#11) | 93.39 | 93.44 | +0.05 | 2.55x |
+| GReg-1 [[12]](#12)  | 93.36 | 93.18 | -0.18 | 2.55x |
+| GReg-2 [[12]](#12)  | 93.36 | 93.36 | -0.00 | 2.55x |
+| Ours w/o SL | 93.53 | 93.36 | -0.17 | 2.51x |
+| **Ours** | 93.53 | **93.64** | +0.11 | 2.57x |
 
 **Note 1:** $\text{speed up} = \frac{\text{Base MACs}}{\text{Pruned MACs}}$
 
@@ -37,26 +39,33 @@
 python main.py --mode pretrain --dataset cifar10 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
 ```
 
-#### - L1-Norm Pruner
+#### - L1-Norm Pruner (Ours-L1)
 [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710)
 ```bash
 # 2.11x
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method l1 --speed-up 2.11 --global-pruning
 ```
 
-#### - BN Pruner
+#### - BN Pruner (Ours-BN)
 [Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/abs/1708.06519)
 ```bash
 # 2.11x
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method slim --speed-up 2.11 --global-pruning --reg 1e-5
 ```
 
-#### - Group Pruner (this work)
+#### - Group Pruner with Sparse Learning (Ours)
 ```bash
-# 2.11x
+# 2.11x without sparse learning (Ours w/o SL)
+python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_norm --speed-up 2.11 --global-pruning --reg 5e-4
+
+# 2.55x without sparse learning (Ours w/o SL)
+python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_norm --speed-up 2.55 --global-pruning --reg 5e-4
+
+```bash
+# 2.11x (Ours)
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_sl --speed-up 2.11 --global-pruning --reg 5e-4
 
-# 2.55x
+# 2.55x (Ours)
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_sl --speed-up 2.55 --global-pruning --reg 5e-4
 ```
 
@@ -69,6 +78,7 @@ python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifa
 | EigenD [[13]](#13) | 73.34 | 65.18 | -8.16 |  8.80× |
 | GReg-1 [[12]](#12) | 74.02 | 67.55 | -6.67 | 8.84× |
 | GReg-2 [[12]](#12) | 74.02 | 67.75 | -6.27 | 8.84× |
+| Ours w/o SL | 73.50 | 67.60 | -5.44 |  8.87x |
 | Ours | 73.50 | 70.39  | -3.11 | 8.92× |
 
 #### - Pretraining
@@ -76,9 +86,12 @@ python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifa
 python main.py --mode pretrain --dataset vgg19 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
 ```
 
-#### - Group Pruner (this work)
+#### - Group Pruner
 ```bash
-# 8.84x
+# 8.84x without sparse learning (Ours w/o SL)
+python main.py --mode prune --model vgg19 --batch-size 128 --restore run/cifar10/pretrain/cifar100_vgg19.pth --dataset cifar100  --method group_norm --speed-up 8.84 --global-pruning --reg 5e-4
+
+# 8.84x (Ours)
 python main.py --mode prune --model vgg19 --batch-size 128 --restore run/cifar10/pretrain/cifar100_vgg19.pth --dataset cifar100  --method group_sl --speed-up 8.84 --global-pruning --reg 5e-4
 ```
 
