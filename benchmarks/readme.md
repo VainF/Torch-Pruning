@@ -32,7 +32,9 @@
 
 **Note 3:** Donwload pretrained resnet-56 to reproduce our results: [dropbox](https://www.dropbox.com/sh/71s2rlt5zr83i4v/AAAjBCwslVf89TjJ49NHl0Epa?dl=0)
 
-**Note 4:** Training logs are available at [run/](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/run). 
+**Note 4:** Training logs are available at [run/](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/run).
+
+**Note 5:** "w/o SL" = "without sparse learning"
 
 #### - Pretraining
 ```python
