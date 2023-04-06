@@ -42,14 +42,14 @@ python main.py --mode pretrain --dataset cifar10 --model resnet56 --lr 0.1 --tot
 ```
 
 #### - L1-Norm Pruner
-[Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710)
+A group-level pruner adapted from [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710)
 ```bash
 # 2.11x
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method l1 --speed-up 2.11 --global-pruning
 ```
 
 #### - BN Pruner
-[Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/abs/1708.06519)
+A group-level pruner adapted from [Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/abs/1708.06519)
 ```bash
 # 2.11x
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method slim --speed-up 2.11 --global-pruning --reg 1e-5
