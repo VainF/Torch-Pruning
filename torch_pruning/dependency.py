@@ -243,6 +243,10 @@ class DependencyGraph(object):
         self.CUSTOMIZED_PRUNERS = {}
         self.IGNORED_LAYERS = []
 
+        # cache
+        self._in_channel_pruning_fn = set([p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
+        self._out_channel_pruning_fn = set([p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
+
     def build_dependency(
         self,
         model: torch.nn.Module,
@@ -270,7 +274,6 @@ class DependencyGraph(object):
         self.model = model
         self._module2name = {module: name for (
             name, module) in model.named_modules()}
-        
 
         # Detect unwrapped nn.parameters
         wrapped_parameters = []
@@ -295,7 +298,7 @@ class DependencyGraph(object):
 
         unwrapped_detected = list( set(unwrapped_detected) - set([p for (p, _) in unwrapped_parameters]) )
         if len(unwrapped_detected)>0 and self.verbose:
-            warnings.warn("Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last dimension of a parameter. If you wish to customize the pruning behavior, please provide an unwrapped_parameters argument.".format([param_to_name[p] for p in unwrapped_detected]))
+            warnings.warn("Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last dimension of a parameter. If you wish to customize this behavior, please provide an unwrapped_parameters argument.".format([param_to_name[p] for p in unwrapped_detected]))
         for p in unwrapped_detected:
             unwrapped_parameters.append( UnwrappedParameters(parameters=p, pruning_dim=-1) ) # prune the last dim by daufault
         self.unwrapped_parameters = unwrapped_parameters
@@ -336,6 +339,9 @@ class DependencyGraph(object):
             pruner (tp.pruner.BasePruningFunc): a pruner for the specified layer type.
         """
         self.CUSTOMIZED_PRUNERS[layer_type] = layer_pruner
+        # Update cache
+        self._in_channel_pruning_fn = set([p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
+        self._out_channel_pruning_fn = set([p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
 
     def check_pruning_group(self, group: Group) -> bool:
         """check the group to avoid over-pruning. Return True if there are sufficient prunable elements.
@@ -359,12 +365,10 @@ class DependencyGraph(object):
         return True
 
     def is_out_channel_pruning_fn(self, fn: typing.Callable) -> bool:
-        return (fn in tuple(p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None) ) or \
-            (fn in tuple(p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values()) )
+        return (fn in self._out_channel_pruning_fn)
     
     def is_in_channel_pruning_fn(self, fn: typing.Callable) -> bool:
-        return (fn in tuple(p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None) ) or \
-            (fn in tuple(p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values()) )
+        return (fn in self._in_channel_pruning_fn)
 
     def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]) -> Group:
         """ An alias of DependencyGraph.get_pruning_group for compatibility.
@@ -444,7 +448,7 @@ class DependencyGraph(object):
             if not isinstance(m, tuple(root_module_types)):
                 continue
 
-            pruner = self.REGISTERED_PRUNERS.get(ops.module2type(m), None)
+            pruner = self.get_pruner_of_module(m)
             if pruner is None or pruner.get_out_channels(m) is None:
                 continue
 
@@ -562,15 +566,15 @@ class DependencyGraph(object):
         model.eval()
         gradfn2module = {}
         visited = {}
-        self._2d_4d = True # CNNs or Transformer, only for pytorch<=1.8
+        #self._is_vit = True # CNNs or Transformer, only for pytorch<=1.8
         def _record_grad_fn(module, inputs, outputs):
             if module not in visited:
                 visited[module] = 1
             else:
                 visited[module] += 1
             
-            if isinstance(module, ops.TORCH_LINEAR) and len(inputs[0].shape)==3:
-                self._2d_4d=False
+            #if len(outputs.shape)!=3:
+            #    self._is_vit=False
 
             if isinstance(outputs, tuple):
                 outputs = outputs[0]
@@ -717,11 +721,11 @@ class DependencyGraph(object):
         """ update all index mapping after pruning
         """
         for module, node in self.module2node.items():
-            #if node.type == ops.OPTYPE.LINEAR:
+            if node.type == ops.OPTYPE.LINEAR:
                 # for Conv-Flatten-Linear (e.g., VGG)
-            #    self._update_flatten_index_mapping(node)
-            if node.type == ops.OPTYPE.RESHAPE:
-                self._update_reshape_index_mapping(node)
+                self._update_flatten_index_mapping(node)
+            #if node.type == ops.OPTYPE.RESHAPE:
+            #    self._update_reshape_index_mapping(node)
             if node.type == ops.OPTYPE.CONCAT:
                 self._update_concat_index_mapping(node)
             if node.type == ops.OPTYPE.SPLIT:
@@ -748,7 +752,6 @@ class DependencyGraph(object):
                         dep.index_mapping = _helpers._FlattenIndexMapping(
                             stride=stride, reverse=True
                         )
-
                 for dep in in_node.dependencies:
                     if dep.target == fc_node:
                         dep.index_mapping = _helpers._FlattenIndexMapping(
@@ -756,14 +759,6 @@ class DependencyGraph(object):
                         )
 
     def _update_reshape_index_mapping(self, reshape_node: Node):
-        # Only Supports 2D/4D tensors
-        if hasattr(reshape_node.grad_fn, '_saved_self_sizes'): 
-            if len(reshape_node.grad_fn._saved_self_sizes)!=1 and len(reshape_node.grad_fn._saved_self_sizes)!=4:
-                return
-        else: # old pytorch versions
-            if not self._2d_4d:
-                return 
-            
         in_channels = None
         for n in reshape_node.inputs:
             in_channels = self._infer_out_channels_recursively(n)
@@ -778,7 +773,16 @@ class DependencyGraph(object):
         
         if out_channels is None or in_channels is None: return
         if out_channels==in_channels: return
-
+        
+        # Only Supports 2D/4D tensors
+        # TODO: Better support for reshape/view/flatten
+        if hasattr(reshape_node.grad_fn, '_saved_self_sizes'): 
+            if (len(reshape_node.grad_fn._saved_self_sizes)!=1 and len(reshape_node.grad_fn._saved_self_sizes)!=4):
+                return
+        #else: # old pytorch versions
+        #    if self._is_vit:
+        #        return 
+        
         # Flatten
         if out_channels > in_channels:
              for in_node in reshape_node.inputs:
