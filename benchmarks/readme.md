@@ -39,14 +39,14 @@
 python main.py --mode pretrain --dataset cifar10 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
 ```
 
-#### - L1-Norm Pruner (Ours-L1)
+#### - L1-Norm Pruner
 [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710)
 ```bash
 # 2.11x
 python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method l1 --speed-up 2.11 --global-pruning
 ```
 
-#### - BN Pruner (Ours-BN)
+#### - BN Pruner
 [Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/abs/1708.06519)
 ```bash
 # 2.11x
