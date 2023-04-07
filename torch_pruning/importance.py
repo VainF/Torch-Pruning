@@ -90,7 +90,8 @@ class MagnitudeImportance(Importance):
                         local_norm = local_norm.repeat(ch_groups)
                     #print(local_norm.shape)
                     group_imp.append(local_norm)
-
+        if len(group_imp)==0:
+            return None
         min_imp_size = min([len(imp) for imp in group_imp])
         aligned_group_imp = []
         for imp in group_imp:
@@ -123,6 +124,8 @@ class BNScaleImportance(MagnitudeImportance):
                     local_imp = local_imp.view(ch_groups, -1).mean(0)
                     local_imp = local_imp.repeat(ch_groups)
                 group_imp.append(local_imp)
+        if len(group_imp)==0:
+            return None
         group_imp = torch.stack(group_imp, dim=0)
         group_imp = self._reduce(group_imp)
         if self.normalizer is not None:
@@ -174,7 +177,8 @@ class LAMPImportance(MagnitudeImportance):
                     w = (layer.weight)[idxs].view(-1, 1)
                     local_imp = torch.norm(w, dim=1, p=self.p)
                     group_imp.append(local_imp)
-
+        if len(group_imp)==0:
+            return None
         group_imp = torch.stack(group_imp, dim=0)
         group_imp = self._reduce(group_imp)
         if self.normalizer is not None:

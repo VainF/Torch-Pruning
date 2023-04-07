@@ -204,6 +204,7 @@ class MetaPruner:
 
                 ch_groups = self.get_channel_groups(group)
                 imp = self.estimate_importance(group, ch_groups=ch_groups)
+                if imp is None: continue
                 current_channels = self.DG.get_out_channels(module)
                 target_sparsity = self.get_target_sparsity(module)
                 n_pruned = current_channels - int(
@@ -237,6 +238,7 @@ class MetaPruner:
             if self._check_sparsity(group):
                 ch_groups = self.get_channel_groups(group)
                 imp = self.estimate_importance(group, ch_groups=ch_groups)
+                if imp is None: continue
                 if ch_groups > 1:
                     imp = imp[:len(imp)//ch_groups]
                 global_importance.append((group, ch_groups, imp))
