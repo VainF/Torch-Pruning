@@ -13,8 +13,6 @@
 </p>
 
 
-
-
 [[中文README | README in Chinese]](README_CN.md)
 
 Torch-Pruning (TP) is a versatile library for Structural Network Pruning that provides the following features:
