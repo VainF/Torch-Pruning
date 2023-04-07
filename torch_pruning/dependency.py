@@ -275,6 +275,20 @@ class DependencyGraph(object):
         self._module2name = {module: name for (
             name, module) in model.named_modules()}
 
+        # Register customized pruners
+        if customized_pruners is not None:
+            for customized_module, customized_pruner in customized_pruners.items():
+                self.register_customized_layer(
+                    customized_module, customized_pruner)
+
+        # Ignore all sub-modules of customized layers
+        for layer_type in self.CUSTOMIZED_PRUNERS.keys():
+            for m in self.model.modules():
+                if isinstance(m, layer_type):
+                    for sub_module in m.modules():
+                        if sub_module != m:
+                            self.IGNORED_LAYERS.append(sub_module)
+
         # Detect unwrapped nn.parameters
         wrapped_parameters = []
         prunable_module_types = self.REGISTERED_PRUNERS.keys()
@@ -302,19 +316,6 @@ class DependencyGraph(object):
         for p in unwrapped_detected:
             unwrapped_parameters.append( UnwrappedParameters(parameters=p, pruning_dim=-1) ) # prune the last dim by daufault
         self.unwrapped_parameters = unwrapped_parameters
-        # Register customized pruners
-        if customized_pruners is not None:
-            for customized_module, customized_pruner in self.customized_pruners.items():
-                self.register_customized_layer(
-                    customized_module, customized_pruner)
-
-        # Ignore all sub-modules of customized layers
-        for layer_type in self.CUSTOMIZED_PRUNERS.keys():
-            for m in self.model.modules():
-                if isinstance(m, layer_type):
-                    for sub_module in m.modules():
-                        if sub_module != m:
-                            self.IGNORED_LAYERS.append(sub_module)
 
         # Build computational graph by tracing.
         self.module2node = self._trace(
@@ -566,15 +567,15 @@ class DependencyGraph(object):
         model.eval()
         gradfn2module = {}
         visited = {}
-        #self._is_vit = True # CNNs or Transformer, only for pytorch<=1.8
+        self._2d_4d = True # only for pytorch<=1.8
         def _record_grad_fn(module, inputs, outputs):
             if module not in visited:
                 visited[module] = 1
             else:
                 visited[module] += 1
             
-            #if len(outputs.shape)!=3:
-            #    self._is_vit=False
+            if isinstance(module, nn.Linear) and len(outputs.shape)==3:
+                self._2d_4d=False
 
             if isinstance(outputs, tuple):
                 outputs = outputs[0]
@@ -721,11 +722,11 @@ class DependencyGraph(object):
         """ update all index mapping after pruning
         """
         for module, node in self.module2node.items():
-            if node.type == ops.OPTYPE.LINEAR:
+            #if node.type == ops.OPTYPE.LINEAR:
                 # for Conv-Flatten-Linear (e.g., VGG)
-                self._update_flatten_index_mapping(node)
-            #if node.type == ops.OPTYPE.RESHAPE:
-            #    self._update_reshape_index_mapping(node)
+            #    self._update_flatten_index_mapping(node)
+            if node.type == ops.OPTYPE.RESHAPE:
+                self._update_reshape_index_mapping(node)
             if node.type == ops.OPTYPE.CONCAT:
                 self._update_concat_index_mapping(node)
             if node.type == ops.OPTYPE.SPLIT:
@@ -759,31 +760,37 @@ class DependencyGraph(object):
                         )
 
     def _update_reshape_index_mapping(self, reshape_node: Node):
-        in_channels = None
-        for n in reshape_node.inputs:
-            in_channels = self._infer_out_channels_recursively(n)
-            if in_channels is not None:  # =0 if there is a residual connection to model inputs
-                break
-            
+        
+        # Only Supports 2D/4D tensors
+        # TODO: Better support for reshape/view/flatten
+        if hasattr(reshape_node.grad_fn, '_saved_self_sizes'): 
+            size = reshape_node.grad_fn._saved_self_sizes
+            if (len(size)!=1 and len(size)!=4):
+                return
+        else: # old pytorch versions
+            if not self._2d_4d:
+                return 
+
         out_channels = None
         for n in reshape_node.outputs:
             out_channels = self._infer_in_channels_recursively(n)
             if out_channels is not None:  # =0 if there is a residual connection to model inputs
                 break
         
+        in_channels = None
+        for n in reshape_node.inputs:
+            in_channels = self._infer_out_channels_recursively(n)
+            if in_channels is not None:  # =0 if there is a residual connection to model inputs
+                break
+        
         if out_channels is None or in_channels is None: return
         if out_channels==in_channels: return
-        
-        # Only Supports 2D/4D tensors
-        # TODO: Better support for reshape/view/flatten
-        if hasattr(reshape_node.grad_fn, '_saved_self_sizes'): 
-            if (len(reshape_node.grad_fn._saved_self_sizes)!=1 and len(reshape_node.grad_fn._saved_self_sizes)!=4):
-                return
-        #else: # old pytorch versions
-        #    if self._is_vit:
-        #        return 
+
+        if len(size)==4 and size[1]*size[2]*size[3]!=out_channels:
+            return
         
         # Flatten
+        #print(reshape_node.grad_fn._saved_self_sizes, in_channels, out_channels)
         if out_channels > in_channels:
              for in_node in reshape_node.inputs:
                 for dep in reshape_node.dependencies:
