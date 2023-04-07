@@ -156,7 +156,7 @@ if __name__ == "__main__":
         if model_name=='fcos_resnet50_fpn':
             ignored_layers.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg, model.head.regression_head.bbox_ctrness])
         if model_name=='keypointrcnn_resnet50_fpn':
-            ignored_layers.extend([model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.roi_heads.box_head, model.roi_heads.box_predictor, model.roi_heads.keypoint_predictor])
+            ignored_layers.extend([model.rpn.head.cls_logits, model.backbone.fpn.layer_blocks, model.rpn.head.bbox_pred, model.roi_heads.box_head, model.roi_heads.box_predictor, model.roi_heads.keypoint_predictor])
         if model_name=='maskrcnn_resnet50_fpn_v2':
             ignored_layers.extend([model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.roi_heads.box_predictor, model.roi_heads.mask_predictor])
         if model_name=='retinanet_resnet50_fpn_v2':
