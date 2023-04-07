@@ -62,18 +62,11 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. How It Works
 
-In complex network structures, dependencies can arise among groups of parameters, necessitating their simultaneous pruning. Our work addresses this challenge by providing an automated mechanism for grouping parameters to facilitate their removal for acceleration. Specifically, Torch-Pruning accomplishes this by forwarding your model with a fake input, tracing the network to establish a graph, and recording the dependencies between layers. When you prune a single layer, Torch-Pruning identifies and groups all coupled layers by returning a `tp.Group`. Moreover, all pruning indices will be automatically aligned if operations like torch.split or torch.cat are present. 
+In structural pruning, **a ``Group`` constitutes the minimal prunable unit within deep networks**. Each group typically comprises several interdependent parameters that must be removed simultaneously to maintain the integrity of the resulting structures. However, deep networks often present complex dependencies among parameters, making structural pruning a challenging endeavor. Our solution addresses this challenge by offering an automated mechanism for parameter grouping and facilitating effortless pruning.
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
 </div>
-
-With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. In our paper, we craft a simple [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/745f6d6bafba7432474421a8c1e5ce3aad25a5ef/torch_pruning/pruner/algorithms/group_norm_pruner.py#L8) (c) to learn consistent sparsity across coupled layers.
-
-<div align="center">
-<img src="assets/group_sparsity.png" width="80%">
-</div>
-
 
 ### 1. A Minimal Example
 
@@ -208,6 +201,13 @@ for i in range(iterative_steps):
     # ...
 ```
 
+#### Group-level Pruning
+
+With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. In our paper, we extend the classic norm-based algorithm and introduce a simple GroupNormPruner, which learns group-level sparsity for pruning.
+
+<div align="center">
+<img src="assets/group_sparsity.png" width="80%">
+</div>
 
 
 ### 3. Low-level Pruning Functions
