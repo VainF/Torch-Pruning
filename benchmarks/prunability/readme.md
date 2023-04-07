@@ -1,5 +1,12 @@
 # Prunability
 
+## Requirements
+
+```bash
+pip install -r requirements.txt
+```
+
+
 ## Torchvision 0.13.1
 ```python
 python torchvision_pruning.py
