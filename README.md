@@ -60,7 +60,7 @@ git clone https://github.com/VainF/Torch-Pruning.git # recommended
   
 Here we provide a quick start for Torch-Pruning. More explained details can be found in [tutorals](./tutorials/)
 
-### 0. How it works
+### 0. How It Works
 
 In complex network structures, dependencies can arise among groups of parameters, necessitating their simultaneous pruning. Our work addresses this challenge by providing an automated mechanism for grouping parameters to facilitate their removal for acceleration. Specifically, Torch-Pruning accomplishes this by forwarding your model with a fake input, tracing the network to establish a graph, and recording the dependencies between layers. When you prune a single layer, Torch-Pruning identifies and groups all coupled layers by returning a `tp.Group`. Moreover, all pruning indices will be automatically aligned if operations like torch.split or torch.cat are present. 
 
@@ -75,7 +75,7 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 </div>
 
 
-### 1. A minimal example
+### 1. A Minimal Example
 
 ```python
 import torch
@@ -210,7 +210,7 @@ for i in range(iterative_steps):
 
 
 
-### 3. Low-level pruning functions
+### 3. Low-level Pruning Functions
 
 While it is possible to manually prune your model using low-level functions, this approach can be quite laborious, as it requires careful management of the associated dependencies. As a result, we recommend utilizing the aforementioned high-level pruners to streamline the pruning process.
 
