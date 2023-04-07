@@ -3,11 +3,13 @@
 <img src="assets/intro.png" width="45%">
 </div>
 
-[![Test Status](https://img.shields.io/badge/tests-passing-blue.svg)](https://github.com/VainF/Torch-Pruning/actions)
-[![Tested PyTorch Versions](https://img.shields.io/badge/PyTorch-1.8.1%20%7C%202.0.0-blue.svg)](https://pytorch.org/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Downloads](https://pepy.tech/badge/Torch-Pruning)](https://pepy.tech/project/Torch-Pruning)
-[![Latest Version](https://img.shields.io/badge/Latest%20Version-1.1.3-blue.svg)](https://github.com/VainF/Torch-Pruning/releases/latest)
+<p align="center">
+  <a href="https://github.com/VainF/Torch-Pruning/actions"><img src="https://img.shields.io/badge/tests-passing-blue.svg" alt="Test Status"></a>
+  <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-1.8.1%20%7C%202.0.0-blue.svg" alt="Tested PyTorch Versions"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
+  <a href="https://pepy.tech/project/Torch-Pruning"><img src="https://pepy.tech/badge/Torch-Pruning" alt="Downloads"></a>
+  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.1.3-blue.svg" alt="Latest Version"></a>
+</p>
 
 [[中文README | README in Chinese]](README_CN.md)
 
