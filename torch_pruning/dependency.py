@@ -785,9 +785,10 @@ class DependencyGraph(object):
         
         if out_channels is None or in_channels is None: return
         if out_channels==in_channels: return
-
-        if len(size)==4 and size[1]*size[2]*size[3]!=out_channels:
-            return
+        
+        if hasattr(reshape_node.grad_fn, '_saved_self_sizes'):
+            if len(size)==4 and size[1]*size[2]*size[3]!=out_channels:
+                return
         
         # Flatten
         #print(reshape_node.grad_fn._saved_self_sizes, in_channels, out_channels)
