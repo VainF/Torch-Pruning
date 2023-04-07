@@ -7,7 +7,7 @@
 [![Tested PyTorch Versions](https://img.shields.io/badge/PyTorch-1.8.1%20%7C%202.0.0-blue.svg)](https://pytorch.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Downloads](https://pepy.tech/badge/Torch-Pruning)](https://pepy.tech/project/Torch-Pruning)
-[![Latest Version](https://img.shields.io/badge/Latest%20Version-1.0-blue.svg)](https://github.com/VainF/Torch-Pruning/releases/latest)
+[![Latest Version](https://img.shields.io/badge/Latest%20Version-1.1.3-blue.svg)](https://github.com/VainF/Torch-Pruning/releases/latest)
 
 [[中文README | README in Chinese]](README_CN.md)
 
