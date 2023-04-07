@@ -1,1 +1,2 @@
-
+torchvision>=0.13.1
+torch>=1.12.1
