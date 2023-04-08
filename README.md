@@ -1,6 +1,6 @@
 <div align="center"> <h1>Torch-Pruning <br> <h3>Towards Any Structural Pruning<h3> </h1> </div>
 <div align="center">
-<img src="assets/intro.png" width="45%">
+<img src="assets/intro.png" width="50%">
 </div>
 
 <p align="center">
