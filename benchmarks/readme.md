@@ -31,14 +31,14 @@ A Prunability Benchmark is available at [benchmarks/prunability](prunability)
 
 **Note 2:** Baseline methods are not implemented in this repo, because they may require additional modifications to the standard models and training scripts. We are working to support more algorithms.
 
-**Note 3:** Donwload pretrained resnet-56 to reproduce our results: [dropbox](https://www.dropbox.com/sh/71s2rlt5zr83i4v/AAAjBCwslVf89TjJ49NHl0Epa?dl=0)
+**Note 3:** Donwload pretrained resnet-56 from [Dropbox](https://www.dropbox.com/sh/71s2rlt5zr83i4v/AAAjBCwslVf89TjJ49NHl0Epa?dl=0) or [Github Release](https://github.com/VainF/Torch-Pruning/releases)
 
 **Note 4:** Training logs are available at [run/](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/run).
 
 **Note 5:** "w/o SL" = "without sparse learning"
 
 
-#### - Download pre-trained models for reproducibility
+### 1.1 Download pre-trained models for reproducibility
 ```bash
 wget https://github.com/VainF/Torch-Pruning/releases/download/v1.1.4/cifar10_resnet56.pth
 ```
@@ -46,6 +46,8 @@ or train a new model:
 ```python
 python main.py --mode pretrain --dataset cifar10 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
 ```
+
+### 1.2 CIFAR-10 Pruning
 
 #### - L1-Norm Pruner
 A group-level pruner adapted from [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710)
@@ -89,7 +91,7 @@ python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/t
 | Ours w/o SL | 73.50 | 67.60 | -5.44 |  8.87x |
 | Ours | 73.50 | 70.39  | -3.11 | 8.92× |
 
-#### - Download pre-trained models for reproducibility
+### 2.1 Download pre-trained models for reproducibility
 ```bash
 wget https://github.com/VainF/Torch-Pruning/releases/download/v1.1.4/cifar100_vgg19.pth
 ```
@@ -97,6 +99,8 @@ or train a new model:
 ```python
 python main.py --mode pretrain --dataset vgg19 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
 ```
+
+### 2.2 CIFAR-100 Pruning
 
 #### - Group Pruner (This Work)
 ```bash
