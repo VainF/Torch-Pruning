@@ -37,7 +37,12 @@ A Prunability Benchmark is available at [benchmarks/prunability](prunability)
 
 **Note 5:** "w/o SL" = "without sparse learning"
 
-#### - Pretraining
+
+#### - Download pre-trained models for reproducibility
+```bash
+wget https://github.com/VainF/Torch-Pruning/releases/download/v1.1.4/cifar10_resnet56.pth
+```
+or train a new model:
 ```python
 python main.py --mode pretrain --dataset cifar10 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
 ```
@@ -46,30 +51,30 @@ python main.py --mode pretrain --dataset cifar10 --model resnet56 --lr 0.1 --tot
 A group-level pruner adapted from [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710)
 ```bash
 # 2.11x
-python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method l1 --speed-up 2.11 --global-pruning
+python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method l1 --speed-up 2.11 --global-pruning
 ```
 
 #### - BN Pruner
 A group-level pruner adapted from [Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/abs/1708.06519)
 ```bash
 # 2.11x
-python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method slim --speed-up 2.11 --global-pruning --reg 1e-5
+python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method slim --speed-up 2.11 --global-pruning --reg 1e-5
 ```
 
 #### - Group Pruner (This Work)
 ```bash
 # 2.11x without sparse learning (Ours w/o SL)
-python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_norm --speed-up 2.11 --global-pruning
+python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method group_norm --speed-up 2.11 --global-pruning
 
 # 2.55x without sparse learning (Ours w/o SL)
-python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_norm --speed-up 2.55 --global-pruning
+python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method group_norm --speed-up 2.55 --global-pruning
 
 ```bash
 # 2.11x (Ours)
-python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_sl --speed-up 2.11 --global-pruning --reg 5e-4
+python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method group_sl --speed-up 2.11 --global-pruning --reg 5e-4
 
 # 2.55x (Ours)
-python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifar10/pretrain/cifar10_resnet56.pth --dataset cifar10  --method group_sl --speed-up 2.55 --global-pruning --reg 5e-4
+python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method group_sl --speed-up 2.55 --global-pruning --reg 5e-4
 ```
 
 ## 2. VGG-19 / CIFAR-100 / 8.8x
@@ -84,7 +89,11 @@ python main.py --mode prune --model resnet56 --batch-size 128 --restore run/cifa
 | Ours w/o SL | 73.50 | 67.60 | -5.44 |  8.87x |
 | Ours | 73.50 | 70.39  | -3.11 | 8.92× |
 
-#### - Pretraining
+#### - Download pre-trained models for reproducibility
+```bash
+wget https://github.com/VainF/Torch-Pruning/releases/download/v1.1.4/cifar100_vgg19.pth
+```
+or train a new model:
 ```python
 python main.py --mode pretrain --dataset vgg19 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
 ```
@@ -92,10 +101,10 @@ python main.py --mode pretrain --dataset vgg19 --model resnet56 --lr 0.1 --total
 #### - Group Pruner (This Work)
 ```bash
 # 8.84x without sparse learning (Ours w/o SL)
-python main.py --mode prune --model vgg19 --batch-size 128 --restore run/cifar10/pretrain/cifar100_vgg19.pth --dataset cifar100  --method group_norm --speed-up 8.84 --global-pruning
+python main.py --mode prune --model vgg19 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar100  --method group_norm --speed-up 8.84 --global-pruning
 
 # 8.84x (Ours)
-python main.py --mode prune --model vgg19 --batch-size 128 --restore run/cifar10/pretrain/cifar100_vgg19.pth --dataset cifar100  --method group_sl --speed-up 8.84 --global-pruning --reg 5e-4
+python main.py --mode prune --model vgg19 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar100  --method group_sl --speed-up 8.84 --global-pruning --reg 5e-4
 ```
 
 ## 3. ResNet50 / ImageNet / 2.00 GMACs
