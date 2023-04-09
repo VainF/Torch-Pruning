@@ -28,6 +28,10 @@ For more technical details, please refer to our CVPR'23 paper:
 
 Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper. 
 
+### Update:
+* 2023.04 [Structural Pruning for LLaMa](https://github.com/horseee/LLaMa-Pruning)
+
+
 ### **Features:**
 - [x] Structural (Channel) pruning for [CNNs](benchmarks/prunability/torchvision_pruning.py#L19) (e.g. ResNet, DenseNet), [Transformers](benchmarks/prunability/torchvision_pruning.py#L11) (e.g. ViT) and Detectors (e.g. [Yolov7](benchmarks/prunability/yolov7_train_pruned.py#L102), [FasterRCNN, SSD](benchmarks/prunability/torchvision_pruning.py#L92))
 - [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900) (a simple pruner used in our paper), RandomPruner, etc.
