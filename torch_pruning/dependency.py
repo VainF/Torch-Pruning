@@ -146,7 +146,8 @@ class Group(object):
 
     def __init__(self):
         self._group = list()
-        self._DG = None
+
+        self._DG = None # for group.prune(idxs=NEW_IDXS)
 
     def prune(self, idxs=None):
         """Prune all coupled layers in the group
@@ -158,7 +159,20 @@ class Group(object):
             new_group.prune()
         else:
             for dep, idxs in self._group:
-                dep(idxs)
+                if dep.target.type == ops.OPTYPE.PARAMETER:
+                    old_parameter = dep.target.module
+                    name = self._DG._param_to_name[old_parameter]
+                    self._DG._param_to_name.pop(old_parameter)
+
+                    pruned_parameter = dep(idxs)
+                    path = name.split('.')
+                    module = self._DG.model
+                    for p in path[:-1]:
+                        module = getattr(module, p)
+                    setattr(module, path[-1], pruned_parameter)
+                    self._DG._param_to_name[pruned_parameter] = name
+                else:
+                    dep(idxs)
 
     def add_dep(self, dep, idxs):
         self._group.append(GroupItem(dep=dep, idxs=idxs))
@@ -297,7 +311,7 @@ class DependencyGraph(object):
             if ( op_type in prunable_module_types and op_type!=ops.OPTYPE.ELEMENTWISE ) or m.__class__ in self.CUSTOMIZED_PRUNERS.keys():
                 wrapped_parameters.extend(list(m.parameters()))
         unwrapped_detected = []
-        param_to_name = {}
+        _param_to_name = {}
         for name, p in self.model.named_parameters():
             is_wrapped = False
             for p_wrapped in wrapped_parameters:
@@ -306,13 +320,13 @@ class DependencyGraph(object):
                     break
             if not is_wrapped:
                 unwrapped_detected.append(p)
-                param_to_name[p] = name
+                _param_to_name[p] = name
         if unwrapped_parameters is None:
             unwrapped_parameters = []
-
+        self._param_to_name = _param_to_name
         unwrapped_detected = list( set(unwrapped_detected) - set([p for (p, _) in unwrapped_parameters]) )
         if len(unwrapped_detected)>0 and self.verbose:
-            warnings.warn("Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last non-singleton dimension of a parameter. If you wish to customize this behavior, please provide an unwrapped_parameters argument.".format([param_to_name[p] for p in unwrapped_detected]))
+            warnings.warn("Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last non-singleton dimension of a parameter. If you wish to customize this behavior, please provide an unwrapped_parameters argument.".format([_param_to_name[p] for p in unwrapped_detected]))
         for p in unwrapped_detected:
             # get the last dimension that >1
             def last_non_singleton_dim(tensor):
