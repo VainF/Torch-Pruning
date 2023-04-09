@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="torch-pruning",
-    version="v1.1.3",
+    version="v1.1.4",
     author="Gongfan Fang",
     author_email="gongfan@u.nus.edu",
     description="Structural Pruning for Model Acceleration.",
