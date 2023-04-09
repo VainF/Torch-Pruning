@@ -166,6 +166,8 @@ class MetaPruner:
         for dep, _ in group:
             module = dep.target.module
             pruning_fn = dep.handler
+            if dep.target.type == ops.OPTYPE.PARAMETER:
+                continue
             if self.DG.is_out_channel_pruning_fn(pruning_fn):
                 target_sparsity = self.get_target_sparsity(module)
                 layer_out_ch = self.DG.get_out_channels(module)

@@ -163,7 +163,6 @@ class Group(object):
                     old_parameter = dep.target.module
                     name = self._DG._param_to_name[old_parameter]
                     self._DG._param_to_name.pop(old_parameter)
-
                     pruned_parameter = dep(idxs)
                     path = name.split('.')
                     module = self._DG.model
@@ -171,6 +170,8 @@ class Group(object):
                         module = getattr(module, p)
                     setattr(module, path[-1], pruned_parameter)
                     self._DG._param_to_name[pruned_parameter] = name
+                    self._DG.module2node[pruned_parameter] = self._DG.module2node.pop(old_parameter)
+                    self._DG.module2node[pruned_parameter].module = pruned_parameter           
                 else:
                     dep(idxs)
 
