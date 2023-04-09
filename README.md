@@ -19,11 +19,11 @@
 [[中文README | README in Chinese]](README_CN.md)
 
 Torch-Pruning (TP) is a versatile library for Structural Network Pruning with the following features:
-* **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of neural networks, including *Vision Transformers, Yolov7, FasterRCNN, SSD, KeypointRCNN, MaskRCNN, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, FCN, DeepLab, etc*. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. 
+* **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of neural networks, including *[LLaMA](https://github.com/horseee/LLaMA-Pruning), Vision Transformers, Yolov7, FasterRCNN, SSD, KeypointRCNN, MaskRCNN, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, FCN, DeepLab, etc*. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning employs a (non-deep) graph algorithm called DepGraph to physically remove coupled parameters (channels) from models. 
 * **Reproducible [Performance Benchmark](benchmarks) and [Prunability Benchmark](benchmarks/prunability):** Currently, TP is able to prune approximately **77/85=90.6%** of the models from Torchvision 0.13.1. Try this [Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing) for quick start.
 
 ### Update:
-* 2023.04 [Structural Pruning for LLaMa](https://github.com/horseee/LLaMa-Pruning)
+* 2023.04 [Structural Pruning for LLaMa](https://github.com/horseee/LLaMA-Pruning)
 
 For more technical details, please refer to our CVPR'23 paper:
 > [**DepGraph: Towards Any Structural Pruning**](https://arxiv.org/abs/2301.12900)   
@@ -45,7 +45,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 - [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**77/85=90.6%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
 - [ ] More Detectors (We are working on the pruning of YOLO series such as YOLOv7 :heavy_check_mark:, YOLOv8)
 - [ ] Pruning from Scratch / at Initialization.
-- [ ] Language, Speech and Generative Models.
+- [ ] Language (e.g., [LLaMA](https://github.com/horseee/LLaMA-Pruning):heavy_check_mark:), Speech and Generative Models.
 - [ ] More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243), etc.
 - [ ] More standard layers: GroupNorm, InstanceNorm, Shuffle Layers, etc.
 - [ ] More Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
