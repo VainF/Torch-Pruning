@@ -31,7 +31,7 @@ A Prunability Benchmark is available at [benchmarks/prunability](prunability)
 
 **Note 2:** Baseline methods are not implemented in this repo, because they may require additional modifications to the standard models and training scripts. We are working to support more algorithms.
 
-**Note 3:** Donwload pretrained resnet-56 from [Dropbox](https://www.dropbox.com/sh/71s2rlt5zr83i4v/AAAjBCwslVf89TjJ49NHl0Epa?dl=0) or [Github Release](https://github.com/VainF/Torch-Pruning/releases)
+**Note 3:** Donwload pretrained resnet-56 from [Dropbox](https://www.dropbox.com/sh/71s2rlt5zr83i4v/AAAjBCwslVf89TjJ49NHl0Epa?dl=0) or [Github Release](https://github.com/VainF/Torch-Pruning/releases/tag/v1.1.4)
 
 **Note 4:** Training logs are available at [run/](https://github.com/VainF/Torch-Pruning/tree/master/benchmarks/run).
 
