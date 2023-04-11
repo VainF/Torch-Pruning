@@ -216,7 +216,7 @@ class MetaPruner:
 
                 if self.round_to:
                     n_pruned = n_pruned - (n_pruned % self.round_to)
-
+    
                 if n_pruned <= 0:
                     continue
                 if ch_groups > 1:
@@ -255,7 +255,7 @@ class MetaPruner:
         if n_pruned <= 0:
             return
         topk_imp, _ = torch.topk(imp, k=n_pruned, largest=False)
-
+        
         # global pruning through thresholding
         thres = topk_imp[-1]
         for group, ch_groups, imp in global_importance:

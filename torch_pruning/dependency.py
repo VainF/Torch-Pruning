@@ -41,13 +41,20 @@ class Node(object):
                 fmt += " ({})".format(str(self.module))
             return fmt
 
-    def add_input(self, node):
-        if node not in self.inputs:
+    def add_input(self, node, allow_dumplicated=False):
+        #if node not in self.inputs:
+        if allow_dumplicated is True:
             self.inputs.append(node)
+        else:
+            if node not in self.inputs:
+                self.inputs.append(node)
 
-    def add_output(self, node):
-        if node not in self.outputs:
+    def add_output(self, node, allow_dumplicated=False):
+        if allow_dumplicated is True:
             self.outputs.append(node)
+        else:
+            if node not in self.outputs:
+                self.outputs.append(node)
 
     def __repr__(self):
         return "<Node: ({})>".format(self.name)
@@ -422,7 +429,6 @@ class DependencyGraph(object):
             Dependency(pruning_fn, pruning_fn,
                        source=root_node, target=root_node), idxs
         )
-
         visited_node = set()
 
         def _fix_dependency_graph_non_recursive(dep, idxs):
@@ -736,8 +742,11 @@ class DependencyGraph(object):
                             if not is_unwrapped_param:
                                 continue
                         input_node = create_node_if_not_exists(f[0])
-                        node.add_input(input_node)
-                        input_node.add_output(node)
+                        allow_dumplicated = False
+                        if node.type in [ops.OPTYPE.CONCAT, ops.OPTYPE.SPLIT] or input_node.type in [ops.OPTYPE.CONCAT, ops.OPTYPE.SPLIT] :
+                            allow_dumplicated = True
+                        node.add_input(input_node, allow_dumplicated=allow_dumplicated)
+                        input_node.add_output(node, allow_dumplicated=allow_dumplicated)
                         processing_stack.append(f[0])
             visited.add(grad_fn)
         
@@ -861,20 +870,30 @@ class DependencyGraph(object):
         cat_node.module.offsets = offsets
 
         # no transform if the concat dim is different from the feature dim
+        # TODO: make the messy for loop more efficient
+        addressed_dep = []
         for i, in_node in enumerate(cat_node.inputs):
             for dep in cat_node.dependencies:
+                if any((dep is d) for d in addressed_dep): continue
                 if dep.target == in_node:
                     if cat_node.enable_index_mapping:
                         dep.index_mapping = _helpers._ConcatIndexMapping(
                             offset=offsets[i: i + 2], reverse=True
                         )
-
+                        addressed_dep.append(dep)
+                        break
+                        
+        addressed_dep = []
+        for i, in_node in enumerate(cat_node.inputs):
             for dep in in_node.dependencies:
+                if any((dep is d) for d in addressed_dep): continue
                 if dep.target == cat_node:
                     if cat_node.enable_index_mapping:
                         dep.index_mapping = _helpers._ConcatIndexMapping(
                             offset=offsets[i: i + 2], reverse=False
                         )
+                        addressed_dep.append(dep)
+                        break
 
     def _update_split_index_mapping(self, split_node: Node):
         if split_node.type != ops.OPTYPE.SPLIT:
@@ -889,17 +908,26 @@ class DependencyGraph(object):
             offsets.append(offsets[-1] + ch)
         split_node.module.offsets = offsets
 
+        addressed_dep = []
         for i, out_node in enumerate(split_node.outputs):
             for dep in split_node.dependencies:
+                if any((dep is d) for d in addressed_dep): continue
                 if dep.target == out_node:
                     if split_node.enable_index_mapping:
                         dep.index_mapping = _helpers._SplitIndexMapping(
                             offset=offsets[i: i + 2], reverse=False
                         )
-
+                        addressed_dep.append(dep)
+                        break
+        
+        addressed_dep = []
+        for i, out_node in enumerate(split_node.outputs):
             for dep in out_node.dependencies:
                 if dep.target == split_node:
+                    if any((dep is d) for d in addressed_dep): continue
                     if split_node.enable_index_mapping:
                         dep.index_mapping = _helpers._SplitIndexMapping(
                             offset=offsets[i: i + 2], reverse=True
                         )
+                        addressed_dep.append(dep)
+                        break
