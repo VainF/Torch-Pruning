@@ -42,6 +42,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 - [x] A [resource list](practical_structural_pruning.md) for practical structrual pruning.
 
 ### **TODO List:**
+- [ ] A strong baseline pruner with bags of tricks from existing methods.
 - [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**77/85=90.6%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
 - [ ] More Detectors (We are working on the pruning of YOLO series such as YOLOv7 :heavy_check_mark:, YOLOv8)
 - [ ] Pruning from Scratch / at Initialization.
