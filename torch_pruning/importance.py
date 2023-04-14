@@ -41,7 +41,7 @@ class MagnitudeImportance(Importance):
     def __call__(self, group, ch_groups=1):
         group_imp = []
         #Get group norm
-        #print(group)
+        #print(group.details())
         for dep, idxs in group:
             idxs.sort()
             layer = dep.target.module

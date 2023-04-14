@@ -91,7 +91,6 @@ class Dependency(Edge):
         handler: typing.Callable,
         source: Node,
         target: Node,
-        index_mapping: typing.Callable = None,
     ):
         """Layer dependency (Edge of DepGraph) in structral neural network pruning. 
         Args:
@@ -105,7 +104,7 @@ class Dependency(Edge):
         self.handler = handler
         self.source = source
         self.target = target
-        self.index_mapping = index_mapping
+        self.index_mapping = [None, None]
 
     def __call__(self, idxs: list):
         self.handler.__self__.pruning_dim = self.target.pruning_dim
@@ -268,6 +267,7 @@ class DependencyGraph(object):
         # cache
         self._in_channel_pruning_fn = set([p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
         self._out_channel_pruning_fn = set([p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
+        self._op_id = 0
 
     def build_dependency(
         self,
@@ -351,6 +351,9 @@ class DependencyGraph(object):
 
         # Build dependency graph
         self._build_dependency(self.module2node)
+        
+        # Init Shape information
+        self._init_shape_information()
 
         # Update index mapping for torch.cat/split/chunck/...
         self.update_index_mapping()
@@ -437,14 +440,17 @@ class DependencyGraph(object):
                 dep, idxs = processing_stack.pop(-1)
                 node, fn = dep.target, dep.handler
                 visited_node.add(node)
-
+                #print(dep)
+                #print(node.dependencies)
                 for new_dep in node.dependencies:
                     if new_dep.is_triggered_by(fn):
-                        new_indices = (
-                            new_dep.index_mapping(idxs)
-                            if new_dep.index_mapping is not None
-                            else idxs
-                        )
+                        new_indices = idxs
+                        for mapping in new_dep.index_mapping:
+                            if mapping is not None:
+                                new_indices = mapping(new_indices)
+                                #print(new_dep, new_dep.index_mapping)
+                                #print(len(new_indices), new_indices)
+                        #print()
                         if len(new_indices) == 0:
                             continue
                         if (new_dep.target in visited_node) and group.has_pruning_op(
@@ -469,7 +475,7 @@ class DependencyGraph(object):
     def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
         visited_layers = []
         ignored_layers = ignored_layers+self.IGNORED_LAYERS
-        for m in self.module2node.keys():
+        for m in list(self.module2node.keys()):
             if m in ignored_layers:
                 continue
 
@@ -531,7 +537,7 @@ class DependencyGraph(object):
 
     def _infer_out_channels_recursively(self, node: Node):
         """ infer the number of output channels recursively
-        """
+        """     
         ch = self.get_out_channels(node)
         if ch is None:
             ch = 0
@@ -542,14 +548,19 @@ class DependencyGraph(object):
                         return None
                     ch += sub_ch
                 else:
-                    ch = self._infer_out_channels_recursively(in_node)
+                    if in_node.type == ops.OPTYPE.SPLIT and in_node.module.split_sizes is not None:
+                        for i, split_out_node in enumerate(in_node.outputs):
+                            if split_out_node == node:
+                                ch = in_node.module.split_sizes[i]
+                    else:
+                        ch = self._infer_out_channels_recursively(in_node)
             if ch == 0:
                 return None
         return ch
 
     def _infer_in_channels_recursively(self, node: Node):
         """ infer the number of input channels recursively
-        """
+        """         
         ch = self.get_in_channels(node)
         if ch is None:
             ch = 0
@@ -685,21 +696,26 @@ class DependencyGraph(object):
                     # we treat all unknwon modules as element-wise operations by default,
                     # which does not modify the #dimension/#channel of features.
                     # If you have some customized layers, please register it with DependencyGraph.register_customized_layer
-                    module = ops._ElementWiseOp("Unknown")
+                    module = ops._ElementWiseOp(self._op_id ,"Unknown")
+                    self._op_id+=1
                     if self.verbose:
                         warnings.warn(
                             "[Warning] Unknown operation {} encountered, which will be handled as an element-wise op".format(
                                 str(grad_fn))
                         )
                 elif "catbackward" in grad_fn.name().lower():
-                    module = ops._ConcatOp()
+                    module = ops._ConcatOp(self._op_id)
+                    self._op_id+=1
                 elif "split" in grad_fn.name().lower():
-                    module = ops._SplitOp()
+                    module = ops._SplitOp(self._op_id)
+                    self._op_id+=1
                 elif "view" in grad_fn.name().lower() or 'reshape' in grad_fn.name().lower():
-                    module = ops._ReshapeOp()
+                    module = ops._ReshapeOp(self._op_id)
+                    self._op_id+=1
                 else:
                     # treate other ops as element-wise ones, like Add, Sub, Div, Mul.
-                    module = ops._ElementWiseOp(grad_fn.name())
+                    module = ops._ElementWiseOp(self._op_id, grad_fn.name())
+                    self._op_id+=1
                 gradfn2module[grad_fn] = module
 
             # 2. link modules and nodes
@@ -721,10 +737,12 @@ class DependencyGraph(object):
         # non-recursive construction of computational graph
         processing_stack = [grad_fn_root]
         visited = set()
+        visited_as_output_node = set()
         while len(processing_stack) > 0:
             grad_fn = processing_stack.pop(-1)
             if grad_fn in visited:
                 continue
+            
             node = create_node_if_not_exists(grad_fn=grad_fn)
             if hasattr(grad_fn, "next_functions"):
                 for f in grad_fn.next_functions:
@@ -742,13 +760,28 @@ class DependencyGraph(object):
                             if not is_unwrapped_param:
                                 continue
                         input_node = create_node_if_not_exists(f[0])
-                        allow_dumplicated = False
-                        if node.type in [ops.OPTYPE.CONCAT, ops.OPTYPE.SPLIT] or input_node.type in [ops.OPTYPE.CONCAT, ops.OPTYPE.SPLIT] :
-                            allow_dumplicated = True
-                        node.add_input(input_node, allow_dumplicated=allow_dumplicated)
-                        input_node.add_output(node, allow_dumplicated=allow_dumplicated)
+
+                        #allow_dumplicated = False
+
+                        # TODO: support duplicated concat/split like torch.cat([x, x], dim=1)
+                        # The following implementation is can achieve this but will introduce some bugs. 
+                        # will be fixed in the future version
+                        #if node.type == ops.OPTYPE.CONCAT:
+                        #    allow_dumplicated = (node not in visited_as_output_node)
+                        #    node.add_input(input_node, allow_dumplicated=allow_dumplicated)
+                        #    input_node.add_output(node, allow_dumplicated=allow_dumplicated)
+                        #    print(node, node.inputs)
+                        #elif input_node.type == ops.OPTYPE.SPLIT:
+                        #    allow_dumplicated = (node not in visited_as_output_node)
+                        #    node.add_input(input_node, allow_dumplicated=allow_dumplicated)
+                        #    input_node.add_output(node, allow_dumplicated=allow_dumplicated)
+                        #else:
+                        node.add_input(input_node, allow_dumplicated=False)
+                        input_node.add_output(node, allow_dumplicated=False)
+
                         processing_stack.append(f[0])
             visited.add(grad_fn)
+            visited_as_output_node.add(node)
         
         for (param, dim) in self.unwrapped_parameters:
             module2node[param].pruning_dim = dim
@@ -756,18 +789,47 @@ class DependencyGraph(object):
 
     def update_index_mapping(self):
         """ update all index mapping after pruning
-        """
+        """       
+        # update index mapping
         for module, node in self.module2node.items():
-            #if node.type == ops.OPTYPE.LINEAR:
-                # for Conv-Flatten-Linear (e.g., VGG)
-            #    self._update_flatten_index_mapping(node)
-            if node.type == ops.OPTYPE.RESHAPE:
-                self._update_reshape_index_mapping(node)
             if node.type == ops.OPTYPE.CONCAT:
                 self._update_concat_index_mapping(node)
             if node.type == ops.OPTYPE.SPLIT:
                 self._update_split_index_mapping(node)
+            if node.type == ops.OPTYPE.RESHAPE:
+                self._update_reshape_index_mapping(node)
 
+    def _init_shape_information(self):
+        for module, node in self.module2node.items():
+            
+            if node.type == ops.OPTYPE.SPLIT:
+                grad_fn = node.grad_fn
+                if hasattr(grad_fn, '_saved_self_sizes'):
+                    if hasattr(grad_fn, '_saved_split_sizes') and hasattr(grad_fn, '_saved_dim') :
+                        if grad_fn._saved_dim != 1:
+                            continue
+                        chs = list(grad_fn._saved_split_sizes)
+                        node.module.split_sizes = chs
+                    elif hasattr(grad_fn, '_saved_split_size') and hasattr(grad_fn, '_saved_dim'):
+                        if grad_fn._saved_dim != 1:
+                            continue
+                        chs = [grad_fn._saved_split_size for _ in range(len(node.outputs))]
+                        node.module.split_sizes = chs
+                    offsets = [0]
+                    for i in range(len(chs)):
+                        offsets.append(offsets[i] + chs[i])
+                    node.module.offsets = offsets
+                else: # legency version
+                    chs = []
+                    for n in node.outputs:
+                        chs.append(self._infer_in_channels_recursively(n))
+                    offsets = [0]
+                    for ch in chs:
+                        if ch is None: continue
+                        offsets.append(offsets[-1] + ch)
+                    node.module.split_sizes = chs
+                    node.module.offsets = offsets
+                                                
     def _update_flatten_index_mapping(self, fc_node: Node):
         if fc_node.type != ops.OPTYPE.LINEAR:
             return
@@ -786,12 +848,12 @@ class DependencyGraph(object):
             for in_node in fc_node.inputs:
                 for dep in fc_node.dependencies:
                     if dep.target == in_node:
-                        dep.index_mapping = _helpers._FlattenIndexMapping(
+                        dep.index_mapping[0] = _helpers._FlattenIndexMapping(
                             stride=stride, reverse=True
                         )
                 for dep in in_node.dependencies:
                     if dep.target == fc_node:
-                        dep.index_mapping = _helpers._FlattenIndexMapping(
+                        dep.index_mapping[0] = _helpers._FlattenIndexMapping(
                             stride=stride, reverse=False
                         )
 
@@ -832,26 +894,26 @@ class DependencyGraph(object):
              for in_node in reshape_node.inputs:
                 for dep in reshape_node.dependencies:
                     if dep.target == in_node:
-                        dep.index_mapping = _helpers._FlattenIndexMapping(
+                        dep.index_mapping[0] = _helpers._FlattenIndexMapping(
                             stride=out_channels // in_channels, reverse=True
                         )
 
                 for dep in in_node.dependencies:
                     if dep.target == reshape_node:
-                        dep.index_mapping = _helpers._FlattenIndexMapping(
+                        dep.index_mapping[0] = _helpers._FlattenIndexMapping(
                             stride=out_channels // in_channels, reverse=False
                         )
         else: # 1D -> 2D
             for out_node in reshape_node.outputs:
                 for dep in reshape_node.dependencies:
                     if dep.target == out_node:
-                        dep.index_mapping = _helpers._FlattenIndexMapping(
+                        dep.index_mapping[0] = _helpers._FlattenIndexMapping(
                             stride=in_channels // out_channels, reverse=True
                         )
 
                 for dep in out_node.dependencies:
                     if dep.target == reshape_node:
-                        dep.index_mapping = _helpers._FlattenIndexMapping(
+                        dep.index_mapping[0] = _helpers._FlattenIndexMapping(
                             stride=in_channels // out_channels, reverse=False
                         )
         #print(in_channels, out_channels)
@@ -861,9 +923,15 @@ class DependencyGraph(object):
     def _update_concat_index_mapping(self, cat_node: Node):
         if cat_node.type != ops.OPTYPE.CONCAT:
             return
-        chs = []
-        for n in cat_node.inputs:
-            chs.append(self._infer_out_channels_recursively(n))
+        
+        if cat_node.module.concat_sizes is not None:
+            chs = cat_node.module.concat_sizes
+        else:
+            chs = []
+            for n in cat_node.inputs:
+                chs.append(self.infer_channels(n, cat_node))
+            cat_node.module.concat_sizes = chs
+            
         offsets = [0]
         for ch in chs:
             offsets.append(offsets[-1] + ch)
@@ -877,7 +945,7 @@ class DependencyGraph(object):
                 if any((dep is d) for d in addressed_dep): continue
                 if dep.target == in_node:
                     if cat_node.enable_index_mapping:
-                        dep.index_mapping = _helpers._ConcatIndexMapping(
+                        dep.index_mapping[1] = _helpers._ConcatIndexMapping(
                             offset=offsets[i: i + 2], reverse=True
                         )
                         addressed_dep.append(dep)
@@ -889,34 +957,29 @@ class DependencyGraph(object):
                 if any((dep is d) for d in addressed_dep): continue
                 if dep.target == cat_node:
                     if cat_node.enable_index_mapping:
-                        dep.index_mapping = _helpers._ConcatIndexMapping(
+                        dep.index_mapping[1] = _helpers._ConcatIndexMapping(
                             offset=offsets[i: i + 2], reverse=False
                         )
                         addressed_dep.append(dep)
                         break
-
+    
+        
     def _update_split_index_mapping(self, split_node: Node):
         if split_node.type != ops.OPTYPE.SPLIT:
             return
-        chs = []
-        for n in split_node.outputs:
-            chs.append(self._infer_in_channels_recursively(n))
 
-        offsets = [0]
-        for ch in chs:
-            if ch is None: return
-            offsets.append(offsets[-1] + ch)
-        split_node.module.offsets = offsets
-
+        offsets = split_node.module.offsets
+        if offsets is None:
+            return
         addressed_dep = []
         for i, out_node in enumerate(split_node.outputs):
             for dep in split_node.dependencies:
                 if any((dep is d) for d in addressed_dep): continue
                 if dep.target == out_node:
                     if split_node.enable_index_mapping:
-                        dep.index_mapping = _helpers._SplitIndexMapping(
+                        dep.index_mapping[0] = (_helpers._SplitIndexMapping(
                             offset=offsets[i: i + 2], reverse=False
-                        )
+                        ))
                         addressed_dep.append(dep)
                         break
         
@@ -926,8 +989,21 @@ class DependencyGraph(object):
                 if dep.target == split_node:
                     if any((dep is d) for d in addressed_dep): continue
                     if split_node.enable_index_mapping:
-                        dep.index_mapping = _helpers._SplitIndexMapping(
+                        dep.index_mapping[0] = (_helpers._SplitIndexMapping(
                             offset=offsets[i: i + 2], reverse=True
-                        )
+                        ))
                         addressed_dep.append(dep)
                         break
+
+    def infer_channels(self, node_1, node_2):
+        if node_1.type == ops.OPTYPE.SPLIT:
+            for i, n in enumerate(node_1.outputs):
+                if n == node_2:
+                    return node_1.module.split_sizes[i]
+        return self._infer_out_channels_recursively(node_1)
+
+        
+
+
+
+        
