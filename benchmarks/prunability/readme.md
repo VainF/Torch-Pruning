@@ -11,10 +11,14 @@
 ```bash
 pip install -r requirements.txt
 ```
+Tested environment:
+```
+Pytorch==1.12.1
+Torchvision==0.13.1
+```
 
 
 ## Torchvision 
-Torchvision Version: 0.13.1
 
 ```python
 python torchvision_pruning.py
