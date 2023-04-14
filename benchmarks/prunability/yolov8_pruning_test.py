@@ -108,7 +108,6 @@ def prune():
     print(model.model)
     base_macs, base_nparams = tp.utils.count_ops_and_params(model.model, example_inputs)
     for g in pruner.step(interactive=True):
-        print(g)
         g.prune()
 
     pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(pruner.model, example_inputs)
