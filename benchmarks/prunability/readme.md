@@ -1,5 +1,11 @@
 # Prunability
 
+- [Prunability](#prunability)
+  - [Torchvision](#torchvision) 
+  - [YOLO-v8](#yolo-v8) 
+  - [YOLO-v7](#yolo-v7) 
+
+
 ## Requirements
 
 ```bash
@@ -7,7 +13,9 @@ pip install -r requirements.txt
 ```
 
 
-## Torchvision 0.13.1
+## Torchvision 
+Torchvision Version: 0.13.1
+
 ```python
 python torchvision_pruning.py
 ```
