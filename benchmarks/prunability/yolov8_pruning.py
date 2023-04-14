@@ -1,4 +1,4 @@
-# This code is adapted from [#147], implemented by @Hyunseok-Kim0.
+# This code is adapted from Issue [#147](https://github.com/VainF/Torch-Pruning/issues/147), implemented by @Hyunseok-Kim0.
 
 import torch
 
