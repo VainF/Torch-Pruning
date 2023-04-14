@@ -163,14 +163,14 @@ Pruning vit_b_32:
 Please refer to Issue [#147](https://github.com/VainF/Torch-Pruning/issues/147#issuecomment-1507475657) for more details.
 ```bash
 git clone https://github.com/ultralytics/ultralytics.git 
-cp yolov8_pruning_test.py ultralytics/
+cp yolov8_pruning.py ultralytics/
 cd ultralytics 
 
 # Test only: We only prune and test the YOLOv8 model in this script. COCO dataset is not required.
 python yolov8_pruning_test.py
 ```
 
-Outputs of yolov8_pruning_test.py:
+Outputs of yolov8_pruning.py:
 ```
 DetectionModel(
   (model): Sequential(
