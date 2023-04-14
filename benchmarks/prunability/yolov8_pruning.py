@@ -1,3 +1,5 @@
+# This code is adapted from [#147], implemented by @Hyunseok-Kim0.
+
 import torch
 
 from ultralytics import YOLO
