@@ -54,6 +54,9 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 - [ ] Pruning benchmarks for CIFAR, ImageNet and COCO.
 
 ## Installation
+
+TP is compatible with Pytorch 1.x and 2.x. But Pytorch 1.12.1 is recommended!
+
 ```bash
 pip install torch-pruning # v1.1.5
 ```
