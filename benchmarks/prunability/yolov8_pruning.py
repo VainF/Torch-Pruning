@@ -75,6 +75,18 @@ def replace_c2f_with_c2f_v2(module):
         else:
             replace_c2f_with_c2f_v2(child_module)
 
+def initialize_weights(model):
+    # Initialize model weights to random values
+    for m in model.modules():
+        t = type(m)
+        if t is nn.Conv2d:
+            pass  # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+        elif t is nn.BatchNorm2d:
+            m.eps = 1e-3
+            m.momentum = 0.03
+        elif t in [nn.Hardswish, nn.LeakyReLU, nn.ReLU, nn.ReLU6, nn.SiLU]:
+            m.inplace = True
+
 def prune():
     # load trained yolov8x model
     model = YOLO('yolov8x.pt')
@@ -83,7 +95,8 @@ def prune():
         param.requires_grad = True
     
     replace_c2f_with_c2f_v2(model.model)
-
+    initialize_weights(model.model) # set BN.eps, momentum, ReLU.inplace
+  
     # pruning
     model.model.eval()
     example_inputs = torch.randn(1, 3, 640, 640).to(model.device)
