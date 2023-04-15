@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Test-Pytorch-2.0.0
+name: Test-Pytorch-1.12.1
 
 on: workflow_dispatch
 
@@ -15,16 +15,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.10
+    - name: Set up Python 3.9
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: "3.9"
         cache: 'pip' # caching pip dependencies
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest torch torchvision
+        pip install flake8 pytest torch==1.12.1 torchvision==0.13.1
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test with pytest
       run: |
-        pytest --ignore=tests/test_concat_split.py
+        pytest --ignore=tests/test_unwrapped_parameters.py --ignore=tests/test_backward.py 
