@@ -43,9 +43,13 @@ def test_pruner():
             "  Iter %d/%d, MACs: %.2f G => %.2f G"
             % (i+1, iterative_steps, base_macs / 1e9, macs / 1e9)
         )
-        
-    torch.save(model.state_dict(), 'model.pth')
-    pruner.save_pruning('pruning.pth')
+    
+    state_dict = {
+        'model': model.state_dict(),
+        'pruning': pruner.pruning_history(),
+    }
+    torch.save(state_dict, 'pruned_model.pth')
+    # Create a new model and pruner
     model = entry()
     pruner = tp.pruner.MagnitudePruner(
         model,
@@ -55,8 +59,9 @@ def test_pruner():
         ch_sparsity=0.2, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
         ignored_layers=ignored_layers,
     )
-    pruner.load_pruning('pruning.pth')
-    model.load_state_dict(torch.load('model.pth'))
+    state_dict = torch.load('pruned_model.pth')
+    pruner.load_pruning_history(state_dict['pruning'])
+    model.load_state_dict(state_dict['model'])
     print(model)
 
 if __name__=='__main__':

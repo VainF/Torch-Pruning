@@ -130,12 +130,13 @@ class MetaPruner:
                 initial_total_channels += (self.DG.get_out_channels(
                     group[0][0].target.module) // ch_groups)
             self.initial_total_channels = initial_total_channels
-    def save_pruning(self, filename):
-        self.DG.save_pruning(filename)
+    
+    def pruning_history(self):
+        return self.DG.pruning_history()
 
-    def load_pruning(self, filename):
-        self.DG.load_pruning(filename)
-        
+    def load_pruning_history(self, pruning_history):
+        self.DG.load_pruning_history(pruning_history)
+
     def get_target_sparsity(self, module):
         s = self.ch_sparsity_dict.get(module, self.per_step_ch_sparsity)[
             self.current_step]

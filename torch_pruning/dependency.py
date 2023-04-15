@@ -275,11 +275,11 @@ class DependencyGraph(object):
         # Pruning History
         self._pruning_history = []
 
-    def save_pruning(self, file_name):
-        torch.save(self._pruning_history, file_name)
+    def pruning_history(self):
+        return self._pruning_history
 
-    def load_pruning(self, file_name):
-        self._pruning_history = torch.load(file_name)
+    def load_pruning_history(self, pruning_history):
+        self._pruning_history = pruning_history
         for module_name, is_out_channel_pruning, pruning_idx in self._pruning_history:
             module = self.model
             for n in module_name.split('.'):
