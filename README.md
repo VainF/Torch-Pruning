@@ -217,7 +217,7 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 
 ### 3. Save & Load
 #### A Naive Way
-The following script save the model object (structure+weights) into the 'model.pth'. This .pth file can be very large due to the additional information in the object.
+The following script saves the whole model object (structure+weights) into a 'model.pth'. This .pth file can be very large due to the additional information in the object.
 ```python
 torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the model object
