@@ -220,13 +220,14 @@ We introduce ``pruning_history`` to save and load your pruned model, which is si
 ```python
 ...
 state_dict = {
-    'model': model.state_dict(),
-    'pruning': pruner.pruning_history(), # DG also support DG.pruning_history & DG.load_pruning_history.
+    'model': model.state_dict(), # model weights
+    'pruning': pruner.pruning_history(), # DG also supports DG.pruning_history & DG.load_pruning_history.
 }
 torch.save(state_dict, 'pruned_model.pth')
+  
 # Create a new model
 model = resnet18()
-# Create a new pruner or DG, both OK!
+# Create a new pruner or DG (both works)
 pruner = tp.pruner.MagnitudePruner(
     model,
     example_inputs,
@@ -235,11 +236,10 @@ pruner = tp.pruner.MagnitudePruner(
     ch_sparsity=0.2, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
     ignored_layers=ignored_layers,
 )
-# or DG = tp.DependencyGraph(...)
 
 state_dict = torch.load('pruned_model.pth') # load the saved pth file
-pruner.load_pruning_history(state_dict['pruning']) # load the pruning history, this operation will replay the pruning prcoess 
-model.load_state_dict(state_dict['model']) # then, we can load the pruned weights into the model.
+pruner.load_pruning_history(state_dict['pruning']) # load the pruning history to replay the pruning prcoess 
+model.load_state_dict(state_dict['model']) # then, we can load the pruned weights into this model.
 print(model)
 ```
 
