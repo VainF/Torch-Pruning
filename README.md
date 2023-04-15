@@ -216,6 +216,13 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 </div>
 
 ### 3. Save & Load
+#### A Naive Way
+The following script save the model object (structure+weights) into the 'model.pth'. This .pth file can be very large due to the additional information in the object.
+```python
+torch.save(model, 'model.pth') # without .state_dict
+model = torch.load('model.pth') # load the model object
+```
+#### Pruning History
 We introduce ``pruning_history`` to save and load your pruned model, which is similar to ``state_dict`` in pytorch. This feature is currently not available in pypi package. An example is available in [tests/test_load.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_load.py)
 ```python
 ...
