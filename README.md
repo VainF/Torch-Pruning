@@ -216,12 +216,12 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 </div>
 
 ### 3. Save & Load
-We introduce ``pruning_history`` to save and load your pruned model, which is similar to ``state_dict`` in pytorch.
+We introduce ``pruning_history`` to save and load your pruned model, which is similar to ``state_dict`` in pytorch. This feature is currently not available on pypi package.
 ```
 ...
 state_dict = {
-        'model': model.state_dict(),
-        'pruning': pruner.pruning_history(), # DG also support DG.pruning_history & DG.load_pruning_history.
+    'model': model.state_dict(),
+    'pruning': pruner.pruning_history(), # DG also support DG.pruning_history & DG.load_pruning_history.
 }
 torch.save(state_dict, 'pruned_model.pth')
 # Create a new model
