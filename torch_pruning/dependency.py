@@ -152,10 +152,9 @@ class Group(object):
 
     def __init__(self):
         self._group = list()
-
         self._DG = None # for group.prune(idxs=NEW_IDXS)
 
-    def prune(self, idxs=None):
+    def prune(self, idxs=None, record_history=True):
         """Prune all coupled layers in the group
         """
         if idxs is not None:
@@ -180,6 +179,10 @@ class Group(object):
                     self._DG.module2node[pruned_parameter].module = pruned_parameter           
                 else:
                     dep(idxs)
+        if record_history:
+            root_module, pruning_fn, root_pruning_idx = self[0][0].target.module, self[0][0].trigger, self[0][1]
+            root_module_name = self._DG._module2name[root_module]
+            self._DG._pruning_history.append([root_module_name, self._DG.is_out_channel_pruning_fn(pruning_fn), root_pruning_idx])
 
     def add_dep(self, dep, idxs):
         self._group.append(GroupItem(dep=dep, idxs=idxs))
@@ -269,6 +272,26 @@ class DependencyGraph(object):
         self._out_channel_pruning_fn = set([p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
         self._op_id = 0
 
+        # Pruning History
+        self._pruning_history = []
+
+    def save_pruning(self, file_name):
+        torch.save(self._pruning_history, file_name)
+
+    def load_pruning(self, file_name):
+        self._pruning_history = torch.load(file_name)
+        for module_name, is_out_channel_pruning, pruning_idx in self._pruning_history:
+            module = self.model
+            for n in module_name.split('.'):
+                module = getattr(module, n)
+            pruner = self.get_pruner_of_module(module)
+            if is_out_channel_pruning:
+                pruning_fn = pruner.prune_out_channels
+            else:
+                pruning_fn = pruner.prune_in_channels
+            group = self.get_pruning_group(module, pruning_fn, pruning_idx)
+            group.prune(record_history=False)
+            
     def build_dependency(
         self,
         model: torch.nn.Module,
