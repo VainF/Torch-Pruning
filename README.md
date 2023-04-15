@@ -216,7 +216,6 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 </div>
 
 ### 3. Save & Load
-
 We introduce ``pruning_history`` to save and load your pruned model, which is similar to ``state_dict`` in pytorch.
 ```
 ...
@@ -236,7 +235,9 @@ pruner = tp.pruner.MagnitudePruner(
     ch_sparsity=0.2, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
     ignored_layers=ignored_layers,
 )
-state_dict = torch.load('pruned_model.pth') # load the saved dict
+# or DG = tp.DependencyGraph(...)
+
+state_dict = torch.load('pruned_model.pth') # load the saved pth file
 pruner.load_pruning_history(state_dict['pruning']) # load the pruning history, this operation will replay the pruning prcoess 
 model.load_state_dict(state_dict['model']) # then, we can load the pruned weights into the model.
 print(model)
