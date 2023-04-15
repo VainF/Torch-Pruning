@@ -232,7 +232,7 @@ state_dict = {
 }
 torch.save(state_dict, 'pruned_model.pth')
   
-# Create a new model
+# Create a new unpruned model
 model = resnet18()
 # Create a new pruner or DG (both works)
 pruner = tp.pruner.MagnitudePruner(
