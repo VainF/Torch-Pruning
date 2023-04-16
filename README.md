@@ -23,8 +23,8 @@ Torch-Pruning (TP) is a versatile library for Structural Network Pruning with th
 * **Reproducible [Performance Benchmark](benchmarks) and [Prunability Benchmark](benchmarks/prunability):** Currently, TP is able to prune approximately **81/85=95.3%** of the models from Torchvision 0.13.1. Try this [Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing) for quick start.
 
 ### Update:
-* 2023.04.15 [An example for YOLOv8 Pruning](benchmarks/prunability)
-* 2023.04.10 [Structural Pruning for LLaMA](https://github.com/horseee/LLaMA-Pruning)
+* 2023.04.15 [An example for YOLOv7/YOLOv8 pruning and post-training](benchmarks/prunability)
+* 2023.04.10 [Structural Pruning for LLaMA (pruning-only)](https://github.com/horseee/LLaMA-Pruning)
 
 For more technical details, please refer to our CVPR'23 paper:
 > [**DepGraph: Towards Any Structural Pruning**](https://arxiv.org/abs/2301.12900)   
