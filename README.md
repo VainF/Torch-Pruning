@@ -208,7 +208,7 @@ for i in range(iterative_steps):
 
 #### Group-level Pruning
 
-With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. In our paper, we extend the classic norm-based algorithm and introduce a simple GroupNormPruner, which learns group-level sparsity for pruning.
+With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. In Torch-pruning, all pruners work in the group level.
 
 <div align="center">
 <img src="assets/group_sparsity.png" width="80%">
