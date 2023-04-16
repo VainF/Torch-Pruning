@@ -234,16 +234,9 @@ torch.save(state_dict, 'pruned_model.pth')
 
 # Load
 model = resnet18() # Create a new unpruned model
-pruner = tp.pruner.MagnitudePruner( # Create a new pruner or DG (both OK!)
-    model,
-    example_inputs,
-    importance=imp,
-    iterative_steps=iterative_steps,
-    ch_sparsity=0.5,
-    ignored_layers=ignored_layers,
-)
+DG = tp.DependencyGraph().build_dependency(model, example_inputs) # Create a new DepGraph or Pruner (both OK!)
 state_dict = torch.load('pruned_model.pth') # load the saved pth file
-pruner.load_pruning_history(state_dict['pruning']) # load the pruning history to replay the pruning prcoess 
+DG.load_pruning_history(state_dict['pruning']) # load the pruning history to replay the pruning prcoess 
 model.load_state_dict(state_dict['model']) # then, we can load the pruned weights into this model.
 print(model)
 ```
