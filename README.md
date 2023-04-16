@@ -96,13 +96,9 @@ group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 
 # 3. prune all grouped layers that are coupled with model.conv1 (included).
 if DG.check_pruning_group(group): # avoid full pruning, i.e., channels=0.
     group.prune()
-
-# 4. save & load the pruned model 
-torch.save(model, 'model.pth') # save the model object
-model_loaded = torch.load('model.pth') # no load_state_dict
 ```
   
-The above example demonstrates the fundamental pruning pipeline using DepGraph. The target layer resnet.conv1 is coupled with several layers, which requires simultaneous removal in structural pruning. Let's print the group and observe how a pruning operation "triggers" other ones. In the following outputs, ``A => B`` means the pruning operation ``A`` triggers the pruning operation ``B``. group[0] refers to the pruning root specified by ``DG.get_pruning_group``.
+The above example demonstrates the fundamental pruning pipeline using DepGraph. The target layer resnet.conv1 is coupled with several layers, which requires simultaneous removal in structural pruning. Let's print the group and observe how a pruning operation "triggers" other ones. In the following outputs, ``A => B`` means the pruning operation ``A`` triggers the pruning operation ``B``. group[0] refers to the pruning root in ``DG.get_pruning_group``.
 
 ```
 --------------------------------
@@ -219,8 +215,42 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 <img src="assets/group_sparsity.png" width="80%">
 </div>
 
+### 3. Save & Load
+#### A Naive Way
+The following script saves the whole model object (structure+weights) into a 'model.pth'. This .pth file can be very large due to the additional information in the object.
+```python
+torch.save(model, 'model.pth') # without .state_dict
+model = torch.load('model.pth') # load the model object
+```
+#### Pruning History
+We introduce ``pruning_history`` to save and load your pruned model, which is similar to ``state_dict`` in pytorch. This feature is currently not available in pypi package. An example is available in [tests/test_load.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_load.py)
+```python
+...
+state_dict = {
+    'model': model.state_dict(), # model weights
+    'pruning': pruner.pruning_history(), # DG also supports DG.pruning_history & DG.load_pruning_history.
+}
+torch.save(state_dict, 'pruned_model.pth')
+  
+# Create a new unpruned model
+model = resnet18()
+# Create a new pruner or DG (both OK!)
+pruner = tp.pruner.MagnitudePruner(
+    model,
+    example_inputs,
+    importance=imp,
+    iterative_steps=iterative_steps,
+    ch_sparsity=0.2, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+    ignored_layers=ignored_layers,
+)
 
-### 3. Low-level Pruning Functions
+state_dict = torch.load('pruned_model.pth') # load the saved pth file
+pruner.load_pruning_history(state_dict['pruning']) # load the pruning history to replay the pruning prcoess 
+model.load_state_dict(state_dict['model']) # then, we can load the pruned weights into this model.
+print(model)
+```
+
+### 4. Low-level Pruning Functions
 
 While it is possible to manually prune your model using low-level functions, this approach can be quite laborious, as it requires careful management of the associated dependencies. As a result, we recommend utilizing the aforementioned high-level pruners to streamline the pruning process.
 
@@ -259,11 +289,13 @@ The following pruning functions are available:
 'prune_instancenorm_in_channels',
 ```
 
-### 4. Customized Layers
+
+
+### 5. Customized Layers
 
 Please refer to [tests/test_customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_customized_layer.py).
 
-### 5. Benchmarks
+### 6. Benchmarks
 
 Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 
