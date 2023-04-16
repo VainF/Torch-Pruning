@@ -1,12 +1,12 @@
 # Prunability
 
 - [Prunability](#prunability)
-  - [Torchvision](#torchvision) 
-  - [YOLO-v8](#yolo-v8) 
-  - [YOLO-v7](#yolo-v7) 
+  - [Torchvision](#1-torchvision) 
+  - [YOLO-v8](#2-yolo-v8) 
+  - [YOLO-v7](#3-yolo-v7) 
 
 
-## Requirements
+## 0. Requirements
 
 ```bash
 pip install -r requirements.txt
@@ -18,7 +18,7 @@ Torchvision==0.13.1
 ```
 
 
-## Torchvision 
+## 1. Torchvision 
 
 ```python
 python torchvision_pruning.py
@@ -164,7 +164,7 @@ Pruning vit_b_32:
 ------------------------------------------------------
 ```
 
-## YOLO v8
+## 2. YOLO v8
 Please refer to Issue [#147](https://github.com/VainF/Torch-Pruning/issues/147#issuecomment-1507475657) for more details.
 ```bash
 git clone https://github.com/ultralytics/ultralytics.git 
@@ -255,7 +255,7 @@ After Pruning: MACs=41.741203 G, #Params=20.787528 M
 
 
 
-## YOLO v7
+## 3. YOLO v7
 
 The following scripts (adapted from [yolov7/detect.py](https://github.com/WongKinYiu/yolov7/blob/main/detect.py) and [yolov7/train.py](https://github.com/WongKinYiu/yolov7/blob/main/train.py)) provide the basic examples of pruning YOLOv7. It is important to note that the training part has not been validated yet due to the time-consuming training process.
 
