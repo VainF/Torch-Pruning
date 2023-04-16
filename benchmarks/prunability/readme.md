@@ -171,7 +171,6 @@ git clone https://github.com/ultralytics/ultralytics.git
 cp yolov8_pruning.py ultralytics/
 cd ultralytics 
 
-# Test only: We only prune and test the YOLOv8 model in this script. COCO dataset is not required.
 python yolov8_pruning_test.py
 ```
 
