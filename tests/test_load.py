@@ -51,16 +51,9 @@ def test_pruner():
     torch.save(state_dict, 'pruned_model.pth')
     # Create a new model and pruner
     model = entry()
-    pruner = tp.pruner.MagnitudePruner(
-        model,
-        example_inputs,
-        importance=imp,
-        iterative_steps=iterative_steps,
-        ch_sparsity=0.2, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
-        ignored_layers=ignored_layers,
-    )
+    DG = tp.DependencyGraph().build_dependency(model, example_inputs)
     state_dict = torch.load('pruned_model.pth')
-    pruner.load_pruning_history(state_dict['pruning'])
+    DG.load_pruning_history(state_dict['pruning'])
     model.load_state_dict(state_dict['model'])
     print(model)
 
