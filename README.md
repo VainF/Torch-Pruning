@@ -23,7 +23,7 @@ Torch-Pruning (TP) is a versatile library for Structural Network Pruning with th
 * **Reproducible [Performance Benchmark](benchmarks) and [Prunability Benchmark](benchmarks/prunability):** Currently, TP is able to prune approximately **81/85=95.3%** of the models from Torchvision 0.13.1. Try this [Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing) for quick start.
 
 ### Update:
-* 2023.04.15 [Pruning and post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
+* 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
 * 2023.04.10 [Structural Pruning for LLaMA (pruning-only)](https://github.com/horseee/LLaMA-Pruning)
 
 For more technical details, please refer to our CVPR'23 paper:
@@ -35,7 +35,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 ### **Features:**
 - [x] Structural pruning for [CNNs](benchmarks/prunability/torchvision_pruning.py#L19) (e.g., ResNet, DenseNet), [Transformers](benchmarks/prunability/torchvision_pruning.py#L11) (e.g., ViT), Detectors (e.g., [Yolov7, Yolov8](benchmarks/prunability/yolov7_train_pruned.py#L102), [FasterRCNN, SSD](benchmarks/prunability/torchvision_pruning.py#L92)) and Language Models (e.g., [LLaMA](https://github.com/horseee/LLaMA-Pruning))
 - [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900) (a simple pruner used in our paper), RandomPruner, etc.
-- [x] DepGraph for Computational Graph Tracing and Dependency Modeling.
+- [x] DepGraph for computational graph tracing and dependency modeling.
 - [x] Supported modules: Conv, Linear, Normalization, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 - [x] Supported operators: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops, etc.
 - [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
@@ -56,14 +56,14 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 
 ## Installation
 
-TP is compatible with Pytorch 1.x and 2.x. **PyTorch 1.12.1 is recommended!**
+Torch-Pruning is compatible with PyTorch 1.x and 2.x. **PyTorch 1.12.1 is recommended!**
 
 ```bash
 pip install torch-pruning # v1.1.6
 ```
 or
 ```bash
-git clone https://github.com/VainF/Torch-Pruning.git # recommended
+git clone https://github.com/VainF/Torch-Pruning.git
 ```
 
 ## Quickstart
