@@ -239,7 +239,7 @@ pruner = tp.pruner.MagnitudePruner( # Create a new pruner or DG (both OK!)
     example_inputs,
     importance=imp,
     iterative_steps=iterative_steps,
-    ch_sparsity=0.2, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+    ch_sparsity=0.5,
     ignored_layers=ignored_layers,
 )
 state_dict = torch.load('pruned_model.pth') # load the saved pth file
