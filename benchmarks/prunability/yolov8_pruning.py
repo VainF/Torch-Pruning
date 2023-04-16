@@ -130,8 +130,10 @@ def prune():
     print("Before Pruning: MACs=%f G, #Params=%f M" % (base_macs / 1e9, base_nparams / 1e6))
     print("After Pruning: MACs=%f G, #Params=%f M" % (pruned_macs / 1e9, pruned_nparams / 1e6))
 
-    # fine-tuning, TBD
-
+    # Fine-tuning (Post-training)
+    # Please replace the coco128.yaml with coco.yaml and choose an appropriate learning rate for finetuning
+    # This part works properly but the final performance has not been validated yet
+    model.train(data='coco128.yaml', epochs=100, imgsz=640)
 
 if __name__ == "__main__":
     prune()
