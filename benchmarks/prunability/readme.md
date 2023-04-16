@@ -174,7 +174,11 @@ cd ultralytics
 python yolov8_pruning_test.py
 ```
 
-Outputs of yolov8_pruning.py:
+#### Screenshot for coco128 post-training:
+<img width="960" alt="image" src="https://user-images.githubusercontent.com/18592211/232287178-95825d66-c569-479d-8b6d-d433ff0d6739.png">
+
+
+#### Outputs of yolov8_pruning.py:
 ```
 DetectionModel(
   (model): Sequential(
@@ -270,11 +274,11 @@ python yolov7_detect_pruned.py --weights yolov7.pt --conf 0.25 --img-size 640 --
 python yolov7_train_pruned.py --workers 8 --device 0 --batch-size 1 --data data/coco.yaml --img 640 640 --cfg cfg/training/yolov7.yaml --weights 'yolov7_training.pt' --name yolov7 --hyp data/hyp.scratch.p5.yaml
 ```
 
-Screenshot for yolov7_train_pruned.py:
+#### Screenshot for yolov7_train_pruned.py:
 ![image](https://user-images.githubusercontent.com/18592211/232129303-18a61be1-b505-4950-b6a1-c60b4974291b.png)
 
 
-Outputs of yolov7_detect_pruned.py:
+#### Outputs of yolov7_detect_pruned.py:
 ```
 Model(
   (model): Sequential(
