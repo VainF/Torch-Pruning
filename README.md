@@ -222,19 +222,19 @@ torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the model object
 ```
 #### Pruning History
-We introduce ``pruning_history`` to save and load your pruned model, which is similar to ``state_dict`` in pytorch. This feature is currently not available in pypi package. An example is available in [tests/test_load.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_load.py)
+We introduce ``pruning_history`` to save and load your pruned model, which is similar to ``state_dict`` in pytorch. This feature is currently not available in pypi package. An example can be found in [tests/test_load.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_load.py)
 ```python
 ...
+# Save
 state_dict = {
     'model': model.state_dict(), # model weights
     'pruning': pruner.pruning_history(), # DG also supports DG.pruning_history & DG.load_pruning_history.
 }
 torch.save(state_dict, 'pruned_model.pth')
-  
-# Create a new unpruned model
-model = resnet18()
-# Create a new pruner or DG (both OK!)
-pruner = tp.pruner.MagnitudePruner(
+
+# Load
+model = resnet18() # Create a new unpruned model
+pruner = tp.pruner.MagnitudePruner( # Create a new pruner or DG (both OK!)
     model,
     example_inputs,
     importance=imp,
@@ -242,7 +242,6 @@ pruner = tp.pruner.MagnitudePruner(
     ch_sparsity=0.2, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
     ignored_layers=ignored_layers,
 )
-
 state_dict = torch.load('pruned_model.pth') # load the saved pth file
 pruner.load_pruning_history(state_dict['pruning']) # load the pruning history to replay the pruning prcoess 
 model.load_state_dict(state_dict['model']) # then, we can load the pruned weights into this model.
