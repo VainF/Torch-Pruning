@@ -172,7 +172,7 @@ cp yolov8_pruning.py ultralytics/
 cd ultralytics 
 
 # This minimal example will craft a yolov8-half and fine-tune it on the coco128 toy set.
-python yolov8_pruning_test.py
+python yolov8_pruning.py
 ```
 
 #### Screenshot for coco128 post-training:
