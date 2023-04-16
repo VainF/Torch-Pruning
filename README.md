@@ -222,7 +222,7 @@ torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the model object
 ```
 #### Pruning History
-We introduce ``pruning_history`` to save and load your pruned model in a similar to the ``state_dict`` in pytorch. This feature is currently not available in pypi package. An example can be found in [tests/test_load.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_load.py)
+We introduce ``pruning_history`` to save and load your pruned model in a similar way to the ``state_dict`` in pytorch. This feature is currently not available in pypi package. An example can be found in [tests/test_load.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_load.py)
 ```python
 ...
 # Save
