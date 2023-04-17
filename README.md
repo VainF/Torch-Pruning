@@ -72,7 +72,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. How It Works
 
-In structural pruning, **``Group`` is the minimal prunable unit within deep networks**. Each group contains several interdependent layers that must be pruned simultaneously to maintain the integrity of the resulting structures. However, deep networks often present complex dependencies among layers, making structural pruning a challenging endeavor. This work addresses this challenge by offering an automated mechanism, ``DepGraph``, for parameter grouping, which facilitates effortless pruning for a wide range of deep networks.
+In structural pruning, **``Group`` is the minimal removable unit within deep networks**. Each group contains several interdependent layers that must be pruned simultaneously to maintain the integrity of the resulting structures. However, deep networks often present complex dependencies among layers, making structural pruning a challenging endeavor. This work addresses this challenge by offering an automated mechanism, ``DepGraph``, for parameter grouping, which facilitates effortless pruning for a wide range of deep networks.
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
@@ -216,7 +216,7 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 
 ### 3. Save & Load
 #### A Naive Way
-The following script saves the whole model object (structure+weights) into a 'model.pth'. This .pth file can be very large due to the additional information in the object.
+The following script saves the whole model object (structure+weights) as a 'model.pth'. This .pth file can be very large due to the additional information in the object.
 ```python
 torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the model object
