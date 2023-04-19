@@ -51,7 +51,10 @@ class MagnitudeImportance(Importance):
                 function.prune_conv_out_channels,
                 function.prune_linear_out_channels,
             ]:
-                w = layer.weight.data[idxs].flatten(1)
+                if hasattr(layer, "transposed") and layer.transposed:
+                    w = layer.weight.data.transpose(1, 0)[idxs].flatten(1)
+                else:
+                    w = layer.weight.data[idxs].flatten(1)
                 local_norm = w.abs().pow(self.p).sum(1)
                 if ch_groups>1:
                     local_norm = local_norm.view(ch_groups, -1).sum(0)
@@ -64,8 +67,8 @@ class MagnitudeImportance(Importance):
                 function.prune_linear_in_channels,
             ]:
                 is_conv_flatten_linear = False
-                if isinstance(layer, nn.ConvTranspose2d):
-                    w = (layer.weight).flatten(1)  
+                if hasattr(layer, "transposed") and layer.transposed:
+                    w = (layer.weight).flatten(1)
                 else:
                     w = (layer.weight).transpose(0, 1).flatten(1)     
                 if ch_groups>1 and prune_fn==function.prune_conv_in_channels and layer.groups==1:
@@ -151,7 +154,10 @@ class LAMPImportance(MagnitudeImportance):
                 function.prune_conv_out_channels,
                 function.prune_linear_out_channels,
             ]:
-                w = (layer.weight)[idxs]
+                if hasattr(layer, "transposed") and layer.transposed:
+                    w = (layer.weight)[:, idxs].transpose(0, 1)
+                else:
+                    w = (layer.weight)[idxs]
                 local_imp = torch.norm(
                     torch.flatten(w, 1), dim=1, p=self.p)
                 group_imp.append(local_imp)
@@ -160,7 +166,10 @@ class LAMPImportance(MagnitudeImportance):
                 function.prune_conv_in_channels,
                 function.prune_linear_in_channels,
             ]:
-                w = (layer.weight)[:, idxs].transpose(0, 1).flatten(1)
+                if hasattr(layer, "transposed") and layer.transposed:
+                    w = (layer.weight)[idxs].flatten(1)
+                else:
+                    w = (layer.weight)[:, idxs].transpose(0, 1).flatten(1)
                 if (
                     w.shape[0] != group_imp[0].shape[0]
                 ):  # for conv-flatten-linear without global pooling
@@ -221,8 +230,11 @@ class GroupNormImportance(Importance):
             if prune_fn in [
                 function.prune_conv_out_channels,
                 function.prune_linear_out_channels,
-            ]:
-                w = layer.weight.data[idxs].flatten(1)
+            ]:  
+                if hasattr(layer, 'transposed') and layer.transposed:
+                    w = layer.weight.data.transpose(1, 0)[idxs].flatten(1)
+                else:
+                    w = layer.weight.data[idxs].flatten(1)
                 local_norm = w.abs().pow(self.p).sum(1)
                 #print(local_norm.shape, layer, idxs, ch_groups)
                 if ch_groups>1:
@@ -237,7 +249,7 @@ class GroupNormImportance(Importance):
                 function.prune_linear_in_channels,
             ]:
                 is_conv_flatten_linear = False
-                if isinstance(layer, nn.ConvTranspose2d):
+                if hasattr(layer, 'transposed') and layer.transposed:
                     w = (layer.weight).flatten(1)  
                 else:
                     w = (layer.weight).transpose(0, 1).flatten(1)             
