@@ -30,12 +30,17 @@ For more technical details, please refer to our CVPR'23 paper:
 > [**DepGraph: Towards Any Structural Pruning**](https://arxiv.org/abs/2301.12900)   
 > [Gongfan Fang](https://fangggf.github.io/), [Xinyin Ma](https://horseee.github.io/), [Mingli Song](https://person.zju.edu.cn/en/msong), [Michael Bi Mi](https://dblp.org/pid/317/0937.html), [Xinchao Wang](https://sites.google.com/site/sitexinchaowang/)   
 
-
 ### Update:
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
 * 2023.04.10 [Structural Pruning for LLaMA (pruning-only)](https://github.com/horseee/LLaMA-Pruning)
 
 Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.
+
+**Join our Telegram or Wechat group for casual discussions:**
+
+* Telegram: https://t.me/+NwjbBDN2ao1lZjZl
+* Wechat: <img width="100" alt="image" src="https://user-images.githubusercontent.com/18592211/233550290-169a2a3e-bbe2-4a21-a2a3-62c7ac2c6a1a.png" >
+
 
 ### **Features:**
 - [x] Structural pruning for CNNs, Transformers, Detectors, and Language Models. Please refer to the [Prunability Benchmark](benchmarks/prunability).
