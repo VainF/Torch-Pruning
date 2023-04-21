@@ -33,7 +33,7 @@ For more technical details, please refer to our CVPR'23 paper:
 ### Update:
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
 * 2023.04.10 [Structural Pruning for LLaMA (pruning-only)](https://github.com/horseee/LLaMA-Pruning)
-* 2023.04.21 Join our Telegram or Wechat group for casual discussions:*
+* 2023.04.21 Join our Telegram or Wechat group for casual discussions:
   * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
   * Wechat: <img width="100" alt="image" src="https://user-images.githubusercontent.com/18592211/233550290-169a2a3e-bbe2-4a21-a2a3-62c7ac2c6a1a.png" >
 
