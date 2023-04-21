@@ -957,6 +957,9 @@ class DependencyGraph(object):
             
         offsets = [0]
         for ch in chs:
+            if ch is None: 
+                #warnings.warn("Fails to trace the concat operation. It may lead to unexpected results.")
+                return
             offsets.append(offsets[-1] + ch)
         cat_node.module.offsets = offsets
 
