@@ -48,7 +48,7 @@ Torch-Pruning (TP)是一个通用的结构化网络剪枝框架，主要包括�
 - [x] 资源列表[resource list](practical_structural_pruning.md) for practical structrual pruning.
 
 ### **后续开发计划:**
-- [ ] 剪枝适配性基准线, 覆盖 [Torchvision](https://pytorch.org/vision/stable/models.html) (**77/85=90.6%** , :heavy_check_mark:)和[timm](https://github.com/huggingface/pytorch-image-models)等常见模型库.
+- [ ] 剪枝适配性基准线, 覆盖 [Torchvision](https://pytorch.org/vision/stable/models.html) (**81/85=95.3%** , :heavy_check_mark:)和[timm](https://github.com/huggingface/pytorch-image-models)等常见模型库.
 - [ ] Pruning from Scratch / at Initialization.
 - [ ] 语言、语音、生成式模型剪枝
 - [ ] 更多的高级剪枝器, 例如[FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243)等.
