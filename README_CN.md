@@ -246,7 +246,7 @@ state_dict = torch.load('pruned_model.pth') # 读取模型参数
 DG.load_pruning_history(state_dict['pruning']) # 读取剪枝历史，并对网络重复相同的裁剪
 model.load_state_dict(state_dict['model']) # 重新剪枝后，模型可以读取存储的参数
 print(model)
-  
+```
   
 ### 4. 底层剪枝函数（Low-level pruning functions）
 
