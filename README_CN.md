@@ -1,14 +1,17 @@
-<div align="center"> <h1>Torch-Pruning <br> <h3>Towards Any Structural Pruning<h3> </h1> </div>
+<br>
 <div align="center">
+<img src="https://user-images.githubusercontent.com/18592211/232830417-0b21a874-516e-4420-8984-4de414a35085.png" width="400px"></img>
+<h2></h2>
+<h3>Towards Any Structural Pruning<h3>
 <img src="assets/intro.png" width="50%">
 </div>
   
 <p align="center">
   <a href="https://github.com/VainF/Torch-Pruning/actions"><img src="https://img.shields.io/badge/tests-passing-9c27b0.svg" alt="Test Status"></a>
-  <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-1.8.1%20%7C%202.0.0-673ab7.svg" alt="Tested PyTorch Versions"></a>
+  <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-1.8 %20%7C%201.12 %20%7C%202.0-673ab7.svg" alt="Tested PyTorch Versions"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-4caf50.svg" alt="License"></a>
   <a href="https://pepy.tech/project/Torch-Pruning"><img src="https://pepy.tech/badge/Torch-Pruning?color=2196f3" alt="Downloads"></a>
-  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.1.4-3f51b5.svg" alt="Latest Version"></a>
+  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.1.6-3f51b5.svg" alt="Latest Version"></a>
   <a href="https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
@@ -17,30 +20,35 @@
 
 
 Torch-Pruning (TP)是一个通用的结构化网络剪枝框架，主要包括以下功能：
-* **通用的结构化剪枝工具:** 支持*Vision Transformers, Yolov7, FasterRCNN, SSD, ResNet, DenseNet, ConvNext, RegNet, ResNext, FCN, DeepLab, VGG*等常见神经网络. 不同于[torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html)中利用掩码(Masking)实现的“模拟剪枝”, Torch-Pruning设计了一种名为DepGraph的非深度图算法, “物理”地移除模型中的耦合参数和通道。
-* **可复线的[性能基准线](benchmarks)和[可剪枝性基准线](benchmarks/prunability)**: 目前, Torch-Pruning已经覆盖了 **77/85=90.6%** 的Torchvision预训练模型(v0.13.1). 您可以访问[Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing)来快速体验Torchvision预训练模型的剪枝。
+* **通用的结构化剪枝工具:** 支持 *[LLaMA](https://github.com/horseee/LLaMA-Pruning), [Vision Transformers](benchmarks/prunability), [Yolov7](benchmarks/prunability/readme.md#3-yolo-v7), [yolov8](benchmarks/prunability/readme.md#2-yolo-v8), FasterRCNN, SSD, KeypointRCNN, MaskRCNN, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, FCN, DeepLab* 等神经网络. 不同于[torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html)中利用掩码(Masking)实现的“模拟剪枝”, Torch-Pruning采用了一种名为DepGraph的非深度图算法, 能够“物理”地移除模型中的耦合参数和通道。
+* **可复线的[性能基准线](benchmarks)和[可剪枝性基准线](benchmarks/prunability)**: 目前, Torch-Pruning已经覆盖了 **81/85=95.3%** 的Torchvision预训练模型(v0.13.1). 您可以访问[Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing)来快速体验Torchvision预训练模型的剪枝。
 
 更多技术细节请参考我们的论文： 
 
 > [**DepGraph: Towards Any Structural Pruning**](https://arxiv.org/abs/2301.12900)   
 > [Gongfan Fang](https://fangggf.github.io/), [Xinyin Ma](https://horseee.github.io/), [Mingli Song](https://person.zju.edu.cn/en/msong), [Michael Bi Mi](https://dblp.org/pid/317/0937.html), [Xinchao Wang](https://sites.google.com/site/sitexinchaowang/)   
 
+### Update:
+* 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
+* 2023.04.10 [Structural Pruning for LLaMA (pruning-only)](https://github.com/horseee/LLaMA-Pruning)
+* 2023.04.21 加入技术分享群（微信群或Telegram Group）:
+  * Wechat: <img width="100" alt="image" src="https://user-images.githubusercontent.com/18592211/233550290-169a2a3e-bbe2-4a21-a2a3-62c7ac2c6a1a.png" >
+  * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
+  
 如有任何框架、论文相关的问题, 请新建[discussion](https://github.com/VainF/Torch-Pruning/discussions)或者[issue](https://github.com/VainF/Torch-Pruning/issues). 非常乐意回复您的问题.
-
+  
 ### **特性:**
-- [x] 结构化(通道)剪枝: 支持[CNNs](benchmarks/prunability/torchvision_pruning.py#L19) (例如ResNet, DenseNet, Deeplab), [Transformers](benchmarks/prunability/torchvision_pruning.py#L11) (e.g. ViT)和各类检测器 (例如[Yolov7](benchmarks/prunability/yolov7_train_pruned.py#L102), [FasterRCNN, SSD](benchmarks/prunability/torchvision_pruning.py#L92))
+- [x] 结构化(通道)剪枝: 支持[CNNs](benchmarks/prunability/torchvision_pruning.py#L19), [Transformers](benchmarks/prunability/torchvision_pruning.py#L11)，各类检测器以及语言模型。
 - [x] 高级剪枝器(High-level pruners): [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900) (论文所使用的组剪枝器), RandomPruner等  
-- [x] 计算图构建和依赖建模
+- [x] DepGraph, 支持计算图构建和依赖建模.
 - [x] 支持的基础模块: Conv, Linear, BatchNorm, LayerNorm, Transposed Conv, PReLU, Embedding, MultiheadAttention, nn.Parameters and [自定义层(customized modules)](tests/test_customized_layer.py).
 - [x] 支持的操作: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops等
 - [x] [底层剪枝函数 (Low-level pruning functions)](torch_pruning/pruner/function.py)
 - [x] [Benchmarks](benchmarks) and [tutorials](tutorials)
 - [x] 资源列表[resource list](practical_structural_pruning.md) for practical structrual pruning.
-- [x] 非标准层的nn.Parameter自动剪枝
 
 ### **后续开发计划:**
-- [ ] 剪枝适配性基准线, 覆盖 [Torchvision](https://pytorch.org/vision/stable/models.html) (**77/85=90.6%** , :heavy_check_mark:)和[timm](https://github.com/huggingface/pytorch-image-models)等常见模型库.
-- [ ] 检测器支持 (我们正在开发yolo系列的相关支持, 例如YOLOv7 :heavy_check_mark:, YOLOv8)
+- [ ] 剪枝适配性基准线, 覆盖 [Torchvision](https://pytorch.org/vision/stable/models.html) (**81/85=95.3%** , :heavy_check_mark:)和[timm](https://github.com/huggingface/pytorch-image-models)等常见模型库.
 - [ ] Pruning from Scratch / at Initialization.
 - [ ] 语言、语音、生成式模型剪枝
 - [ ] 更多的高级剪枝器, 例如[FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243)等.
@@ -50,8 +58,9 @@ Torch-Pruning (TP)是一个通用的结构化网络剪枝框架，主要包括�
 - [ ] 性能基准线: 支持CIFAR, ImageNet and COCO.
 
 ## 安装
+Torch-Pruning支持Pytorch 1.0和2.0版本。本项目主要使用Pytorch>=1.13.1进行开发和测试。
 ```bash
-pip install torch-pruning # v1.1.2
+pip install torch-pruning # v1.1.6
 ```
 或者
 ```bash
@@ -69,13 +78,6 @@ git clone https://github.com/VainF/Torch-Pruning.git # recommended
 <div align="center">
 <img src="assets/dep.png" width="100%">
 </div>
-
-利用DepGraph, 我们可以比较轻松地设计出各种组级别重要性评估指标(group-level criteria), 用于一组参数的重要性. 这不同于过去仅用于单层的重要性评估. 在我们的论文中, 我们构造了一种简单的组剪枝器[GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/745f6d6bafba7432474421a8c1e5ce3aad25a5ef/torch_pruning/pruner/algorithms/group_norm_pruner.py#L8) (如下图c所示).该剪枝器通过组级别的稀疏来学习到具有一致重要性的耦合参数, 确保被移除的参数均具有较小的重要性得分.
-
-<div align="center">
-<img src="assets/group_sparsity.png" width="80%">
-</div>
-
 
 ### 1. A minimal example
 
@@ -99,10 +101,6 @@ print(pruning_group.details())  # or print(pruning_group)
 # 3. 检查剩余通道数是否<=0, 并执行剪枝
 if DG.check_pruning_group(pruning_group):
     pruning_group.prune()
-
-# 4. 存储/读取剪枝后模型
-torch.save(model, 'model.pth') # 保存模型对象
-model_loaded = torch.load('model.pth') # 不需要使用load_state_dict, 因为我们保存了整个模型对象
 ```
   
 这个例子演示了使用 DepGraph剪枝的基本流程.值得注意的是, resnet.conv1实际上会与多个层耦合在一起.通过打印返回的组, 我们观察到组内各个层之间的剪枝是如何互相“触发”的.在以下输出中, “A => B”表示剪枝操作“A”触发剪枝操作“B”.group[0]是用户在DG.get_pruning_group中给出的剪枝操作.
@@ -215,9 +213,42 @@ for i in range(iterative_steps):
     # ...
 ```
 
+#### 组剪枝                                       
+利用DepGraph, 我们可以比较轻松地设计出各种组级别重要性评估指标(group-level criteria), 用于一组参数的重要性. 这不同于过去仅用于单层的重要性评估. 在我们的论文中, 我们构造了一种简单的组剪枝器[GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/745f6d6bafba7432474421a8c1e5ce3aad25a5ef/torch_pruning/pruner/algorithms/group_norm_pruner.py#L8) (如下图c所示).该剪枝器通过组级别的稀疏来学习到具有一致重要性的耦合参数, 确保被移除的参数均具有较小的重要性得分.
 
+<div align="center">
+<img src="assets/group_sparsity.png" width="80%">
+</div>
 
-### 3. 底层剪枝函数（Low-level pruning functions）
+### 3. 模型的保存与读取
+#### 最简单的方式
+以下代码直接将模型对象序列化为.pth文件，该方式足够简单但是会导致存储文件偏大，不方便通过互联网分享。
+```python
+torch.save(model, 'model.pth') # without .state_dict
+model = torch.load('model.pth') # load the model object
+```
+
+#### 剪枝历史（Pruning History）
+我们介绍一种利用 ``pruning_history`` 来存储和读取剪枝后模型的方法，该方法与PyTorch采用的``state_dict``非常相似。请参考样例 [tests/test_load.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_load.py)
+```python
+...
+# Save
+state_dict = {
+    'model': model.state_dict(), # 标准的Pytorch存储方式
+    'pruning': pruner.pruning_history(), # 依赖图DG支持相同的DG.pruning_history & DG.load_pruning_history接口
+}
+torch.save(state_dict, 'pruned_model.pth')
+
+# Load
+model = resnet18() # 创建一个未剪枝的模型
+DG = tp.DependencyGraph().build_dependency(model, example_inputs) # 创建一个依赖图DG或者Pruner
+state_dict = torch.load('pruned_model.pth') # 读取模型参数
+DG.load_pruning_history(state_dict['pruning']) # 读取剪枝历史，并对网络重复相同的裁剪
+model.load_state_dict(state_dict['model']) # 重新剪枝后，模型可以读取存储的参数
+print(model)
+```
+  
+### 4. 底层剪枝函数（Low-level pruning functions）
 
 虽然使用低级函数可以手动修剪模型, 但这种方法可能非常繁琐, 因为它需要手动管理相关依赖项.因此, 我们建议利用前面提到的高级剪枝器来简化剪枝过程.
 
@@ -252,11 +283,11 @@ tp.prune_multihead_attention_out_channels,
 tp.prune_multihead_attention_in_channels,
 ```
 
-### 4. 自定义层
+### 5. 自定义层
 
 请参考[tests/test_customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_customized_layer.py). 该示例演示了如何剪枝用户自定义的层.
 
-### 5. 基准线 Benchmarks
+### 6. 基准线 Benchmarks
 
 Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 
