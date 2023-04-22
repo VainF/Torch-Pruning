@@ -2,6 +2,7 @@ import abc
 import torch
 import torch.nn as nn
 
+import typing
 from .pruner import function
 from ._helpers import _FlattenIndexMapping
 from . import ops
@@ -15,11 +16,29 @@ class Importance(abc.ABC):
         raise NotImplementedError
 
 class MagnitudeImportance(Importance):
-    def __init__(self, p=2, group_reduction="mean", normalizer=None):
+    def __init__(self, p=2, group_reduction="mean", normalizer='mean'):
         self.p = p
         self.group_reduction = group_reduction
         self.normalizer = normalizer
 
+    def _normalize(self, group_importance, normalizer):
+        if normalizer is None: 
+            return group_importance
+        elif isinstance(normalizer, typing.Callable):
+            return normalizer(group_importance)
+        elif normalizer == "sum":
+            return group_importance / group_importance.sum()
+        elif normalizer == "standarization":
+            return (group_importance - group_importance.min()) / (group_importance.max() - group_importance.min()+1e-8)
+        elif normalizer == "mean":
+            return group_importance / group_importance.mean()
+        elif normalizer == "max":
+            return group_importance / group_importance.max()
+        elif normalizer == 'gaussian':
+            return (group_importance - group_importance.mean()) / (group_importance.std()+1e-8)
+        else:
+            raise NotImplementedError
+        
     def _reduce(self, group_imp):
         if self.group_reduction == "sum":
             group_imp = group_imp.sum(dim=0)
@@ -105,8 +124,7 @@ class MagnitudeImportance(Importance):
                 aligned_group_imp.append(imp)
         group_imp = torch.stack(aligned_group_imp, dim=0)
         group_imp = self._reduce(group_imp)
-        if self.normalizer is not None:
-            group_imp = self.normalizer(group, group_imp)
+        group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
 
@@ -114,7 +132,7 @@ class BNScaleImportance(MagnitudeImportance):
     """Learning Efficient Convolutional Networks through Network Slimming, 
     https://arxiv.org/abs/1708.06519
     """
-    def __init__(self, group_reduction='mean', normalizer=None):
+    def __init__(self, group_reduction='mean', normalizer='mean'):
         super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer)
     
     def __call__(self, group, ch_groups=1):
@@ -131,8 +149,7 @@ class BNScaleImportance(MagnitudeImportance):
             return None
         group_imp = torch.stack(group_imp, dim=0)
         group_imp = self._reduce(group_imp)
-        if self.normalizer is not None:
-            group_imp = self.normalizer(group, group_imp)
+        group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
 
@@ -140,7 +157,7 @@ class LAMPImportance(MagnitudeImportance):
     """Layer-adaptive Sparsity for the Magnitude-based Pruning,
     https://arxiv.org/abs/2010.07611
     """
-    def __init__(self, p=2, group_reduction="mean", normalizer=None):
+    def __init__(self, p=2, group_reduction="mean", normalizer='mean'):
         super().__init__(p=p, group_reduction=group_reduction, normalizer=normalizer)
 
     @torch.no_grad()
@@ -190,8 +207,7 @@ class LAMPImportance(MagnitudeImportance):
             return None
         group_imp = torch.stack(group_imp, dim=0)
         group_imp = self._reduce(group_imp)
-        if self.normalizer is not None:
-            group_imp = self.normalizer(group, group_imp)
+        group_imp = self._normalize(group_imp, self.normalizer)
         return self.lamp(group_imp)
 
     def lamp(self, imp):
@@ -210,15 +226,15 @@ class RandomImportance(Importance):
         _, idxs = group[0]
         return torch.rand(len(idxs))
 
-class GroupNormImportance(Importance):
-    def __init__(self, p=2, normalizer=None):
+class GroupNormImportance(MagnitudeImportance):
+    def __init__(self, p=2, normalizer='max'):
+        super().__init__(p=p, group_reduction=None, normalizer=normalizer)
         self.p = p
         self.normalizer = normalizer
         
     @torch.no_grad()
     def __call__(self, group, ch_groups=1):
         group_norm = 0
-        group_size = 0
 
         #Get group norm
         for dep, idxs in group:
@@ -285,12 +301,6 @@ class GroupNormImportance(Importance):
                         local_norm = local_norm.repeat(ch_groups)
                     group_norm += local_norm
 
-                    #b = layer.bias.data[idxs]
-                    #local_norm = b.pow(2)
-                    #if ch_groups>1:
-                    #    local_norm = local_norm.view(ch_groups, -1).sum(0)
-                    #    local_norm = local_norm.repeat(ch_groups)
-                    #group_norm += local_norm
             elif prune_fn == function.prune_lstm_out_channels:
                 _idxs = torch.tensor(idxs)
                 local_norm = 0
@@ -318,5 +328,5 @@ class GroupNormImportance(Importance):
                     local_norm = torch.cat([local_norm, local_norm_reverse], dim=0)
                 group_norm+=local_norm
         group_imp = group_norm**(1/self.p)
-        group_imp = group_imp / group_imp.max()
+        group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp 
