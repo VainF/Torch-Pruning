@@ -102,6 +102,11 @@ group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 
 # 3. prune all grouped layers that are coupled with model.conv1 (included).
 if DG.check_pruning_group(group): # avoid full pruning, i.e., channels=0.
     group.prune()
+    
+# 4. Save & Load
+model.zero_grad() # We don't want to store gradient information
+torch.save(model, 'model.pth') # without .state_dict
+model = torch.load('model.pth') # load the model object
 ```
   
 The above example demonstrates the fundamental pruning pipeline using DepGraph. The target layer resnet.conv1 is coupled with several layers, which requires simultaneous removal in structural pruning. Let's print the group and observe how a pruning operation "triggers" other ones. In the following outputs, ``A => B`` means the pruning operation ``A`` triggers the pruning operation ``B``. group[0] refers to the pruning root in ``DG.get_pruning_group``.
