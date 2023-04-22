@@ -226,31 +226,11 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 </div>
 
 ### 3. Save & Load
-#### A Simple Way
 The following script saves the whole model object (structure+weights) as a 'model.pth'. 
 ```python
 model.zero_grad() # We don't want to store gradient information
 torch.save(model, 'model.pth') # without .state_dict
-model = torch.load('model.pth') # load the model object
-```
-#### Pruning History
-We introduce ``pruning_history`` to save and load your pruned model in a similar way to the ``state_dict`` in pytorch. This feature is currently not available in pypi package. An example can be found in [tests/test_load.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_load.py)
-```python
-...
-# Save
-state_dict = {
-    'model': model.state_dict(), # model weights
-    'pruning': pruner.pruning_history(), # DG also supports DG.pruning_history & DG.load_pruning_history.
-}
-torch.save(state_dict, 'pruned_model.pth')
-
-# Load
-model = resnet18() # Create a new unpruned model
-DG = tp.DependencyGraph().build_dependency(model, example_inputs) # Create a new DepGraph or Pruner (both OK!)
-state_dict = torch.load('pruned_model.pth') # load the .pth file
-DG.load_pruning_history(state_dict['pruning']) # load the pruning history to replay the pruning prcoess 
-model.load_state_dict(state_dict['model']) # then, we can load the pruned weights into this model.
-print(model)
+model = torch.load('model.pth') # load the pruned model
 ```
 
 ### 4. Low-level Pruning Functions
