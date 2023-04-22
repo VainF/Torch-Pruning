@@ -221,9 +221,10 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 </div>
 
 ### 3. Save & Load
-#### A Naive Way
+#### A Simple Way
 The following script saves the whole model object (structure+weights) as a 'model.pth'. This .pth file can be very large due to the additional information in the object.
 ```python
+model.zero_grad() # We don't want to store gradient information
 torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the model object
 ```
