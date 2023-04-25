@@ -133,7 +133,55 @@ def prune():
     # Fine-tuning (Post-training)
     # Please replace the coco128.yaml with coco.yaml and choose an appropriate learning rate for finetuning
     # This part works properly but the final performance has not been validated yet
-    model.train(data='coco128.yaml', epochs=100, imgsz=640)
+
+    #########################################################################################################
+    # WARNING: the model.train function will replace the pruned model with a new but unpruned one.
+    # So we have to make some modifications to the model.train function in ultralytics/yolo/engine/model.py
+    #########################################################################################################
+
+    # uncomment the following line for training
+    # model.train(data='coco128.yaml', epochs=1, imgsz=640)
+
+    # The following model.train should work
+    '''
+    def train(self, **kwargs):
+        """
+        Trains the model on a given dataset.
+    
+        Args:
+            **kwargs (Any): Any number of arguments representing the training configuration.
+        """
+        self._check_is_pytorch_model()
+        if self.session:  # Ultralytics HUB session
+            if any(kwargs):
+                LOGGER.warning('WARNING ⚠️ using HUB training arguments, ignoring local training arguments.')
+            kwargs = self.session.train_args
+            self.session.check_disk_space()
+        check_pip_update_available()
+        overrides = self.overrides.copy()
+        overrides.update(kwargs)
+        if kwargs.get('cfg'):
+            LOGGER.info(f"cfg file passed. Overriding default params with {kwargs['cfg']}.")
+            overrides = yaml_load(check_yaml(kwargs['cfg']))
+        overrides['mode'] = 'train'
+        if not overrides.get('data'):
+            raise AttributeError("Dataset required but missing, i.e. pass 'data=coco128.yaml'")
+        if overrides.get('resume'):
+            overrides['resume'] = self.ckpt_path
+        self.task = overrides.get('task') or self.task
+        self.trainer = TASK_MAP[self.task][1](overrides=overrides, _callbacks=self.callbacks)
+        #if not overrides.get('resume'):  # disable .get_model
+            #self.trainer.model = self.trainer.get_model(weights=self.model if self.ckpt else None, cfg=self.model.yaml)
+            #self.model = self.trainer.model
+        self.trainer.model = self.model # manually set the pruned model
+        self.trainer.hub_session = self.session  # attach optional HUB session
+        self.trainer.train()
+        # update model and cfg after training
+        if RANK in (-1, 0):
+            self.model, _ = attempt_load_one_weight(str(self.trainer.best))
+            self.overrides = self.model.args
+            self.metrics = getattr(self.trainer.validator, 'metrics', None)  # TODO: no metrics returned by DDP
+    '''
 
 if __name__ == "__main__":
     prune()
