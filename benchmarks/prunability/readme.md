@@ -227,7 +227,7 @@ python yolov8_pruning.py
 ```
 
 #### Screenshot for coco128 post-training:
-<img width="960" alt="image" src="https://user-images.githubusercontent.com/18592211/232287178-95825d66-c569-479d-8b6d-d433ff0d6739.png">
+<img width="876" alt="image" src="https://user-images.githubusercontent.com/18592211/234308234-771e1895-06a3-43a7-8967-b3736ee06d87.png">
 
 
 #### Outputs of yolov8_pruning.py:
