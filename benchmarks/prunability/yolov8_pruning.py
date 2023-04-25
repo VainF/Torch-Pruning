@@ -138,9 +138,7 @@ def prune():
     # WARNING: the model.train function will replace the pruned model with a new but unpruned one.
     # So we have to make some modifications to the model.train function in ultralytics/yolo/engine/model.py
     #########################################################################################################
-
-    # uncomment the following line for training
-    # model.train(data='coco128.yaml', epochs=1, imgsz=640)
+    model.train(data='coco128.yaml', epochs=1, imgsz=640)
 
     # The following model.train should work
     '''
