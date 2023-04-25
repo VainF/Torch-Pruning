@@ -175,7 +175,7 @@ cd ultralytics
 ```
 
 #### Modification
-The  model.train function will replace the pruned model with a new but unpruned one. So we have to make some modifications to the model.train function in ultralytics/yolo/engine/model.py. Replace the model.train function with:
+The ``model.train`` function for YOLO training will replace the pruned model with a new one. So we have to make some modifications to the model.train function in ultralytics/yolo/engine/model.py. Replace the model.train function with:
 ```python
 def train(self, **kwargs):
     """
