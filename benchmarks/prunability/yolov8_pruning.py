@@ -267,8 +267,8 @@ def train_v2(self: YOLO, pruning=False, **kwargs):
         self.trainer.model = self.model
 
         # replace some functions to disable half precision saving
-        self.trainer.save_model = save_model_v2
-        self.trainer.final_eval = final_eval_v2
+        self.trainer.save_model = save_model_v2.__get__(self.trainer)
+        self.trainer.final_eval = final_eval_v2.__get__(self.trainer)
 
     self.trainer.hub_session = self.session  # attach optional HUB session
     self.trainer.train()
@@ -411,7 +411,7 @@ def val_v2(self: YOLO, data=None, **kwargs):
     args.imgsz = check_imgsz(args.imgsz, max_dim=1)
 
     self.validator = TASK_MAP[self.task][2](args=args)
-    self.validator.__call__ = call_v2
+    self.validator.__call__ = call_v2.__get__(self.validator)
     self.validator(model=self.model)
     self.metrics = self.validator.metrics
 
@@ -421,8 +421,8 @@ def val_v2(self: YOLO, data=None, **kwargs):
 def prune(args):
     # load trained yolov8 model
     model = YOLO(args.model)
-    model.__setattr__("train_v2", train_v2)
-    model.__setattr__("val_v2", val_v2)
+    model.__setattr__("train_v2", train_v2.__get__(model))
+    model.__setattr__("val_v2", val_v2.__get__(model))
     pruning_cfg = yaml_load(check_yaml(args.cfg))
     batch_size = pruning_cfg['batch']
 
