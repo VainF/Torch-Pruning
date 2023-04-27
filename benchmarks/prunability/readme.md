@@ -175,54 +175,21 @@ cd ultralytics
 ```
 
 #### Modification
-The ``model.train`` function for YOLO training will replace the pruned model with a new one. So we have to make some modifications to the model.train function in ultralytics/yolo/engine/model.py. 
+Some functions need modification to prevent performance loss during model saving.
 
-For example, replace the model.train function with:
-```python
-def train(self, **kwargs):
-    """
-    Trains the model on a given dataset.
+##### 1. ```train``` in class ```YOLO```
+This function creates new trainer when called. Trainer loads model based on config file and reassign it to current model, which should be avoided for pruning.
 
-    Args:
-        **kwargs (Any): Any number of arguments representing the training configuration.
-    """
-    self._check_is_pytorch_model()
-    if self.session:  # Ultralytics HUB session
-        if any(kwargs):
-            LOGGER.warning('WARNING ⚠️ using HUB training arguments, ignoring local training arguments.')
-        kwargs = self.session.train_args
-        self.session.check_disk_space()
-    check_pip_update_available()
-    overrides = self.overrides.copy()
-    overrides.update(kwargs)
-    if kwargs.get('cfg'):
-        LOGGER.info(f"cfg file passed. Overriding default params with {kwargs['cfg']}.")
-        overrides = yaml_load(check_yaml(kwargs['cfg']))
-    overrides['mode'] = 'train'
-    if not overrides.get('data'):
-        raise AttributeError("Dataset required but missing, i.e. pass 'data=coco128.yaml'")
-    if overrides.get('resume'):
-        overrides['resume'] = self.ckpt_path
-    self.task = overrides.get('task') or self.task
-    self.trainer = TASK_MAP[self.task][1](overrides=overrides, _callbacks=self.callbacks)
-    ########################### Modification
-    #if not overrides.get('resume'):  # disable .get_model
-        #self.trainer.model = self.trainer.get_model(weights=self.model if self.ckpt else None, cfg=self.model.yaml)
-        #self.model = self.trainer.model
-    self.trainer.model = self.model # manually set the pruned model
-    ########################### Modification
-    self.trainer.hub_session = self.session  # attach optional HUB session
-    self.trainer.train()
-    # update model and cfg after training
-    if RANK in (-1, 0):
-        self.model, _ = attempt_load_one_weight(str(self.trainer.best))
-        self.overrides = self.model.args
-        self.metrics = getattr(self.trainer.validator, 'metrics', None)  # TODO: no metrics returned by DDP
-```
+##### 2. ```save_model``` in class ```BaseTrainer```
+YOLO v8 saves trained model with half precision. Due to this precision loss, saved model shows different performance with validation result during fine-tuning.
+This is modified to save the model with full precision because changing model to half precision can be done easily whenever after the pruning.
+
+##### 3. ```final_eval``` in class ```BaseTrainer```
+YOLO v8 replaces saved checkpoint file to half precision after training is done using ```strip_optimizer```. Half precision saving is changed with same reason above.
 
 #### Training
 ```
-# This minimal example will craft a yolov8-half and fine-tune it on the coco128 toy set.
+# This example will craft yolov8-half and fine-tune it on the coco128 toy set.
 python yolov8_pruning.py
 ```
 
