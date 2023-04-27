@@ -344,7 +344,7 @@ def prune(args):
         # pre fine-tuning validation
         pruning_cfg['name'] = f"step_{i}_pre_val"
         pruning_cfg['batch'] = 1
-        validation_model.model = model.model
+        validation_model.model = deepcopy(model.model)
         metric = validation_model.val(**pruning_cfg)
         pruned_map = metric.box.map
         pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(pruner.model, example_inputs)
