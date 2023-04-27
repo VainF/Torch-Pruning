@@ -1,6 +1,7 @@
 # This code is adapted from Issue [#147](https://github.com/VainF/Torch-Pruning/issues/147), implemented by @Hyunseok-Kim0.
 import argparse
 import json
+import math
 import os
 from copy import deepcopy
 from datetime import datetime
@@ -314,10 +315,10 @@ def prune(args):
     pruned_map_list.append(init_map)
     print(f"Before Pruning: MACs={base_macs / 1e9: .5f} G, #Params={base_nparams / 1e6: .5f} M, mAP={init_map: .5f}")
 
-    for i in range(args.iterative_steps):
+    # prune same ratio of filter based on initial size
+    ch_sparsity = 1 - math.pow((1 - args.target_prune_rate), 1 / args.iterative_steps)
 
-        # prune same amount of filter based on initial size
-        ch_sparsity = args.target_prune_rate / (args.iterative_steps - i)
+    for i in range(args.iterative_steps):
 
         model.model.train()
         for name, param in model.model.named_parameters():
