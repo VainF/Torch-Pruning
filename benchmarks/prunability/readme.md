@@ -175,7 +175,7 @@ cd ultralytics
 ```
 
 #### Modification
-Some functions need modification to prevent performance loss during model saving.
+Some functions will be automatically modified by the yolov8_pruning.py to prevent performance loss during model saving.
 
 ##### 1. ```train``` in class ```YOLO```
 This function creates new trainer when called. Trainer loads model based on config file and reassign it to current model, which should be avoided for pruning.
