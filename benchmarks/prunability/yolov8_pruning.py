@@ -286,9 +286,10 @@ def prune(args):
     pruning_cfg = yaml_load(check_yaml(args.cfg))
     batch_size = pruning_cfg['batch']
 
-    # use coco128 dataset for 15 epochs fine-tuning each pruning iteration step
+    # use coco128 dataset for 10 epochs fine-tuning each pruning iteration step
+    # this part is only for sample code, number of epochs should be included in config file
     pruning_cfg['data'] = "coco128.yaml"
-    pruning_cfg['epochs'] = 15
+    pruning_cfg['epochs'] = 10
 
     model.model.train()
     replace_c2f_with_c2f_v2(model.model)
@@ -343,7 +344,7 @@ def prune(args):
         # pre fine-tuning validation
         pruning_cfg['name'] = f"step_{i}_pre_val"
         pruning_cfg['batch'] = 1
-        validation_model = deepcopy(model)
+        validation_model.model = model.model
         metric = validation_model.val(**pruning_cfg)
         pruned_map = metric.box.map
         pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(pruner.model, example_inputs)
@@ -361,7 +362,7 @@ def prune(args):
         # post fine-tuning validation
         pruning_cfg['name'] = f"step_{i}_post_val"
         pruning_cfg['batch'] = 1
-        validation_model = deepcopy(model)
+        validation_model = YOLO(model.trainer.best)
         metric = validation_model.val(**pruning_cfg)
         current_map = metric.box.map
         print(f"After fine tuning mAP={current_map}")
