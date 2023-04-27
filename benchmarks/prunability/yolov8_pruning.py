@@ -285,6 +285,7 @@ def prune(args):
     model.__setattr__("train_v2", train_v2.__get__(model))
     pruning_cfg = yaml_load(check_yaml(args.cfg))
     batch_size = pruning_cfg['batch']
+    pruning_cfg['data'] = "coco128.yaml"
 
     model.model.train()
     replace_c2f_with_c2f_v2(model.model)
@@ -344,7 +345,7 @@ def prune(args):
         pruned_map = metric.box.map
         pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(pruner.model, example_inputs)
         current_speed_up = float(macs_list[0]) / pruned_macs
-        print(f"After pruning iter {i + 1}: MACs={pruned_macs / 1e9} G, #Params={pruned_nparams / 1e9} G, "
+        print(f"After pruning iter {i + 1}: MACs={pruned_macs / 1e9} G, #Params={pruned_nparams / 1e6} M, "
               f"mAP={pruned_map}, speed up={current_speed_up}")
 
         # fine-tuning
