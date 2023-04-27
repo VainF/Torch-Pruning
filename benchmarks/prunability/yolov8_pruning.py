@@ -279,150 +279,10 @@ def train_v2(self: YOLO, pruning=False, **kwargs):
         self.metrics = getattr(self.trainer.validator, 'metrics', None)
 
 
-@torch.no_grad()
-def call_v2(self: BaseValidator, trainer=None, model=None):
-    """
-    Supports validation of a pre-trained model if passed or a model being trained
-    if trainer is passed (trainer gets priority).
-    """
-    self.training = trainer is not None
-    if self.training:
-        self.device = trainer.device
-        self.data = trainer.data
-        model = trainer.ema.ema or trainer.model
-        self.args.half = self.device.type != 'cpu'  # force FP16 val during training
-        model = model.half() if self.args.half else model.float()
-        self.model = model
-        self.loss = torch.zeros_like(trainer.loss_items, device=trainer.device)
-        self.args.plots = trainer.stopper.possible_stop or (trainer.epoch == trainer.epochs - 1)
-        model.eval()
-    else:
-        callbacks.add_integration_callbacks(self)
-        self.run_callbacks('on_val_start')
-        assert model is not None, 'Either trainer or model is needed for validation'
-        self.device = select_device(self.args.device, self.args.batch)
-        self.args.half &= self.device.type != 'cpu'
-        model = AutoBackend(model, device=self.device, dnn=self.args.dnn, data=self.args.data, fp16=self.args.half)
-        self.model = model
-        stride, pt, jit, engine = model.stride, model.pt, model.jit, model.engine
-        imgsz = check_imgsz(self.args.imgsz, stride=stride)
-        if engine:
-            self.args.batch = model.batch_size
-        else:
-            self.device = model.device
-            if not pt and not jit:
-                self.args.batch = 1  # export.py models default to batch-size 1
-                LOGGER.info(f'Forcing batch=1 square inference (1,3,{imgsz},{imgsz}) for non-PyTorch models')
-
-        if isinstance(self.args.data, str) and self.args.data.endswith('.yaml'):
-            self.data = check_det_dataset(self.args.data)
-        elif self.args.task == 'classify':
-            self.data = check_cls_dataset(self.args.data)
-        else:
-            raise FileNotFoundError(emojis(f"Dataset '{self.args.data}' for task={self.args.task} not found ❌"))
-
-        if self.device.type == 'cpu':
-            self.args.workers = 0  # faster CPU val as time dominated by inference, not dataloading
-        if not pt:
-            self.args.rect = False
-        self.dataloader = self.dataloader or self.get_dataloader(self.data.get(self.args.split), self.args.batch)
-
-        model.eval()
-        model.warmup(imgsz=(1 if pt else self.args.batch, 3, imgsz, imgsz))  # warmup
-
-    dt = Profile(), Profile(), Profile(), Profile()
-    n_batches = len(self.dataloader)
-    desc = self.get_desc()
-    # NOTE: keeping `not self.training` in tqdm will eliminate pbar after segmentation evaluation during training,
-    # which may affect classification task since this arg is in yolov5/classify/val.py.
-    # bar = tqdm(self.dataloader, desc, n_batches, not self.training, bar_format=TQDM_BAR_FORMAT)
-    bar = tqdm(self.dataloader, desc, n_batches, bar_format=TQDM_BAR_FORMAT)
-    self.init_metrics(de_parallel(model))
-    self.jdict = []  # empty before each val
-    for batch_i, batch in enumerate(bar):
-        self.run_callbacks('on_val_batch_start')
-        self.batch_i = batch_i
-        # Preprocess
-        with dt[0]:
-            batch = self.preprocess(batch)
-
-        # Inference
-        with dt[1]:
-            preds = model(batch['img'])
-
-        # Loss
-        with dt[2]:
-            if self.training:
-                self.loss += trainer.criterion(preds, batch)[1]
-
-        # Postprocess
-        with dt[3]:
-            preds = self.postprocess(preds)
-
-        self.update_metrics(preds, batch)
-        if self.args.plots and batch_i < 3:
-            self.plot_val_samples(batch, batch_i)
-            self.plot_predictions(batch, preds, batch_i)
-
-        self.run_callbacks('on_val_batch_end')
-    stats = self.get_stats()
-    self.check_stats(stats)
-    self.speed = dict(zip(self.speed.keys(), (x.t / len(self.dataloader.dataset) * 1E3 for x in dt)))
-    self.finalize_metrics()
-    self.print_results()
-    self.run_callbacks('on_val_end')
-    if self.training:
-        model.float()
-        self.loss = self.loss.cpu() / len(self.dataloader)
-        results = {**stats, **trainer.label_loss_items(self.loss, prefix='val')}
-        return {k: round(float(v), 5) for k, v in results.items()}  # return results as 5 decimal place floats
-    else:
-        LOGGER.info('Speed: %.1fms preprocess, %.1fms inference, %.1fms loss, %.1fms postprocess per image' %
-                    tuple(self.speed.values()))
-        if self.args.save_json and self.jdict:
-            with open(str(self.save_dir / 'predictions.json'), 'w') as f:
-                LOGGER.info(f'Saving {f.name}...')
-                json.dump(self.jdict, f)  # flatten and save
-            stats = self.eval_json(stats)  # update stats
-        if self.args.plots or self.args.save_json:
-            LOGGER.info(f"Results saved to {colorstr('bold', self.save_dir)}")
-        return stats
-
-
-@torch.no_grad()
-def val_v2(self: YOLO, data=None, **kwargs):
-    """
-    Disabled smart inference mode. originated from ultralytics/yolo/utils/torch_utils.py
-    """
-    overrides = self.overrides.copy()
-    overrides['rect'] = True  # rect batches as default
-    overrides.update(kwargs)
-    overrides['mode'] = 'val'
-    args = get_cfg(cfg=DEFAULT_CFG, overrides=overrides)
-    args.data = data or args.data
-    if 'task' in overrides:
-        self.task = args.task
-    else:
-        args.task = self.task
-
-    if args.imgsz == DEFAULT_CFG.imgsz and not isinstance(self.model, (str, Path)):
-        args.imgsz = self.model.args['imgsz']  # use trained imgsz unless custom value is passed
-
-    args.imgsz = check_imgsz(args.imgsz, max_dim=1)
-
-    self.validator = TASK_MAP[self.task][2](args=args)
-    self.validator.__call__ = call_v2.__get__(self.validator)
-    self.validator(model=self.model)
-    self.metrics = self.validator.metrics
-
-    return self.metrics
-
-
 def prune(args):
     # load trained yolov8 model
     model = YOLO(args.model)
     model.__setattr__("train_v2", train_v2.__get__(model))
-    model.__setattr__("val_v2", val_v2.__get__(model))
     pruning_cfg = yaml_load(check_yaml(args.cfg))
     batch_size = pruning_cfg['batch']
 
@@ -440,7 +300,8 @@ def prune(args):
     # do validation before pruning model
     pruning_cfg['name'] = f"baseline_val"
     pruning_cfg['batch'] = 1
-    metric = model.val_v2(**pruning_cfg)
+    validation_model = deepcopy(model)
+    metric = validation_model.val(**pruning_cfg)
     init_map = metric.box.map
     macs_list.append(base_macs)
     nparams_list.append(100)
@@ -478,7 +339,8 @@ def prune(args):
         # pre fine-tuning validation
         pruning_cfg['name'] = f"step_{i}_pre_val"
         pruning_cfg['batch'] = 1
-        metric = model.val_v2(**pruning_cfg)
+        validation_model = deepcopy(model)
+        metric = validation_model.val(**pruning_cfg)
         pruned_map = metric.box.map
         pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(pruner.model, example_inputs)
         current_speed_up = float(macs_list[0]) / pruned_macs
@@ -495,7 +357,8 @@ def prune(args):
         # post fine-tuning validation
         pruning_cfg['name'] = f"step_{i}_post_val"
         pruning_cfg['batch'] = 1
-        metric = model.val_v2(**pruning_cfg)
+        validation_model = deepcopy(model)
+        metric = validation_model.val(**pruning_cfg)
         current_map = metric.box.map
         print(f"After fine tuning mAP={current_map}")
 

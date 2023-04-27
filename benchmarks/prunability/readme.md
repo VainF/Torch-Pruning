@@ -180,14 +180,11 @@ Some functions need modification to prevent performance loss during model saving
 ##### 1. ```train``` in class ```YOLO```
 This function creates new trainer when called. Trainer loads model based on config file and reassign it to current model, which should be avoided for pruning.
 
-##### 2. ```val``` in class ```YOLO```
-In Pytorch >= 1.9, ```smart_inference_mode``` decorator use ```torch.inference_mode``` which occurs problem in training after validation. This is replaced with ```torch.no_grad```.
-
-##### 3. ```save_model``` in class ```BaseTrainer```
+##### 2. ```save_model``` in class ```BaseTrainer```
 YOLO v8 saves trained model with half precision. Due to this precision loss, saved model shows different performance with validation result during fine-tuning.
 This is modified to save the model with full precision because changing model to half precision can be done easily whenever after the pruning.
 
-##### 4. ```final_eval``` in class ```BaseTrainer```
+##### 3. ```final_eval``` in class ```BaseTrainer```
 YOLO v8 replaces saved checkpoint file to half precision after training is done using ```strip_optimizer```. Half precision saving is changed with same reason above.
 
 #### Training
