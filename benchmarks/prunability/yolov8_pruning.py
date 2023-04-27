@@ -1,34 +1,26 @@
 # This code is adapted from Issue [#147](https://github.com/VainF/Torch-Pruning/issues/147), implemented by @Hyunseok-Kim0.
 import argparse
-import json
 import math
 import os
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
+from typing import List, Union
 
 import numpy as np
 import torch
+import torch.nn as nn
 from matplotlib import pyplot as plt
-from tqdm import tqdm
-
 from ultralytics import YOLO, __version__
-from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.nn.modules import Detect, C2f, Conv, Bottleneck
 from ultralytics.nn.tasks import attempt_load_one_weight
-from ultralytics.yolo.cfg import get_cfg
-from ultralytics.yolo.data.utils import check_det_dataset, check_cls_dataset
 from ultralytics.yolo.engine.model import TASK_MAP
 from ultralytics.yolo.engine.trainer import BaseTrainer
-from ultralytics.yolo.engine.validator import BaseValidator
-from ultralytics.yolo.utils import yaml_load, LOGGER, RANK, DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, DEFAULT_CFG, callbacks, \
-    emojis, TQDM_BAR_FORMAT, colorstr
-from ultralytics.yolo.utils.checks import check_yaml, check_imgsz
-from ultralytics.yolo.utils.ops import Profile
-from ultralytics.yolo.utils.torch_utils import initialize_weights, de_parallel, select_device
+from ultralytics.yolo.utils import yaml_load, LOGGER, RANK, DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS
+from ultralytics.yolo.utils.checks import check_yaml
+from ultralytics.yolo.utils.torch_utils import initialize_weights, de_parallel
+
 import torch_pruning as tp
-import torch.nn as nn
-from typing import List, Union
 
 
 def save_pruning_performance_graph(x, y1, y2, y3):
