@@ -165,7 +165,7 @@ Pruning vit_b_32:
 ```
 
 ## 2. YOLO v8
-Please refer to Issue [#147](https://github.com/VainF/Torch-Pruning/issues/147#issuecomment-1507475657) for more details.
+This example was implemented by [@Hyunseok-Kim0 (Hyunseok Kim)](https://github.com/Hyunseok-Kim0). Please refer to Issue [#147](https://github.com/VainF/Torch-Pruning/issues/147#issuecomment-1507475657) for more details.
 
 #### Ultralytics
 ```bash
