@@ -185,10 +185,10 @@ In Pytorch >= 1.9, ```smart_inference_mode``` decorator use ```torch.inference_m
 
 ##### 3. ```save_model``` in class ```BaseTrainer```
 YOLO v8 saves trained model with half precision. Due to this precision loss, saved model shows different performance with validation result during fine-tuning.
-This functions is modified because changing model to half precision can be done easily whenever after the pruning.
+This is modified to save the model with full precision because changing model to half precision can be done easily whenever after the pruning.
 
 ##### 4. ```final_eval``` in class ```BaseTrainer```
-YOLO v8 replaces saved checkpoint file to half precision after training is done using ```strip_optimizer```. Same reason with above.
+YOLO v8 replaces saved checkpoint file to half precision after training is done using ```strip_optimizer```. Half precision saving is changed with same reason above.
 
 #### Training
 ```

@@ -522,9 +522,9 @@ if __name__ == "__main__":
     parser.add_argument('--cfg', default='default.yaml',
                         help='Pruning config file.'
                              ' This file should have same format with ultralytics/yolo/cfg/default.yaml')
-    parser.add_argument('--iterative-steps', default=16, help='Total pruning iteration step')
-    parser.add_argument('--target-prune-rate', default=0.5, help='Target pruning rate')
-    parser.add_argument('--max-map-drop', default=0.2, help='Allowed maximum map drop after fine-tuning')
+    parser.add_argument('--iterative-steps', default=16, type=int, help='Total pruning iteration step')
+    parser.add_argument('--target-prune-rate', default=0.5, type=float, help='Target pruning rate')
+    parser.add_argument('--max-map-drop', default=0.2, type=float, help='Allowed maximum map drop after fine-tuning')
 
     args = parser.parse_args()
 
