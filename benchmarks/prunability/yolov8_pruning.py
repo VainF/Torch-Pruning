@@ -285,7 +285,10 @@ def prune(args):
     model.__setattr__("train_v2", train_v2.__get__(model))
     pruning_cfg = yaml_load(check_yaml(args.cfg))
     batch_size = pruning_cfg['batch']
+
+    # use coco128 dataset for 15 epochs fine-tuning each pruning iteration step
     pruning_cfg['data'] = "coco128.yaml"
+    pruning_cfg['epochs'] = 15
 
     model.model.train()
     replace_c2f_with_c2f_v2(model.model)
