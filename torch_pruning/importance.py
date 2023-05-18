@@ -347,9 +347,10 @@ class GroupNormImportance(MagnitudeImportance):
 
 
 class TaylorImportance(Importance):
-    def __init__(self, group_reduction="mean", normalizer='mean'):
+    def __init__(self, group_reduction="mean", normalizer='mean', multivariable=False):
         self.group_reduction = group_reduction
         self.normalizer = normalizer
+        self.multivariable = multivariable
 
     def _normalize(self, group_importance, normalizer):
         if normalizer is None:
@@ -405,7 +406,10 @@ class TaylorImportance(Importance):
                 else:
                     w = layer.weight.data[idxs].flatten(1)
                     dw = layer.weight.grad.data[idxs].flatten(1)
-                local_imp = (w * dw).sum(1).abs()
+                if self.multivariable:
+                    local_imp = (w * dw).sum(1).abs()
+                else:
+                    local_imp = (w * dw).abs().sum(1)
                 group_imp.append(local_imp)
             # Conv in_channels
             elif prune_fn in [
@@ -418,7 +422,10 @@ class TaylorImportance(Importance):
                 else:
                     w = (layer.weight).transpose(0, 1).flatten(1)[idxs]
                     dw = (layer.weight.grad).transpose(0, 1).flatten(1)[idxs]
-                local_imp = (w * dw).sum(1).abs()
+                if self.multivariable:
+                    local_imp = (w * dw).sum(1).abs()
+                else:
+                    local_imp = (w * dw).abs().sum(1)
                 group_imp.append(local_imp)
             # BN
             elif prune_fn == function.prune_groupnorm_out_channels:
