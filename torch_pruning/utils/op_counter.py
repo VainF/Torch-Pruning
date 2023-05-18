@@ -22,6 +22,8 @@ def count_ops_and_params(model, example_inputs):
                                   ignore_list=[])
     if isinstance(example_inputs, (tuple, list)):
         _ = flops_model(*example_inputs)
+    elif isinstance(example_inputs, dict):
+        _ = flops_model(**example_inputs)
     else:
         _ = flops_model(example_inputs)
     flops_count, params_count = flops_model.compute_average_flops_cost()

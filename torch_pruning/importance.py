@@ -237,7 +237,7 @@ class GroupNormImportance(MagnitudeImportance):
 
     @torch.no_grad()
     def __call__(self, group, ch_groups=1):
-        group_norm = 0
+        group_norm = None
 
         # Get group norm
         for dep, idxs in group:
@@ -259,7 +259,8 @@ class GroupNormImportance(MagnitudeImportance):
                 if ch_groups > 1:
                     local_norm = local_norm.view(ch_groups, -1).sum(0)
                     local_norm = local_norm.repeat(ch_groups)
-                if group_norm.shape[0] == local_norm.shape[0]:
+                if group_norm is None: group_norm = local_norm
+                elif group_norm.shape[0] == local_norm.shape[0]:
                     group_norm += local_norm
                 # if layer.bias is not None:
                 #    group_norm += layer.bias.data[idxs].pow(2)
@@ -293,7 +294,8 @@ class GroupNormImportance(MagnitudeImportance):
                     local_norm = local_norm.repeat(ch_groups)
                 if not is_conv_flatten_linear:
                     local_norm = local_norm[idxs]
-                if group_norm.shape[0] == local_norm.shape[0]:
+                if group_norm is None: group_norm = local_norm
+                elif group_norm.shape[0] == local_norm.shape[0]:
                     group_norm += local_norm
             # BN
             elif prune_fn == function.prune_batchnorm_out_channels:
@@ -304,7 +306,8 @@ class GroupNormImportance(MagnitudeImportance):
                     if ch_groups > 1:
                         local_norm = local_norm.view(ch_groups, -1).sum(0)
                         local_norm = local_norm.repeat(ch_groups)
-                    if group_norm.shape[0] == local_norm.shape[0]:
+                    if group_norm is None: group_norm = local_norm
+                    elif group_norm.shape[0] == local_norm.shape[0]:
                         group_norm += local_norm
 
             elif prune_fn == function.prune_lstm_out_channels:
@@ -334,7 +337,8 @@ class GroupNormImportance(MagnitudeImportance):
                         expanded_idxs].abs().pow(self.p).sum(1).view(4, -1).sum(0)
                     local_norm = torch.cat(
                         [local_norm, local_norm_reverse], dim=0)
-                if group_norm.shape[0] == local_norm.shape[0]:
+                if group_norm is None: group_norm = local_norm
+                elif group_norm.shape[0] == local_norm.shape[0]:
                     group_norm += local_norm
             elif prune_fn == function.prune_lstm_in_channels:
                 local_norm = getattr(layer, 'weight_ih_l0')[
@@ -344,7 +348,8 @@ class GroupNormImportance(MagnitudeImportance):
                         :, idxs].abs().pow(self.p).sum(0)
                     local_norm = torch.cat(
                         [local_norm, local_norm_reverse], dim=0)
-                if group_norm.shape[0] == local_norm.shape[0]:
+                if group_norm is None: group_norm = local_norm
+                elif group_norm.shape[0] == local_norm.shape[0]:
                     group_norm += local_norm
         group_imp = group_norm**(1/self.p)
         group_imp = self._normalize(group_imp, self.normalizer)
