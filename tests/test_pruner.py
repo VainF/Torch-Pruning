@@ -76,10 +76,11 @@ def test_pruner_TransposeConv():
 
     iterative_steps = 5
     for imp in [
+        tp.importance.TaylorImportance(),
         tp.importance.MagnitudeImportance(p=2),
         tp.importance.LAMPImportance(p=2),
         tp.importance.BNScaleImportance(),
-        tp.importance.GroupNormImportance(p=2),
+        tp.importance.GroupNormImportance(p=2),    
     ]:
         for Pruner in [
             tp.pruner.MagnitudePruner,
@@ -104,6 +105,10 @@ def test_pruner_TransposeConv():
                 model, example_inputs
             )
             for i in range(iterative_steps):
+
+                if isinstance(imp, tp.importance.TaylorImportance):
+                    loss = model(example_inputs).sum() # a dummy loss for TaylorImportance
+                    loss.backward()
                 pruner.step()
                 macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
                 print(model(example_inputs).shape)

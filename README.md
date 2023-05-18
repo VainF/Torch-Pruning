@@ -160,7 +160,7 @@ model = resnet18(pretrained=True)
 
 # Importance criteria
 example_inputs = torch.randn(1, 3, 224, 224)
-imp = tp.importance.MagnitudeImportance(p=2)
+imp = tp.importance.TaylorImportance()
 
 ignored_layers = []
 for m in model.modules():
@@ -179,6 +179,10 @@ pruner = tp.pruner.MagnitudePruner(
 
 base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
 for i in range(iterative_steps):
+    if isinstance(imp, tp.importance.TaylorImportance):
+        # Taylor expansion requires gradients for importance estimation
+        loss = model(example_inputs).sum() # a dummy loss for TaylorImportance
+        loss.backward() # before pruner.step()
     pruner.step()
     macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
     # finetune your model here

@@ -81,6 +81,11 @@ class BasePruningFunc(ABC):
         layer = pruning_fn(layer, idxs)
         return layer
 
+    def _prune_parameter_and_grad(self, weight, keep_idxs, pruning_dim):
+        pruned_weight = torch.nn.Parameter(torch.index_select(weight, pruning_dim, torch.LongTensor(keep_idxs).to(weight.device)))
+        if weight.grad is not None:
+            pruned_weight.grad = torch.index_select(weight.grad, pruning_dim, torch.LongTensor(keep_idxs).to(weight.device))
+        return pruned_weight.to(weight.device)
 
 class ConvPruner(BasePruningFunc):
     TARGET_MODULE = ops.TORCH_CONV
@@ -90,13 +95,12 @@ class ConvPruner(BasePruningFunc):
         keep_idxs.sort()
         layer.out_channels = layer.out_channels-len(idxs)
         if not layer.transposed:
-            layer.weight = torch.nn.Parameter(
-                layer.weight.data[keep_idxs])
+            layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 0)
         else:
-            layer.weight = torch.nn.Parameter(
-                layer.weight.data[:, keep_idxs])
+            layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 1)
+        
         if layer.bias is not None:
-            layer.bias = torch.nn.Parameter(layer.bias.data[keep_idxs])
+            layer.bias = self._prune_parameter_and_grad(layer.bias, keep_idxs, 0)
         return layer
 
     def prune_in_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
@@ -105,12 +109,11 @@ class ConvPruner(BasePruningFunc):
         layer.in_channels = layer.in_channels - len(idxs)
         if layer.groups>1:
             keep_idxs = keep_idxs[:len(keep_idxs)//layer.groups]
+        
         if not layer.transposed:
-            layer.weight = torch.nn.Parameter(
-                layer.weight.data[:, keep_idxs])
+            layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 1)
         else:
-            layer.weight = torch.nn.Parameter(
-                layer.weight.data[keep_idxs])
+            layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 0)
         # no bias pruning because it does not change the output channels
         return layer
 
@@ -130,9 +133,9 @@ class DepthwiseConvPruner(ConvPruner):
         layer.out_channels = layer.out_channels-len(idxs)
         layer.in_channels = layer.in_channels-len(idxs)
         layer.groups = layer.groups-len(idxs)
-        layer.weight = torch.nn.Parameter(layer.weight.data[keep_idxs])
+        layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 0)
         if layer.bias is not None:
-            layer.bias = torch.nn.Parameter(layer.bias.data[keep_idxs])
+            layer.bias = self._prune_parameter_and_grad(layer.bias, keep_idxs, 0)
         return layer
 
     prune_in_channels = prune_out_channels
@@ -147,17 +150,16 @@ class LinearPruner(BasePruningFunc):
         keep_idxs = list(set(range(layer.out_features)) - set(idxs))
         keep_idxs.sort()
         layer.out_features = layer.out_features-len(idxs)
-        layer.weight = torch.nn.Parameter(layer.weight.data[keep_idxs])
+        layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 0)
         if layer.bias is not None:
-            layer.bias = torch.nn.Parameter(layer.bias.data[keep_idxs])
+            layer.bias = self._prune_parameter_and_grad(layer.bias, keep_idxs, 0)
         return layer
 
     def prune_in_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
         keep_idxs = list(set(range(layer.in_features)) - set(idxs))
         keep_idxs.sort()
         layer.in_features = layer.in_features-len(idxs)
-        layer.weight = torch.nn.Parameter(
-            layer.weight.data[:, keep_idxs])
+        layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 1)
         return layer
 
     def get_out_channels(self, layer):
@@ -177,9 +179,8 @@ class BatchnormPruner(BasePruningFunc):
         layer.running_mean = layer.running_mean.data[keep_idxs]
         layer.running_var = layer.running_var.data[keep_idxs]
         if layer.affine:
-            layer.weight = torch.nn.Parameter(
-                layer.weight.data[keep_idxs])
-            layer.bias = torch.nn.Parameter(layer.bias.data[keep_idxs])
+            layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 0)
+            layer.bias = self._prune_parameter_and_grad(layer.bias, keep_idxs, 0)
         return layer
 
     prune_in_channels = prune_out_channels
@@ -211,10 +212,8 @@ class LayernormPruner(BasePruningFunc):
         keep_idxs = torch.tensor(list(set(range(num_features)) - set(idxs)))
         keep_idxs.sort()
         if layer.elementwise_affine:
-            layer.weight = torch.nn.Parameter(
-                layer.weight.data.index_select(pruning_dim, keep_idxs))
-            layer.bias = torch.nn.Parameter(
-                layer.bias.data.index_select(pruning_dim, keep_idxs))
+            layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, pruning_dim)
+            layer.bias = self._prune_parameter_and_grad(layer.bias, keep_idxs, pruning_dim)
         if pruning_dim != -1:
             layer.normalized_shape = layer.normalized_shape[:pruning_dim] + (
                 keep_idxs.size(0), ) + layer.normalized_shape[pruning_dim+1:]
@@ -237,9 +236,8 @@ class GroupNormPruner(BasePruningFunc):
         keep_idxs.sort()
         layer.num_channels = layer.num_channels-len(idxs)
         if layer.affine:
-            layer.weight = torch.nn.Parameter(
-                layer.weight.data[keep_idxs])
-            layer.bias = torch.nn.Parameter(layer.bias.data[keep_idxs])
+            layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 0)
+            layer.bias = self._prune_parameter_and_grad(layer.bias, keep_idxs, 0)
         return layer
     
     prune_in_channels = prune_out_channels
@@ -256,9 +254,8 @@ class InstanceNormPruner(BasePruningFunc):
         keep_idxs.sort()
         layer.num_features = layer.num_features-len(idxs)
         if layer.affine:
-            layer.weight = torch.nn.Parameter(
-                layer.weight.data[keep_idxs])
-            layer.bias = torch.nn.Parameter(layer.bias.data[keep_idxs])
+            layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 0)
+            layer.bias = self._prune_parameter_and_grad(layer.bias, keep_idxs, 0)
         return layer
 
     prune_in_channels = prune_out_channels
@@ -279,7 +276,7 @@ class PReLUPruner(BasePruningFunc):
         keep_idxs = list(set(range(layer.num_parameters)) - set(idxs))
         keep_idxs.sort()
         layer.num_parameters = layer.num_parameters-len(idxs)
-        layer.weight = torch.nn.Parameter(layer.weight.data[keep_idxs])
+        layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 0)
         return layer
 
     prune_in_channels = prune_out_channels
@@ -303,8 +300,7 @@ class EmbeddingPruner(BasePruningFunc):
         num_features = layer.embedding_dim
         keep_idxs = list(set(range(num_features)) - set(idxs))
         keep_idxs.sort()
-        layer.weight = torch.nn.Parameter(
-            layer.weight.data[:, keep_idxs])
+        layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 1)
         layer.embedding_dim = len(keep_idxs)
         return layer
 
@@ -336,30 +332,29 @@ class LSTMPruner(BasePruningFunc):
             postfix = ['']
         #for l in range(num_layers):
         for pf in postfix:
-            setattr(layer, 'weight_hh_l0'+pf, torch.nn.Parameter(
-                getattr(layer, 'weight_hh_l0'+pf).data[expanded_keep_idxs]))
+            setattr(layer, 'weight_hh_l0'+pf, self._prune_parameter_and_grad(
+                getattr(layer, 'weight_hh_l0'+pf), keep_idxs, 0))
             if layer.bias:
-                setattr(layer, 'bias_hh_l0'+pf, torch.nn.Parameter(
-                    getattr(layer, 'bias_hh_l0'+pf).data[expanded_keep_idxs]))
-            setattr(layer, 'weight_hh_l0'+pf, torch.nn.Parameter(
-                getattr(layer, 'weight_hh_l0'+pf).data[:, keep_idxs]))
-
-            setattr(layer, 'weight_ih_l0'+pf, torch.nn.Parameter(
-                getattr(layer, 'weight_ih_l0'+pf).data[expanded_keep_idxs]))
+                setattr(layer, 'bias_hh_l0'+pf, self._prune_parameter_and_grad(
+                    getattr(layer, 'bias_hh_l0'+pf), keep_idxs, 0))
+            setattr(layer, 'weight_hh_l0'+pf, self._prune_parameter_and_grad(
+                getattr(layer, 'weight_hh_l0'+pf), keep_idxs, 0))
+            setattr(layer, 'weight_ih_l0'+pf,  self._prune_parameter_and_grad(
+                getattr(layer, 'weight_ih_l0'+pf), expanded_keep_idxs, 1))
             if layer.bias:
-                setattr(layer, 'bias_ih_l0'+pf, torch.nn.Parameter(
-                    getattr(layer, 'bias_ih_l0'+pf).data[expanded_keep_idxs]))
+                setattr(layer, 'bias_ih_l0'+pf, self._prune_parameter_and_grad(
+                    getattr(layer, 'bias_ih_l0'+pf), keep_idxs, 0))
         layer.hidden_size = len(keep_idxs)
 
     def prune_in_channels(self, layer: nn.LSTM, idxs: list):
         num_features = layer.input_size
         keep_idxs = list(set(range(num_features)) - set(idxs))
         keep_idxs.sort()
-        setattr(layer, 'weight_ih_l0', torch.nn.Parameter(
-                    getattr(layer, 'weight_ih_l0').data[:, keep_idxs]))
+        setattr(layer, 'weight_ih_l0', self._prune_parameter_and_grad(
+                    getattr(layer, 'weight_ih_l0'), keep_idxs, 1))
         if layer.bidirectional:
-            setattr(layer, 'weight_ih_l0_reverse', torch.nn.Parameter(
-                    getattr(layer, 'weight_ih_l0_reverse').data[:, keep_idxs]))
+            setattr(layer, 'weight_ih_l0_reverse', self._prune_parameter_and_grad(
+                    getattr(layer, 'weight_ih_l0_reverse'), keep_idxs, 1))
         layer.input_size = len(keep_idxs)
 
     def get_out_channels(self, layer):
@@ -377,8 +372,7 @@ class ParameterPruner(BasePruningFunc):
     def prune_out_channels(self, tensor, idxs: list) -> nn.Module:
         keep_idxs = list(set(range(tensor.data.shape[self.pruning_dim])) - set(idxs))
         keep_idxs.sort()
-        pruned_parameter = nn.Parameter(torch.index_select(
-            tensor.data, self.pruning_dim, torch.LongTensor(keep_idxs).to(tensor.device)))
+        pruned_parameter = self._prune_parameter_and_grad(tensor, keep_idxs, self.pruning_dim)
         return pruned_parameter
 
     prune_in_channels = prune_out_channels
@@ -403,14 +397,11 @@ class MultiheadAttentionPruner(BasePruningFunc):
 
 
         if layer.q_proj_weight is not None:
-            layer.q_proj_weight = nn.Parameter(torch.index_select(
-                layer.q_proj_weight.data, 0, torch.LongTensor(keep_idxs)))
+            layer.q_proj_weight = self._prune_parameter_and_grad(layer.q_proj_weight, keep_idxs, 0)
         if layer.k_proj_weight is not None:
-            layer.q_proj_weight = nn.Parameter(torch.index_select(
-                layer.q_proj_weight.data, 0, torch.LongTensor(keep_idxs)))
+            layer.q_proj_weight = self._prune_parameter_and_grad(layer.k_proj_weight, keep_idxs, 0)
         if layer.v_proj_weight is not None:
-            layer.v_proj_weight = nn.Parameter(torch.index_select(
-                layer.v_proj_weight.data, 0, torch.LongTensor(keep_idxs)))
+            layer.v_proj_weight = self._prune_parameter_and_grad(layer.v_proj_weight, keep_idxs, 0)
 
 
         pruning_idxs_repeated = idxs + \
@@ -420,37 +411,27 @@ class MultiheadAttentionPruner(BasePruningFunc):
             set(range(3*layer.embed_dim)) - set(pruning_idxs_repeated))
         keep_idxs_3x_repeated.sort()
         if layer.in_proj_weight is not None:
-            layer.in_proj_weight = nn.Parameter(torch.index_select(
-                layer.in_proj_weight.data, 0, torch.LongTensor(keep_idxs_3x_repeated)))
-            layer.in_proj_weight = nn.Parameter(torch.index_select(
-                layer.in_proj_weight.data, 1, torch.LongTensor(keep_idxs)))
+            layer.in_proj_weight = self._prune_parameter_and_grad(layer.in_proj_weight, keep_idxs_3x_repeated, 0)
+            layer.in_proj_weight = self._prune_parameter_and_grad(layer.in_proj_weight, keep_idxs, 1)
         if layer.in_proj_bias is not None:
-            layer.in_proj_bias = nn.Parameter(torch.index_select(
-                layer.in_proj_bias.data, 0, torch.LongTensor(keep_idxs_3x_repeated)))
-
+            layer.in_proj_bias = self._prune_parameter_and_grad(layer.in_proj_bias, keep_idxs_3x_repeated, 0)
 
         if layer.bias_k is not None:
-            layer.bias_k = nn.Parameter(torch.index_select(
-                layer.bias_k.data, 2, torch.LongTensor(keep_idxs)))
+            layer.bias_k = self._prune_parameter_and_grad(layer.bias_k, keep_idxs, 2)
         if layer.bias_v is not None:
-            layer.bias_v = nn.Parameter(torch.index_select(
-                layer.bias_v.data, 2, torch.LongTensor(keep_idxs)))
+            layer.bias_v = self._prune_parameter_and_grad(layer.bias_v, keep_idxs, 2)
 
         linear = layer.out_proj
         keep_idxs = list(set(range(linear.out_features)) - set(idxs))
         keep_idxs.sort()
         linear.out_features = linear.out_features-len(idxs)
-        linear.weight = torch.nn.Parameter(
-            linear.weight.data[keep_idxs])
+        linear.weight = self._prune_parameter_and_grad(linear.weight, keep_idxs, 0)
         if linear.bias is not None:
-            linear.bias = torch.nn.Parameter(
-                linear.bias.data[keep_idxs])
+            linear.bias = self._prune_parameter_and_grad(linear.bias, keep_idxs, 0)
         keep_idxs = list(set(range(linear.in_features)) - set(idxs))
         keep_idxs.sort()
         linear.in_features = linear.in_features-len(idxs)
-        linear.weight = torch.nn.Parameter(
-            linear.weight.data[:, keep_idxs])
-
+        linear.weight = self._prune_parameter_and_grad(linear.weight, keep_idxs, 1)
         layer.embed_dim = layer.embed_dim - len(idxs)
         layer.head_dim = layer.embed_dim // layer.num_heads
         layer.kdim = layer.embed_dim
