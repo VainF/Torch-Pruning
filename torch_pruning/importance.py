@@ -351,6 +351,7 @@ class GroupNormImportance(MagnitudeImportance):
                 if group_norm is None: group_norm = local_norm
                 elif group_norm.shape[0] == local_norm.shape[0]:
                     group_norm += local_norm
+                    
         group_imp = group_norm**(1/self.p)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
