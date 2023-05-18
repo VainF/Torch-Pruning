@@ -43,6 +43,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 ### **Features:**
 - [x] Structural pruning for CNNs, Transformers, Detectors, and Language Models. Please refer to the [Prunability Benchmark](benchmarks/prunability).
 - [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), RandomPruner, etc.
+- [x] Importance Criteria: L-p Norm, Taylor, Random, BNScaling, etc.
 - [x] DepGraph for computational graph tracing and dependency modeling.
 - [x] Supported modules: Linear, (Transposed) Conv, Normalization, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 - [x] Supported operators: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops, etc.
