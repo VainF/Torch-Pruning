@@ -442,6 +442,10 @@ class DependencyGraph(object):
             pruning_fn (Callable): the pruning function.
             idxs (list or tuple): the indices of channels/dimensions.
         """
+        if module not in self.module2node:
+            raise ValueError(
+                "Module {} is not in the dependency graph.".format(module)
+            )
         if isinstance(module, ops.TORCH_CONV) and module.groups == module.out_channels:
             pruning_fn = function.prune_depthwise_conv_out_channels
         if isinstance(idxs, Number):
