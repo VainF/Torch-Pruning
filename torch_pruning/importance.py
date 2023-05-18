@@ -116,13 +116,10 @@ class MagnitudeImportance(Importance):
                     group_imp.append(local_norm)
         if len(group_imp) == 0:
             return None
-        min_imp_size = min([len(imp) for imp in group_imp])
+        imp_size = len(group_imp[0])
         aligned_group_imp = []
         for imp in group_imp:
-            if len(imp) > min_imp_size and len(imp) % min_imp_size == 0:
-                imp = imp.view(len(imp) // min_imp_size, min_imp_size).sum(0)
-                aligned_group_imp.append(imp)
-            elif len(imp) == min_imp_size:
+            if len(imp) == imp_size:
                 aligned_group_imp.append(imp)
         group_imp = torch.stack(aligned_group_imp, dim=0)
         group_imp = self._reduce(group_imp)
