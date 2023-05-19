@@ -36,7 +36,7 @@ For more technical details, please refer to our CVPR'23 paper:
 * 2023.04.10 [Structural Pruning for LLaMA (pruning-only)](https://github.com/horseee/LLaMA-Pruning)
 * 2023.04.21 Join our Telegram or Wechat group for casual discussions:
   * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
-  * Wechat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/3d17dc53-759d-4211-a3a0-299f5f1e65ab">
+  * Wechat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/592aa054-7b77-434c-9591-27b635849e53">
 
 Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.
 
