@@ -42,7 +42,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 
 
 ### **Features:**
-- [x] Structural pruning for CNNs, Transformers, Detectors, and Language Models. Please refer to the [Prunability Benchmark](benchmarks/prunability).
+- [x] Structural pruning for CNNs, Transformers, Detectors, Language Models and Diffusion Models. Please refer to the [Prunability Benchmark](benchmarks/prunability).
 - [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), RandomPruner, etc.
 - [x] Importance Criteria: L-p Norm, Taylor, Random, BNScaling, etc.
 - [x] DepGraph for computational graph tracing and dependency modeling.
@@ -53,8 +53,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 - [x] A [resource list](practical_structural_pruning.md) for practical structrual pruning.
   
 ### **TODO List:**
-- [ ] LLM Pruning
-- [ ] Diffusion Model Pruning
+- [ ] LLM Pruning 
 - [ ] A strong baseline pruner with bags of tricks from existing methods.
 - [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**81/85=95.3%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
 - [ ] Pruning from Scratch / at Initialization.
