@@ -305,6 +305,14 @@ Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 
 Please refer to [benchmarks](benchmarks) for more details.
 
+### 7. Series of Works
+> **LLM-Pruner: On the Structural Pruning of Large Language Models** [[Project]](https://github.com/horseee/LLM-Pruner) [[arXiv]](https://arxiv.org/abs/2305.11627)   
+> *Xinyin Ma, Gongfan Fang, Xinchao Wang*   
+
+> **Structural Pruning for Diffusion Models** [[Project]](https://github.com/VainF/Diff-Pruning) [[arxiv]](https://arxiv.org/abs/2305.10924)  
+> *Gongfan Fang, Xinyin Ma, Xinchao Wang*    
+
+
 ## Citation
 ```
 @article{fang2023depgraph,
