@@ -169,7 +169,7 @@ class OPTYPE(IntEnum):
 
 def module2type(module):
     if isinstance(module, TORCH_CONV):
-        if module.groups == module.out_channels:
+        if module.groups == module.out_channels and module.out_channels > 1:
             return OPTYPE.DEPTHWISE_CONV
         else:
             return OPTYPE.CONV

@@ -446,7 +446,7 @@ class DependencyGraph(object):
             raise ValueError(
                 "Module {} is not in the dependency graph.".format(module)
             )
-        if isinstance(module, ops.TORCH_CONV) and module.groups == module.out_channels:
+        if isinstance(module, ops.TORCH_CONV) and module.groups == module.out_channels and module.out_channels>1:
             pruning_fn = function.prune_depthwise_conv_out_channels
         if isinstance(idxs, Number):
             idxs = [idxs]
