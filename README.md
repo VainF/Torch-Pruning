@@ -206,7 +206,7 @@ for epoch in range(epochs):
 ```
 
 #### Interactive Pruning (Advanced)
-All high-level pruners support interactive pruning. You can use ``pruner.step(interactive=True)`` to get all groups and interactively prune them by calling ``group.prune()``. This feature is useful if you want to control/monitor the pruning process.
+All high-level pruners support interactive pruning. Use ``pruner.step(interactive=True)`` to get all groups and interactively prune them by calling ``group.prune()``. This feature is useful if you want to control/monitor the pruning process.
 
 ```python
 for i in range(iterative_steps):
@@ -218,7 +218,7 @@ for i in range(iterative_steps):
         pruning_fn = dep.handler # get the pruning function
        
         # Don't forget to prune the group
-        group.prune() # remeber to call the group.prune()
+        group.prune()
           
         # group.prune(idxs=[0, 2, 6]) # It is even possible to change the pruning behaviour with the idxs parameter
     macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
