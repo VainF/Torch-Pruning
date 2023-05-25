@@ -214,8 +214,13 @@ for i in range(iterative_steps):
     for group in pruner.step(interactive=True): # Warning: groups must be handled sequentially. Do not keep them as a list.
         print(group) 
         # do whatever you like with the group 
-        # ...
+        dep, idxs = group[0] # get the idxs
+        target_module = dep.target.module # get the root module
+        pruning_fn = dep.handler # get the pruning function
+       
+        # Don't forget to prune the group
         group.prune() # remeber to call the group.prune()
+          
         # group.prune(idxs=[0, 2, 6]) # It is even possible to change the pruning behaviour with the idxs parameter
     macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
     # finetune your model here
