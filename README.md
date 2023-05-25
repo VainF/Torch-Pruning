@@ -53,8 +53,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 - [x] A [resource list](practical_structural_pruning.md) for practical structrual pruning.
   
 ### **TODO List:**
-- [ ] LLM Pruning 
-- [ ] A strong baseline pruner with bags of tricks from existing methods.
+- [ ] A strong baseline with bags of tricks from existing methods.
 - [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**81/85=95.3%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
 - [ ] Pruning from Scratch / at Initialization.
 - [ ] More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), [GrowingReg](https://arxiv.org/abs/2012.09243), etc.
