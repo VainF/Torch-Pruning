@@ -34,7 +34,6 @@ def test_depgraph():
     print(out.shape)
     loss = out.sum()
     loss.backward()
-    print(model.aha)
           
 if __name__=='__main__':
     test_depgraph()
