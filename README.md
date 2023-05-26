@@ -66,7 +66,7 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 Torch-Pruning is compatible with PyTorch 1.x and 2.x. **PyTorch 1.12.1 is recommended!**
 
 ```bash
-pip install torch-pruning # v1.1.7
+pip install torch-pruning # v1.1.8
 ```
 or
 ```bash
