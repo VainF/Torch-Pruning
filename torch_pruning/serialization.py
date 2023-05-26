@@ -7,13 +7,32 @@ save = torch.save
 
 def state_dict(model: torch.nn.Module):
     full_state_dict = {}
+    attributions = {}
     for name, module in model.named_modules():
-        # keep all attributes
+        # state dicts
         full_state_dict[name] = module.__dict__.copy()
-    return full_state_dict
+        module_attr = {}
+
+        # attributes
+        for attr_name in dir(module):
+            attr_value = getattr(module, attr_name)
+            if attr_name=='T_destination':
+                continue
+            if not callable(attr_value) and (not attr_name.startswith('__')) and (not attr_name.startswith('_')):
+                if not isinstance(attr_value, torch.nn.Parameter) and not isinstance(attr_value, torch.Tensor):
+                    module_attr[attr_name] = attr_value
+        attributions[name] = module_attr
+    return {'full_state_dict': full_state_dict, 'attributions': attributions}
 
 def load_state_dict(model: torch.nn.Module, state_dict: dict):
+    full_state_dict = state_dict['full_state_dict']
+    attributions = state_dict['attributions']
     for name, module in model.named_modules():
-        if name in state_dict:
-            module.__dict__.update(state_dict[name])
+        # load state dicts
+        if name in full_state_dict:
+            module.__dict__.update(full_state_dict[name])
+        # load attributes
+        if name in attributions:
+            for attr_name, attr_value in attributions[name].items():
+                setattr(module, attr_name, attr_value)
     return model
