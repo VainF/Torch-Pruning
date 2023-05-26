@@ -6,7 +6,7 @@ from torchvision.models import vit_b_16 as entry
 import torch_pruning as tp
 from torchvision.models.vision_transformer import VisionTransformer
 
-def test_depgraph():
+def test_serialization():
     model = entry().eval()
 
     customized_value = 8
@@ -54,4 +54,4 @@ def test_depgraph():
     loss.backward()
 
 if __name__=='__main__':
-    test_depgraph()
+    test_serialization()
