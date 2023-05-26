@@ -244,7 +244,7 @@ torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the pruned model
 ```
 
-**Experimental Features**: ``tp.state_dict`` and ``tp.load_state_dict``
+**Experimental Features**: Re-create pruned models from unpruned ones using ``tp.state_dict`` and ``tp.load_state_dict``.
 ```python
 # save the pruned state_dict, which includes both pruned parameters and modified attributes
 state_dict = tp.state_dict(pruned_model) # the pruned model, e.g., a resnet-18-half
