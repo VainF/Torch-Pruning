@@ -236,6 +236,7 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 </div>
 
 ### 3. Save & Load
+          
 The following script saves the whole model object (structure+weights) as a 'model.pth'. 
 ```python
 model.zero_grad() # We don't want to store gradient information
@@ -243,6 +244,23 @@ torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the pruned model
 ```
 
+**Experimental Features**: ``tp.state_dict`` and ``tp.load_state_dict``
+```python
+# save the pruned state_dict, which includes both pruned parameters and modified attributes
+state_dict = tp.state_dict(pruned_model) # the pruned model, e.g., a resnet-18-half
+torch.save(state_dict, 'pruned.pth')
+
+# create a new model, e.g. resnet18
+new_model = resnet18().eval()
+
+# load the pruned state_dict into the unpruned model.
+loaded_state_dict = torch.load('pruned.pth', map_location='cpu')
+tp.load_state_dict(new_model, state_dict=loaded_state_dict)
+print(new_model) # This will be a pruned model.
+```
+Refer to [tests/test_serialization.py](tests/test_serialization.py) for an ViT example. In this example, we will prune the model and modify some attributes like ``model.hidden_dims``.
+                                        
+                                
 ### 4. Low-level Pruning Functions
 
 While it is possible to manually prune your model using low-level functions, this approach can be quite laborious, as it requires careful management of the associated dependencies. As a result, we recommend utilizing the aforementioned high-level pruners to streamline the pruning process.
