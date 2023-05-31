@@ -268,11 +268,11 @@ class DependencyGraph(object):
             ops.OPTYPE.SPLIT: ops.SplitPruner(),
             ops.OPTYPE.ELEMENTWISE: ops.ElementWisePruner(),
             ops.OPTYPE.RESHAPE: ops.ReshapePruner(),
-            ops.OPTYPE.CUSTOMIZED: None,
+            ops.OPTYPE.CUSTOMIZED: ops.CustomizedPruner(), # just a placeholder
         }
         self.REGISTERED_PRUNERS = function.PrunerBox.copy()  # shallow copy
-        self.REGISTERED_PRUNERS.update(_dummy_pruners)
-        self.CUSTOMIZED_PRUNERS = {}
+        self.REGISTERED_PRUNERS.update(_dummy_pruners) # merge dummy pruners
+        self.CUSTOMIZED_PRUNERS = {} # user-customized pruners
         self.IGNORED_LAYERS = []
 
         # cache pruning functions for fast lookup
@@ -308,9 +308,9 @@ class DependencyGraph(object):
         forward_fn: typing.Callable[[torch.nn.Module, typing.Union[torch.Tensor, typing.Sequence]], torch.Tensor] = None,
         output_transform: typing.Callable = None,
         unwrapped_parameters: typing.Dict[nn.Parameter, int] = None,
-        customized_pruners: typing.Dict[typing.Any,function.BasePruningFunc] = None,
+        customized_pruners: typing.Dict[ typing.Union[typing.Any, torch.nn.Module],function.BasePruningFunc] = None,
         verbose: bool = True,
-    ):
+    ) -> "DependencyGraph":
         """Build a dependency graph through tracing.
         Args:
             model (class): the model to be pruned.
@@ -318,7 +318,7 @@ class DependencyGraph(object):
             forward_fn (Callable): a function to forward the model with example_inputs, which should return a reduced scalr tensor for backpropagation.
             output_transform (Callable): a function to transform network outputs.
             unwrapped_parameters (typing.Dict[nn.Parameter, int]): unwrapped nn.parameters that do not belong to standard nn.Module.
-            customized_pruners (typing.Dict[typing.Any, function.BasePruningFunc]): pruners for customized layers.
+            customized_pruners (typing.Dict[ typing.Union[typing.Any, torch.nn.Module],function.BasePruningFunc]): customized pruners for a specific layer type or a specific layer instance.
             verbose (bool): verbose mode.
         """
 
@@ -328,13 +328,14 @@ class DependencyGraph(object):
 
         # Register customized pruners
         if customized_pruners is not None:
-            for customized_module, customized_pruner in customized_pruners.items():
-                self.register_customized_layer(customized_module, customized_pruner)
-
+            for customized_type, customized_pruner in customized_pruners.items():
+                self.register_customized_layer(customized_type, customized_pruner)
+        
         # Ignore all sub-modules of customized layers as they will be handled by the customized pruners
-        for layer_type in self.CUSTOMIZED_PRUNERS.keys():
+        for layer_type_or_instance in self.CUSTOMIZED_PRUNERS.keys():            
             for m in self.model.modules():
-                if isinstance(m, layer_type):
+                # a layer instance or a layer type
+                if (m==layer_type_or_instance) or (not isinstance(layer_type_or_instance, torch.nn.Module) and isinstance(m, layer_type_or_instance)):
                     for sub_module in m.modules(): 
                         if sub_module != m:
                             self.IGNORED_LAYERS.append(sub_module)
@@ -362,7 +363,7 @@ class DependencyGraph(object):
 
     def register_customized_layer(
         self,
-        layer_type: typing.Type,
+        layer_type_or_instance: typing.Union[typing.Any, torch.nn.Module],
         layer_pruner: function.BasePruningFunc,
     ):
         """Register a customized pruner
@@ -370,7 +371,8 @@ class DependencyGraph(object):
             layer_type (class): the type of target layer
             pruner (tp.pruner.BasePruningFunc): a pruner for the specified layer type.
         """
-        self.CUSTOMIZED_PRUNERS[layer_type] = layer_pruner
+        self.CUSTOMIZED_PRUNERS[layer_type_or_instance] = layer_pruner
+        
         # Update cache
         self._in_channel_pruning_fn = set([p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
         self._out_channel_pruning_fn = set([p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
@@ -508,10 +510,12 @@ class DependencyGraph(object):
             if prunable_group:
                 yield group
 
-    def get_pruner_of_module(self, module):
-        p = self.CUSTOMIZED_PRUNERS.get(module.__class__, None)
+    def get_pruner_of_module(self, module: nn.Module):
+        p = self.CUSTOMIZED_PRUNERS.get(module.__class__, None) # customized pruners for a specific layer type
         if p is None:
-            p = self.REGISTERED_PRUNERS.get(ops.module2type(module), None)
+            p = self.CUSTOMIZED_PRUNERS.get(module, None) # customized pruners for a specific layer instance
+        if p is None:
+            p = self.REGISTERED_PRUNERS.get(ops.module2type(module), None) # standard pruners
         return p
 
     def get_out_channels(self, module_or_node):
@@ -587,7 +591,7 @@ class DependencyGraph(object):
         prunable_module_types = self.REGISTERED_PRUNERS.keys()
         for m in self.model.modules():
             op_type = ops.module2type(m)
-            if ( op_type in prunable_module_types and op_type!=ops.OPTYPE.ELEMENTWISE ) or m.__class__ in self.CUSTOMIZED_PRUNERS.keys():
+            if ( op_type in prunable_module_types and op_type!=ops.OPTYPE.ELEMENTWISE ) or m.__class__ in self.CUSTOMIZED_PRUNERS.keys() or m in self.CUSTOMIZED_PRUNERS.keys():
                 wrapped_parameters.extend(list(m.parameters()))
        
         # Detect unwrapped nn.Parameters
@@ -671,15 +675,17 @@ class DependencyGraph(object):
                 outputs = outputs.data
             gradfn2module[outputs.grad_fn] = module
 
+        # Register hooks for prunable modules
         registered_types = tuple(ops.type2class(
-            t) for t in self.REGISTERED_PRUNERS.keys()) + tuple(self.CUSTOMIZED_PRUNERS.keys())
+            t) for t in self.REGISTERED_PRUNERS.keys()) + tuple(t for t in self.CUSTOMIZED_PRUNERS.keys() if not isinstance(t, torch.nn.Module)) # standard pruners + customized pruners for a specific layer type
+        registered_instances = tuple(instance for instance in self.CUSTOMIZED_PRUNERS.keys() if isinstance(instance, torch.nn.Module)) # customized pruners for a specific layer instance
         hooks = [
             m.register_forward_hook(_record_grad_fn)
             for m in model.modules()
-            if (isinstance(m, registered_types) and m not in self.IGNORED_LAYERS)
+            if ( (m not in self.IGNORED_LAYERS) and (isinstance(m, registered_types) or (m in registered_instances) ) )
         ]
-
-        # Feed forward and record gradient functions of prunable modules
+        
+        # Feed forward to record gradient functions of prunable modules
         if forward_fn is not None:
             out = forward_fn(model, example_inputs)
         elif isinstance(example_inputs, dict):
@@ -689,17 +695,16 @@ class DependencyGraph(object):
                 out = model(*example_inputs)
             except:
                 out = model(example_inputs)
-
         for hook in hooks:
             hook.remove()
+
         # for recursive models or layers
         reused = [m for (m, count) in visited.items() if count > 1]
 
-        # build graph
+        # Graph tracing
         if output_transform is not None:
             out = output_transform(out)
-
-        module2node = {}
+        module2node = {} # create a mapping from nn.Module to tp.dependency.Node
         for o in utils.flatten_as_list(out):
             self._trace_computational_graph(
                 module2node, o.grad_fn, gradfn2module, reused)
@@ -770,7 +775,7 @@ class DependencyGraph(object):
                     name=self._module2name.get(module, None),
                 )
                 if (
-                    type(module) in self.CUSTOMIZED_PRUNERS
+                    type(module) in self.CUSTOMIZED_PRUNERS or module in self.CUSTOMIZED_PRUNERS
                 ):  # mark it as a customized layer
                     node.type = ops.OPTYPE.CUSTOMIZED
                 module2node[module] = node
