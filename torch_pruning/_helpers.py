@@ -3,7 +3,20 @@ import numpy as np
 import torch
 from operator import add
 from numbers import Number
+from collections import namedtuple
 
+UnwrappedParameters = namedtuple('UnwrappedParameters', ['parameters', 'pruning_dim'])
+GroupItem = namedtuple('GroupItem', ['dep', 'idxs']) # Group = [GroupItem_1, GroupItem_2, ...]
+
+class PruningIndex(namedtuple("_PruingIndex", ["idx", "root_idx"])):
+    def __repr__(self):
+        return str( (self.idx, self.root_idx) )
+
+
+def to_plain_idxs(idxs: PruningIndex):
+    if len(idxs)==0 or not isinstance(idxs[0], PruningIndex):
+        return idxs
+    return [i.idx for i in idxs]
 
 def is_scalar(x):
     if isinstance(x, torch.Tensor):
@@ -20,16 +33,17 @@ class _FlattenIndexMapping(object):
         self._stride = stride
         self.reverse = reverse
 
-    def __call__(self, idxs):
+    def __call__(self, idxs: PruningIndex):
         new_idxs = []
         if self.reverse == True:
             for i in idxs:
-                new_idxs.append(i // self._stride)
-                new_idxs = list(set(new_idxs))
+                new_idxs.append( PruningIndex( idx = (i.idx // self._stride), root_idx=i.root_idx ) )
+            new_idxs = list(set(new_idxs))
         else:
             for i in idxs:
                 new_idxs.extend(
-                    list(range(i * self._stride, (i + 1) * self._stride)))
+                    [ PruningIndex(idx=k, root_idx=i.root_idx) for k in range(i.idx * self._stride, (i.idx + 1) * self._stride) ]  
+                )
         return new_idxs
 
 
@@ -38,16 +52,16 @@ class _ConcatIndexMapping(object):
         self.offset = offset
         self.reverse = reverse
 
-    def __call__(self, idxs):
+    def __call__(self, idxs: PruningIndex):
 
         if self.reverse == True:
             new_idxs = [
-                i - self.offset[0]
+                PruningIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx )
                 for i in idxs
-                if (i >= self.offset[0] and i < self.offset[1])
+                if (i.idx >= self.offset[0] and i.idx < self.offset[1])
             ]
         else:
-            new_idxs = [i + self.offset[0] for i in idxs]
+            new_idxs = [ PruningIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
         return new_idxs
 
 
@@ -56,35 +70,16 @@ class _SplitIndexMapping(object):
         self.offset = offset
         self.reverse = reverse
 
-    def __call__(self, idxs):
+    def __call__(self, idxs: PruningIndex):
         if self.reverse == True:
-            new_idxs = [i + self.offset[0] for i in idxs]
+            new_idxs = [ PruningIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
         else:
             new_idxs = [
-                i - self.offset[0]
+                PruningIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx)
                 for i in idxs
-                if (i >= self.offset[0] and i < self.offset[1])
+                if (i.idx >= self.offset[0] and i.idx < self.offset[1])
             ]
         return new_idxs
-
-
-class _GroupConvIndexMapping(object):
-    def __init__(self, in_channels, out_channels, groups, reverse=False):
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.groups = groups
-        self.reverse = reverse
-
-    def __call__(self, idxs):
-        if self.reverse == True:
-            new_idxs = [i + self.offset[0] for i in idxs]
-        else:
-            group_histgram = np.histogram(
-                idxs, bins=self.groups, range=(0, self.out_channels)
-            )
-            max_group_size = int(group_histgram.max())
-        return new_idxs
-
 
 class ScalarSum:
     def __init__(self):

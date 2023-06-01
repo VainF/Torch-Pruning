@@ -9,6 +9,8 @@ import torch.nn as nn
 from .pruner import function
 from . import _helpers, utils, ops
 
+from ._helpers import UnwrappedParameters, PruningIndex, GroupItem
+
 __all__ = ["Dependency", "Group", "DependencyGraph"]
 
 def _are_the_same_methods(func1, func2):
@@ -18,6 +20,7 @@ def _are_the_same_methods(func1, func2):
         isinstance(func1.__self__, type(func2.__self__)) and 
         func1.__name__ == func2.__name__
     )
+
 
 
 class Node(object):
@@ -117,6 +120,8 @@ class Dependency(Edge):
 
     def __call__(self, idxs: list):
         self.handler.__self__.pruning_dim = self.target.pruning_dim # set pruning_dim
+        if len(idxs)>0 and isinstance(idxs[0], PruningIndex):
+            idxs = _helpers.to_plain_idxs(idxs)
         result = self.handler(self.target.module, idxs)
         return result
 
@@ -146,7 +151,6 @@ class Dependency(Edge):
         return hash((self.source, self.target, self.trigger, self.handler))
 
 
-GroupItem = namedtuple('GroupItem', ['dep', 'idxs']) # Group = [GroupItem_1, GroupItem_2, ...]
 
 class Group(object):
     """A group that contains dependencies and pruning indices.   
@@ -207,8 +211,9 @@ class Group(object):
                 return True
         return False
 
-    def has_pruning_op(self, dep, idxs):
+    def has_pruning_op(self, dep: Dependency, idxs: PruningIndex):
         for _dep, _idxs in self._group:
+            #_idxs = _helpers.to_plain_idxs(_idxs)
             if (
                 _dep.target == dep.target
                 and _dep.handler == dep.handler
@@ -258,7 +263,6 @@ class Group(object):
     def __call__(self):
         return self.prune()
 
-UnwrappedParameters = namedtuple('UnwrappedParameters', ['parameters', 'pruning_dim'])
 
 class DependencyGraph(object):
 
@@ -405,22 +409,24 @@ class DependencyGraph(object):
     def is_in_channel_pruning_fn(self, fn: typing.Callable) -> bool:
         return (fn in self._in_channel_pruning_fn)
 
-    def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]) -> Group:
-        """ An alias of DependencyGraph.get_pruning_group for compatibility.
-        """
-        return self.get_pruning_group(module, pruning_fn, idxs)
+    #def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]) -> Group:
+    #    """ An alias of DependencyGraph.get_pruning_group for compatibility.
+    #    """
+    #    return self.get_pruning_group(module, pruning_fn, idxs)
 
     def get_pruning_group(
         self,
         module: nn.Module,
         pruning_fn: typing.Callable,
-        idxs: typing.Union[list, tuple],
+        idxs: typing.Sequence[int],
+        return_root_idxs: bool = False,
     ) -> Group:
         """Get the pruning group of pruning_fn.
         Args:
             module (nn.Module): the to-be-pruned module/layer.
             pruning_fn (Callable): the pruning function.
             idxs (list or tuple): the indices of channels/dimensions.
+            grouped_idxs (bool): whether the indices are grouped. If True, idxs is a list of list, e.g., [[0,1,2], [3,4,5]], where each sublist is a group.
         """
         if module not in self.module2node:
             raise ValueError(
@@ -430,15 +436,19 @@ class DependencyGraph(object):
             pruning_fn = function.prune_depthwise_conv_out_channels
         if isinstance(idxs, Number):
             idxs = [idxs]
+        
+        idxs = [ PruningIndex(idx=i, root_idx=i) for i in idxs ] # idxs == root_idxs for the root layer
 
         self.update_index_mapping()
         group = Group()
+
         #  the user pruning operation
         root_node = self.module2node[module]
         group.add_dep(
-            Dependency(pruning_fn, pruning_fn,
-                       source=root_node, target=root_node), idxs
+            dep=Dependency(pruning_fn, pruning_fn, source=root_node, target=root_node), 
+            idxs=idxs,
         )
+
         visited_node = set()
 
         def _fix_dependency_graph_non_recursive(dep, idxs):
@@ -456,7 +466,7 @@ class DependencyGraph(object):
                             if mapping is not None:
                                 new_indices = mapping(new_indices)
                                 #print(new_dep, new_dep.index_mapping)
-                                #print(len(new_indices), new_indices)
+                                #print(len(new_indices))
                         #print()
                         if len(new_indices) == 0:
                             continue
@@ -475,6 +485,8 @@ class DependencyGraph(object):
         # merge pruning ops
         merged_group = Group()
         for dep, idxs in group.items:
+            if not return_root_idxs:
+                idxs = _helpers.to_plain_idxs(idxs)
             merged_group.add_and_merge(dep, idxs)
         merged_group._DG = self
         return merged_group
