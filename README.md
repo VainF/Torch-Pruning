@@ -79,7 +79,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. How It Works
 
-In structural pruning, a Group is defined as the minimal removable unit within deep networks. Each group consists of multiple interdependent layers that need to be pruned simultaneously in order to preserve the integrity of the resulting structures. However, deep networks often exhibit intricate dependencies among layers, posing a significant challenge for structural pruning. This work tackles this challenge by introducing an automated mechanism called DepGraph, which enables effortless parameter grouping and facilitates pruning for a diverse range of deep networks.
+In structural pruning, a ``Group`` is defined as the minimal removable unit within deep networks. Each group consists of multiple interdependent layers that need to be pruned simultaneously in order to preserve the integrity of the resulting structures. However, deep networks often exhibit intricate dependencies among layers, posing a significant challenge for structural pruning. This work tackles this challenge by introducing an automated mechanism called ``DepGraph``, which enables effortless parameter grouping and facilitates pruning for a diverse range of deep networks.
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
