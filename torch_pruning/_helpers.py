@@ -12,11 +12,15 @@ class PruningIndex(namedtuple("_PruingIndex", ["idx", "root_idx"])):
     def __repr__(self):
         return str( (self.idx, self.root_idx) )
 
-
 def to_plain_idxs(idxs: PruningIndex):
     if len(idxs)==0 or not isinstance(idxs[0], PruningIndex):
         return idxs
     return [i.idx for i in idxs]
+
+def to_root_idxs(idxs: PruningIndex):
+    if len(idxs)==0 or not isinstance(idxs[0], PruningIndex):
+        return idxs
+    return [i.root_idx for i in idxs]
 
 def is_scalar(x):
     if isinstance(x, torch.Tensor):

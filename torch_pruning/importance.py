@@ -4,16 +4,22 @@ import torch.nn as nn
 
 import typing
 from .pruner import function
+from .dependency import Group
 from ._helpers import _FlattenIndexMapping
 from . import ops
 import math
 
 
 class Importance(abc.ABC):
-    """ estimate the importance of a Pruning Group, and return an 1-D per-channel importance score.
+    """ Estimate the importance of a Pruning Group, and return an 1-D per-channel importance score.
+
+        It should accept a group and a ch_groups as inputs, and return a 1-D tensor with the same length as the number of channels.
+        ch_groups refer to the number of internal groups, e.g., for a 64-channel **group conv** with groups=ch_groups=4, each group has 16 channels.
+        All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
+        Just ignore the ch_groups if you are not sure what it is.
     """
     @abc.abstractclassmethod
-    def __call__(self, group) -> torch.Tensor:
+    def __call__(self, group: Group, ch_groups: int=1) -> torch.Tensor: 
         raise NotImplementedError
 
 
@@ -41,28 +47,37 @@ class MagnitudeImportance(Importance):
         else:
             raise NotImplementedError
 
-    def _reduce(self, group_imp):
-        if self.group_reduction == "sum":
-            group_imp = group_imp.sum(dim=0)
-        elif self.group_reduction == "mean":
-            group_imp = group_imp.mean(dim=0)
-        elif self.group_reduction == "max":
-            group_imp = group_imp.max(dim=0)[0]
-        elif self.group_reduction == "prod":
-            group_imp = torch.prod(group_imp, dim=0)
-        elif self.group_reduction == 'first':
-            group_imp = group_imp[0]
-        elif self.group_reduction is None:
-            group_imp = group_imp
-        else:
-            raise NotImplementedError
-        return group_imp
-
+    def _reduce(self, group_imp: typing.List[torch.Tensor], root_idxs: typing.List[typing.List[int]]):
+        if len(group_imp) == 0: return group_imp
+        reduced_imp = torch.zeros_like(group_imp[0])
+        for i, imp in enumerate(zip(group_imp, root_idxs)):
+            if self.group_reduction == "sum" or self.group_reduction == "mean":
+                reduced_imp.scatter_add_(0, torch.tensor(root_idxs), imp) # accumulated importance
+            elif self.group_reduction == "max": # keep the max importance
+                selected_imp = torch.select(reduced_imp, 0, torch.tensor(root_idxs))
+                torch.max(selected_imp, imp, out=selected_imp)
+                reduced_imp.scatter_(0, torch.tensor(root_idxs), selected_imp)
+            elif self.group_reduction == "prod": # product of importance
+                selected_imp = torch.select(reduced_imp, 0, torch.tensor(root_idxs))
+                torch.mul(selected_imp, imp, out=selected_imp)
+                reduced_imp.scatter_(0, torch.tensor(root_idxs), selected_imp)
+            elif self.group_reduction == 'first':
+                if i == 0:
+                    reduced_imp.scatter_(0, torch.tensor(root_idxs), imp)
+            elif self.group_reduction == 'gate':
+                if i == len(group_imp)-1:
+                    reduced_imp.scatter_(0, torch.tensor(root_idxs), imp)
+            elif self.group_reduction is None:
+                reduced_imp = group_imp # no reduction
+            else:
+                raise NotImplementedError
+            return reduced_imp
+        
     @torch.no_grad()
-    def __call__(self, group, ch_groups=1):
+    def __call__(self, group: Group, ch_groups: int=1):
         group_imp = []
+
         # Get group norm
-        # print(group.details())
         for dep, idxs in group:
             idxs.sort()
             layer = dep.target.module
