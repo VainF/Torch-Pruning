@@ -36,7 +36,8 @@ For more technical details, please refer to our CVPR'23 paper:
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
 * 2023.04.21 Join our Telegram or Wechat group for casual discussions:
   * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
-  * Wechat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/2b90b963-1715-417c-b972-4994b8706a38">
+  * WeChat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/9498d1cd-bddf-4191-b2cb-953c2a094ef5">
+
 
 Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.
 
