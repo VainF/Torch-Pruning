@@ -251,6 +251,9 @@ class MetaPruner:
                     imp = imp[:len(imp)//ch_groups]
                 global_importance.append((group, ch_groups, imp))
 
+        if len(global_importance) == 0:
+            return
+                
         imp = torch.cat([local_imp[-1]
                         for local_imp in global_importance], dim=0)
         target_sparsity = self.per_step_ch_sparsity[self.current_step]
