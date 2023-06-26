@@ -399,7 +399,7 @@ class MultiheadAttentionPruner(BasePruningFunc):
         if layer.q_proj_weight is not None:
             layer.q_proj_weight = self._prune_parameter_and_grad(layer.q_proj_weight, keep_idxs, 0)
         if layer.k_proj_weight is not None:
-            layer.q_proj_weight = self._prune_parameter_and_grad(layer.k_proj_weight, keep_idxs, 0)
+            layer.k_proj_weight = self._prune_parameter_and_grad(layer.k_proj_weight, keep_idxs, 0)
         if layer.v_proj_weight is not None:
             layer.v_proj_weight = self._prune_parameter_and_grad(layer.v_proj_weight, keep_idxs, 0)
 
