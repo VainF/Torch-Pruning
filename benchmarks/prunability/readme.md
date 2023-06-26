@@ -172,6 +172,7 @@ This example was implemented by [@Hyunseok-Kim0 (Hyunseok Kim)](https://github.c
 git clone https://github.com/ultralytics/ultralytics.git 
 cp yolov8_pruning.py ultralytics/
 cd ultralytics 
+git checkout 44c7c3514d87a5e05cfb14dba5a3eeb6eb860e70 # for compatibility
 ```
 
 #### Modification

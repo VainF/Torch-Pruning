@@ -36,7 +36,9 @@ For more technical details, please refer to our CVPR'23 paper:
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
 * 2023.04.21 Join our Telegram or Wechat group for casual discussions:
   * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
-  * Wechat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/592aa054-7b77-434c-9591-27b635849e53">
+  * WeChat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/1a12a64e-a94e-4a74-8909-8fc0886f63f2">
+
+
 
 Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.
 
@@ -79,7 +81,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### 0. How It Works
 
-In structural pruning, **``Group`` is the minimal removable unit within deep networks**. Each group contains several interdependent layers that must be pruned simultaneously to maintain the integrity of the resulting structures. However, deep networks often present complex dependencies among layers, making structural pruning a challenging endeavor. This work addresses this challenge by offering an automated mechanism, ``DepGraph``, for parameter grouping, which facilitates effortless pruning for a wide range of deep networks.
+In structural pruning, a ``Group`` is defined as the minimal removable unit within deep networks. Each group consists of multiple interdependent layers that need to be pruned simultaneously in order to preserve the integrity of the resulting structures. However, deep networks often exhibit intricate dependencies among layers, posing a significant challenge for structural pruning. This work tackles this challenge by introducing an automated mechanism called ``DepGraph``, which enables effortless parameter grouping and facilitates pruning for a diverse range of deep networks.
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
