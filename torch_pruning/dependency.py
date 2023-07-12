@@ -9,7 +9,7 @@ import torch.nn as nn
 from .pruner import function
 from . import _helpers, utils, ops
 
-from ._helpers import UnwrappedParameters, HybridIndex, GroupItem
+from ._helpers import UnwrappedParameters, _HybridIndex, GroupItem
 
 __all__ = ["Dependency", "Group", "DependencyGraph"]
 
@@ -120,7 +120,7 @@ class Dependency(Edge):
 
     def __call__(self, idxs: list):
         self.handler.__self__.pruning_dim = self.target.pruning_dim # set pruning_dim
-        if len(idxs)>0 and isinstance(idxs[0], HybridIndex):
+        if len(idxs)>0 and isinstance(idxs[0], _HybridIndex):
             idxs = _helpers.to_plain_idxs(idxs)
         result = self.handler(self.target.module, idxs)
         return result
@@ -213,7 +213,7 @@ class Group(object):
                 return True
         return False
 
-    def has_pruning_op(self, dep: Dependency, idxs: HybridIndex):
+    def has_pruning_op(self, dep: Dependency, idxs: _HybridIndex):
         for _dep, _idxs in self._group:
             #_idxs = _helpers.to_plain_idxs(_idxs)
             if (
@@ -434,7 +434,7 @@ class DependencyGraph(object):
         if isinstance(idxs, Number):
             idxs = [idxs]
         
-        idxs = [ HybridIndex(idx=i, root_idx=i) for i in idxs ] # idxs == root_idxs for the root layer
+        idxs = [ _HybridIndex(idx=i, root_idx=i) for i in idxs ] # idxs == root_idxs for the root layer
 
         self.update_index_mapping()
         group = Group()
@@ -486,8 +486,8 @@ class DependencyGraph(object):
         merged_group._DG = self
         for i in range(len(merged_group)):
             idxs = _helpers.to_plain_idxs(merged_group[i].idxs)
-            merged_group[i] = GroupItem(merged_group[i].dep, idxs)
-            merged_group[i].root_idxs = _helpers.to_root_idxs(merged_group[i].idxs)
+            merged_group[i] = GroupItem(merged_group[i].dep, idxs) # transform _HybridIndex to plain index
+            merged_group[i].root_idxs = _helpers.to_root_idxs(merged_group[i].idxs) # add root_idxs
         return merged_group
 
     def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):

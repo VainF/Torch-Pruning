@@ -16,20 +16,20 @@ class GroupItem(namedtuple('_GroupItem', ['dep', 'idxs'])):
     def __repr__(self):
         return str( (self.dep, self.idxs) )
 
-class HybridIndex(namedtuple("_PruingIndex", ["idx", "root_idx"])):
+class _HybridIndex(namedtuple("_PruingIndex", ["idx", "root_idx"])):
     """ A tuple of (idx, root_idx) where idx is the index of the pruned dimension in the current layer, 
     and root_idx is the index of the pruned dimension in the root layer.
     """
     def __repr__(self):
         return str( (self.idx, self.root_idx) )
 
-def to_plain_idxs(idxs: HybridIndex):
-    if len(idxs)==0 or not isinstance(idxs[0], HybridIndex):
+def to_plain_idxs(idxs: _HybridIndex):
+    if len(idxs)==0 or not isinstance(idxs[0], _HybridIndex):
         return idxs
     return [i.idx for i in idxs]
 
-def to_root_idxs(idxs: HybridIndex):
-    if len(idxs)==0 or not isinstance(idxs[0], HybridIndex):
+def to_root_idxs(idxs: _HybridIndex):
+    if len(idxs)==0 or not isinstance(idxs[0], _HybridIndex):
         return idxs
     return [i.root_idx for i in idxs]
 
@@ -48,16 +48,16 @@ class _FlattenIndexMapping(object):
         self._stride = stride
         self.reverse = reverse
 
-    def __call__(self, idxs: HybridIndex):
+    def __call__(self, idxs: _HybridIndex):
         new_idxs = []
         if self.reverse == True:
             for i in idxs:
-                new_idxs.append( HybridIndex( idx = (i.idx // self._stride), root_idx=i.root_idx ) )
+                new_idxs.append( _HybridIndex( idx = (i.idx // self._stride), root_idx=i.root_idx ) )
             new_idxs = list(set(new_idxs))
         else:
             for i in idxs:
                 new_idxs.extend(
-                    [ HybridIndex(idx=k, root_idx=i.root_idx) for k in range(i.idx * self._stride, (i.idx + 1) * self._stride) ]  
+                    [ _HybridIndex(idx=k, root_idx=i.root_idx) for k in range(i.idx * self._stride, (i.idx + 1) * self._stride) ]  
                 )
         return new_idxs
 
@@ -67,16 +67,16 @@ class _ConcatIndexMapping(object):
         self.offset = offset
         self.reverse = reverse
 
-    def __call__(self, idxs: HybridIndex):
+    def __call__(self, idxs: _HybridIndex):
 
         if self.reverse == True:
             new_idxs = [
-                HybridIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx )
+                _HybridIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx )
                 for i in idxs
                 if (i.idx >= self.offset[0] and i.idx < self.offset[1])
             ]
         else:
-            new_idxs = [ HybridIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
+            new_idxs = [ _HybridIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
         return new_idxs
 
 
@@ -85,12 +85,12 @@ class _SplitIndexMapping(object):
         self.offset = offset
         self.reverse = reverse
 
-    def __call__(self, idxs: HybridIndex):
+    def __call__(self, idxs: _HybridIndex):
         if self.reverse == True:
-            new_idxs = [ HybridIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
+            new_idxs = [ _HybridIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
         else:
             new_idxs = [
-                HybridIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx)
+                _HybridIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx)
                 for i in idxs
                 if (i.idx >= self.offset[0] and i.idx < self.offset[1])
             ]
