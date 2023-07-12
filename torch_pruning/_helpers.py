@@ -6,19 +6,30 @@ from numbers import Number
 from collections import namedtuple
 
 UnwrappedParameters = namedtuple('UnwrappedParameters', ['parameters', 'pruning_dim'])
-GroupItem = namedtuple('GroupItem', ['dep', 'idxs']) # Group = [GroupItem_1, GroupItem_2, ...]
 
-class PruningIndex(namedtuple("_PruingIndex", ["idx", "root_idx"])):
+class GroupItem(namedtuple('_GroupItem', ['dep', 'idxs'])):
+    def __new__(cls, dep, idxs):
+        """ A tuple of (dep, idxs) where dep is the dependency of the group, and idxs is the list of indices in the group."""
+        cls.root_idxs = None # a placeholder. Will be filled by DepGraph
+        return super(GroupItem, cls).__new__(cls, dep, idxs)
+    
+    def __repr__(self):
+        return str( (self.dep, self.idxs) )
+
+class HybridIndex(namedtuple("_PruingIndex", ["idx", "root_idx"])):
+    """ A tuple of (idx, root_idx) where idx is the index of the pruned dimension in the current layer, 
+    and root_idx is the index of the pruned dimension in the root layer.
+    """
     def __repr__(self):
         return str( (self.idx, self.root_idx) )
 
-def to_plain_idxs(idxs: PruningIndex):
-    if len(idxs)==0 or not isinstance(idxs[0], PruningIndex):
+def to_plain_idxs(idxs: HybridIndex):
+    if len(idxs)==0 or not isinstance(idxs[0], HybridIndex):
         return idxs
     return [i.idx for i in idxs]
 
-def to_root_idxs(idxs: PruningIndex):
-    if len(idxs)==0 or not isinstance(idxs[0], PruningIndex):
+def to_root_idxs(idxs: HybridIndex):
+    if len(idxs)==0 or not isinstance(idxs[0], HybridIndex):
         return idxs
     return [i.root_idx for i in idxs]
 
@@ -37,16 +48,16 @@ class _FlattenIndexMapping(object):
         self._stride = stride
         self.reverse = reverse
 
-    def __call__(self, idxs: PruningIndex):
+    def __call__(self, idxs: HybridIndex):
         new_idxs = []
         if self.reverse == True:
             for i in idxs:
-                new_idxs.append( PruningIndex( idx = (i.idx // self._stride), root_idx=i.root_idx ) )
+                new_idxs.append( HybridIndex( idx = (i.idx // self._stride), root_idx=i.root_idx ) )
             new_idxs = list(set(new_idxs))
         else:
             for i in idxs:
                 new_idxs.extend(
-                    [ PruningIndex(idx=k, root_idx=i.root_idx) for k in range(i.idx * self._stride, (i.idx + 1) * self._stride) ]  
+                    [ HybridIndex(idx=k, root_idx=i.root_idx) for k in range(i.idx * self._stride, (i.idx + 1) * self._stride) ]  
                 )
         return new_idxs
 
@@ -56,16 +67,16 @@ class _ConcatIndexMapping(object):
         self.offset = offset
         self.reverse = reverse
 
-    def __call__(self, idxs: PruningIndex):
+    def __call__(self, idxs: HybridIndex):
 
         if self.reverse == True:
             new_idxs = [
-                PruningIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx )
+                HybridIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx )
                 for i in idxs
                 if (i.idx >= self.offset[0] and i.idx < self.offset[1])
             ]
         else:
-            new_idxs = [ PruningIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
+            new_idxs = [ HybridIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
         return new_idxs
 
 
@@ -74,12 +85,12 @@ class _SplitIndexMapping(object):
         self.offset = offset
         self.reverse = reverse
 
-    def __call__(self, idxs: PruningIndex):
+    def __call__(self, idxs: HybridIndex):
         if self.reverse == True:
-            new_idxs = [ PruningIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
+            new_idxs = [ HybridIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
         else:
             new_idxs = [
-                PruningIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx)
+                HybridIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx)
                 for i in idxs
                 if (i.idx >= self.offset[0] and i.idx < self.offset[1])
             ]

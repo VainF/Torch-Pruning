@@ -9,19 +9,19 @@ import torch.nn as nn
 from .pruner import function
 from . import _helpers, utils, ops
 
-from ._helpers import UnwrappedParameters, PruningIndex, GroupItem
+from ._helpers import UnwrappedParameters, HybridIndex, GroupItem
 
 __all__ = ["Dependency", "Group", "DependencyGraph"]
 
-def _are_the_same_methods(func1, func2):
+_PLACEHOLDER = None
+
+def equal_func(func1, func2):
     return (
         hasattr(func1, '__self__') and 
         hasattr(func2, '__self__') and 
         isinstance(func1.__self__, type(func2.__self__)) and 
         func1.__name__ == func2.__name__
     )
-
-
 
 class Node(object):
     """ Node of DepGraph
@@ -30,10 +30,10 @@ class Node(object):
         # For Computational Graph (Tracing)
         self.inputs = []  # input nodes
         self.outputs = [] # output nodes
-        self.module = module # torch.nn.Module
+        self.module = module # reference to torch.nn.Module
 
-        self.grad_fn = grad_fn # gradient function, e.g., x.grad_fn
-        self._name = name # node name, a string
+        self.grad_fn = grad_fn # gradient function of module output
+        self._name = name # node name
         self.type = ops.module2type(module) # node type (enum) 
         self.module_class = module.__class__ # class type of the module
 
@@ -120,7 +120,7 @@ class Dependency(Edge):
 
     def __call__(self, idxs: list):
         self.handler.__self__.pruning_dim = self.target.pruning_dim # set pruning_dim
-        if len(idxs)>0 and isinstance(idxs[0], PruningIndex):
+        if len(idxs)>0 and isinstance(idxs[0], HybridIndex):
             idxs = _helpers.to_plain_idxs(idxs)
         result = self.handler(self.target.module, idxs)
         return result
@@ -141,7 +141,7 @@ class Dependency(Edge):
 
     def __eq__(self, other):
         return (
-            self.source == other.source
+            self.source == other.source 
             and self.trigger == other.trigger
             and self.handler == other.handler
             and self.target == other.target
@@ -151,11 +151,10 @@ class Dependency(Edge):
         return hash((self.source, self.target, self.trigger, self.handler))
 
 
-
 class Group(object):
     """A group that contains dependencies and pruning indices.   
     Each element is defined as a namedtuple('GroupItem', ['dep', 'idxs']).
-    A group is a iterable list 
+    A group is a iterable List just like
     [ [Dep1, Indices1], [Dep2, Indices2], ..., [DepK, IndicesK] ]
     """
 
@@ -201,6 +200,9 @@ class Group(object):
     def __getitem__(self, k):
         return self._group[k]
 
+    def __setitem__(self, k, v):
+        self._group[k] = v
+
     @property
     def items(self):
         return self._group
@@ -211,7 +213,7 @@ class Group(object):
                 return True
         return False
 
-    def has_pruning_op(self, dep: Dependency, idxs: PruningIndex):
+    def has_pruning_op(self, dep: Dependency, idxs: HybridIndex):
         for _dep, _idxs in self._group:
             #_idxs = _helpers.to_plain_idxs(_idxs)
             if (
@@ -228,7 +230,7 @@ class Group(object):
     def add_and_merge(self, dep, idxs):
         for i, (_dep, _idxs) in enumerate(self._group):
             if _dep.target == dep.target and _dep.handler == dep.handler:
-                self._group[i] = (_dep, list(set(_idxs + idxs)))
+                self._group[i] = GroupItem(dep=_dep, idxs=list(set(_idxs + idxs)))
                 return
         self.add_dep(dep, idxs)
 
@@ -287,7 +289,7 @@ class DependencyGraph(object):
         # Pruning History
         self._pruning_history = []
 
-    def pruning_history(self):
+    def pruning_history(self) -> typing.List[typing.Tuple[str, bool, typing.Union[list, tuple]]]:
         return self._pruning_history
 
     def load_pruning_history(self, pruning_history):
@@ -409,11 +411,6 @@ class DependencyGraph(object):
     def is_in_channel_pruning_fn(self, fn: typing.Callable) -> bool:
         return (fn in self._in_channel_pruning_fn)
 
-    #def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]) -> Group:
-    #    """ An alias of DependencyGraph.get_pruning_group for compatibility.
-    #    """
-    #    return self.get_pruning_group(module, pruning_fn, idxs)
-
     def get_pruning_group(
         self,
         module: nn.Module,
@@ -437,7 +434,7 @@ class DependencyGraph(object):
         if isinstance(idxs, Number):
             idxs = [idxs]
         
-        idxs = [ PruningIndex(idx=i, root_idx=i) for i in idxs ] # idxs == root_idxs for the root layer
+        idxs = [ HybridIndex(idx=i, root_idx=i) for i in idxs ] # idxs == root_idxs for the root layer
 
         self.update_index_mapping()
         group = Group()
@@ -451,7 +448,7 @@ class DependencyGraph(object):
 
         visited_node = set()
 
-        def _fix_dependency_graph_non_recursive(dep, idxs):
+        def _fix_dependency_graph_non_recursive(dep, idxs, *args):
             processing_stack = [(dep, idxs)]
             while len(processing_stack) > 0:
                 dep, idxs = processing_stack.pop(-1)
@@ -485,10 +482,12 @@ class DependencyGraph(object):
         # merge pruning ops
         merged_group = Group()
         for dep, idxs in group.items:
-            if not return_root_idxs:
-                idxs = _helpers.to_plain_idxs(idxs)
             merged_group.add_and_merge(dep, idxs)
         merged_group._DG = self
+        for i in range(len(merged_group)):
+            idxs = _helpers.to_plain_idxs(merged_group[i].idxs)
+            merged_group[i] = GroupItem(merged_group[i].dep, idxs)
+            merged_group[i].root_idxs = _helpers.to_root_idxs(merged_group[i].idxs)
         return merged_group
 
     def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
