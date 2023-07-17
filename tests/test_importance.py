@@ -18,29 +18,37 @@ def test_imp():
     rand_imp = random_importance(pruning_group)
     print("Random: ", rand_imp)
 
+    magnitude_importance = tp.importance.MagnitudeImportance(p=1, group_reduction=None)
+    mag_imp_raw = magnitude_importance(pruning_group)
+    print("L-1 Norm, No Reduction: ", mag_imp_raw)
+
     magnitude_importance = tp.importance.MagnitudeImportance(p=1)
     mag_imp = magnitude_importance(pruning_group)
     print("L-1 Norm, Group Mean: ", mag_imp)
+    assert torch.allclose(mag_imp, mag_imp_raw.mean(0))
+
+    magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction=None)
+    mag_imp_raw = magnitude_importance(pruning_group)
+    print("L-2 Norm, No Reduction: ", mag_imp_raw)
 
     magnitude_importance = tp.importance.MagnitudeImportance(p=2)
     mag_imp = magnitude_importance(pruning_group)
     print("L-2 Norm, Group Mean: ", mag_imp)
+    assert torch.allclose(mag_imp, mag_imp_raw.mean(0))
 
     magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction='sum')
     mag_imp = magnitude_importance(pruning_group)
     print("L-2 Norm, Group Sum: ", mag_imp)
-
-    magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction=None)
-    mag_imp = magnitude_importance(pruning_group)
-    print("L-2 Norm, No Reduction: ", mag_imp)
+    assert torch.allclose(mag_imp, mag_imp_raw.sum(0))
 
     bn_scale_importance = tp.importance.BNScaleImportance()
     bn_imp = bn_scale_importance(pruning_group)
-    print("BN Scaling, Group mean: ", bn_imp)
+    print("BN Scaling, Group mean: ", bn_imp)   
 
     lamp_importance = tp.importance.LAMPImportance()
     lamp_imp = lamp_importance(pruning_group)
     print("LAMP: ", lamp_imp)
+    assert torch.allclose(torch.argsort(mag_imp), mag_imp_raw.mean(0))
 
 
 if __name__=='__main__':

@@ -997,7 +997,7 @@ class DependencyGraph(object):
         else:
             chs = []
             for n in cat_node.inputs:
-                chs.append(self.infer_channels(n, cat_node))
+                chs.append(self.infer_channels_between(n, cat_node))
             cat_node.module.concat_sizes = chs
             
         offsets = [0]
@@ -1066,7 +1066,7 @@ class DependencyGraph(object):
                         addressed_dep.append(dep)
                         break
 
-    def infer_channels(self, node_1, node_2):
+    def infer_channels_between(self, node_1, node_2):
         if node_1.type == ops.OPTYPE.SPLIT:
             for i, n in enumerate(node_1.outputs):
                 if n == node_2:

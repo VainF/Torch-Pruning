@@ -316,7 +316,7 @@ def accumulate_flops(self):
 
 
 def get_model_parameters_number(model):
-    params_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    params_num = sum(p.numel() for p in model.parameters())
     return params_num
 
 

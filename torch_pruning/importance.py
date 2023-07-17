@@ -63,26 +63,28 @@ class MagnitudeImportance(Importance):
 
         for i, (imp, root_idxs) in enumerate(zip(group_imp, group_idxs)):
             if self.group_reduction == "sum" or self.group_reduction == "mean":
-                reduced_imp.scatter_add_(0, torch.tensor(root_idxs), imp) # accumulated importance
+                reduced_imp.scatter_add_(0, torch.tensor(root_idxs, device=imp.device), imp) # accumulated importance
             elif self.group_reduction == "max": # keep the max importance
-                selected_imp = torch.select(reduced_imp, 0, torch.tensor(root_idxs))
+                selected_imp = torch.select(reduced_imp, 0, torch.tensor(root_idxs, device=imp.device))
                 torch.max(selected_imp, imp, out=selected_imp)
-                reduced_imp.scatter_(0, torch.tensor(root_idxs), selected_imp)
+                reduced_imp.scatter_(0, torch.tensor(root_idxs, device=imp.device), selected_imp)
             elif self.group_reduction == "prod": # product of importance
-                selected_imp = torch.select(reduced_imp, 0, torch.tensor(root_idxs))
+                selected_imp = torch.select(reduced_imp, 0, torch.tensor(root_idxs, device=imp.device))
                 torch.mul(selected_imp, imp, out=selected_imp)
-                reduced_imp.scatter_(0, torch.tensor(root_idxs), selected_imp)
+                reduced_imp.scatter_(0, torch.tensor(root_idxs, device=imp.device), selected_imp)
             elif self.group_reduction == 'first':
                 if i == 0:
-                    reduced_imp.scatter_(0, torch.tensor(root_idxs), imp)
+                    reduced_imp.scatter_(0, torch.tensor(root_idxs, device=imp.device), imp)
             elif self.group_reduction == 'gate':
                 if i == len(group_imp)-1:
-                    reduced_imp.scatter_(0, torch.tensor(root_idxs), imp)
+                    reduced_imp.scatter_(0, torch.tensor(root_idxs, device=imp.device), imp)
             elif self.group_reduction is None:
                 reduced_imp = torch.stack(group_imp, dim=0) # no reduction
             else:
                 raise NotImplementedError
-            return reduced_imp
+        if self.group_reduction == "mean":
+            reduced_imp /= len(group_imp)
+        return reduced_imp
         
     @torch.no_grad()
     def __call__(self, group: Group, ch_groups: int=1):
@@ -348,7 +350,7 @@ class GroupNormImportance(MagnitudeImportance):
         return group_imp
 
 
-class TaylorImportance(Importance):
+class TaylorImportance(MagnitudeImportance):
     def __init__(self, group_reduction="mean", normalizer='mean', multivariable=False):
         self.group_reduction = group_reduction
         self.normalizer = normalizer
@@ -372,30 +374,15 @@ class TaylorImportance(Importance):
         else:
             raise NotImplementedError
 
-    def _reduce(self, group_imp):
-        if self.group_reduction == "sum":
-            group_imp = group_imp.sum(dim=0)
-        elif self.group_reduction == "mean":
-            group_imp = group_imp.mean(dim=0)
-        elif self.group_reduction == "max":
-            group_imp = group_imp.max(dim=0)[0]
-        elif self.group_reduction == "prod":
-            group_imp = torch.prod(group_imp, dim=0)
-        elif self.group_reduction == 'first':
-            group_imp = group_imp[0]
-        elif self.group_reduction is None:
-            group_imp = group_imp
-        else:
-            raise NotImplementedError
-        return group_imp
-
     @torch.no_grad()
     def __call__(self, group, ch_groups=1):
         group_imp = []
-        for dep, idxs in group:
+        group_idxs = []
+        for i, (dep, idxs) in enumerate(group):
             idxs.sort()
             layer = dep.target.module
             prune_fn = dep.handler
+            root_idxs = group[i].root_idxs
 
             if prune_fn in [
                 function.prune_conv_out_channels,
@@ -413,6 +400,8 @@ class TaylorImportance(Importance):
                 else:
                     local_imp = (w * dw).abs().sum(1)
                 group_imp.append(local_imp)
+                group_idxs.append(root_idxs)
+
             # Conv in_channels
             elif prune_fn in [
                 function.prune_conv_in_channels,
@@ -429,6 +418,8 @@ class TaylorImportance(Importance):
                 else:
                     local_imp = (w * dw).abs().sum(1)
                 group_imp.append(local_imp)
+                group_idxs.append(root_idxs)
+
             # BN
             elif prune_fn == function.prune_groupnorm_out_channels:
                 # regularize BN
@@ -437,14 +428,8 @@ class TaylorImportance(Importance):
                     dw = layer.weight.grad.data[idxs]
                     local_imp = (w*dw).abs()
                     group_imp.append(local_imp)
-        if len(group_imp) == 0:
-            return None
-        imp_size = len(group_imp[0])
-        aligned_group_imp = []
-        for imp in group_imp:
-            if len(imp) == imp_size:
-                aligned_group_imp.append(imp)
-        group_imp = torch.stack(aligned_group_imp, dim=0)
-        group_imp = self._reduce(group_imp)
+                    group_idxs.append(root_idxs)
+
+        group_imp = self._reduce(group_imp, group_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp

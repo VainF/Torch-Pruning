@@ -7,6 +7,8 @@ from ..._helpers import _FlattenIndexMapping
 
 
 class GroupNormPruner(MetaPruner):
+    """ Only for reproducing our results in the paper. Not recommended for general use. Please refer to MagnitudePruner for a general implementation of magnitude-based pruning.
+    """
     def __init__(
         self,
         model,
@@ -158,7 +160,7 @@ class GroupNormPruner(MetaPruner):
                     function.prune_linear_in_channels,
                 ]:
                     gn = group_norm
-                    if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexTransform):
+                    if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexMapping):
                         gn = group_norm.repeat_interleave(w.shape[1]//group_norm.shape[0])
                     # regularize input channels
                     if prune_fn==function.prune_conv_in_channels and layer.groups>1:
