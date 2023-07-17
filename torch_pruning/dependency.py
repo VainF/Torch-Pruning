@@ -146,6 +146,14 @@ class Dependency(Edge):
             and self.handler == other.handler
             and self.target == other.target
         )
+    
+    @property
+    def layer(self):
+        return self.target.module
+
+    @property
+    def pruning_fn(self):
+        return self.handler
 
     def __hash__(self):
         return hash((self.source, self.target, self.trigger, self.handler))
