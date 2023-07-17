@@ -11,7 +11,7 @@ Pytorch==1.12.1
 Torchvision==0.13.1
 ```
 
-## Pruning
+## 1. Pruning
 
 ```python
 python torchvision_pruning.py
