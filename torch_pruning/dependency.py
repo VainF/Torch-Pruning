@@ -873,13 +873,14 @@ class DependencyGraph(object):
             if node.type == ops.OPTYPE.SPLIT:
                 grad_fn = node.grad_fn
                 if hasattr(grad_fn, '_saved_self_sizes'):
+                    MAX_LEGAL_DIM = 100
                     if hasattr(grad_fn, '_saved_split_sizes') and hasattr(grad_fn, '_saved_dim') :
-                        if grad_fn._saved_dim != 1:
+                        if grad_fn._saved_dim != 1 and grad_fn._saved_dim < MAX_LEGAL_DIM: # a temp fix for pytorch==1.11, where the _saved_dim is an uninitialized value like 118745347895359
                             continue
                         chs = list(grad_fn._saved_split_sizes)
                         node.module.split_sizes = chs
                     elif hasattr(grad_fn, '_saved_split_size') and hasattr(grad_fn, '_saved_dim'):
-                        if grad_fn._saved_dim != 1:
+                        if grad_fn._saved_dim != 1 and grad_fn._saved_dim < MAX_LEGAL_DIM: # a temp fix for pytorch==1.11, where the _saved_dim is an uninitialized value like 118745347895359
                             continue
                         chs = [grad_fn._saved_split_size for _ in range(len(node.outputs))]
                         node.module.split_sizes = chs
