@@ -14,7 +14,7 @@ Welcome to the resource list for structural pruning, which is continually being 
 | Pruning-for-YOLOX | [project](https://github.com/YINYIPENG-EN/Pruning_for_YOLOX) |
 | YOLOX-pruning | [project](https://github.com/lizexu123/YOLOX-pruning) |
 | Vision Model Compression (ResNet-18, VGG-16) | [project](https://github.com/ashutoshsameer/vision-model-compression) |
-| LAASP | [project](https://github.com/ghimiredhikura/LAASP-FilterPruning/tree/63e84c07031f85ef155954b02f9cb9b56ed8c6d8) |
+| LAASP: Loss-aware automatic selection of structured pruning criteria for deep neural network acceleration | [project](https://github.com/ghimiredhikura/laasp) |
 | Magnitude and Similarity based Variable Rate Filter Pruning for Efficient Convolution Neural Networks | [project](https://github.com/ghimiredhikura/MSVFP-FilterPruning) |
 | Resnet50-pruning | [projects](https://github.com/wxy1234567/Resnet50-pruning) |
 | yolov5-pruning | [project](https://github.com/jylink/yolov5-pruning/tree/9b039785efa1a6f6323cceb24815fa06fbf01b89) |

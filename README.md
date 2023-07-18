@@ -19,10 +19,7 @@
   <a href="https://arxiv.org/abs/2301.12900" target="_blank"><img src="https://img.shields.io/badge/arXiv-2301.12900-009688.svg" alt="arXiv"></a>
 </p>
 
-
-[[中文README | README in Chinese]](README_CN.md)
-
-Torch-Pruning (TP) is a versatile library for Structural Network Pruning with the following features:
+Torch-Pruning (TP) is a versatile library for Structural Pruning with the following features:
 * **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of neural networks, including *[Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Vision Transformers](benchmarks/prunability), [Yolov7](benchmarks/prunability/readme.md#3-yolo-v7), [yolov8](benchmarks/prunability/readme.md#2-yolo-v8), FasterRCNN, SSD, KeypointRCNN, MaskRCNN, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, FCN, DeepLab, etc*. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys a (non-deep) graph algorithm called **DepGraph** to remove parameters and channels physically. 
 * **Reproducible [Performance Benchmark](benchmarks) and [Prunability Benchmark](benchmarks/prunability):** Currently, TP is able to prune approximately **81/85=95.3%** of the models from Torchvision 0.13.1. Try this [Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing) for quick start.
   
@@ -30,29 +27,28 @@ For more technical details, please refer to our CVPR'23 paper:
 > [**DepGraph: Towards Any Structural Pruning**](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)   
 > [Gongfan Fang](https://fangggf.github.io/), [Xinyin Ma](https://horseee.github.io/), [Mingli Song](https://person.zju.edu.cn/en/msong), [Michael Bi Mi](https://dblp.org/pid/317/0937.html), [Xinchao Wang](https://sites.google.com/site/sitexinchaowang/)   
 
+Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.
+
 ### Update:
 * 2023.05.20 	:rocket: [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
 * 2023.05.19 [Structural Pruning for Diffusion Models](https://github.com/VainF/Diff-Pruning) [*[arXiv]*](https://arxiv.org/abs/2305.10924)
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
 * 2023.04.21 Join our Telegram or Wechat group for casual discussions:
   * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
-  * WeChat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/1a12a64e-a94e-4a74-8909-8fc0886f63f2">
+  * WeChat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/41cd9bf9-13e3-45b2-919e-bb067fc14377">
 
 
-
-Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.
 
 
 ### **Features:**
 - [x] Structural pruning for CNNs, Transformers, Detectors, Language Models and Diffusion Models. Please refer to the [Prunability Benchmark](benchmarks/prunability).
 - [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), RandomPruner, etc.
 - [x] Importance Criteria: L-p Norm, Taylor, Random, BNScaling, etc.
-- [x] Dependency Graph for dependency modeling.
+- [x] Dependency Graph
 - [x] Supported modules: Linear, (Transposed) Conv, Normalization, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 - [x] Supported operators: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops, etc.
 - [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
 - [x] [Benchmarks](benchmarks) and [tutorials](tutorials)
-- [x] A [resource list](practical_structural_pruning.md) for practical structrual pruning.
   
 ### **TODO List:**
 - [ ] A strong baseline with bags of tricks from existing methods.
@@ -96,18 +92,18 @@ import torch_pruning as tp
 
 model = resnet18(pretrained=True).eval()
 
-# 1. build dependency graph for resnet18
+# 1. Build dependency graph for resnet18
 DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
 # 2. Specify the to-be-pruned channels. Here we prune those channels indexed by [2, 6, 9].
 group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )
 
-# 3. prune all grouped layers that are coupled with model.conv1 (included).
+# 3. Prune all grouped layers that are coupled with model.conv1 (included).
 if DG.check_pruning_group(group): # avoid full pruning, i.e., channels=0.
     group.prune()
     
 # 4. Save & Load
-model.zero_grad() # We don't want to store gradient information
+model.zero_grad() # reset gradients
 torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the model object
 ```
@@ -330,6 +326,10 @@ Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 Please refer to [benchmarks](benchmarks) for more details.
 
 ### 7. Series of Works
+
+> **DepGraph: Towards Any Structural Pruning** [[Project]](https://github.com/VainF/Torch-Pruning) [[Paper]](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)   
+> *Gongfan Fang, Xinyin Ma, Mingli Song, Michael Bi Mi, Xinchao Wang*   
+
 > **LLM-Pruner: On the Structural Pruning of Large Language Models** [[Project]](https://github.com/horseee/LLM-Pruner) [[arXiv]](https://arxiv.org/abs/2305.11627)   
 > *Xinyin Ma, Gongfan Fang, Xinchao Wang*   
 
