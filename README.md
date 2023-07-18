@@ -39,9 +39,6 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
   * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
   * WeChat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/41cd9bf9-13e3-45b2-919e-bb067fc14377">
 
-
-
-
 ### **Features:**
 - [x] Structural pruning for CNNs, Transformers, Detectors, Language Models and Diffusion Models. Please refer to the [Prunability Benchmark](benchmarks/prunability).
 - [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), RandomPruner, etc.
@@ -50,8 +47,8 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 - [x] Supported modules: Linear, (Transposed) Conv, Normalization, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 - [x] Supported operators: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops, etc.
 - [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
-- [x] [Benchmarks](benchmarks) and [tutorials](tutorials)
-  
+- [x] [Benchmarks](benchmarks) and [tutorials](https://github.com/VainF/Torch-Pruning/wiki)
+
 ### **TODO List:**
 - [ ] A strong baseline with bags of tricks from existing methods.
 - [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**81/85=95.3%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
@@ -75,7 +72,7 @@ git clone https://github.com/VainF/Torch-Pruning.git
 
 ## Quickstart
   
-Here we provide a quick start for Torch-Pruning. More explained details can be found in [tutorals](./tutorials/)
+Here we provide a quick start for Torch-Pruning. More explained details can be found in [tutorals](https://github.com/VainF/Torch-Pruning/wiki)
 
 ### 0. How It Works
 
@@ -134,7 +131,7 @@ The above example demonstrates the fundamental pruning pipeline using DepGraph. 
 [15] prune_out_channels on layer1.0.bn2 (BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)) => prune_out_channels on layer1.0.conv2 (Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)), idxs=[2, 6, 9]
 --------------------------------
 ```
-For more details about grouping, please refer to [tutorials/2 - Exploring Dependency Groups](https://github.com/VainF/Torch-Pruning/blob/master/tutorials/2%20-%20Exploring%20Dependency%20Groups.ipynb)
+For more details about grouping, please refer to [Wiki - DepGraph & Group](https://github.com/VainF/Torch-Pruning/wiki/3.-DepGraph-&-Group)
   
 #### How to scan all groups (Advanced):
 We can use ``DG.get_all_groups(ignored_layers, root_module_types)`` to scan all groups sequentially. Each group will begin with a layer that matches a type in the "root_module_types" parameter. Note that DG.get_all_groups is only responsible for grouping and does not have any knowledge or understanding of which parameters should be pruned. Therefore, it is necessary to specify the pruning idxs using  ``group.prune(idxs=idxs)``.
