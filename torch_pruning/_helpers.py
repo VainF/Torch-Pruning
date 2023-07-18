@@ -50,6 +50,7 @@ class _FlattenIndexMapping(object):
 
     def __call__(self, idxs: _HybridIndex):
         new_idxs = []
+        
         if self.reverse == True:
             for i in idxs:
                 new_idxs.append( _HybridIndex( idx = (i.idx // self._stride), root_idx=i.root_idx ) )

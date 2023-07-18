@@ -204,6 +204,7 @@ class MetaPruner:
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             # check pruning rate
             if self._check_sparsity(group):
+                
                 module = group[0][0].target.module
                 pruning_fn = group[0][0].handler
 
@@ -232,6 +233,7 @@ class MetaPruner:
                         [pruning_idxs+group_size*i for i in range(ch_groups)], 0)
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs.tolist())
+                
                 if self.DG.check_pruning_group(group):
                     yield group
 

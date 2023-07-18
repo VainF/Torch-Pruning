@@ -18,38 +18,52 @@ def test_imp():
     rand_imp = random_importance(pruning_group)
     print("Random: ", rand_imp)
 
-    magnitude_importance = tp.importance.MagnitudeImportance(p=1, group_reduction=None)
+    magnitude_importance = tp.importance.MagnitudeImportance(p=1, group_reduction=None, normalizer=None)
     mag_imp_raw = magnitude_importance(pruning_group)
     print("L-1 Norm, No Reduction: ", mag_imp_raw)
 
-    magnitude_importance = tp.importance.MagnitudeImportance(p=1)
+    magnitude_importance = tp.importance.MagnitudeImportance(p=1, normalizer=None)
     mag_imp = magnitude_importance(pruning_group)
     print("L-1 Norm, Group Mean: ", mag_imp)
     assert torch.allclose(mag_imp, mag_imp_raw.mean(0))
 
-    magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction=None)
+    magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction=None, normalizer=None)
     mag_imp_raw = magnitude_importance(pruning_group)
     print("L-2 Norm, No Reduction: ", mag_imp_raw)
 
-    magnitude_importance = tp.importance.MagnitudeImportance(p=2)
+    magnitude_importance = tp.importance.MagnitudeImportance(p=2, normalizer=None)
     mag_imp = magnitude_importance(pruning_group)
     print("L-2 Norm, Group Mean: ", mag_imp)
     assert torch.allclose(mag_imp, mag_imp_raw.mean(0))
 
-    magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction='sum')
+    magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction='sum', normalizer=None)
     mag_imp = magnitude_importance(pruning_group)
     print("L-2 Norm, Group Sum: ", mag_imp)
     assert torch.allclose(mag_imp, mag_imp_raw.sum(0))
 
-    bn_scale_importance = tp.importance.BNScaleImportance()
+    magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction='max', normalizer=None)
+    mag_imp = magnitude_importance(pruning_group)
+    print("L-2 Norm, Group Max: ", mag_imp)
+    assert torch.allclose(mag_imp, mag_imp_raw.max(0)[0])
+
+    magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction='gate', normalizer=None)
+    mag_imp = magnitude_importance(pruning_group)
+    print("L-2 Norm, Group Gate: ", mag_imp)
+    assert torch.allclose(mag_imp, mag_imp_raw[-1])
+
+    magnitude_importance = tp.importance.MagnitudeImportance(p=2, group_reduction='prod', normalizer=None)
+    mag_imp = magnitude_importance(pruning_group)
+    print("L-2 Norm, Group Prod: ", mag_imp)
+    print(mag_imp,  torch.prod(mag_imp_raw, dim=0))
+    assert torch.allclose(mag_imp, torch.prod(mag_imp_raw, dim=0))
+
+    bn_scale_importance = tp.importance.BNScaleImportance(normalizer=None)
     bn_imp = bn_scale_importance(pruning_group)
     print("BN Scaling, Group mean: ", bn_imp)   
 
-    lamp_importance = tp.importance.LAMPImportance()
+    lamp_importance = tp.importance.LAMPImportance(normalizer=None)
     lamp_imp = lamp_importance(pruning_group)
     print("LAMP: ", lamp_imp)
-    assert torch.allclose(torch.argsort(mag_imp), mag_imp_raw.mean(0))
-
 
 if __name__=='__main__':
     test_imp()

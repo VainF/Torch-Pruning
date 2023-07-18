@@ -424,7 +424,6 @@ class DependencyGraph(object):
         module: nn.Module,
         pruning_fn: typing.Callable,
         idxs: typing.Sequence[int],
-        return_root_idxs: bool = False,
     ) -> Group:
         """Get the pruning group of pruning_fn.
         Args:
@@ -470,7 +469,7 @@ class DependencyGraph(object):
                         for mapping in new_dep.index_mapping:
                             if mapping is not None:
                                 new_indices = mapping(new_indices)
-                                #print(new_dep, new_dep.index_mapping)
+
                                 #print(len(new_indices))
                         #print()
                         if len(new_indices) == 0:
@@ -493,14 +492,17 @@ class DependencyGraph(object):
             merged_group.add_and_merge(dep, idxs)
         merged_group._DG = self
         for i in range(len(merged_group)):
-            idxs = _helpers.to_plain_idxs(merged_group[i].idxs)
+            hybrid_idxs = merged_group[i].idxs
+            idxs = _helpers.to_plain_idxs(hybrid_idxs)
+            root_idxs = _helpers.to_root_idxs(hybrid_idxs)
             merged_group[i] = GroupItem(merged_group[i].dep, idxs) # transform _HybridIndex to plain index
-            merged_group[i].root_idxs = _helpers.to_root_idxs(merged_group[i].idxs) # add root_idxs
+            merged_group[i].root_idxs = root_idxs
         return merged_group
 
     def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
         visited_layers = []
         ignored_layers = ignored_layers+self.IGNORED_LAYERS
+
         for m in list(self.module2node.keys()):
             if m in ignored_layers:
                 continue
@@ -518,6 +520,7 @@ class DependencyGraph(object):
             layer_channels = pruner.get_out_channels(m)
             group = self.get_pruning_group(
                 m, pruner.prune_out_channels, list(range(layer_channels)))
+    
             prunable_group = True
             for dep, _ in group:
                 module = dep.target.module
@@ -531,8 +534,6 @@ class DependencyGraph(object):
 
     def get_pruner_of_module(self, module: nn.Module):
         p = self.CUSTOMIZED_PRUNERS.get(module.__class__, None) # customized pruners for a specific layer type
-        if p is None:
-            p = self.CUSTOMIZED_PRUNERS.get(module, None) # customized pruners for a specific layer instance
         if p is None:
             p = self.REGISTERED_PRUNERS.get(ops.module2type(module), None) # standard pruners
         return p
@@ -696,12 +697,11 @@ class DependencyGraph(object):
 
         # Register hooks for prunable modules
         registered_types = tuple(ops.type2class(
-            t) for t in self.REGISTERED_PRUNERS.keys()) + tuple(t for t in self.CUSTOMIZED_PRUNERS.keys() if not isinstance(t, torch.nn.Module)) # standard pruners + customized pruners for a specific layer type
-        registered_instances = tuple(instance for instance in self.CUSTOMIZED_PRUNERS.keys() if isinstance(instance, torch.nn.Module)) # customized pruners for a specific layer instance
+            t) for t in self.REGISTERED_PRUNERS.keys()) + tuple(self.CUSTOMIZED_PRUNERS.keys())
         hooks = [
             m.register_forward_hook(_record_grad_fn)
             for m in model.modules()
-            if ( (m not in self.IGNORED_LAYERS) and (isinstance(m, registered_types) or (m in registered_instances) ) )
+            if (isinstance(m, registered_types) and m not in self.IGNORED_LAYERS)
         ]
         
         # Feed forward to record gradient functions of prunable modules
@@ -794,7 +794,7 @@ class DependencyGraph(object):
                     name=self._module2name.get(module, None),
                 )
                 if (
-                    type(module) in self.CUSTOMIZED_PRUNERS or module in self.CUSTOMIZED_PRUNERS
+                    type(module) in self.CUSTOMIZED_PRUNERS
                 ):  # mark it as a customized layer
                     node.type = ops.OPTYPE.CUSTOMIZED
                 module2node[module] = node

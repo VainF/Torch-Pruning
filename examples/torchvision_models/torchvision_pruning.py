@@ -203,6 +203,16 @@ if __name__ == "__main__":
         print("==============Before pruning=================")
         print("Model Name: {}".format(model_name))
         print(model)
+
+        layer_channel_cfg = {}
+        for module in model.modules():
+            if module not in pruner.ignored_layers:
+                #print(module)
+                if isinstance(module, nn.Conv2d):
+                    layer_channel_cfg[module] = module.out_channels
+                elif isinstance(module, nn.Linear):
+                    layer_channel_cfg[module] = module.out_features
+
         pruner.step()
         if isinstance(
             model, VisionTransformer
@@ -223,7 +233,18 @@ if __name__ == "__main__":
             if output_transform:
                 out = output_transform(out)
             print("{} Pruning: ".format(model_name))
-            print("  Params: %s => %s" % (ori_size, tp.utils.count_params(model)))
+            params_after_prune = tp.utils.count_params(model)
+            print("  Params: %s => %s" % (ori_size, params_after_prune))
+            
+            if 'rcnn' not in model_name and model_name!='ssdlite320_mobilenet_v3_large': # RCNN may return 0 proposals, making some layers unreachable during tracing.
+                for module, ch in layer_channel_cfg.items():
+                    if isinstance(module, nn.Conv2d):
+                        #print(module.out_channels, layer_channel_cfg[module])
+                        assert int(0.5*layer_channel_cfg[module]) == module.out_channels
+                    elif isinstance(module, nn.Linear):
+                        #print(module.out_features, layer_channel_cfg[module])
+                        assert int(0.5*layer_channel_cfg[module]) == module.out_features
+
             if isinstance(out, (dict,list,tuple)):
                 print("  Output:")
                 for o in tp.utils.flatten_as_list(out):

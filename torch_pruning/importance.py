@@ -59,17 +59,22 @@ class MagnitudeImportance(Importance):
 
     def _reduce(self, group_imp: typing.List[torch.Tensor], group_idxs: typing.List[typing.List[int]]):
         if len(group_imp) == 0: return group_imp
-        reduced_imp = torch.zeros_like(group_imp[0])
+        if self.group_reduction == 'prod':
+            reduced_imp = torch.ones_like(group_imp[0])
+        elif self.group_reduction == 'max':
+            reduced_imp = torch.ones_like(group_imp[0]) * -99999
+        else:
+            reduced_imp = torch.zeros_like(group_imp[0])
 
         for i, (imp, root_idxs) in enumerate(zip(group_imp, group_idxs)):
             if self.group_reduction == "sum" or self.group_reduction == "mean":
                 reduced_imp.scatter_add_(0, torch.tensor(root_idxs, device=imp.device), imp) # accumulated importance
             elif self.group_reduction == "max": # keep the max importance
-                selected_imp = torch.select(reduced_imp, 0, torch.tensor(root_idxs, device=imp.device))
-                torch.max(selected_imp, imp, out=selected_imp)
+                selected_imp = torch.index_select(reduced_imp, 0, torch.tensor(root_idxs, device=imp.device))
+                selected_imp = torch.maximum(input=selected_imp, other=imp)
                 reduced_imp.scatter_(0, torch.tensor(root_idxs, device=imp.device), selected_imp)
             elif self.group_reduction == "prod": # product of importance
-                selected_imp = torch.select(reduced_imp, 0, torch.tensor(root_idxs, device=imp.device))
+                selected_imp = torch.index_select(reduced_imp, 0, torch.tensor(root_idxs, device=imp.device))
                 torch.mul(selected_imp, imp, out=selected_imp)
                 reduced_imp.scatter_(0, torch.tensor(root_idxs, device=imp.device), selected_imp)
             elif self.group_reduction == 'first':
@@ -82,6 +87,7 @@ class MagnitudeImportance(Importance):
                 reduced_imp = torch.stack(group_imp, dim=0) # no reduction
             else:
                 raise NotImplementedError
+        
         if self.group_reduction == "mean":
             reduced_imp /= len(group_imp)
         return reduced_imp

@@ -91,14 +91,14 @@ def test_customization():
     
     my_linear_pruner = MyLinearPruner()
     DG.register_customized_layer(
-        model.fc2, my_linear_pruner
+        nn.Linear, my_linear_pruner
     )
 
     # 2. Build dependency graph
     DG.build_dependency(model, example_inputs=torch.randn(1,128))
 
     # 3. get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
-    pruning_group = DG.get_pruning_group( model.fc1, tp.prune_linear_out_channels, idxs=[0, 1, 6] )
+    pruning_group = DG.get_pruning_group( model.fc1, my_linear_pruner.prune_out_channels, idxs=[0, 1, 6] )
     print(pruning_group)
 
     # 4. execute this group (prune the model)
