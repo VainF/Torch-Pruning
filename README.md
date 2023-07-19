@@ -270,7 +270,7 @@ tp.prune_conv_in_channels( model.layer2[0].conv1, idxs=[2,6,9] )
 ...
 ```
 
-The following pruning functions are available:
+The following [pruning functions](torch_pruning/pruner/function.py) are available:
 ```python
 'prune_conv_out_channels',
 'prune_conv_in_channels',
