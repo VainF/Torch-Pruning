@@ -7,7 +7,7 @@ from ..._helpers import _FlattenIndexMapping
 
 
 class GroupNormPruner(MetaPruner):
-    """ Only for reproducing our results in the paper. Not recommended for general use. Please refer to MagnitudePruner for a general implementation of magnitude-based pruning.
+    """ Only for reproducing our results in the paper. Not recommended for practical use. Please refer to MagnitudePruner for a general implementation of magnitude-based pruning.
     """
     def __init__(
         self,

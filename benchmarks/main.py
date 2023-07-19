@@ -171,6 +171,10 @@ def get_pruner(model, example_inputs):
         args.sparsity_learning = True
         imp = tp.importance.BNScaleImportance()
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
+    elif args.method == "group_slim":
+        args.sparsity_learning = True
+        imp = tp.importance.BNScaleImportance()
+        pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning, group_lasso=True)
     elif args.method == "group_norm":
         imp = tp.importance.GroupNormImportance(p=2)
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)

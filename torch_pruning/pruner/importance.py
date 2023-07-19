@@ -3,10 +3,10 @@ import torch
 import torch.nn as nn
 
 import typing
-from .pruner import function
-from .dependency import Group
-from ._helpers import _FlattenIndexMapping
-from . import ops
+from . import function
+from ..dependency import Group
+from .._helpers import _FlattenIndexMapping
+from .. import ops
 import math
 
 
@@ -34,10 +34,11 @@ class Importance(abc.ABC):
 
 
 class MagnitudeImportance(Importance):
-    def __init__(self, p=2, group_reduction="mean", normalizer='mean'):
+    def __init__(self, p=2, group_reduction="mean", normalizer='mean', target_types=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
         self.p = p
         self.group_reduction = group_reduction
         self.normalizer = normalizer
+        self.target_types = target_types
 
     def _normalize(self, group_importance, normalizer):
         if normalizer is None:
@@ -93,16 +94,17 @@ class MagnitudeImportance(Importance):
         return reduced_imp
         
     @torch.no_grad()
-    def __call__(self, group: Group, ch_groups: int=1):
+    def __call__(self, group: Group, ch_groups: int=1, return_group_size=False):
         group_imp = []
         group_idxs = []
-
+        group_size = 0
         # Iterate over all groups and estimate group importance
         for i, (dep, idxs) in enumerate(group):
             layer = dep.layer
             prune_fn = dep.pruning_fn
             root_idxs = group[i].root_idxs
-
+            if not isinstance(layer, tuple(self.target_types)):
+                continue
             ####################
             # Conv/Linear Output
             ####################
@@ -115,6 +117,7 @@ class MagnitudeImportance(Importance):
                 else:
                     w = layer.weight.data[idxs].flatten(1)
                 local_imp = w.abs().pow(self.p).sum(1)
+                group_size += w.shape[1]
                 if ch_groups > 1:
                     local_imp = local_imp.view(ch_groups, -1).sum(0)
                     local_imp = local_imp.repeat(ch_groups)
@@ -132,7 +135,7 @@ class MagnitudeImportance(Importance):
                     w = (layer.weight.data).flatten(1)
                 else:
                     w = (layer.weight.data).transpose(0, 1).flatten(1)
-
+                group_size += w.shape[1]
                 if ch_groups > 1 and prune_fn == function.prune_conv_in_channels and layer.groups == 1:
                     # non-grouped conv followed by a group conv
                     w = w.view(w.shape[0] // group_imp[0].shape[0], group_imp[0].shape[0], w.shape[1]).transpose(0, 1).flatten(1)
@@ -154,6 +157,7 @@ class MagnitudeImportance(Importance):
                 if layer.affine:
                     w = layer.weight.data[idxs]
                     local_imp = w.abs().pow(self.p)
+                    group_size += 1
                     if ch_groups > 1:
                         local_imp = local_imp.view(ch_groups, -1).sum(0)
                         local_imp = local_imp.repeat(ch_groups)
@@ -165,6 +169,8 @@ class MagnitudeImportance(Importance):
             return None
         group_imp = self._reduce(group_imp, group_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
+        if return_group_size:
+            return group_imp, group_size
         return group_imp
 
 
