@@ -19,12 +19,12 @@
   <a href="https://arxiv.org/abs/2301.12900" target="_blank"><img src="https://img.shields.io/badge/arXiv-2301.12900-009688.svg" alt="arXiv"></a>
 </p>
 
-Torch-Pruning (TP) is a pruning library that enables the following features:
+Torch-Pruning (TP) is a library for structural pruning that enables the following features:
 
 * **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of neural networks, including *[Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [Vision Transformers](examples/torchvision_models/), FasterRCNN, SSD, KeypointRCNN, MaskRCNN, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, FCN, DeepLab, etc*. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys a (non-deep) graph algorithm called **DepGraph** to remove parameters and channels physically. Currently, TP is able to prune approximately **81/85=95.3%** of the models from Torchvision 0.13.1. Try this [Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing) for a quick start.
-* **[Performance Benchmark](benchmarks)**: Reproduce the reported results in the DepGraph paper.
+* **[Performance Benchmark](benchmarks)**: Reproduce the our results in the DepGraph paper.
 * **[Tutorials and Documents](https://github.com/VainF/Torch-Pruning/wiki)** are available at the GitHub Wiki.
-  
+
 For more technical details, please refer to our CVPR'23 paper:
 > [**DepGraph: Towards Any Structural Pruning**](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)   
 > [Gongfan Fang](https://fangggf.github.io/), [Xinyin Ma](https://horseee.github.io/), [Mingli Song](https://person.zju.edu.cn/en/msong), [Michael Bi Mi](https://dblp.org/pid/317/0937.html), [Xinchao Wang](https://sites.google.com/site/sitexinchaowang/)   
@@ -32,25 +32,23 @@ For more technical details, please refer to our CVPR'23 paper:
 Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper. 
 
 ### Update:
-* 2023.05.20 	:rocket: [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
+* 2023.05.20 :rocket: [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
 * 2023.05.19 [Structural Pruning for Diffusion Models](https://github.com/VainF/Diff-Pruning) [*[arXiv]*](https://arxiv.org/abs/2305.10924)
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
-* 2023.04.21 Join our Telegram or Wechat group for casual discussions:
+* 2023.04.21 Join our Telegram or Wechat group:
   * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
   * WeChat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/41cd9bf9-13e3-45b2-919e-bb067fc14377">
 
 
-
-
 ### **Features:**
-- [x] Structural pruning for CNNs, Transformers, Detectors, Language Models and Diffusion Models. Please refer to the [Prunability Benchmark](benchmarks/prunability).
+- [x] Structural pruning for CNNs, Transformers, Detectors, Language Models and Diffusion Models. Please refer to the [examples](examples).
 - [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), RandomPruner, etc.
 - [x] Importance Criteria: L-p Norm, Taylor, Random, BNScaling, etc.
-- [x] Dependency Graph
+- [x] Dependency Graph for automatic structrual pruning
 - [x] Supported modules: Linear, (Transposed) Conv, Normalization, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 - [x] Supported operators: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops, etc.
 - [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
-- [x] [Benchmarks](benchmarks) and [tutorials](tutorials)
+- [x] [Benchmarks](benchmarks) and [Tutorials](https://github.com/VainF/Torch-Pruning/wiki)
   
 ### **TODO List:**
 - [ ] A strong baseline with bags of tricks from existing methods.
@@ -63,10 +61,10 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 
 ## Installation
 
-Torch-Pruning is compatible with PyTorch 1.x and 2.x. **PyTorch 1.12.1 is recommended!**
+Torch-Pruning is compatible with both PyTorch 1.x and 2.x versions. However, it is highly recommended to use PyTorch 1.12.1 or higher.
 
 ```bash
-pip install torch-pruning # v1.1.9
+pip install torch-pruning 
 ```
 or
 ```bash
@@ -75,11 +73,11 @@ git clone https://github.com/VainF/Torch-Pruning.git
 
 ## Quickstart
   
-Here we provide a quick start for Torch-Pruning. More explained details can be found in [tutorals](./tutorials/)
+Here we provide a quick start for Torch-Pruning. More explained details can be found in [Tutorals](https://github.com/VainF/Torch-Pruning/wiki)
 
 ### 0. How It Works
 
-In structural pruning, a ``Group`` is defined as the minimal removable unit within deep networks. Each group consists of multiple interdependent layers that need to be pruned simultaneously in order to preserve the integrity of the resulting structures. However, deep networks often exhibit intricate dependencies among layers, posing a significant challenge for structural pruning. This work tackles this challenge by introducing an automated mechanism called ``DepGraph``, which enables effortless parameter grouping and facilitates pruning for a diverse range of deep networks.
+In structural pruning, a "Group" is defined as the minimal unit that can be removed within deep networks. These groups are composed of multiple layers that are interdependent and need to be pruned together in order to maintain the integrity of the resulting structures. However, deep networks often have complex dependencies among their layers, making structural pruning a challenging task. This work addresses this challenge by introducing an automated mechanism called "DepGraph." DepGraph allows for seamless parameter grouping and facilitates pruning in various types of deep networks.
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
@@ -110,7 +108,7 @@ torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the model object
 ```
   
-The above example demonstrates the fundamental pruning pipeline using DepGraph. The target layer resnet.conv1 is coupled with several layers, which requires simultaneous removal in structural pruning. Let's print the group and observe how a pruning operation "triggers" other ones. In the following outputs, ``A => B`` means the pruning operation ``A`` triggers the pruning operation ``B``. group[0] refers to the pruning root in ``DG.get_pruning_group``.
+The above example demonstrates the fundamental pruning pipeline utilizing DepGraph. The target layer resnet.conv1 is coupled with several layers, necessitating their simultaneous removal during structural pruning. To observe the cascading effect of pruning operations, we can print the groups and observe how one pruning operation can "trigger" others. In the subsequent outputs, "A => B" indicates that pruning operation "A" triggers pruning operation "B." The group[0] refers to the pruning root in DG.get_pruning_group.
 
 ```
 --------------------------------
