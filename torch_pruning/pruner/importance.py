@@ -166,6 +166,8 @@ class MagnitudeImportance(Importance):
             #elif prune_fn == function.prune_multihead_attention_out_channels:
                 
         if len(group_imp) == 0: # skip groups without parameterized layers
+            if return_group_size:
+                return None, 0
             return None
         group_imp = self._reduce(group_imp, group_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)

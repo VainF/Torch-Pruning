@@ -109,6 +109,7 @@ def train_model(
     best_acc = -1
     for epoch in range(epochs):
         model.train()
+    
         for i, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
@@ -129,6 +130,10 @@ def train_model(
                         optimizer.param_groups[0]["lr"],
                     )
                 )
+
+        if pruner is not None and isinstance(pruner, tp.pruner.GrowingRegPruner):
+            pruner.update_reg() # increase the strength of regularization
+            #print(pruner.group_reg[pruner._groups[0]])
         
         model.eval()
         acc, val_loss = eval(model, test_loader, device=device)
@@ -182,6 +187,10 @@ def get_pruner(model, example_inputs):
         args.sparsity_learning = True
         imp = tp.importance.GroupNormImportance(p=2)
         pruner_entry = partial(tp.pruner.GroupNormPruner, reg=args.reg, global_pruning=args.global_pruning)
+    elif args.method == "growing_reg":
+        args.sparsity_learning = True
+        imp = tp.importance.MagnitudeImportance(p=2)
+        pruner_entry = partial(tp.pruner.GrowingRegPruner, reg=args.reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
     

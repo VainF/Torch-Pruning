@@ -477,3 +477,452 @@
 [01/03 18:35:14] cifar10-global-slim-resnet56 INFO: Epoch 98/100, Acc=0.9304, Val Loss=0.2677, lr=0.0001
 [01/03 18:35:31] cifar10-global-slim-resnet56 INFO: Epoch 99/100, Acc=0.9317, Val Loss=0.2714, lr=0.0001
 [01/03 18:35:31] cifar10-global-slim-resnet56 INFO: Best Acc=0.9329
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: mode: prune
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: model: resnet56
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: verbose: False
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: dataset: cifar10
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: batch_size: 128
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: total_epochs: 100
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: lr_decay_milestones: 60,80
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: lr_decay_gamma: 0.1
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: lr: 0.01
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: restore: cifar10_resnet56.pth
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-slim-resnet56
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: method: slim
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: speed_up: 2.11
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: max_sparsity: 1.0
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: soft_keeping_ratio: 0.0
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: reg: 0.0001
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: weight_decay: 0.0005
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: seed: None
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: global_pruning: True
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: sl_total_epochs: 100
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: sl_lr: 0.01
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: sl_reg_warmup: 0
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: sl_restore: None
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: iterative_steps: 400
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: logger: <Logger cifar10-global-slim-resnet56 (DEBUG)>
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: device: cuda
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: num_classes: 10
+[07/20 15:24:45] cifar10-global-slim-resnet56 INFO: Loading model from cifar10_resnet56.pth
+[07/20 15:24:49] cifar10-global-slim-resnet56 INFO: Regularizing...
+[07/20 15:25:14] cifar10-global-slim-resnet56 INFO: Epoch 0/100, Acc=0.9088, Val Loss=0.3215, lr=0.0100
+[07/20 15:25:39] cifar10-global-slim-resnet56 INFO: Epoch 1/100, Acc=0.9114, Val Loss=0.3050, lr=0.0100
+[07/20 15:26:03] cifar10-global-slim-resnet56 INFO: Epoch 2/100, Acc=0.9098, Val Loss=0.3070, lr=0.0100
+[07/20 15:26:29] cifar10-global-slim-resnet56 INFO: Epoch 3/100, Acc=0.9183, Val Loss=0.3023, lr=0.0100
+[07/20 15:26:54] cifar10-global-slim-resnet56 INFO: Epoch 4/100, Acc=0.9066, Val Loss=0.3324, lr=0.0100
+[07/20 15:27:19] cifar10-global-slim-resnet56 INFO: Epoch 5/100, Acc=0.9101, Val Loss=0.3055, lr=0.0100
+[07/20 15:27:43] cifar10-global-slim-resnet56 INFO: Epoch 6/100, Acc=0.9141, Val Loss=0.3261, lr=0.0100
+[07/20 15:28:08] cifar10-global-slim-resnet56 INFO: Epoch 7/100, Acc=0.9102, Val Loss=0.3205, lr=0.0100
+[07/20 15:28:33] cifar10-global-slim-resnet56 INFO: Epoch 8/100, Acc=0.9131, Val Loss=0.3259, lr=0.0100
+[07/20 15:28:58] cifar10-global-slim-resnet56 INFO: Epoch 9/100, Acc=0.9129, Val Loss=0.3311, lr=0.0100
+[07/20 15:29:23] cifar10-global-slim-resnet56 INFO: Epoch 10/100, Acc=0.9164, Val Loss=0.3079, lr=0.0100
+[07/20 15:29:47] cifar10-global-slim-resnet56 INFO: Epoch 11/100, Acc=0.9076, Val Loss=0.3582, lr=0.0100
+[07/20 15:30:12] cifar10-global-slim-resnet56 INFO: Epoch 12/100, Acc=0.9134, Val Loss=0.3269, lr=0.0100
+[07/20 15:30:36] cifar10-global-slim-resnet56 INFO: Epoch 13/100, Acc=0.9182, Val Loss=0.3122, lr=0.0100
+[07/20 15:31:01] cifar10-global-slim-resnet56 INFO: Epoch 14/100, Acc=0.9163, Val Loss=0.3232, lr=0.0100
+[07/20 15:31:26] cifar10-global-slim-resnet56 INFO: Epoch 15/100, Acc=0.9136, Val Loss=0.3256, lr=0.0100
+[07/20 15:31:51] cifar10-global-slim-resnet56 INFO: Epoch 16/100, Acc=0.9156, Val Loss=0.3194, lr=0.0100
+[07/20 15:32:15] cifar10-global-slim-resnet56 INFO: Epoch 17/100, Acc=0.9226, Val Loss=0.3104, lr=0.0100
+[07/20 15:32:40] cifar10-global-slim-resnet56 INFO: Epoch 18/100, Acc=0.9159, Val Loss=0.3228, lr=0.0100
+[07/20 15:33:04] cifar10-global-slim-resnet56 INFO: Epoch 19/100, Acc=0.9186, Val Loss=0.2996, lr=0.0100
+[07/20 15:33:30] cifar10-global-slim-resnet56 INFO: Epoch 20/100, Acc=0.9215, Val Loss=0.3191, lr=0.0100
+[07/20 15:33:54] cifar10-global-slim-resnet56 INFO: Epoch 21/100, Acc=0.9215, Val Loss=0.2943, lr=0.0100
+[07/20 15:34:19] cifar10-global-slim-resnet56 INFO: Epoch 22/100, Acc=0.9253, Val Loss=0.2928, lr=0.0100
+[07/20 15:34:44] cifar10-global-slim-resnet56 INFO: Epoch 23/100, Acc=0.9214, Val Loss=0.3091, lr=0.0100
+[07/20 15:35:08] cifar10-global-slim-resnet56 INFO: Epoch 24/100, Acc=0.9148, Val Loss=0.3374, lr=0.0100
+[07/20 15:35:33] cifar10-global-slim-resnet56 INFO: Epoch 25/100, Acc=0.9197, Val Loss=0.3213, lr=0.0100
+[07/20 15:35:58] cifar10-global-slim-resnet56 INFO: Epoch 26/100, Acc=0.9246, Val Loss=0.3028, lr=0.0100
+[07/20 15:36:22] cifar10-global-slim-resnet56 INFO: Epoch 27/100, Acc=0.9154, Val Loss=0.3415, lr=0.0100
+[07/20 15:36:48] cifar10-global-slim-resnet56 INFO: Epoch 28/100, Acc=0.9295, Val Loss=0.2897, lr=0.0100
+[07/20 15:37:12] cifar10-global-slim-resnet56 INFO: Epoch 29/100, Acc=0.9253, Val Loss=0.3089, lr=0.0100
+[07/20 15:37:37] cifar10-global-slim-resnet56 INFO: Epoch 30/100, Acc=0.9173, Val Loss=0.3387, lr=0.0100
+[07/20 15:38:02] cifar10-global-slim-resnet56 INFO: Epoch 31/100, Acc=0.9225, Val Loss=0.3249, lr=0.0100
+[07/20 15:38:26] cifar10-global-slim-resnet56 INFO: Epoch 32/100, Acc=0.9253, Val Loss=0.3102, lr=0.0100
+[07/20 15:38:51] cifar10-global-slim-resnet56 INFO: Epoch 33/100, Acc=0.9253, Val Loss=0.3109, lr=0.0100
+[07/20 15:39:16] cifar10-global-slim-resnet56 INFO: Epoch 34/100, Acc=0.9276, Val Loss=0.3078, lr=0.0100
+[07/20 15:39:40] cifar10-global-slim-resnet56 INFO: Epoch 35/100, Acc=0.9220, Val Loss=0.3240, lr=0.0100
+[07/20 15:40:05] cifar10-global-slim-resnet56 INFO: Epoch 36/100, Acc=0.9252, Val Loss=0.3213, lr=0.0100
+[07/20 15:40:29] cifar10-global-slim-resnet56 INFO: Epoch 37/100, Acc=0.9177, Val Loss=0.3261, lr=0.0100
+[07/20 15:40:54] cifar10-global-slim-resnet56 INFO: Epoch 38/100, Acc=0.9270, Val Loss=0.3065, lr=0.0100
+[07/20 15:41:19] cifar10-global-slim-resnet56 INFO: Epoch 39/100, Acc=0.9251, Val Loss=0.3181, lr=0.0100
+[07/20 15:41:44] cifar10-global-slim-resnet56 INFO: Epoch 40/100, Acc=0.9229, Val Loss=0.3284, lr=0.0100
+[07/20 15:42:09] cifar10-global-slim-resnet56 INFO: Epoch 41/100, Acc=0.9206, Val Loss=0.3486, lr=0.0100
+[07/20 15:42:34] cifar10-global-slim-resnet56 INFO: Epoch 42/100, Acc=0.9238, Val Loss=0.3341, lr=0.0100
+[07/20 15:42:59] cifar10-global-slim-resnet56 INFO: Epoch 43/100, Acc=0.9222, Val Loss=0.3298, lr=0.0100
+[07/20 15:43:24] cifar10-global-slim-resnet56 INFO: Epoch 44/100, Acc=0.9193, Val Loss=0.3465, lr=0.0100
+[07/20 15:43:48] cifar10-global-slim-resnet56 INFO: Epoch 45/100, Acc=0.9251, Val Loss=0.3247, lr=0.0100
+[07/20 15:44:13] cifar10-global-slim-resnet56 INFO: Epoch 46/100, Acc=0.9229, Val Loss=0.3312, lr=0.0100
+[07/20 15:44:38] cifar10-global-slim-resnet56 INFO: Epoch 47/100, Acc=0.9217, Val Loss=0.3416, lr=0.0100
+[07/20 15:45:03] cifar10-global-slim-resnet56 INFO: Epoch 48/100, Acc=0.9260, Val Loss=0.3246, lr=0.0100
+[07/20 15:45:27] cifar10-global-slim-resnet56 INFO: Epoch 49/100, Acc=0.9249, Val Loss=0.3358, lr=0.0100
+[07/20 15:45:52] cifar10-global-slim-resnet56 INFO: Epoch 50/100, Acc=0.9210, Val Loss=0.3448, lr=0.0100
+[07/20 15:46:17] cifar10-global-slim-resnet56 INFO: Epoch 51/100, Acc=0.9266, Val Loss=0.3221, lr=0.0100
+[07/20 15:46:42] cifar10-global-slim-resnet56 INFO: Epoch 52/100, Acc=0.9129, Val Loss=0.3905, lr=0.0100
+[07/20 15:47:07] cifar10-global-slim-resnet56 INFO: Epoch 53/100, Acc=0.9196, Val Loss=0.3450, lr=0.0100
+[07/20 15:47:31] cifar10-global-slim-resnet56 INFO: Epoch 54/100, Acc=0.9285, Val Loss=0.3155, lr=0.0100
+[07/20 15:47:56] cifar10-global-slim-resnet56 INFO: Epoch 55/100, Acc=0.9274, Val Loss=0.3298, lr=0.0100
+[07/20 15:48:21] cifar10-global-slim-resnet56 INFO: Epoch 56/100, Acc=0.9220, Val Loss=0.3644, lr=0.0100
+[07/20 15:48:46] cifar10-global-slim-resnet56 INFO: Epoch 57/100, Acc=0.9254, Val Loss=0.3275, lr=0.0100
+[07/20 15:49:11] cifar10-global-slim-resnet56 INFO: Epoch 58/100, Acc=0.9173, Val Loss=0.3706, lr=0.0100
+[07/20 15:49:36] cifar10-global-slim-resnet56 INFO: Epoch 59/100, Acc=0.9218, Val Loss=0.3564, lr=0.0100
+[07/20 15:50:00] cifar10-global-slim-resnet56 INFO: Epoch 60/100, Acc=0.9316, Val Loss=0.3092, lr=0.0010
+[07/20 15:50:26] cifar10-global-slim-resnet56 INFO: Epoch 61/100, Acc=0.9322, Val Loss=0.3062, lr=0.0010
+[07/20 15:50:51] cifar10-global-slim-resnet56 INFO: Epoch 62/100, Acc=0.9339, Val Loss=0.3026, lr=0.0010
+[07/20 15:51:15] cifar10-global-slim-resnet56 INFO: Epoch 63/100, Acc=0.9339, Val Loss=0.3032, lr=0.0010
+[07/20 15:51:40] cifar10-global-slim-resnet56 INFO: Epoch 64/100, Acc=0.9334, Val Loss=0.3050, lr=0.0010
+[07/20 15:52:04] cifar10-global-slim-resnet56 INFO: Epoch 65/100, Acc=0.9350, Val Loss=0.3049, lr=0.0010
+[07/20 15:52:29] cifar10-global-slim-resnet56 INFO: Epoch 66/100, Acc=0.9357, Val Loss=0.3058, lr=0.0010
+[07/20 15:52:54] cifar10-global-slim-resnet56 INFO: Epoch 67/100, Acc=0.9350, Val Loss=0.3043, lr=0.0010
+[07/20 15:53:19] cifar10-global-slim-resnet56 INFO: Epoch 68/100, Acc=0.9363, Val Loss=0.3048, lr=0.0010
+[07/20 15:53:43] cifar10-global-slim-resnet56 INFO: Epoch 69/100, Acc=0.9358, Val Loss=0.3050, lr=0.0010
+[07/20 15:54:08] cifar10-global-slim-resnet56 INFO: Epoch 70/100, Acc=0.9364, Val Loss=0.3049, lr=0.0010
+[07/20 15:54:33] cifar10-global-slim-resnet56 INFO: Epoch 71/100, Acc=0.9352, Val Loss=0.3066, lr=0.0010
+[07/20 15:54:57] cifar10-global-slim-resnet56 INFO: Epoch 72/100, Acc=0.9361, Val Loss=0.3059, lr=0.0010
+[07/20 15:55:23] cifar10-global-slim-resnet56 INFO: Epoch 73/100, Acc=0.9358, Val Loss=0.3061, lr=0.0010
+[07/20 15:55:48] cifar10-global-slim-resnet56 INFO: Epoch 74/100, Acc=0.9349, Val Loss=0.3074, lr=0.0010
+[07/20 15:56:15] cifar10-global-slim-resnet56 INFO: Epoch 75/100, Acc=0.9360, Val Loss=0.3032, lr=0.0010
+[07/20 15:56:40] cifar10-global-slim-resnet56 INFO: Epoch 76/100, Acc=0.9368, Val Loss=0.3062, lr=0.0010
+[07/20 15:57:08] cifar10-global-slim-resnet56 INFO: Epoch 77/100, Acc=0.9366, Val Loss=0.3018, lr=0.0010
+[07/20 15:57:33] cifar10-global-slim-resnet56 INFO: Epoch 78/100, Acc=0.9361, Val Loss=0.3050, lr=0.0010
+[07/20 15:57:59] cifar10-global-slim-resnet56 INFO: Epoch 79/100, Acc=0.9365, Val Loss=0.3057, lr=0.0010
+[07/20 15:58:25] cifar10-global-slim-resnet56 INFO: Epoch 80/100, Acc=0.9373, Val Loss=0.3081, lr=0.0001
+[07/20 15:58:50] cifar10-global-slim-resnet56 INFO: Epoch 81/100, Acc=0.9362, Val Loss=0.3065, lr=0.0001
+[07/20 15:59:16] cifar10-global-slim-resnet56 INFO: Epoch 82/100, Acc=0.9358, Val Loss=0.3069, lr=0.0001
+[07/20 15:59:43] cifar10-global-slim-resnet56 INFO: Epoch 83/100, Acc=0.9373, Val Loss=0.3061, lr=0.0001
+[07/20 16:00:08] cifar10-global-slim-resnet56 INFO: Epoch 84/100, Acc=0.9372, Val Loss=0.3050, lr=0.0001
+[07/20 16:00:35] cifar10-global-slim-resnet56 INFO: Epoch 85/100, Acc=0.9353, Val Loss=0.3068, lr=0.0001
+[07/20 16:01:02] cifar10-global-slim-resnet56 INFO: Epoch 86/100, Acc=0.9362, Val Loss=0.3048, lr=0.0001
+[07/20 16:01:30] cifar10-global-slim-resnet56 INFO: Epoch 87/100, Acc=0.9369, Val Loss=0.3051, lr=0.0001
+[07/20 16:01:57] cifar10-global-slim-resnet56 INFO: Epoch 88/100, Acc=0.9367, Val Loss=0.3068, lr=0.0001
+[07/20 16:02:22] cifar10-global-slim-resnet56 INFO: Epoch 89/100, Acc=0.9362, Val Loss=0.3056, lr=0.0001
+[07/20 16:02:48] cifar10-global-slim-resnet56 INFO: Epoch 90/100, Acc=0.9364, Val Loss=0.3068, lr=0.0001
+[07/20 16:03:13] cifar10-global-slim-resnet56 INFO: Epoch 91/100, Acc=0.9372, Val Loss=0.3058, lr=0.0001
+[07/20 16:03:40] cifar10-global-slim-resnet56 INFO: Epoch 92/100, Acc=0.9367, Val Loss=0.3044, lr=0.0001
+[07/20 16:04:07] cifar10-global-slim-resnet56 INFO: Epoch 93/100, Acc=0.9356, Val Loss=0.3067, lr=0.0001
+[07/20 16:04:33] cifar10-global-slim-resnet56 INFO: Epoch 94/100, Acc=0.9366, Val Loss=0.3080, lr=0.0001
+[07/20 16:04:58] cifar10-global-slim-resnet56 INFO: Epoch 95/100, Acc=0.9367, Val Loss=0.3025, lr=0.0001
+[07/20 16:05:24] cifar10-global-slim-resnet56 INFO: Epoch 96/100, Acc=0.9357, Val Loss=0.3045, lr=0.0001
+[07/20 16:05:50] cifar10-global-slim-resnet56 INFO: Epoch 97/100, Acc=0.9368, Val Loss=0.3046, lr=0.0001
+[07/20 16:06:16] cifar10-global-slim-resnet56 INFO: Epoch 98/100, Acc=0.9360, Val Loss=0.3069, lr=0.0001
+[07/20 16:06:42] cifar10-global-slim-resnet56 INFO: Epoch 99/100, Acc=0.9357, Val Loss=0.3064, lr=0.0001
+[07/20 16:06:42] cifar10-global-slim-resnet56 INFO: Best Acc=0.9373
+[07/20 16:06:42] cifar10-global-slim-resnet56 INFO: Loading the sparse model from run/cifar10/prune/cifar10-global-slim-resnet56/reg_cifar10_resnet56_slim_0.0001.pth...
+[07/20 16:06:44] cifar10-global-slim-resnet56 INFO: Pruning...
+[07/20 16:06:50] cifar10-global-slim-resnet56 INFO: ResNet(
+  (conv1): Conv2d(3, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+  (bn1): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (relu): ReLU(inplace=True)
+  (layer1): Sequential(
+    (0): BasicBlock(
+      (conv1): Conv2d(9, 12, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(12, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(12, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (1): BasicBlock(
+      (conv1): Conv2d(9, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(3, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(3, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (2): BasicBlock(
+      (conv1): Conv2d(9, 4, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(4, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(4, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (3): BasicBlock(
+      (conv1): Conv2d(9, 5, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(5, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(5, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (4): BasicBlock(
+      (conv1): Conv2d(9, 12, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(12, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(12, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (5): BasicBlock(
+      (conv1): Conv2d(9, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(7, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (6): BasicBlock(
+      (conv1): Conv2d(9, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(9, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (7): BasicBlock(
+      (conv1): Conv2d(9, 15, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(15, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(15, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (8): BasicBlock(
+      (conv1): Conv2d(9, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(8, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (layer2): Sequential(
+    (0): BasicBlock(
+      (conv1): Conv2d(9, 30, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(30, 31, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(31, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (downsample): Sequential(
+        (0): Conv2d(9, 31, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(31, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): Conv2d(31, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(16, 31, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(31, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (2): BasicBlock(
+      (conv1): Conv2d(31, 28, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(28, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(28, 31, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(31, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (3): BasicBlock(
+      (conv1): Conv2d(31, 27, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(27, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(27, 31, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(31, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (4): BasicBlock(
+      (conv1): Conv2d(31, 27, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(27, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(27, 31, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(31, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (5): BasicBlock(
+      (conv1): Conv2d(31, 11, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(11, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(11, 31, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(31, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (6): BasicBlock(
+      (conv1): Conv2d(31, 10, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(10, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(10, 31, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(31, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (7): BasicBlock(
+      (conv1): Conv2d(31, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(9, 31, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(31, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (8): BasicBlock(
+      (conv1): Conv2d(31, 4, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(4, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(4, 31, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(31, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (layer3): Sequential(
+    (0): BasicBlock(
+      (conv1): Conv2d(31, 61, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(61, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(61, 41, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(41, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (downsample): Sequential(
+        (0): Conv2d(31, 41, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(41, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): Conv2d(41, 62, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(62, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(62, 41, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(41, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (2): BasicBlock(
+      (conv1): Conv2d(41, 57, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(57, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(57, 41, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(41, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (3): BasicBlock(
+      (conv1): Conv2d(41, 57, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(57, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(57, 41, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(41, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (4): BasicBlock(
+      (conv1): Conv2d(41, 58, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(58, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(58, 41, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(41, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (5): BasicBlock(
+      (conv1): Conv2d(41, 57, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(57, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(57, 41, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(41, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (6): BasicBlock(
+      (conv1): Conv2d(41, 53, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(53, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(53, 41, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(41, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (7): BasicBlock(
+      (conv1): Conv2d(41, 50, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(50, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(50, 41, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(41, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (8): BasicBlock(
+      (conv1): Conv2d(41, 53, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(53, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(53, 41, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(41, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (avgpool): AvgPool2d(kernel_size=8, stride=8, padding=0)
+  (fc): Linear(in_features=41, out_features=10, bias=True)
+)
+[07/20 16:06:51] cifar10-global-slim-resnet56 INFO: Params: 0.86 M => 0.47 M (55.08%)
+[07/20 16:06:51] cifar10-global-slim-resnet56 INFO: FLOPs: 127.12 M => 58.97 M (46.39%, 2.16X )
+[07/20 16:06:51] cifar10-global-slim-resnet56 INFO: Acc: 0.9373 => 0.0968
+[07/20 16:06:51] cifar10-global-slim-resnet56 INFO: Val Loss: 0.3081 => 3.2124
+[07/20 16:06:51] cifar10-global-slim-resnet56 INFO: Finetuning...
+[07/20 16:07:09] cifar10-global-slim-resnet56 INFO: Epoch 0/100, Acc=0.8456, Val Loss=0.4697, lr=0.0100
+[07/20 16:07:27] cifar10-global-slim-resnet56 INFO: Epoch 1/100, Acc=0.8797, Val Loss=0.3772, lr=0.0100
+[07/20 16:07:44] cifar10-global-slim-resnet56 INFO: Epoch 2/100, Acc=0.8804, Val Loss=0.3950, lr=0.0100
+[07/20 16:08:02] cifar10-global-slim-resnet56 INFO: Epoch 3/100, Acc=0.8888, Val Loss=0.3768, lr=0.0100
+[07/20 16:08:19] cifar10-global-slim-resnet56 INFO: Epoch 4/100, Acc=0.8961, Val Loss=0.3320, lr=0.0100
+[07/20 16:08:37] cifar10-global-slim-resnet56 INFO: Epoch 5/100, Acc=0.8966, Val Loss=0.3522, lr=0.0100
+[07/20 16:08:54] cifar10-global-slim-resnet56 INFO: Epoch 6/100, Acc=0.8839, Val Loss=0.4093, lr=0.0100
+[07/20 16:09:11] cifar10-global-slim-resnet56 INFO: Epoch 7/100, Acc=0.8917, Val Loss=0.3489, lr=0.0100
+[07/20 16:09:29] cifar10-global-slim-resnet56 INFO: Epoch 8/100, Acc=0.8997, Val Loss=0.3340, lr=0.0100
+[07/20 16:09:46] cifar10-global-slim-resnet56 INFO: Epoch 9/100, Acc=0.8990, Val Loss=0.3386, lr=0.0100
+[07/20 16:10:03] cifar10-global-slim-resnet56 INFO: Epoch 10/100, Acc=0.8918, Val Loss=0.3756, lr=0.0100
+[07/20 16:10:20] cifar10-global-slim-resnet56 INFO: Epoch 11/100, Acc=0.8993, Val Loss=0.3459, lr=0.0100
+[07/20 16:10:38] cifar10-global-slim-resnet56 INFO: Epoch 12/100, Acc=0.8931, Val Loss=0.3621, lr=0.0100
+[07/20 16:10:55] cifar10-global-slim-resnet56 INFO: Epoch 13/100, Acc=0.8978, Val Loss=0.3433, lr=0.0100
+[07/20 16:11:13] cifar10-global-slim-resnet56 INFO: Epoch 14/100, Acc=0.9045, Val Loss=0.3137, lr=0.0100
+[07/20 16:11:32] cifar10-global-slim-resnet56 INFO: Epoch 15/100, Acc=0.8996, Val Loss=0.3362, lr=0.0100
+[07/20 16:11:49] cifar10-global-slim-resnet56 INFO: Epoch 16/100, Acc=0.8937, Val Loss=0.3583, lr=0.0100
+[07/20 16:12:07] cifar10-global-slim-resnet56 INFO: Epoch 17/100, Acc=0.8960, Val Loss=0.3604, lr=0.0100
+[07/20 16:12:25] cifar10-global-slim-resnet56 INFO: Epoch 18/100, Acc=0.9003, Val Loss=0.3391, lr=0.0100
+[07/20 16:12:43] cifar10-global-slim-resnet56 INFO: Epoch 19/100, Acc=0.8912, Val Loss=0.3608, lr=0.0100
+[07/20 16:13:01] cifar10-global-slim-resnet56 INFO: Epoch 20/100, Acc=0.8875, Val Loss=0.3981, lr=0.0100
+[07/20 16:13:18] cifar10-global-slim-resnet56 INFO: Epoch 21/100, Acc=0.8993, Val Loss=0.3319, lr=0.0100
+[07/20 16:13:36] cifar10-global-slim-resnet56 INFO: Epoch 22/100, Acc=0.8982, Val Loss=0.3408, lr=0.0100
+[07/20 16:13:53] cifar10-global-slim-resnet56 INFO: Epoch 23/100, Acc=0.8962, Val Loss=0.3459, lr=0.0100
+[07/20 16:14:11] cifar10-global-slim-resnet56 INFO: Epoch 24/100, Acc=0.9010, Val Loss=0.3386, lr=0.0100
+[07/20 16:14:28] cifar10-global-slim-resnet56 INFO: Epoch 25/100, Acc=0.8812, Val Loss=0.4142, lr=0.0100
+[07/20 16:14:45] cifar10-global-slim-resnet56 INFO: Epoch 26/100, Acc=0.8973, Val Loss=0.3714, lr=0.0100
+[07/20 16:15:03] cifar10-global-slim-resnet56 INFO: Epoch 27/100, Acc=0.8996, Val Loss=0.3361, lr=0.0100
+[07/20 16:15:20] cifar10-global-slim-resnet56 INFO: Epoch 28/100, Acc=0.8920, Val Loss=0.3883, lr=0.0100
+[07/20 16:15:37] cifar10-global-slim-resnet56 INFO: Epoch 29/100, Acc=0.8970, Val Loss=0.3645, lr=0.0100
+[07/20 16:15:55] cifar10-global-slim-resnet56 INFO: Epoch 30/100, Acc=0.8948, Val Loss=0.3601, lr=0.0100
+[07/20 16:16:13] cifar10-global-slim-resnet56 INFO: Epoch 31/100, Acc=0.8975, Val Loss=0.3512, lr=0.0100
+[07/20 16:16:30] cifar10-global-slim-resnet56 INFO: Epoch 32/100, Acc=0.8945, Val Loss=0.3835, lr=0.0100
+[07/20 16:16:47] cifar10-global-slim-resnet56 INFO: Epoch 33/100, Acc=0.8973, Val Loss=0.3387, lr=0.0100
+[07/20 16:17:05] cifar10-global-slim-resnet56 INFO: Epoch 34/100, Acc=0.9011, Val Loss=0.3381, lr=0.0100
+[07/20 16:17:23] cifar10-global-slim-resnet56 INFO: Epoch 35/100, Acc=0.9029, Val Loss=0.3298, lr=0.0100
+[07/20 16:17:40] cifar10-global-slim-resnet56 INFO: Epoch 36/100, Acc=0.8751, Val Loss=0.4391, lr=0.0100
+[07/20 16:17:57] cifar10-global-slim-resnet56 INFO: Epoch 37/100, Acc=0.8892, Val Loss=0.4121, lr=0.0100
+[07/20 16:18:15] cifar10-global-slim-resnet56 INFO: Epoch 38/100, Acc=0.8917, Val Loss=0.3832, lr=0.0100
+[07/20 16:18:32] cifar10-global-slim-resnet56 INFO: Epoch 39/100, Acc=0.9002, Val Loss=0.3376, lr=0.0100
+[07/20 16:18:50] cifar10-global-slim-resnet56 INFO: Epoch 40/100, Acc=0.8981, Val Loss=0.3492, lr=0.0100
+[07/20 16:19:07] cifar10-global-slim-resnet56 INFO: Epoch 41/100, Acc=0.8897, Val Loss=0.3946, lr=0.0100
+[07/20 16:19:24] cifar10-global-slim-resnet56 INFO: Epoch 42/100, Acc=0.9044, Val Loss=0.3255, lr=0.0100
+[07/20 16:19:41] cifar10-global-slim-resnet56 INFO: Epoch 43/100, Acc=0.9136, Val Loss=0.2942, lr=0.0100
+[07/20 16:19:59] cifar10-global-slim-resnet56 INFO: Epoch 44/100, Acc=0.8877, Val Loss=0.3956, lr=0.0100
+[07/20 16:20:16] cifar10-global-slim-resnet56 INFO: Epoch 45/100, Acc=0.9028, Val Loss=0.3327, lr=0.0100
+[07/20 16:20:33] cifar10-global-slim-resnet56 INFO: Epoch 46/100, Acc=0.8652, Val Loss=0.4811, lr=0.0100
+[07/20 16:20:51] cifar10-global-slim-resnet56 INFO: Epoch 47/100, Acc=0.8985, Val Loss=0.3806, lr=0.0100
+[07/20 16:21:09] cifar10-global-slim-resnet56 INFO: Epoch 48/100, Acc=0.9056, Val Loss=0.3378, lr=0.0100
+[07/20 16:21:26] cifar10-global-slim-resnet56 INFO: Epoch 49/100, Acc=0.9033, Val Loss=0.3469, lr=0.0100
+[07/20 16:21:44] cifar10-global-slim-resnet56 INFO: Epoch 50/100, Acc=0.8981, Val Loss=0.3595, lr=0.0100
+[07/20 16:22:01] cifar10-global-slim-resnet56 INFO: Epoch 51/100, Acc=0.8894, Val Loss=0.3978, lr=0.0100
+[07/20 16:22:19] cifar10-global-slim-resnet56 INFO: Epoch 52/100, Acc=0.8940, Val Loss=0.3741, lr=0.0100
+[07/20 16:22:36] cifar10-global-slim-resnet56 INFO: Epoch 53/100, Acc=0.8926, Val Loss=0.3807, lr=0.0100
+[07/20 16:22:54] cifar10-global-slim-resnet56 INFO: Epoch 54/100, Acc=0.8945, Val Loss=0.3592, lr=0.0100
+[07/20 16:23:12] cifar10-global-slim-resnet56 INFO: Epoch 55/100, Acc=0.8756, Val Loss=0.4583, lr=0.0100
+[07/20 16:23:29] cifar10-global-slim-resnet56 INFO: Epoch 56/100, Acc=0.8883, Val Loss=0.4007, lr=0.0100
+[07/20 16:23:48] cifar10-global-slim-resnet56 INFO: Epoch 57/100, Acc=0.8993, Val Loss=0.3497, lr=0.0100
+[07/20 16:24:06] cifar10-global-slim-resnet56 INFO: Epoch 58/100, Acc=0.9023, Val Loss=0.3308, lr=0.0100
+[07/20 16:24:23] cifar10-global-slim-resnet56 INFO: Epoch 59/100, Acc=0.8827, Val Loss=0.4252, lr=0.0100
+[07/20 16:24:41] cifar10-global-slim-resnet56 INFO: Epoch 60/100, Acc=0.9240, Val Loss=0.2592, lr=0.0010
+[07/20 16:24:59] cifar10-global-slim-resnet56 INFO: Epoch 61/100, Acc=0.9267, Val Loss=0.2516, lr=0.0010
+[07/20 16:25:17] cifar10-global-slim-resnet56 INFO: Epoch 62/100, Acc=0.9283, Val Loss=0.2534, lr=0.0010
+[07/20 16:25:35] cifar10-global-slim-resnet56 INFO: Epoch 63/100, Acc=0.9297, Val Loss=0.2532, lr=0.0010
+[07/20 16:25:53] cifar10-global-slim-resnet56 INFO: Epoch 64/100, Acc=0.9304, Val Loss=0.2553, lr=0.0010
+[07/20 16:26:10] cifar10-global-slim-resnet56 INFO: Epoch 65/100, Acc=0.9298, Val Loss=0.2562, lr=0.0010
+[07/20 16:26:28] cifar10-global-slim-resnet56 INFO: Epoch 66/100, Acc=0.9296, Val Loss=0.2584, lr=0.0010
+[07/20 16:26:44] cifar10-global-slim-resnet56 INFO: Epoch 67/100, Acc=0.9322, Val Loss=0.2561, lr=0.0010
+[07/20 16:27:03] cifar10-global-slim-resnet56 INFO: Epoch 68/100, Acc=0.9305, Val Loss=0.2606, lr=0.0010
+[07/20 16:27:20] cifar10-global-slim-resnet56 INFO: Epoch 69/100, Acc=0.9293, Val Loss=0.2606, lr=0.0010
+[07/20 16:27:39] cifar10-global-slim-resnet56 INFO: Epoch 70/100, Acc=0.9303, Val Loss=0.2627, lr=0.0010
+[07/20 16:27:56] cifar10-global-slim-resnet56 INFO: Epoch 71/100, Acc=0.9304, Val Loss=0.2641, lr=0.0010
+[07/20 16:28:14] cifar10-global-slim-resnet56 INFO: Epoch 72/100, Acc=0.9310, Val Loss=0.2587, lr=0.0010
+[07/20 16:28:31] cifar10-global-slim-resnet56 INFO: Epoch 73/100, Acc=0.9312, Val Loss=0.2602, lr=0.0010
+[07/20 16:28:49] cifar10-global-slim-resnet56 INFO: Epoch 74/100, Acc=0.9316, Val Loss=0.2684, lr=0.0010
+[07/20 16:29:06] cifar10-global-slim-resnet56 INFO: Epoch 75/100, Acc=0.9294, Val Loss=0.2710, lr=0.0010
+[07/20 16:29:22] cifar10-global-slim-resnet56 INFO: Epoch 76/100, Acc=0.9279, Val Loss=0.2701, lr=0.0010
+[07/20 16:29:40] cifar10-global-slim-resnet56 INFO: Epoch 77/100, Acc=0.9312, Val Loss=0.2656, lr=0.0010
+[07/20 16:29:58] cifar10-global-slim-resnet56 INFO: Epoch 78/100, Acc=0.9297, Val Loss=0.2684, lr=0.0010
+[07/20 16:30:16] cifar10-global-slim-resnet56 INFO: Epoch 79/100, Acc=0.9299, Val Loss=0.2707, lr=0.0010
+[07/20 16:30:34] cifar10-global-slim-resnet56 INFO: Epoch 80/100, Acc=0.9305, Val Loss=0.2680, lr=0.0001
+[07/20 16:30:51] cifar10-global-slim-resnet56 INFO: Epoch 81/100, Acc=0.9311, Val Loss=0.2654, lr=0.0001
+[07/20 16:31:09] cifar10-global-slim-resnet56 INFO: Epoch 82/100, Acc=0.9305, Val Loss=0.2662, lr=0.0001
+[07/20 16:31:27] cifar10-global-slim-resnet56 INFO: Epoch 83/100, Acc=0.9307, Val Loss=0.2642, lr=0.0001
+[07/20 16:31:44] cifar10-global-slim-resnet56 INFO: Epoch 84/100, Acc=0.9301, Val Loss=0.2659, lr=0.0001
+[07/20 16:32:01] cifar10-global-slim-resnet56 INFO: Epoch 85/100, Acc=0.9299, Val Loss=0.2686, lr=0.0001
+[07/20 16:32:19] cifar10-global-slim-resnet56 INFO: Epoch 86/100, Acc=0.9302, Val Loss=0.2651, lr=0.0001
+[07/20 16:32:37] cifar10-global-slim-resnet56 INFO: Epoch 87/100, Acc=0.9298, Val Loss=0.2665, lr=0.0001
+[07/20 16:32:53] cifar10-global-slim-resnet56 INFO: Epoch 88/100, Acc=0.9293, Val Loss=0.2680, lr=0.0001
+[07/20 16:33:11] cifar10-global-slim-resnet56 INFO: Epoch 89/100, Acc=0.9317, Val Loss=0.2664, lr=0.0001
+[07/20 16:33:27] cifar10-global-slim-resnet56 INFO: Epoch 90/100, Acc=0.9305, Val Loss=0.2694, lr=0.0001
+[07/20 16:33:44] cifar10-global-slim-resnet56 INFO: Epoch 91/100, Acc=0.9313, Val Loss=0.2676, lr=0.0001
+[07/20 16:34:02] cifar10-global-slim-resnet56 INFO: Epoch 92/100, Acc=0.9304, Val Loss=0.2695, lr=0.0001
+[07/20 16:34:19] cifar10-global-slim-resnet56 INFO: Epoch 93/100, Acc=0.9302, Val Loss=0.2655, lr=0.0001
+[07/20 16:34:35] cifar10-global-slim-resnet56 INFO: Epoch 94/100, Acc=0.9298, Val Loss=0.2667, lr=0.0001
+[07/20 16:34:52] cifar10-global-slim-resnet56 INFO: Epoch 95/100, Acc=0.9317, Val Loss=0.2675, lr=0.0001
+[07/20 16:35:09] cifar10-global-slim-resnet56 INFO: Epoch 96/100, Acc=0.9300, Val Loss=0.2664, lr=0.0001
+[07/20 16:35:26] cifar10-global-slim-resnet56 INFO: Epoch 97/100, Acc=0.9313, Val Loss=0.2654, lr=0.0001
+[07/20 16:35:44] cifar10-global-slim-resnet56 INFO: Epoch 98/100, Acc=0.9317, Val Loss=0.2660, lr=0.0001
+[07/20 16:36:01] cifar10-global-slim-resnet56 INFO: Epoch 99/100, Acc=0.9300, Val Loss=0.2677, lr=0.0001
+[07/20 16:36:01] cifar10-global-slim-resnet56 INFO: Best Acc=0.9322
