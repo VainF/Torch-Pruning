@@ -4,7 +4,7 @@ import typing
 import torch
 import torch.nn as nn
 
-from ..importance import MagnitudeImportance
+from ..importance import MagnitudeImportance, GroupNormImportance
 from .. import function
 import math
 
@@ -48,7 +48,7 @@ class GrowingRegPruner(MetaPruner):
         self.base_reg = reg
         self._groups = list(self.DG.get_all_groups())
         self.group_lasso = True
-        self._l2_imp = MagnitudeImportance(p=2, group_reduction='mean', normalizer=None, target_types=target_types)
+        self._l2_imp = GroupNormImportance()
 
         group_reg = {}
         for group in self._groups:

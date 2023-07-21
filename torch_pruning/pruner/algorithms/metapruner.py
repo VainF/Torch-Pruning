@@ -219,8 +219,12 @@ class MetaPruner:
                 )
 
                 if self.round_to:
-                    n_pruned = n_pruned - (n_pruned % self.round_to)
-    
+                    rounded_channels = current_channels - n_pruned
+                    # round to the nearest multiple of round_to
+                    rounded_channels = rounded_channels - \
+                        (rounded_channels % self.round_to)
+                    n_pruned = current_channels - rounded_channels
+
                 if n_pruned <= 0:
                     continue
                 if ch_groups > 1:

@@ -33,6 +33,7 @@ parser.add_argument("--speed-up", type=float, default=2)
 parser.add_argument("--max-sparsity", type=float, default=1.0)
 parser.add_argument("--soft-keeping-ratio", type=float, default=0.0)
 parser.add_argument("--reg", type=float, default=5e-4)
+parser.add_argument("--delta_reg", type=float, default=1e-4, help='for growing regularization')
 parser.add_argument("--weight-decay", type=float, default=5e-4)
 
 parser.add_argument("--seed", type=int, default=None)
@@ -189,8 +190,8 @@ def get_pruner(model, example_inputs):
         pruner_entry = partial(tp.pruner.GroupNormPruner, reg=args.reg, global_pruning=args.global_pruning)
     elif args.method == "growing_reg":
         args.sparsity_learning = True
-        imp = tp.importance.MagnitudeImportance(p=2)
-        pruner_entry = partial(tp.pruner.GrowingRegPruner, reg=args.reg, global_pruning=args.global_pruning)
+        imp = tp.importance.GroupNormImportance(p=2)
+        pruner_entry = partial(tp.pruner.GrowingRegPruner, reg=args.reg, delta_reg=args.delta_reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
     

@@ -201,7 +201,7 @@ class Group(object):
             root_module, pruning_fn, root_pruning_idx = self[0][0].target.module, self[0][0].trigger, self[0][1]
             root_module_name = self._DG._module2name[root_module]
             self._DG._pruning_history.append([root_module_name, self._DG.is_out_channel_pruning_fn(pruning_fn), root_pruning_idx])
-
+    
     def add_dep(self, dep, idxs):
         self._group.append(GroupItem(dep=dep, idxs=idxs))
 
