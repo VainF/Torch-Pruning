@@ -9,27 +9,38 @@ import torch.nn as nn
 from .pruner import function
 from . import _helpers, utils, ops
 
+from ._helpers import UnwrappedParameters, _HybridIndex, GroupItem
+
 __all__ = ["Dependency", "Group", "DependencyGraph"]
 
+_PLACEHOLDER = None
+
+def equal_func(func1, func2):
+    return (
+        hasattr(func1, '__self__') and 
+        hasattr(func2, '__self__') and 
+        isinstance(func1.__self__, type(func2.__self__)) and 
+        func1.__name__ == func2.__name__
+    )
 
 class Node(object):
-    """ Nodes of DepGraph
+    """ Node of DepGraph
     """
-
     def __init__(self, module: nn.Module, grad_fn, name: str = None):
         # For Computational Graph (Tracing)
-        self.inputs = []
-        self.outputs = []
-        self.module = module
-        self.grad_fn = grad_fn
-        self._name = name
-        self.type = ops.module2type(module)
-        self.class_type = module.__class__
+        self.inputs = []  # input nodes
+        self.outputs = [] # output nodes
+        self.module = module # reference to torch.nn.Module
+
+        self.grad_fn = grad_fn # gradient function of module output
+        self._name = name # node name
+        self.type = ops.module2type(module) # node type (enum) 
+        self.module_class = module.__class__ # class type of the module
 
         # For Dependency Graph
         self.dependencies = []  # Adjacency List
-        self.enable_index_mapping = True
-        self.pruning_dim = -1
+        self.enable_index_mapping = True # whether to enable index mapping
+        self.pruning_dim = -1 # the dimension to be pruned
 
     @property
     def name(self):
@@ -42,7 +53,6 @@ class Node(object):
             return fmt
 
     def add_input(self, node, allow_dumplicated=False):
-        #if node not in self.inputs:
         if allow_dumplicated is True:
             self.inputs.append(node)
         else:
@@ -57,7 +67,7 @@ class Node(object):
                 self.outputs.append(node)
 
     def __repr__(self):
-        return "<Node: ({})>".format(self.name)
+        return str(self)
 
     def __str__(self):
         return "<Node: ({})>".format(self.name)
@@ -74,13 +84,13 @@ class Node(object):
         fmt += " " * 4 + "DEP:\n"
         for dep in self.dependencies:
             fmt += " " * 8 + "{}\n".format(dep)
-        fmt += "\tEnable_index_mapping={}\n".format(
-            self.enable_index_mapping)
+        fmt += "\tEnable_index_mapping={}, pruning_dim={}\n".format(
+            self.enable_index_mapping, self.pruning_dim)
         fmt = "-" * 32 + "\n"
         return fmt
 
 
-class Edge():  # for readability
+class Edge(): # for readability
     pass
 
 
@@ -103,15 +113,16 @@ class Dependency(Edge):
         self.trigger = trigger
         self.handler = handler
         self.source = source
-        self.target = target
-        self.index_mapping = [None, None]
+        self.target = target             
+        # Current coordinate system => Standard coordinate system => target coordinate system 
+        #                     index_mapping[0]              index_mapping[1]
+        self.index_mapping = [None, None] 
 
     def __call__(self, idxs: list):
-        self.handler.__self__.pruning_dim = self.target.pruning_dim
-        result = self.handler(
-            self.target.module,
-            idxs,
-        )
+        self.handler.__self__.pruning_dim = self.target.pruning_dim # set pruning_dim
+        if len(idxs)>0 and isinstance(idxs[0], _HybridIndex):
+            idxs = _helpers.to_plain_idxs(idxs)
+        result = self.handler(self.target.module, idxs)
         return result
 
     def __repr__(self):
@@ -130,41 +141,47 @@ class Dependency(Edge):
 
     def __eq__(self, other):
         return (
-            self.source == other.source
+            self.source == other.source 
             and self.trigger == other.trigger
             and self.handler == other.handler
             and self.target == other.target
         )
+    
+    @property
+    def layer(self):
+        return self.target.module
+
+    @property
+    def pruning_fn(self):
+        return self.handler
 
     def __hash__(self):
         return hash((self.source, self.target, self.trigger, self.handler))
 
 
-GroupItem = namedtuple('GroupItem', ['dep', 'idxs'])
-
-
 class Group(object):
     """A group that contains dependencies and pruning indices.   
     Each element is defined as a namedtuple('GroupItem', ['dep', 'idxs']).
-    A group is a iterable list 
+    A group is a iterable List just like
     [ [Dep1, Indices1], [Dep2, Indices2], ..., [DepK, IndicesK] ]
     """
 
     def __init__(self):
         self._group = list()
-        self._DG = None # for group.prune(idxs=NEW_IDXS)
+        self._DG = None # link to the DependencyGraph that produces this group. Will be filled by DependencyGraph.get_pruning_group.
 
     def prune(self, idxs=None, record_history=True):
         """Prune all coupled layers in the group
         """
-        if idxs is not None:
+        if idxs is not None: # prune the group with the specified indices
             module = self._group[0].dep.target.module
             pruning_fn = self._group[0].dep.handler
-            new_group = self._DG.get_pruning_group(module, pruning_fn, idxs)
+            new_group = self._DG.get_pruning_group(module, pruning_fn, idxs) # create a new group with the specified indices
             new_group.prune()
         else:
             for dep, idxs in self._group:
-                if dep.target.type == ops.OPTYPE.PARAMETER:
+                if dep.target.type == ops.OPTYPE.PARAMETER: 
+                    # prune unwrapped nn.Parameter
                     old_parameter = dep.target.module
                     name = self._DG._param_to_name[old_parameter]
                     self._DG._param_to_name.pop(old_parameter)
@@ -177,18 +194,22 @@ class Group(object):
                     self._DG._param_to_name[pruned_parameter] = name
                     self._DG.module2node[pruned_parameter] = self._DG.module2node.pop(old_parameter)
                     self._DG.module2node[pruned_parameter].module = pruned_parameter           
-                else:
+                else: # prune nn.Module
                     dep(idxs)
+        
         if record_history:
             root_module, pruning_fn, root_pruning_idx = self[0][0].target.module, self[0][0].trigger, self[0][1]
             root_module_name = self._DG._module2name[root_module]
             self._DG._pruning_history.append([root_module_name, self._DG.is_out_channel_pruning_fn(pruning_fn), root_pruning_idx])
-
+    
     def add_dep(self, dep, idxs):
         self._group.append(GroupItem(dep=dep, idxs=idxs))
 
     def __getitem__(self, k):
         return self._group[k]
+
+    def __setitem__(self, k, v):
+        self._group[k] = v
 
     @property
     def items(self):
@@ -200,8 +221,9 @@ class Group(object):
                 return True
         return False
 
-    def has_pruning_op(self, dep, idxs):
+    def has_pruning_op(self, dep: Dependency, idxs: _HybridIndex):
         for _dep, _idxs in self._group:
+            #_idxs = _helpers.to_plain_idxs(_idxs)
             if (
                 _dep.target == dep.target
                 and _dep.handler == dep.handler
@@ -216,7 +238,7 @@ class Group(object):
     def add_and_merge(self, dep, idxs):
         for i, (_dep, _idxs) in enumerate(self._group):
             if _dep.target == dep.target and _dep.handler == dep.handler:
-                self._group[i] = (_dep, list(set(_idxs + idxs)))
+                self._group[i] = GroupItem(dep=_dep, idxs=list(set(_idxs + idxs)))
                 return
         self.add_dep(dep, idxs)
 
@@ -244,13 +266,13 @@ class Group(object):
         return fmt
 
     def exec(self):
-        """old interface, replaced by group.prune()"""
+        """old interface, will be deprecated in the future."""
+        warnings.warn("Group.exec() will be deprecated in the future. Please use Group.prune() instead.")
         self.prune()
 
     def __call__(self):
         return self.prune()
 
-UnwrappedParameters = namedtuple('UnwrappedParameters', ['parameters', 'pruning_dim'])
 
 class DependencyGraph(object):
 
@@ -260,25 +282,26 @@ class DependencyGraph(object):
             ops.OPTYPE.SPLIT: ops.SplitPruner(),
             ops.OPTYPE.ELEMENTWISE: ops.ElementWisePruner(),
             ops.OPTYPE.RESHAPE: ops.ReshapePruner(),
-            ops.OPTYPE.CUSTOMIZED: None,
+            ops.OPTYPE.CUSTOMIZED: ops.CustomizedPruner(), # just a placeholder
         }
         self.REGISTERED_PRUNERS = function.PrunerBox.copy()  # shallow copy
-        self.REGISTERED_PRUNERS.update(_dummy_pruners)
-        self.CUSTOMIZED_PRUNERS = {}
+        self.REGISTERED_PRUNERS.update(_dummy_pruners) # merge dummy pruners
+        self.CUSTOMIZED_PRUNERS = {} # user-customized pruners
         self.IGNORED_LAYERS = []
 
-        # cache
+        # cache pruning functions for fast lookup
         self._in_channel_pruning_fn = set([p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
         self._out_channel_pruning_fn = set([p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
-        self._op_id = 0
+        self._op_id = 0 # operatior id
 
         # Pruning History
         self._pruning_history = []
 
-    def pruning_history(self):
+    def pruning_history(self) -> typing.List[typing.Tuple[str, bool, typing.Union[list, tuple]]]:
         return self._pruning_history
 
     def load_pruning_history(self, pruning_history):
+        """Redo the pruning history"""
         self._pruning_history = pruning_history
         for module_name, is_out_channel_pruning, pruning_idx in self._pruning_history:
             module = self.model
@@ -295,79 +318,49 @@ class DependencyGraph(object):
     def build_dependency(
         self,
         model: torch.nn.Module,
-        example_inputs: typing.Union[torch.Tensor, typing.Sequence],
-        forward_fn: typing.Callable[[
-            torch.nn.Module, typing.Union[torch.Tensor, typing.Sequence]], torch.Tensor] = None,
+        example_inputs: typing.Union[torch.Tensor, typing.Sequence, typing.Dict],
+        forward_fn: typing.Callable[[torch.nn.Module, typing.Union[torch.Tensor, typing.Sequence]], torch.Tensor] = None,
         output_transform: typing.Callable = None,
         unwrapped_parameters: typing.Dict[nn.Parameter, int] = None,
-        customized_pruners: typing.Dict[typing.Any,
-                                        function.BasePruningFunc] = None,
+        customized_pruners: typing.Dict[ typing.Union[typing.Any, torch.nn.Module],function.BasePruningFunc] = None,
         verbose: bool = True,
-    ):
+    ) -> "DependencyGraph":
         """Build a dependency graph through tracing.
         Args:
             model (class): the model to be pruned.
             example_inputs (torch.Tensor or List): dummy inputs for tracing.
-            forward_fn (Callable): a function to run the model with example_inputs, which should return a reduced tensor for backpropagation.
+            forward_fn (Callable): a function to forward the model with example_inputs, which should return a reduced scalr tensor for backpropagation.
             output_transform (Callable): a function to transform network outputs.
-            unwrapped_parameters (List): unwrapped nn.parameters defined by parameters.
-            customized_pruners (typing.Dict[typing.Any, function.BasePruningFunc]): pruners for customized layers.
+            unwrapped_parameters (typing.Dict[nn.Parameter, int]): unwrapped nn.parameters that do not belong to standard nn.Module.
+            customized_pruners (typing.Dict[ typing.Union[typing.Any, torch.nn.Module],function.BasePruningFunc]): customized pruners for a specific layer type or a specific layer instance.
             verbose (bool): verbose mode.
         """
 
         self.verbose = verbose
         self.model = model
-        self._module2name = {module: name for (
-            name, module) in model.named_modules()}
+        self._module2name = {module: name for (name, module) in model.named_modules()} # nn.Module => module name
 
         # Register customized pruners
         if customized_pruners is not None:
-            for customized_module, customized_pruner in customized_pruners.items():
-                self.register_customized_layer(
-                    customized_module, customized_pruner)
-
-        # Ignore all sub-modules of customized layers
-        for layer_type in self.CUSTOMIZED_PRUNERS.keys():
+            for customized_type, customized_pruner in customized_pruners.items():
+                self.register_customized_layer(customized_type, customized_pruner)
+        
+        # Ignore all sub-modules of customized layers as they will be handled by the customized pruners
+        for layer_type_or_instance in self.CUSTOMIZED_PRUNERS.keys():            
             for m in self.model.modules():
-                if isinstance(m, layer_type):
-                    for sub_module in m.modules():
+                # a layer instance or a layer type
+                if (m==layer_type_or_instance) or (not isinstance(layer_type_or_instance, torch.nn.Module) and isinstance(m, layer_type_or_instance)):
+                    for sub_module in m.modules(): 
                         if sub_module != m:
                             self.IGNORED_LAYERS.append(sub_module)
 
         # Detect unwrapped nn.parameters
-        wrapped_parameters = []
-        prunable_module_types = self.REGISTERED_PRUNERS.keys()
-        for m in self.model.modules():
-            op_type = ops.module2type(m)
-            if ( op_type in prunable_module_types and op_type!=ops.OPTYPE.ELEMENTWISE ) or m.__class__ in self.CUSTOMIZED_PRUNERS.keys():
-                wrapped_parameters.extend(list(m.parameters()))
-        unwrapped_detected = []
-        _param_to_name = {}
-        for name, p in self.model.named_parameters():
-            is_wrapped = False
-            for p_wrapped in wrapped_parameters:
-                if p is p_wrapped:
-                    is_wrapped = True
-                    break
-            if not is_wrapped:
-                unwrapped_detected.append(p)
-                _param_to_name[p] = name
-        if unwrapped_parameters is None:
-            unwrapped_parameters = []
-        self._param_to_name = _param_to_name
-        unwrapped_detected = list( set(unwrapped_detected) - set([p for (p, _) in unwrapped_parameters]) )
-        if len(unwrapped_detected)>0 and self.verbose:
-            warnings.warn("Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last non-singleton dimension of a parameter. If you wish to customize this behavior, please provide an unwrapped_parameters argument.".format([_param_to_name[p] for p in unwrapped_detected]))
-        for p in unwrapped_detected:
-            # get the last dimension that >1
-            def last_non_singleton_dim(tensor):
-                non_singleton_dims = [i for i, s in enumerate(tensor.shape) if s > 1]
-                return non_singleton_dims[-1] if non_singleton_dims else None
-            pruning_dim = last_non_singleton_dim(p)
-            if pruning_dim is not None:
-                unwrapped_parameters.append( UnwrappedParameters(parameters=p, pruning_dim=pruning_dim) ) # prune the last non-singleton dim by daufault
-        self.unwrapped_parameters = unwrapped_parameters
-        # Build computational graph by tracing.
+        self._param_to_name, self.unwrapped_parameters = self._detect_unwrapped_parameters(unwrapped_parameters)
+
+        # Detect torch.no_grad()
+        assert torch.is_grad_enabled(), "Dependency graph relies on backward. Please enable gradient computation."
+        
+        # Build computational graph through tracing. 
         self.module2node = self._trace(
             model, example_inputs, forward_fn, output_transform=output_transform
         )
@@ -384,7 +377,7 @@ class DependencyGraph(object):
 
     def register_customized_layer(
         self,
-        layer_type: typing.Type,
+        layer_type_or_instance: typing.Union[typing.Any, torch.nn.Module],
         layer_pruner: function.BasePruningFunc,
     ):
         """Register a customized pruner
@@ -392,7 +385,8 @@ class DependencyGraph(object):
             layer_type (class): the type of target layer
             pruner (tp.pruner.BasePruningFunc): a pruner for the specified layer type.
         """
-        self.CUSTOMIZED_PRUNERS[layer_type] = layer_pruner
+        self.CUSTOMIZED_PRUNERS[layer_type_or_instance] = layer_pruner
+        
         # Update cache
         self._in_channel_pruning_fn = set([p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
         self._out_channel_pruning_fn = set([p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
@@ -425,22 +419,18 @@ class DependencyGraph(object):
     def is_in_channel_pruning_fn(self, fn: typing.Callable) -> bool:
         return (fn in self._in_channel_pruning_fn)
 
-    def get_pruning_plan(self, module: nn.Module, pruning_fn: typing.Callable, idxs: typing.Union[list, tuple]) -> Group:
-        """ An alias of DependencyGraph.get_pruning_group for compatibility.
-        """
-        return self.get_pruning_group(module, pruning_fn, idxs)
-
     def get_pruning_group(
         self,
         module: nn.Module,
         pruning_fn: typing.Callable,
-        idxs: typing.Union[list, tuple],
+        idxs: typing.Sequence[int],
     ) -> Group:
         """Get the pruning group of pruning_fn.
         Args:
             module (nn.Module): the to-be-pruned module/layer.
             pruning_fn (Callable): the pruning function.
             idxs (list or tuple): the indices of channels/dimensions.
+            grouped_idxs (bool): whether the indices are grouped. If True, idxs is a list of list, e.g., [[0,1,2], [3,4,5]], where each sublist is a group.
         """
         if module not in self.module2node:
             raise ValueError(
@@ -450,18 +440,22 @@ class DependencyGraph(object):
             pruning_fn = function.prune_depthwise_conv_out_channels
         if isinstance(idxs, Number):
             idxs = [idxs]
+        
+        idxs = [ _HybridIndex(idx=i, root_idx=i) for i in idxs ] # idxs == root_idxs for the root layer
 
         self.update_index_mapping()
         group = Group()
+
         #  the user pruning operation
         root_node = self.module2node[module]
         group.add_dep(
-            Dependency(pruning_fn, pruning_fn,
-                       source=root_node, target=root_node), idxs
+            dep=Dependency(pruning_fn, pruning_fn, source=root_node, target=root_node), 
+            idxs=idxs,
         )
+
         visited_node = set()
 
-        def _fix_dependency_graph_non_recursive(dep, idxs):
+        def _fix_dependency_graph_non_recursive(dep, idxs, *args):
             processing_stack = [(dep, idxs)]
             while len(processing_stack) > 0:
                 dep, idxs = processing_stack.pop(-1)
@@ -475,8 +469,8 @@ class DependencyGraph(object):
                         for mapping in new_dep.index_mapping:
                             if mapping is not None:
                                 new_indices = mapping(new_indices)
-                                #print(new_dep, new_dep.index_mapping)
-                                #print(len(new_indices), new_indices)
+
+                                #print(len(new_indices))
                         #print()
                         if len(new_indices) == 0:
                             continue
@@ -497,11 +491,18 @@ class DependencyGraph(object):
         for dep, idxs in group.items:
             merged_group.add_and_merge(dep, idxs)
         merged_group._DG = self
+        for i in range(len(merged_group)):
+            hybrid_idxs = merged_group[i].idxs
+            idxs = _helpers.to_plain_idxs(hybrid_idxs)
+            root_idxs = _helpers.to_root_idxs(hybrid_idxs)
+            merged_group[i] = GroupItem(merged_group[i].dep, idxs) # transform _HybridIndex to plain index
+            merged_group[i].root_idxs = root_idxs
         return merged_group
 
     def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
         visited_layers = []
         ignored_layers = ignored_layers+self.IGNORED_LAYERS
+
         for m in list(self.module2node.keys()):
             if m in ignored_layers:
                 continue
@@ -519,6 +520,7 @@ class DependencyGraph(object):
             layer_channels = pruner.get_out_channels(m)
             group = self.get_pruning_group(
                 m, pruner.prune_out_channels, list(range(layer_channels)))
+    
             prunable_group = True
             for dep, _ in group:
                 module = dep.target.module
@@ -530,10 +532,10 @@ class DependencyGraph(object):
             if prunable_group:
                 yield group
 
-    def get_pruner_of_module(self, module):
-        p = self.CUSTOMIZED_PRUNERS.get(module.__class__, None)
+    def get_pruner_of_module(self, module: nn.Module):
+        p = self.CUSTOMIZED_PRUNERS.get(module.__class__, None) # customized pruners for a specific layer type
         if p is None:
-            p = self.REGISTERED_PRUNERS.get(ops.module2type(module), None)
+            p = self.REGISTERED_PRUNERS.get(ops.module2type(module), None) # standard pruners
         return p
 
     def get_out_channels(self, module_or_node):
@@ -602,7 +604,46 @@ class DependencyGraph(object):
             if ch == 0:
                 return None
         return ch
-
+    
+    def _detect_unwrapped_parameters(self, unwrapped_parameters):
+        # Detect wrapped nn.Parameters
+        wrapped_parameters = []
+        prunable_module_types = self.REGISTERED_PRUNERS.keys()
+        for m in self.model.modules():
+            op_type = ops.module2type(m)
+            if ( op_type in prunable_module_types and op_type!=ops.OPTYPE.ELEMENTWISE ) or m.__class__ in self.CUSTOMIZED_PRUNERS.keys() or m in self.CUSTOMIZED_PRUNERS.keys():
+                wrapped_parameters.extend(list(m.parameters()))
+       
+        # Detect unwrapped nn.Parameters
+        unwrapped_detected = []
+        _param_to_name = {}
+        for name, p in self.model.named_parameters():
+            is_wrapped = False
+            for p_wrapped in wrapped_parameters:
+                if p is p_wrapped:
+                    is_wrapped = True
+                    break
+            if not is_wrapped:
+                unwrapped_detected.append(p)
+                _param_to_name[p] = name
+        if unwrapped_parameters is None:
+            unwrapped_parameters = []
+        unwrapped_detected = list( set(unwrapped_detected) - set([p for (p, _) in unwrapped_parameters]) )
+        if len(unwrapped_detected)>0 and self.verbose:
+            warning_str = "Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last non-singleton dimension of a parameter. If you wish to customize this behavior, please provide an unwrapped_parameters argument.".format([_param_to_name[p] for p in unwrapped_detected])
+            warnings.warn(warning_str)
+        
+        # set default pruning dim for unwrapped parameters
+        for p in unwrapped_detected:
+            # get the last dimension that >1
+            def last_non_singleton_dim(tensor):
+                non_singleton_dims = [i for i, s in enumerate(tensor.shape) if s > 1]
+                return non_singleton_dims[-1] if non_singleton_dims else None
+            pruning_dim = last_non_singleton_dim(p)
+            if pruning_dim is not None:
+                unwrapped_parameters.append( UnwrappedParameters(parameters=p, pruning_dim=pruning_dim) ) # prune the last non-singleton dim by daufault
+        return _param_to_name, unwrapped_parameters
+    
     def _build_dependency(self, module2node):
 
         for _, node in module2node.items():
@@ -654,6 +695,7 @@ class DependencyGraph(object):
                 outputs = outputs.data
             gradfn2module[outputs.grad_fn] = module
 
+        # Register hooks for prunable modules
         registered_types = tuple(ops.type2class(
             t) for t in self.REGISTERED_PRUNERS.keys()) + tuple(self.CUSTOMIZED_PRUNERS.keys())
         hooks = [
@@ -661,8 +703,8 @@ class DependencyGraph(object):
             for m in model.modules()
             if (isinstance(m, registered_types) and m not in self.IGNORED_LAYERS)
         ]
-
-        # Feed forward and record gradient functions of prunable modules
+        
+        # Feed forward to record gradient functions of prunable modules
         if forward_fn is not None:
             out = forward_fn(model, example_inputs)
         elif isinstance(example_inputs, dict):
@@ -672,17 +714,16 @@ class DependencyGraph(object):
                 out = model(*example_inputs)
             except:
                 out = model(example_inputs)
-
         for hook in hooks:
             hook.remove()
+
         # for recursive models or layers
         reused = [m for (m, count) in visited.items() if count > 1]
 
-        # build graph
+        # Graph tracing
         if output_transform is not None:
             out = output_transform(out)
-
-        module2node = {}
+        module2node = {} # create a mapping from nn.Module to tp.dependency.Node
         for o in utils.flatten_as_list(out):
             self._trace_computational_graph(
                 module2node, o.grad_fn, gradfn2module, reused)
@@ -832,13 +873,14 @@ class DependencyGraph(object):
             if node.type == ops.OPTYPE.SPLIT:
                 grad_fn = node.grad_fn
                 if hasattr(grad_fn, '_saved_self_sizes'):
+                    MAX_LEGAL_DIM = 100
                     if hasattr(grad_fn, '_saved_split_sizes') and hasattr(grad_fn, '_saved_dim') :
-                        if grad_fn._saved_dim != 1:
+                        if grad_fn._saved_dim != 1 and grad_fn._saved_dim < MAX_LEGAL_DIM: # a temp fix for pytorch==1.11, where the _saved_dim is an uninitialized value like 118745347895359
                             continue
                         chs = list(grad_fn._saved_split_sizes)
                         node.module.split_sizes = chs
                     elif hasattr(grad_fn, '_saved_split_size') and hasattr(grad_fn, '_saved_dim'):
-                        if grad_fn._saved_dim != 1:
+                        if grad_fn._saved_dim != 1 and grad_fn._saved_dim < MAX_LEGAL_DIM: # a temp fix for pytorch==1.11, where the _saved_dim is an uninitialized value like 118745347895359
                             continue
                         chs = [grad_fn._saved_split_size for _ in range(len(node.outputs))]
                         node.module.split_sizes = chs
@@ -956,7 +998,7 @@ class DependencyGraph(object):
         else:
             chs = []
             for n in cat_node.inputs:
-                chs.append(self.infer_channels(n, cat_node))
+                chs.append(self.infer_channels_between(n, cat_node))
             cat_node.module.concat_sizes = chs
             
         offsets = [0]
@@ -1025,7 +1067,7 @@ class DependencyGraph(object):
                         addressed_dep.append(dep)
                         break
 
-    def infer_channels(self, node_1, node_2):
+    def infer_channels_between(self, node_1, node_2):
         if node_1.type == ops.OPTYPE.SPLIT:
             for i, n in enumerate(node_1.outputs):
                 if n == node_2:

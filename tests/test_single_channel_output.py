@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 import torch_pruning as tp
 
-class TestModel(nn.Module):
+class Model(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 16, 3, stride=1, padding=1)
@@ -20,7 +20,7 @@ class TestModel(nn.Module):
         return x
     
 def test_single_channel_output():
-    model = TestModel()
+    model = Model()
     example_inputs = torch.randn(1, 3, 224, 224)
     DG = tp.DependencyGraph().build_dependency(model, example_inputs=example_inputs)
 

@@ -128,6 +128,9 @@ class ReshapePruner(DummyPruner):
 class ElementWisePruner(DummyPruner):
     pass
 
+class CustomizedPruner(DummyPruner):
+    pass
+
 
 # Standard Modules
 TORCH_CONV = nn.modules.conv._ConvNd

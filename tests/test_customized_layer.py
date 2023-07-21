@@ -1,4 +1,5 @@
 import sys, os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import torch
@@ -55,8 +56,8 @@ class MyPruner(tp.pruner.BasePruningFunc):
         keep_idxs = list(set(range(layer.in_dim)) - set(idxs))
         keep_idxs.sort()
         layer.in_dim = layer.in_dim-len(idxs)
-        layer.scale = torch.nn.Parameter(layer.scale.data.clone()[keep_idxs])
-        layer.bias = torch.nn.Parameter(layer.bias.data.clone()[keep_idxs])
+        layer.scale = self._prune_parameter_and_grad(layer.scale, keep_idxs, pruning_dim=0)
+        layer.bias = self._prune_parameter_and_grad(layer.bias, keep_idxs, pruning_dim=0)
         tp.prune_linear_in_channels(layer.fc, idxs)
         tp.prune_linear_out_channels(layer.fc, idxs)
         return layer
@@ -68,6 +69,15 @@ class MyPruner(tp.pruner.BasePruningFunc):
     prune_in_channels = prune_out_channels
     get_in_channels = get_out_channels
 
+class MyLinearPruner(tp.function.LinearPruner):
+    def prune_out_channels(self, layer: nn.Linear, idxs: Sequence[int]) -> nn.Linear:
+        print("MyLinearPruner applied to layer: ", layer)
+        return super().prune_out_channels(layer, idxs)
+
+    def prune_in_channels(self, layer: nn.Linear, idxs: Sequence[int]) -> nn.Linear:
+        print("MyLinearPruner applied to layer: ", layer)
+        return super().prune_in_channels(layer, idxs)
+
 def test_customization():
     model = FullyConnectedNet(128, 10, 256)
 
@@ -78,12 +88,17 @@ def test_customization():
     DG.register_customized_layer(
         CustomizedLayer, 
         my_pruner)
+    
+    my_linear_pruner = MyLinearPruner()
+    DG.register_customized_layer(
+        nn.Linear, my_linear_pruner
+    )
 
     # 2. Build dependency graph
     DG.build_dependency(model, example_inputs=torch.randn(1,128))
 
     # 3. get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
-    pruning_group = DG.get_pruning_group( model.fc1, tp.prune_linear_out_channels, idxs=[0, 1, 6] )
+    pruning_group = DG.get_pruning_group( model.fc1, my_linear_pruner.prune_out_channels, idxs=[0, 1, 6] )
     print(pruning_group)
 
     # 4. execute this group (prune the model)

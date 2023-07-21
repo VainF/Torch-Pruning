@@ -33,6 +33,7 @@ parser.add_argument("--speed-up", type=float, default=2)
 parser.add_argument("--max-sparsity", type=float, default=1.0)
 parser.add_argument("--soft-keeping-ratio", type=float, default=0.0)
 parser.add_argument("--reg", type=float, default=5e-4)
+parser.add_argument("--delta_reg", type=float, default=1e-4, help='for growing regularization')
 parser.add_argument("--weight-decay", type=float, default=5e-4)
 
 parser.add_argument("--seed", type=int, default=None)
@@ -109,6 +110,7 @@ def train_model(
     best_acc = -1
     for epoch in range(epochs):
         model.train()
+    
         for i, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
@@ -129,6 +131,10 @@ def train_model(
                         optimizer.param_groups[0]["lr"],
                     )
                 )
+
+        if pruner is not None and isinstance(pruner, tp.pruner.GrowingRegPruner):
+            pruner.update_reg() # increase the strength of regularization
+            #print(pruner.group_reg[pruner._groups[0]])
         
         model.eval()
         acc, val_loss = eval(model, test_loader, device=device)
@@ -171,6 +177,10 @@ def get_pruner(model, example_inputs):
         args.sparsity_learning = True
         imp = tp.importance.BNScaleImportance()
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning)
+    elif args.method == "group_slim":
+        args.sparsity_learning = True
+        imp = tp.importance.BNScaleImportance()
+        pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning, group_lasso=True)
     elif args.method == "group_norm":
         imp = tp.importance.GroupNormImportance(p=2)
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)
@@ -178,6 +188,10 @@ def get_pruner(model, example_inputs):
         args.sparsity_learning = True
         imp = tp.importance.GroupNormImportance(p=2)
         pruner_entry = partial(tp.pruner.GroupNormPruner, reg=args.reg, global_pruning=args.global_pruning)
+    elif args.method == "growing_reg":
+        args.sparsity_learning = True
+        imp = tp.importance.GroupNormImportance(p=2)
+        pruner_entry = partial(tp.pruner.GrowingRegPruner, reg=args.reg, delta_reg=args.delta_reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError
     
