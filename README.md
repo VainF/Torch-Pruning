@@ -75,7 +75,7 @@ git clone https://github.com/VainF/Torch-Pruning.git
 
 ## Quickstart
   
-Here we provide a quick start for Torch-Pruning. More explained details can be found in [tutorals](./tutorials/)
+Here we provide a quick start for Torch-Pruning. More explained details can be found in [tutorals](https://github.com/VainF/Torch-Pruning/wiki)
 
 ### 0. How It Works
 
