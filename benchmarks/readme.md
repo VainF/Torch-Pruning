@@ -14,8 +14,9 @@ A Prunability Benchmark is available at [benchmarks/prunability](prunability)
 | HRank [[6]](#6) | 93.26 | 92.17 | -0.09 |2.00x |
 | SFP  [[7]](#7)  | 93.59 | 93.36 | -0.23 |2.11x |
 | ResRep [[8]](#8) | 93.71 | 93.71 | +0.00 |2.12x |
-| Ours-L1 | 93.53 | 92.93 | -0.60 | 2.12x |
-| Ours-BN | 93.53 | 93.29 | -0.24 | 2.12x |
+| Group-L1 | 93.53 | 92.93 | -0.60 | 2.12x |
+| Group-BN | 93.53 | 93.29 | -0.24 | 2.12x |
+| Group-GReg | 93.53 | 93.55 | +0.02 | 2.12x |
 | Ours w/o SL | 93.53 | 93.46 | -0.07 | 2.11x |
 | **Ours** | 93.53 | **93.77** | +0.38 | 2.13x |
 ||
@@ -49,18 +50,25 @@ python main.py --mode pretrain --dataset cifar10 --model resnet56 --lr 0.1 --tot
 
 ### 1.2 CIFAR-10 Pruning
 
-#### - L1-Norm Pruner
+#### - L1-Norm Pruner (Group-L1)
 A group-level pruner adapted from [Pruning Filters for Efficient ConvNets](https://arxiv.org/abs/1608.08710)
 ```bash
 # 2.11x
 python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method l1 --speed-up 2.11 --global-pruning
 ```
 
-#### - BN Pruner
+#### - BN Pruner (Group-BN)
 A group-level pruner adapted from [Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/abs/1708.06519)
 ```bash
 # 2.11x
 python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method slim --speed-up 2.11 --global-pruning --reg 1e-5
+```
+
+#### - Growing Regularization (Group-GReg)
+A group-level pruner adapted from [Neural Pruning via Growing Regularization](https://arxiv.org/abs/2012.09243)
+```bash
+# 2.11x
+python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method growing_reg --speed-up 2.11 --global-pruning --reg 1e-4 --delta_reg 1e-5
 ```
 
 #### - Group Pruner (This Work)
