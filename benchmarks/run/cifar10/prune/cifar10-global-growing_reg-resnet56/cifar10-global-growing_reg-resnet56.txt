@@ -1,3 +1,4 @@
+
 [07/20 21:09:06] cifar10-global-growing_reg-resnet56 INFO: mode: prune
 [07/20 21:09:06] cifar10-global-growing_reg-resnet56 INFO: model: resnet56
 [07/20 21:09:06] cifar10-global-growing_reg-resnet56 INFO: verbose: False
