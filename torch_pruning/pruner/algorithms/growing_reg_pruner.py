@@ -3,10 +3,8 @@ from .scheduler import linear_scheduler
 import typing
 import torch
 import torch.nn as nn
-
-from ..importance import MagnitudeImportance, GroupNormImportance
 from .. import function
-import math
+
 
 class GrowingRegPruner(MetaPruner):
     def __init__(
@@ -15,7 +13,7 @@ class GrowingRegPruner(MetaPruner):
         example_inputs,
         importance,
         reg=1e-5,
-        delta_reg = 1e-5,
+        delta_reg=1e-5,
         iterative_steps=1,
         iterative_sparsity_scheduler: typing.Callable = linear_scheduler,
         ch_sparsity=0.5,
@@ -46,11 +44,10 @@ class GrowingRegPruner(MetaPruner):
         )
         self.base_reg = reg
         self._groups = list(self.DG.get_all_groups())
-        self.group_lasso = True
 
         group_reg = {}
         for group in self._groups:
-            group_reg[group] = torch.ones( len(group[0].idxs) ) * self.base_reg
+            group_reg[group] = torch.ones(len(group[0].idxs)) * self.base_reg
         self.group_reg = group_reg
         self.delta_reg = delta_reg
 
@@ -58,9 +55,10 @@ class GrowingRegPruner(MetaPruner):
         for group in self._groups:
             group_l2norm_sq = self.estimate_importance(group)
             if group_l2norm_sq is None:
-                continue 
+                continue
             reg = self.group_reg[group]
-            standarized_imp = (group_l2norm_sq.max() - group_l2norm_sq) / (group_l2norm_sq.max() - group_l2norm_sq.min() + 1e-8)
+            standarized_imp = (group_l2norm_sq.max() - group_l2norm_sq) / \
+                (group_l2norm_sq.max() - group_l2norm_sq.min() + 1e-8)  # => [0, 1]
             reg = reg + self.delta_reg * standarized_imp.to(reg.device)
             self.group_reg[group] = reg
 
@@ -69,19 +67,18 @@ class GrowingRegPruner(MetaPruner):
             group_l2norm_sq = self.estimate_importance(group)
             if group_l2norm_sq is None:
                 continue
-            
             reg = self.group_reg[group]
             for dep, idxs in group:
                 layer = dep.layer
                 pruning_fn = dep.pruning_fn
-                if isinstance(layer, nn.modules.batchnorm._BatchNorm) and layer.affine==True and layer not in self.ignored_layers:
+                if isinstance(layer, nn.modules.batchnorm._BatchNorm) and layer.affine == True and layer not in self.ignored_layers:
                     layer.weight.grad.data.add_(reg.to(layer.weight.device) * layer.weight.data)
-                elif isinstance(layer, (nn.modules.conv._ConvNd, nn.Linear)) and layer not in self.ignored_layers:
-                    if pruning_fn in [function.prune_conv_out_channels, function.prune_linear_out_channels]:
+                elif isinstance(layer, (nn.modules.conv._ConvNd, nn.Linear)):
+                    if pruning_fn in [function.prune_conv_out_channels, function.prune_linear_out_channels] and layer not in self.ignored_layers:
                         w = layer.weight.data[idxs]
-                        g = w * reg.to(layer.weight.device).view( -1, *([1]*(len(w.shape)-1)) ) #/ group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size #group_size #* scale.view( -1, *([1]*(len(w.shape)-1)) )
-                        layer.weight.grad.data[idxs]+= g
+                        g = w * reg.to(layer.weight.device).view(-1, *([1]*(len(w.shape)-1)))
+                        layer.weight.grad.data[idxs] += g
                     elif pruning_fn in [function.prune_conv_in_channels, function.prune_linear_in_channels]:
                         w = layer.weight.data[:, idxs]
-                        g = w * reg.to(layer.weight.device).view( 1, -1, *([1]*(len(w.shape)-2))  ) #/ gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * group_size #* scale.view( 1, -1, *([1]*(len(w.shape)-2))  )
-                        layer.weight.grad.data[:, idxs]+=g
+                        g = w * reg.to(layer.weight.device).view(1, -1, *([1]*(len(w.shape)-2)))
+                        layer.weight.grad.data[:, idxs] += g

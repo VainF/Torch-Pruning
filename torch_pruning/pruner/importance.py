@@ -229,6 +229,8 @@ class RandomImportance(Importance):
 
 
 class GroupNormImportance(MagnitudeImportance):
+    """ A magnitude-based importance in the group level. Only for reproducing the results in the paper. It may not be ready for practical use.
+    """
     def __init__(self, p=2, normalizer='max'):
         super().__init__(p=p, group_reduction=None, normalizer=normalizer)
         self.p = p
@@ -357,6 +359,9 @@ class GroupNormImportance(MagnitudeImportance):
 
 
 class TaylorImportance(MagnitudeImportance):
+    """First-order taylor expansion of the loss function.
+       https://openaccess.thecvf.com/content_CVPR_2019/papers/Molchanov_Importance_Estimation_for_Neural_Network_Pruning_CVPR_2019_paper.pdf
+    """
     def __init__(self, group_reduction="mean", normalizer='mean', multivariable=False):
         self.group_reduction = group_reduction
         self.normalizer = normalizer
