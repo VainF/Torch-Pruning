@@ -27,7 +27,6 @@ class GrowingRegPruner(MetaPruner):
         customized_pruners=None,
         unwrapped_parameters=None,
         output_transform=None,
-        target_types=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm],
     ):
         super(GrowingRegPruner, self).__init__(
             model=model,
@@ -48,7 +47,6 @@ class GrowingRegPruner(MetaPruner):
         self.base_reg = reg
         self._groups = list(self.DG.get_all_groups())
         self.group_lasso = True
-        self._l2_imp = GroupNormImportance()
 
         group_reg = {}
         for group in self._groups:
@@ -58,7 +56,7 @@ class GrowingRegPruner(MetaPruner):
 
     def update_reg(self):
         for group in self._groups:
-            group_l2norm_sq = self._l2_imp(group)
+            group_l2norm_sq = self.estimate_importance(group)
             if group_l2norm_sq is None:
                 continue 
             reg = self.group_reg[group]
@@ -68,7 +66,7 @@ class GrowingRegPruner(MetaPruner):
 
     def regularize(self, model):
         for i, group in enumerate(self._groups):
-            group_l2norm_sq = self._l2_imp(group)
+            group_l2norm_sq = self.estimate_importance(group)
             if group_l2norm_sq is None:
                 continue
             
