@@ -39,7 +39,8 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
 * 2023.04.21 Join our Telegram or Wechat group:
   * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
-  * WeChat: <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/41cd9bf9-13e3-45b2-919e-bb067fc14377">
+  * WeChat (Group size exceeded 200): <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/00ae94c9-eb89-41b1-bfa0-0eab54ad89d4">
+
 
 ### **Features:**
 - [x] Structural pruning for CNNs, Transformers, Detectors, Language Models and Diffusion Models. Please refer to the [examples](examples).
