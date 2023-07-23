@@ -14,7 +14,7 @@ timm=0.9.2
 ## 1. Pruning
 
 ```python
-python torchvision_pruning.py
+python timm_pruning.py
 ```
 
 #### Outputs:
