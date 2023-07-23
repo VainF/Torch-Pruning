@@ -134,7 +134,7 @@ def get_pruner(model, example_inputs, args):
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)
     elif args.method == "group_greg":
         sparsity_learning = True
-        imp = tp.importance.GroupNormImportance(p=2)
+        imp = tp.importance.MagnitudeImportance(p=2)
         pruner_entry = partial(tp.pruner.GrowingRegPruner, reg=args.reg, delta_reg=args.delta_reg, global_pruning=args.global_pruning)
     elif args.method == "group_sl":
         sparsity_learning = True
@@ -207,9 +207,6 @@ def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, arg
             if epoch < args.lr_warmup_epochs:
                 # Reset ema buffer to keep copying weights during warmup period
                 model_ema.n_averaged.fill_(0)
-        
-        if pruner is not None and isinstance(pruner, tp.pruner.GroupNormPruner):
-            pruner.update_reg()
             
         acc1, acc5 = utils.accuracy(output, target, topk=(1, 5))
         batch_size = image.shape[0]
@@ -217,7 +214,9 @@ def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, arg
         metric_logger.meters["acc1"].update(acc1.item(), n=batch_size)
         metric_logger.meters["acc5"].update(acc5.item(), n=batch_size)
         metric_logger.meters["img/s"].update(batch_size / (time.time() - start_time))
-
+        
+    if pruner is not None and isinstance(pruner, tp.pruner.GrowingRegPruner):
+        pruner.update_reg()
 
 def evaluate(model, criterion, data_loader, device, print_freq=100, log_suffix=""):
     model.eval()
