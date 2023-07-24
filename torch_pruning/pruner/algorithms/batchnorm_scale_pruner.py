@@ -46,7 +46,7 @@ class BNScalePruner(MetaPruner):
         )
         self.reg = reg
         self._groups = list(self.DG.get_all_groups())
-        self.group_lasso = True
+        self.group_lasso = group_lasso
         if self.group_lasso:
             self._l2_imp = MagnitudeImportance(p=2, group_reduction='mean', normalizer=None, target_types=[nn.modules.batchnorm._BatchNorm])
     
@@ -60,10 +60,10 @@ class BNScalePruner(MetaPruner):
                     m.weight.grad.data.add_(reg*torch.sign(m.weight.data))
         else:
             for group in self._groups:
-                group_l2norm_sq, group_size = self._l2_imp(group, return_group_size=True)
+                group_l2norm_sq = self._l2_imp(group)
                 if group_l2norm_sq is None:
                     continue
                 for dep, _ in group:
                     layer = dep.layer
                     if isinstance(layer, nn.modules.batchnorm._BatchNorm) and layer.affine==True and layer not in self.ignored_layers:
-                        layer.weight.grad.data.add_(reg * math.sqrt(group_size) * (1 / group_l2norm_sq.sqrt()) * layer.weight.data) # Group Lasso https://tibshirani.su.domains/ftp/sparse-grlasso.pdf
+                        layer.weight.grad.data.add_(reg * (1 / group_l2norm_sq.sqrt()) * layer.weight.data) # Group Lasso https://tibshirani.su.domains/ftp/sparse-grlasso.pdf

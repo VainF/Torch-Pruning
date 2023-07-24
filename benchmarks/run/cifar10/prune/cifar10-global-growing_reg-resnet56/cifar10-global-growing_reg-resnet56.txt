@@ -478,3 +478,453 @@
 [07/20 22:37:24] cifar10-global-growing_reg-resnet56 INFO: Epoch 98/100, Acc=0.9354, Val Loss=0.2627, lr=0.0001
 [07/20 22:37:41] cifar10-global-growing_reg-resnet56 INFO: Epoch 99/100, Acc=0.9348, Val Loss=0.2656, lr=0.0001
 [07/20 22:37:41] cifar10-global-growing_reg-resnet56 INFO: Best Acc=0.9355
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: mode: prune
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: model: resnet56
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: verbose: False
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: dataset: cifar10
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: batch_size: 128
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: total_epochs: 100
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: lr_decay_milestones: 60,80
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: lr_decay_gamma: 0.1
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: lr: 0.01
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: restore: cifar10_resnet56.pth
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: output_dir: run/cifar10/prune/cifar10-global-growing_reg-resnet56
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: method: growing_reg
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: speed_up: 2.11
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: max_sparsity: 1.0
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: soft_keeping_ratio: 0.0
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: reg: 0.0001
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: delta_reg: 1e-05
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: weight_decay: 0.0005
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: seed: None
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: global_pruning: True
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: sl_total_epochs: 100
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: sl_lr: 0.01
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: sl_lr_decay_milestones: 60,80
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: sl_reg_warmup: 0
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: sl_restore: None
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: iterative_steps: 400
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: logger: <Logger cifar10-global-growing_reg-resnet56 (DEBUG)>
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: device: cuda
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: num_classes: 10
+[07/22 01:25:58] cifar10-global-growing_reg-resnet56 INFO: Loading model from cifar10_resnet56.pth
+[07/22 01:26:01] cifar10-global-growing_reg-resnet56 INFO: Regularizing...
+[07/22 01:26:36] cifar10-global-growing_reg-resnet56 INFO: Epoch 0/100, Acc=0.8918, Val Loss=0.4039, lr=0.0100
+[07/22 01:27:11] cifar10-global-growing_reg-resnet56 INFO: Epoch 1/100, Acc=0.9072, Val Loss=0.3326, lr=0.0100
+[07/22 01:27:46] cifar10-global-growing_reg-resnet56 INFO: Epoch 2/100, Acc=0.9120, Val Loss=0.3198, lr=0.0100
+[07/22 01:28:21] cifar10-global-growing_reg-resnet56 INFO: Epoch 3/100, Acc=0.9119, Val Loss=0.3161, lr=0.0100
+[07/22 01:28:55] cifar10-global-growing_reg-resnet56 INFO: Epoch 4/100, Acc=0.9131, Val Loss=0.3105, lr=0.0100
+[07/22 01:29:29] cifar10-global-growing_reg-resnet56 INFO: Epoch 5/100, Acc=0.9079, Val Loss=0.3481, lr=0.0100
+[07/22 01:30:04] cifar10-global-growing_reg-resnet56 INFO: Epoch 6/100, Acc=0.9107, Val Loss=0.3434, lr=0.0100
+[07/22 01:30:38] cifar10-global-growing_reg-resnet56 INFO: Epoch 7/100, Acc=0.8889, Val Loss=0.4145, lr=0.0100
+[07/22 01:31:13] cifar10-global-growing_reg-resnet56 INFO: Epoch 8/100, Acc=0.9129, Val Loss=0.3244, lr=0.0100
+[07/22 01:31:47] cifar10-global-growing_reg-resnet56 INFO: Epoch 9/100, Acc=0.9130, Val Loss=0.3284, lr=0.0100
+[07/22 01:32:21] cifar10-global-growing_reg-resnet56 INFO: Epoch 10/100, Acc=0.9096, Val Loss=0.3294, lr=0.0100
+[07/22 01:32:55] cifar10-global-growing_reg-resnet56 INFO: Epoch 11/100, Acc=0.9094, Val Loss=0.3398, lr=0.0100
+[07/22 01:33:29] cifar10-global-growing_reg-resnet56 INFO: Epoch 12/100, Acc=0.9073, Val Loss=0.3438, lr=0.0100
+[07/22 01:34:03] cifar10-global-growing_reg-resnet56 INFO: Epoch 13/100, Acc=0.9079, Val Loss=0.3467, lr=0.0100
+[07/22 01:34:37] cifar10-global-growing_reg-resnet56 INFO: Epoch 14/100, Acc=0.9202, Val Loss=0.3115, lr=0.0100
+[07/22 01:35:11] cifar10-global-growing_reg-resnet56 INFO: Epoch 15/100, Acc=0.9011, Val Loss=0.3489, lr=0.0100
+[07/22 01:35:46] cifar10-global-growing_reg-resnet56 INFO: Epoch 16/100, Acc=0.9158, Val Loss=0.3149, lr=0.0100
+[07/22 01:36:19] cifar10-global-growing_reg-resnet56 INFO: Epoch 17/100, Acc=0.9097, Val Loss=0.3410, lr=0.0100
+[07/22 01:36:54] cifar10-global-growing_reg-resnet56 INFO: Epoch 18/100, Acc=0.9119, Val Loss=0.3371, lr=0.0100
+[07/22 01:37:28] cifar10-global-growing_reg-resnet56 INFO: Epoch 19/100, Acc=0.9143, Val Loss=0.3335, lr=0.0100
+[07/22 01:38:01] cifar10-global-growing_reg-resnet56 INFO: Epoch 20/100, Acc=0.9135, Val Loss=0.3244, lr=0.0100
+[07/22 01:38:36] cifar10-global-growing_reg-resnet56 INFO: Epoch 21/100, Acc=0.9124, Val Loss=0.3542, lr=0.0100
+[07/22 01:39:10] cifar10-global-growing_reg-resnet56 INFO: Epoch 22/100, Acc=0.9147, Val Loss=0.3223, lr=0.0100
+[07/22 01:39:44] cifar10-global-growing_reg-resnet56 INFO: Epoch 23/100, Acc=0.9085, Val Loss=0.3612, lr=0.0100
+[07/22 01:40:18] cifar10-global-growing_reg-resnet56 INFO: Epoch 24/100, Acc=0.9107, Val Loss=0.3333, lr=0.0100
+[07/22 01:40:52] cifar10-global-growing_reg-resnet56 INFO: Epoch 25/100, Acc=0.9130, Val Loss=0.3433, lr=0.0100
+[07/22 01:41:27] cifar10-global-growing_reg-resnet56 INFO: Epoch 26/100, Acc=0.9061, Val Loss=0.3435, lr=0.0100
+[07/22 01:42:01] cifar10-global-growing_reg-resnet56 INFO: Epoch 27/100, Acc=0.9112, Val Loss=0.3367, lr=0.0100
+[07/22 01:42:35] cifar10-global-growing_reg-resnet56 INFO: Epoch 28/100, Acc=0.9041, Val Loss=0.3696, lr=0.0100
+[07/22 01:43:10] cifar10-global-growing_reg-resnet56 INFO: Epoch 29/100, Acc=0.9064, Val Loss=0.3655, lr=0.0100
+[07/22 01:43:44] cifar10-global-growing_reg-resnet56 INFO: Epoch 30/100, Acc=0.9114, Val Loss=0.3327, lr=0.0100
+[07/22 01:44:18] cifar10-global-growing_reg-resnet56 INFO: Epoch 31/100, Acc=0.9196, Val Loss=0.2976, lr=0.0100
+[07/22 01:44:52] cifar10-global-growing_reg-resnet56 INFO: Epoch 32/100, Acc=0.9131, Val Loss=0.3386, lr=0.0100
+[07/22 01:45:26] cifar10-global-growing_reg-resnet56 INFO: Epoch 33/100, Acc=0.9151, Val Loss=0.3207, lr=0.0100
+[07/22 01:46:01] cifar10-global-growing_reg-resnet56 INFO: Epoch 34/100, Acc=0.9142, Val Loss=0.3258, lr=0.0100
+[07/22 01:46:35] cifar10-global-growing_reg-resnet56 INFO: Epoch 35/100, Acc=0.9146, Val Loss=0.3139, lr=0.0100
+[07/22 01:47:09] cifar10-global-growing_reg-resnet56 INFO: Epoch 36/100, Acc=0.9083, Val Loss=0.3474, lr=0.0100
+[07/22 01:47:43] cifar10-global-growing_reg-resnet56 INFO: Epoch 37/100, Acc=0.9117, Val Loss=0.3453, lr=0.0100
+[07/22 01:48:17] cifar10-global-growing_reg-resnet56 INFO: Epoch 38/100, Acc=0.9028, Val Loss=0.3681, lr=0.0100
+[07/22 01:48:51] cifar10-global-growing_reg-resnet56 INFO: Epoch 39/100, Acc=0.9148, Val Loss=0.3275, lr=0.0100
+[07/22 01:49:25] cifar10-global-growing_reg-resnet56 INFO: Epoch 40/100, Acc=0.9130, Val Loss=0.3342, lr=0.0100
+[07/22 01:49:59] cifar10-global-growing_reg-resnet56 INFO: Epoch 41/100, Acc=0.9126, Val Loss=0.3329, lr=0.0100
+[07/22 01:50:34] cifar10-global-growing_reg-resnet56 INFO: Epoch 42/100, Acc=0.9143, Val Loss=0.3380, lr=0.0100
+[07/22 01:51:08] cifar10-global-growing_reg-resnet56 INFO: Epoch 43/100, Acc=0.9151, Val Loss=0.3400, lr=0.0100
+[07/22 01:51:43] cifar10-global-growing_reg-resnet56 INFO: Epoch 44/100, Acc=0.9157, Val Loss=0.3277, lr=0.0100
+[07/22 01:52:18] cifar10-global-growing_reg-resnet56 INFO: Epoch 45/100, Acc=0.9144, Val Loss=0.3160, lr=0.0100
+[07/22 01:52:52] cifar10-global-growing_reg-resnet56 INFO: Epoch 46/100, Acc=0.9145, Val Loss=0.3295, lr=0.0100
+[07/22 01:53:26] cifar10-global-growing_reg-resnet56 INFO: Epoch 47/100, Acc=0.9086, Val Loss=0.3452, lr=0.0100
+[07/22 01:54:00] cifar10-global-growing_reg-resnet56 INFO: Epoch 48/100, Acc=0.9045, Val Loss=0.4000, lr=0.0100
+[07/22 01:54:34] cifar10-global-growing_reg-resnet56 INFO: Epoch 49/100, Acc=0.9100, Val Loss=0.3247, lr=0.0100
+[07/22 01:55:09] cifar10-global-growing_reg-resnet56 INFO: Epoch 50/100, Acc=0.9142, Val Loss=0.3201, lr=0.0100
+[07/22 01:55:43] cifar10-global-growing_reg-resnet56 INFO: Epoch 51/100, Acc=0.9128, Val Loss=0.3145, lr=0.0100
+[07/22 01:56:17] cifar10-global-growing_reg-resnet56 INFO: Epoch 52/100, Acc=0.9052, Val Loss=0.3385, lr=0.0100
+[07/22 01:56:51] cifar10-global-growing_reg-resnet56 INFO: Epoch 53/100, Acc=0.9061, Val Loss=0.3435, lr=0.0100
+[07/22 01:57:25] cifar10-global-growing_reg-resnet56 INFO: Epoch 54/100, Acc=0.9024, Val Loss=0.3672, lr=0.0100
+[07/22 01:57:59] cifar10-global-growing_reg-resnet56 INFO: Epoch 55/100, Acc=0.8907, Val Loss=0.4212, lr=0.0100
+[07/22 01:58:33] cifar10-global-growing_reg-resnet56 INFO: Epoch 56/100, Acc=0.8909, Val Loss=0.4301, lr=0.0100
+[07/22 01:59:07] cifar10-global-growing_reg-resnet56 INFO: Epoch 57/100, Acc=0.8981, Val Loss=0.3696, lr=0.0100
+[07/22 01:59:41] cifar10-global-growing_reg-resnet56 INFO: Epoch 58/100, Acc=0.9016, Val Loss=0.3592, lr=0.0100
+[07/22 02:00:15] cifar10-global-growing_reg-resnet56 INFO: Epoch 59/100, Acc=0.9140, Val Loss=0.3138, lr=0.0100
+[07/22 02:00:49] cifar10-global-growing_reg-resnet56 INFO: Epoch 60/100, Acc=0.9316, Val Loss=0.2547, lr=0.0010
+[07/22 02:01:23] cifar10-global-growing_reg-resnet56 INFO: Epoch 61/100, Acc=0.9346, Val Loss=0.2533, lr=0.0010
+[07/22 02:01:57] cifar10-global-growing_reg-resnet56 INFO: Epoch 62/100, Acc=0.9328, Val Loss=0.2540, lr=0.0010
+[07/22 02:02:31] cifar10-global-growing_reg-resnet56 INFO: Epoch 63/100, Acc=0.9343, Val Loss=0.2547, lr=0.0010
+[07/22 02:03:05] cifar10-global-growing_reg-resnet56 INFO: Epoch 64/100, Acc=0.9343, Val Loss=0.2612, lr=0.0010
+[07/22 02:03:39] cifar10-global-growing_reg-resnet56 INFO: Epoch 65/100, Acc=0.9335, Val Loss=0.2614, lr=0.0010
+[07/22 02:04:14] cifar10-global-growing_reg-resnet56 INFO: Epoch 66/100, Acc=0.9337, Val Loss=0.2627, lr=0.0010
+[07/22 02:04:48] cifar10-global-growing_reg-resnet56 INFO: Epoch 67/100, Acc=0.9349, Val Loss=0.2614, lr=0.0010
+[07/22 02:05:22] cifar10-global-growing_reg-resnet56 INFO: Epoch 68/100, Acc=0.9339, Val Loss=0.2660, lr=0.0010
+[07/22 02:05:56] cifar10-global-growing_reg-resnet56 INFO: Epoch 69/100, Acc=0.9360, Val Loss=0.2641, lr=0.0010
+[07/22 02:06:30] cifar10-global-growing_reg-resnet56 INFO: Epoch 70/100, Acc=0.9341, Val Loss=0.2697, lr=0.0010
+[07/22 02:07:04] cifar10-global-growing_reg-resnet56 INFO: Epoch 71/100, Acc=0.9354, Val Loss=0.2683, lr=0.0010
+[07/22 02:07:38] cifar10-global-growing_reg-resnet56 INFO: Epoch 72/100, Acc=0.9348, Val Loss=0.2694, lr=0.0010
+[07/22 02:08:13] cifar10-global-growing_reg-resnet56 INFO: Epoch 73/100, Acc=0.9339, Val Loss=0.2704, lr=0.0010
+[07/22 02:08:47] cifar10-global-growing_reg-resnet56 INFO: Epoch 74/100, Acc=0.9353, Val Loss=0.2733, lr=0.0010
+[07/22 02:09:21] cifar10-global-growing_reg-resnet56 INFO: Epoch 75/100, Acc=0.9353, Val Loss=0.2732, lr=0.0010
+[07/22 02:09:56] cifar10-global-growing_reg-resnet56 INFO: Epoch 76/100, Acc=0.9350, Val Loss=0.2737, lr=0.0010
+[07/22 02:10:30] cifar10-global-growing_reg-resnet56 INFO: Epoch 77/100, Acc=0.9346, Val Loss=0.2778, lr=0.0010
+[07/22 02:11:04] cifar10-global-growing_reg-resnet56 INFO: Epoch 78/100, Acc=0.9362, Val Loss=0.2772, lr=0.0010
+[07/22 02:11:38] cifar10-global-growing_reg-resnet56 INFO: Epoch 79/100, Acc=0.9368, Val Loss=0.2765, lr=0.0010
+[07/22 02:12:12] cifar10-global-growing_reg-resnet56 INFO: Epoch 80/100, Acc=0.9358, Val Loss=0.2789, lr=0.0001
+[07/22 02:12:47] cifar10-global-growing_reg-resnet56 INFO: Epoch 81/100, Acc=0.9363, Val Loss=0.2753, lr=0.0001
+[07/22 02:13:21] cifar10-global-growing_reg-resnet56 INFO: Epoch 82/100, Acc=0.9369, Val Loss=0.2759, lr=0.0001
+[07/22 02:13:55] cifar10-global-growing_reg-resnet56 INFO: Epoch 83/100, Acc=0.9363, Val Loss=0.2766, lr=0.0001
+[07/22 02:14:29] cifar10-global-growing_reg-resnet56 INFO: Epoch 84/100, Acc=0.9366, Val Loss=0.2777, lr=0.0001
+[07/22 02:15:03] cifar10-global-growing_reg-resnet56 INFO: Epoch 85/100, Acc=0.9376, Val Loss=0.2757, lr=0.0001
+[07/22 02:15:38] cifar10-global-growing_reg-resnet56 INFO: Epoch 86/100, Acc=0.9370, Val Loss=0.2769, lr=0.0001
+[07/22 02:16:12] cifar10-global-growing_reg-resnet56 INFO: Epoch 87/100, Acc=0.9372, Val Loss=0.2755, lr=0.0001
+[07/22 02:16:46] cifar10-global-growing_reg-resnet56 INFO: Epoch 88/100, Acc=0.9367, Val Loss=0.2766, lr=0.0001
+[07/22 02:17:20] cifar10-global-growing_reg-resnet56 INFO: Epoch 89/100, Acc=0.9365, Val Loss=0.2775, lr=0.0001
+[07/22 02:17:54] cifar10-global-growing_reg-resnet56 INFO: Epoch 90/100, Acc=0.9363, Val Loss=0.2769, lr=0.0001
+[07/22 02:18:28] cifar10-global-growing_reg-resnet56 INFO: Epoch 91/100, Acc=0.9372, Val Loss=0.2778, lr=0.0001
+[07/22 02:19:02] cifar10-global-growing_reg-resnet56 INFO: Epoch 92/100, Acc=0.9373, Val Loss=0.2777, lr=0.0001
+[07/22 02:19:36] cifar10-global-growing_reg-resnet56 INFO: Epoch 93/100, Acc=0.9369, Val Loss=0.2764, lr=0.0001
+[07/22 02:20:10] cifar10-global-growing_reg-resnet56 INFO: Epoch 94/100, Acc=0.9370, Val Loss=0.2784, lr=0.0001
+[07/22 02:20:44] cifar10-global-growing_reg-resnet56 INFO: Epoch 95/100, Acc=0.9381, Val Loss=0.2756, lr=0.0001
+[07/22 02:21:19] cifar10-global-growing_reg-resnet56 INFO: Epoch 96/100, Acc=0.9356, Val Loss=0.2775, lr=0.0001
+[07/22 02:21:53] cifar10-global-growing_reg-resnet56 INFO: Epoch 97/100, Acc=0.9369, Val Loss=0.2773, lr=0.0001
+[07/22 02:22:27] cifar10-global-growing_reg-resnet56 INFO: Epoch 98/100, Acc=0.9375, Val Loss=0.2774, lr=0.0001
+[07/22 02:23:00] cifar10-global-growing_reg-resnet56 INFO: Epoch 99/100, Acc=0.9360, Val Loss=0.2790, lr=0.0001
+[07/22 02:23:01] cifar10-global-growing_reg-resnet56 INFO: Best Acc=0.9381
+[07/22 02:23:01] cifar10-global-growing_reg-resnet56 INFO: Loading the sparse model from run/cifar10/prune/cifar10-global-growing_reg-resnet56/reg_cifar10_resnet56_growing_reg_0.0001.pth...
+[07/22 02:23:02] cifar10-global-growing_reg-resnet56 INFO: Pruning...
+[07/22 02:23:09] cifar10-global-growing_reg-resnet56 INFO: ResNet(
+  (conv1): Conv2d(3, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+  (bn1): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (relu): ReLU(inplace=True)
+  (layer1): Sequential(
+    (0): BasicBlock(
+      (conv1): Conv2d(8, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(8, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (1): BasicBlock(
+      (conv1): Conv2d(8, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(7, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (2): BasicBlock(
+      (conv1): Conv2d(8, 6, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(6, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(6, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (3): BasicBlock(
+      (conv1): Conv2d(8, 10, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(10, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(10, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (4): BasicBlock(
+      (conv1): Conv2d(8, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(8, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (5): BasicBlock(
+      (conv1): Conv2d(8, 13, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(13, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(13, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (6): BasicBlock(
+      (conv1): Conv2d(8, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(3, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(3, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (7): BasicBlock(
+      (conv1): Conv2d(8, 10, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(10, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(10, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (8): BasicBlock(
+      (conv1): Conv2d(8, 7, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(7, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(7, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (layer2): Sequential(
+    (0): BasicBlock(
+      (conv1): Conv2d(8, 24, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(24, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(24, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (downsample): Sequential(
+        (0): Conv2d(8, 30, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): Conv2d(30, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(9, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(9, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (2): BasicBlock(
+      (conv1): Conv2d(30, 29, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(29, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(29, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (3): BasicBlock(
+      (conv1): Conv2d(30, 29, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(29, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(29, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (4): BasicBlock(
+      (conv1): Conv2d(30, 29, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(29, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(29, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (5): BasicBlock(
+      (conv1): Conv2d(30, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(8, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (6): BasicBlock(
+      (conv1): Conv2d(30, 14, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(14, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(14, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (7): BasicBlock(
+      (conv1): Conv2d(30, 11, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(11, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(11, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (8): BasicBlock(
+      (conv1): Conv2d(30, 5, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(5, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(5, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(30, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (layer3): Sequential(
+    (0): BasicBlock(
+      (conv1): Conv2d(30, 56, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(56, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(56, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (downsample): Sequential(
+        (0): Conv2d(30, 47, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): Conv2d(47, 63, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(63, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(63, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (2): BasicBlock(
+      (conv1): Conv2d(47, 61, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(61, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(61, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (3): BasicBlock(
+      (conv1): Conv2d(47, 61, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(61, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(61, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (4): BasicBlock(
+      (conv1): Conv2d(47, 62, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(62, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(62, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (5): BasicBlock(
+      (conv1): Conv2d(47, 62, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(62, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(62, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (6): BasicBlock(
+      (conv1): Conv2d(47, 57, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(57, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(57, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (7): BasicBlock(
+      (conv1): Conv2d(47, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(47, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (8): BasicBlock(
+      (conv1): Conv2d(47, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(47, 47, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(47, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (avgpool): AvgPool2d(kernel_size=8, stride=8, padding=0)
+  (fc): Linear(in_features=47, out_features=10, bias=True)
+)
+[07/22 02:23:10] cifar10-global-growing_reg-resnet56 INFO: Params: 0.86 M => 0.52 M (61.28%)
+[07/22 02:23:10] cifar10-global-growing_reg-resnet56 INFO: FLOPs: 127.12 M => 59.84 M (47.07%, 2.12X )
+[07/22 02:23:10] cifar10-global-growing_reg-resnet56 INFO: Acc: 0.9381 => 0.1119
+[07/22 02:23:10] cifar10-global-growing_reg-resnet56 INFO: Val Loss: 0.2756 => 9.0222
+[07/22 02:23:10] cifar10-global-growing_reg-resnet56 INFO: Finetuning...
+[07/22 02:23:28] cifar10-global-growing_reg-resnet56 INFO: Epoch 0/100, Acc=0.8742, Val Loss=0.3933, lr=0.0100
+[07/22 02:23:44] cifar10-global-growing_reg-resnet56 INFO: Epoch 1/100, Acc=0.8852, Val Loss=0.3753, lr=0.0100
+[07/22 02:24:01] cifar10-global-growing_reg-resnet56 INFO: Epoch 2/100, Acc=0.8661, Val Loss=0.4365, lr=0.0100
+[07/22 02:24:17] cifar10-global-growing_reg-resnet56 INFO: Epoch 3/100, Acc=0.8905, Val Loss=0.3537, lr=0.0100
+[07/22 02:24:34] cifar10-global-growing_reg-resnet56 INFO: Epoch 4/100, Acc=0.8797, Val Loss=0.3890, lr=0.0100
+[07/22 02:24:51] cifar10-global-growing_reg-resnet56 INFO: Epoch 5/100, Acc=0.8910, Val Loss=0.3505, lr=0.0100
+[07/22 02:25:10] cifar10-global-growing_reg-resnet56 INFO: Epoch 6/100, Acc=0.8989, Val Loss=0.3354, lr=0.0100
+[07/22 02:25:26] cifar10-global-growing_reg-resnet56 INFO: Epoch 7/100, Acc=0.8974, Val Loss=0.3435, lr=0.0100
+[07/22 02:25:43] cifar10-global-growing_reg-resnet56 INFO: Epoch 8/100, Acc=0.8927, Val Loss=0.3625, lr=0.0100
+[07/22 02:26:01] cifar10-global-growing_reg-resnet56 INFO: Epoch 9/100, Acc=0.8998, Val Loss=0.3302, lr=0.0100
+[07/22 02:26:19] cifar10-global-growing_reg-resnet56 INFO: Epoch 10/100, Acc=0.8933, Val Loss=0.3635, lr=0.0100
+[07/22 02:26:36] cifar10-global-growing_reg-resnet56 INFO: Epoch 11/100, Acc=0.8969, Val Loss=0.3341, lr=0.0100
+[07/22 02:26:55] cifar10-global-growing_reg-resnet56 INFO: Epoch 12/100, Acc=0.8904, Val Loss=0.3709, lr=0.0100
+[07/22 02:27:12] cifar10-global-growing_reg-resnet56 INFO: Epoch 13/100, Acc=0.9003, Val Loss=0.3277, lr=0.0100
+[07/22 02:27:29] cifar10-global-growing_reg-resnet56 INFO: Epoch 14/100, Acc=0.8918, Val Loss=0.3707, lr=0.0100
+[07/22 02:27:46] cifar10-global-growing_reg-resnet56 INFO: Epoch 15/100, Acc=0.9053, Val Loss=0.3068, lr=0.0100
+[07/22 02:28:03] cifar10-global-growing_reg-resnet56 INFO: Epoch 16/100, Acc=0.8918, Val Loss=0.3580, lr=0.0100
+[07/22 02:28:20] cifar10-global-growing_reg-resnet56 INFO: Epoch 17/100, Acc=0.8938, Val Loss=0.3611, lr=0.0100
+[07/22 02:28:37] cifar10-global-growing_reg-resnet56 INFO: Epoch 18/100, Acc=0.8902, Val Loss=0.3977, lr=0.0100
+[07/22 02:28:54] cifar10-global-growing_reg-resnet56 INFO: Epoch 19/100, Acc=0.8994, Val Loss=0.3405, lr=0.0100
+[07/22 02:29:11] cifar10-global-growing_reg-resnet56 INFO: Epoch 20/100, Acc=0.9094, Val Loss=0.3150, lr=0.0100
+[07/22 02:29:29] cifar10-global-growing_reg-resnet56 INFO: Epoch 21/100, Acc=0.8825, Val Loss=0.4182, lr=0.0100
+[07/22 02:29:46] cifar10-global-growing_reg-resnet56 INFO: Epoch 22/100, Acc=0.8907, Val Loss=0.3861, lr=0.0100
+[07/22 02:30:03] cifar10-global-growing_reg-resnet56 INFO: Epoch 23/100, Acc=0.8986, Val Loss=0.3507, lr=0.0100
+[07/22 02:30:21] cifar10-global-growing_reg-resnet56 INFO: Epoch 24/100, Acc=0.9082, Val Loss=0.3024, lr=0.0100
+[07/22 02:30:38] cifar10-global-growing_reg-resnet56 INFO: Epoch 25/100, Acc=0.8863, Val Loss=0.3911, lr=0.0100
+[07/22 02:30:55] cifar10-global-growing_reg-resnet56 INFO: Epoch 26/100, Acc=0.9041, Val Loss=0.3338, lr=0.0100
+[07/22 02:31:13] cifar10-global-growing_reg-resnet56 INFO: Epoch 27/100, Acc=0.8967, Val Loss=0.3447, lr=0.0100
+[07/22 02:31:30] cifar10-global-growing_reg-resnet56 INFO: Epoch 28/100, Acc=0.8908, Val Loss=0.3892, lr=0.0100
+[07/22 02:31:47] cifar10-global-growing_reg-resnet56 INFO: Epoch 29/100, Acc=0.8727, Val Loss=0.4386, lr=0.0100
+[07/22 02:32:05] cifar10-global-growing_reg-resnet56 INFO: Epoch 30/100, Acc=0.9017, Val Loss=0.3354, lr=0.0100
+[07/22 02:32:22] cifar10-global-growing_reg-resnet56 INFO: Epoch 31/100, Acc=0.8933, Val Loss=0.3861, lr=0.0100
+[07/22 02:32:40] cifar10-global-growing_reg-resnet56 INFO: Epoch 32/100, Acc=0.8716, Val Loss=0.4683, lr=0.0100
+[07/22 02:32:57] cifar10-global-growing_reg-resnet56 INFO: Epoch 33/100, Acc=0.9012, Val Loss=0.3370, lr=0.0100
+[07/22 02:33:15] cifar10-global-growing_reg-resnet56 INFO: Epoch 34/100, Acc=0.8968, Val Loss=0.3715, lr=0.0100
+[07/22 02:33:32] cifar10-global-growing_reg-resnet56 INFO: Epoch 35/100, Acc=0.9003, Val Loss=0.3457, lr=0.0100
+[07/22 02:33:50] cifar10-global-growing_reg-resnet56 INFO: Epoch 36/100, Acc=0.8886, Val Loss=0.4046, lr=0.0100
+[07/22 02:34:07] cifar10-global-growing_reg-resnet56 INFO: Epoch 37/100, Acc=0.8912, Val Loss=0.3739, lr=0.0100
+[07/22 02:34:25] cifar10-global-growing_reg-resnet56 INFO: Epoch 38/100, Acc=0.9001, Val Loss=0.3478, lr=0.0100
+[07/22 02:34:42] cifar10-global-growing_reg-resnet56 INFO: Epoch 39/100, Acc=0.9067, Val Loss=0.3225, lr=0.0100
+[07/22 02:35:00] cifar10-global-growing_reg-resnet56 INFO: Epoch 40/100, Acc=0.8995, Val Loss=0.3535, lr=0.0100
+[07/22 02:35:18] cifar10-global-growing_reg-resnet56 INFO: Epoch 41/100, Acc=0.8851, Val Loss=0.4250, lr=0.0100
+[07/22 02:35:36] cifar10-global-growing_reg-resnet56 INFO: Epoch 42/100, Acc=0.9077, Val Loss=0.3242, lr=0.0100
+[07/22 02:35:53] cifar10-global-growing_reg-resnet56 INFO: Epoch 43/100, Acc=0.9042, Val Loss=0.3331, lr=0.0100
+[07/22 02:36:11] cifar10-global-growing_reg-resnet56 INFO: Epoch 44/100, Acc=0.8865, Val Loss=0.3998, lr=0.0100
+[07/22 02:36:29] cifar10-global-growing_reg-resnet56 INFO: Epoch 45/100, Acc=0.8863, Val Loss=0.3913, lr=0.0100
+[07/22 02:36:46] cifar10-global-growing_reg-resnet56 INFO: Epoch 46/100, Acc=0.9015, Val Loss=0.3451, lr=0.0100
+[07/22 02:37:04] cifar10-global-growing_reg-resnet56 INFO: Epoch 47/100, Acc=0.8942, Val Loss=0.3699, lr=0.0100
+[07/22 02:37:22] cifar10-global-growing_reg-resnet56 INFO: Epoch 48/100, Acc=0.8992, Val Loss=0.3428, lr=0.0100
+[07/22 02:37:41] cifar10-global-growing_reg-resnet56 INFO: Epoch 49/100, Acc=0.8810, Val Loss=0.4253, lr=0.0100
+[07/22 02:38:00] cifar10-global-growing_reg-resnet56 INFO: Epoch 50/100, Acc=0.9068, Val Loss=0.3200, lr=0.0100
+[07/22 02:38:19] cifar10-global-growing_reg-resnet56 INFO: Epoch 51/100, Acc=0.9025, Val Loss=0.3292, lr=0.0100
+[07/22 02:38:38] cifar10-global-growing_reg-resnet56 INFO: Epoch 52/100, Acc=0.8983, Val Loss=0.3616, lr=0.0100
+[07/22 02:38:57] cifar10-global-growing_reg-resnet56 INFO: Epoch 53/100, Acc=0.9063, Val Loss=0.3364, lr=0.0100
+[07/22 02:39:16] cifar10-global-growing_reg-resnet56 INFO: Epoch 54/100, Acc=0.8970, Val Loss=0.3707, lr=0.0100
+[07/22 02:39:34] cifar10-global-growing_reg-resnet56 INFO: Epoch 55/100, Acc=0.9065, Val Loss=0.3400, lr=0.0100
+[07/22 02:39:53] cifar10-global-growing_reg-resnet56 INFO: Epoch 56/100, Acc=0.9070, Val Loss=0.3331, lr=0.0100
+[07/22 02:40:11] cifar10-global-growing_reg-resnet56 INFO: Epoch 57/100, Acc=0.9005, Val Loss=0.3485, lr=0.0100
+[07/22 02:40:30] cifar10-global-growing_reg-resnet56 INFO: Epoch 58/100, Acc=0.8969, Val Loss=0.3844, lr=0.0100
+[07/22 02:40:48] cifar10-global-growing_reg-resnet56 INFO: Epoch 59/100, Acc=0.9020, Val Loss=0.3527, lr=0.0100
+[07/22 02:41:05] cifar10-global-growing_reg-resnet56 INFO: Epoch 60/100, Acc=0.9281, Val Loss=0.2527, lr=0.0010
+[07/22 02:41:23] cifar10-global-growing_reg-resnet56 INFO: Epoch 61/100, Acc=0.9293, Val Loss=0.2529, lr=0.0010
+[07/22 02:41:40] cifar10-global-growing_reg-resnet56 INFO: Epoch 62/100, Acc=0.9310, Val Loss=0.2531, lr=0.0010
+[07/22 02:41:58] cifar10-global-growing_reg-resnet56 INFO: Epoch 63/100, Acc=0.9323, Val Loss=0.2484, lr=0.0010
+[07/22 02:42:16] cifar10-global-growing_reg-resnet56 INFO: Epoch 64/100, Acc=0.9322, Val Loss=0.2507, lr=0.0010
+[07/22 02:42:34] cifar10-global-growing_reg-resnet56 INFO: Epoch 65/100, Acc=0.9306, Val Loss=0.2518, lr=0.0010
+[07/22 02:42:52] cifar10-global-growing_reg-resnet56 INFO: Epoch 66/100, Acc=0.9323, Val Loss=0.2516, lr=0.0010
+[07/22 02:43:09] cifar10-global-growing_reg-resnet56 INFO: Epoch 67/100, Acc=0.9328, Val Loss=0.2553, lr=0.0010
+[07/22 02:43:26] cifar10-global-growing_reg-resnet56 INFO: Epoch 68/100, Acc=0.9316, Val Loss=0.2551, lr=0.0010
+[07/22 02:43:44] cifar10-global-growing_reg-resnet56 INFO: Epoch 69/100, Acc=0.9326, Val Loss=0.2542, lr=0.0010
+[07/22 02:44:03] cifar10-global-growing_reg-resnet56 INFO: Epoch 70/100, Acc=0.9344, Val Loss=0.2537, lr=0.0010
+[07/22 02:44:21] cifar10-global-growing_reg-resnet56 INFO: Epoch 71/100, Acc=0.9331, Val Loss=0.2572, lr=0.0010
+[07/22 02:44:38] cifar10-global-growing_reg-resnet56 INFO: Epoch 72/100, Acc=0.9321, Val Loss=0.2611, lr=0.0010
+[07/22 02:44:56] cifar10-global-growing_reg-resnet56 INFO: Epoch 73/100, Acc=0.9330, Val Loss=0.2601, lr=0.0010
+[07/22 02:45:14] cifar10-global-growing_reg-resnet56 INFO: Epoch 74/100, Acc=0.9324, Val Loss=0.2597, lr=0.0010
+[07/22 02:45:31] cifar10-global-growing_reg-resnet56 INFO: Epoch 75/100, Acc=0.9322, Val Loss=0.2671, lr=0.0010
+[07/22 02:45:49] cifar10-global-growing_reg-resnet56 INFO: Epoch 76/100, Acc=0.9326, Val Loss=0.2623, lr=0.0010
+[07/22 02:46:06] cifar10-global-growing_reg-resnet56 INFO: Epoch 77/100, Acc=0.9319, Val Loss=0.2644, lr=0.0010
+[07/22 02:46:23] cifar10-global-growing_reg-resnet56 INFO: Epoch 78/100, Acc=0.9328, Val Loss=0.2618, lr=0.0010
+[07/22 02:46:40] cifar10-global-growing_reg-resnet56 INFO: Epoch 79/100, Acc=0.9333, Val Loss=0.2638, lr=0.0010
+[07/22 02:46:58] cifar10-global-growing_reg-resnet56 INFO: Epoch 80/100, Acc=0.9337, Val Loss=0.2627, lr=0.0001
+[07/22 02:47:15] cifar10-global-growing_reg-resnet56 INFO: Epoch 81/100, Acc=0.9341, Val Loss=0.2631, lr=0.0001
+[07/22 02:47:32] cifar10-global-growing_reg-resnet56 INFO: Epoch 82/100, Acc=0.9343, Val Loss=0.2613, lr=0.0001
+[07/22 02:47:50] cifar10-global-growing_reg-resnet56 INFO: Epoch 83/100, Acc=0.9343, Val Loss=0.2619, lr=0.0001
+[07/22 02:48:06] cifar10-global-growing_reg-resnet56 INFO: Epoch 84/100, Acc=0.9345, Val Loss=0.2622, lr=0.0001
+[07/22 02:48:24] cifar10-global-growing_reg-resnet56 INFO: Epoch 85/100, Acc=0.9332, Val Loss=0.2629, lr=0.0001
+[07/22 02:48:41] cifar10-global-growing_reg-resnet56 INFO: Epoch 86/100, Acc=0.9337, Val Loss=0.2618, lr=0.0001
+[07/22 02:48:58] cifar10-global-growing_reg-resnet56 INFO: Epoch 87/100, Acc=0.9339, Val Loss=0.2632, lr=0.0001
+[07/22 02:49:15] cifar10-global-growing_reg-resnet56 INFO: Epoch 88/100, Acc=0.9327, Val Loss=0.2646, lr=0.0001
+[07/22 02:49:32] cifar10-global-growing_reg-resnet56 INFO: Epoch 89/100, Acc=0.9333, Val Loss=0.2599, lr=0.0001
+[07/22 02:49:49] cifar10-global-growing_reg-resnet56 INFO: Epoch 90/100, Acc=0.9346, Val Loss=0.2612, lr=0.0001
+[07/22 02:50:05] cifar10-global-growing_reg-resnet56 INFO: Epoch 91/100, Acc=0.9343, Val Loss=0.2594, lr=0.0001
+[07/22 02:50:23] cifar10-global-growing_reg-resnet56 INFO: Epoch 92/100, Acc=0.9335, Val Loss=0.2602, lr=0.0001
+[07/22 02:50:40] cifar10-global-growing_reg-resnet56 INFO: Epoch 93/100, Acc=0.9337, Val Loss=0.2629, lr=0.0001
+[07/22 02:50:58] cifar10-global-growing_reg-resnet56 INFO: Epoch 94/100, Acc=0.9333, Val Loss=0.2623, lr=0.0001
+[07/22 02:51:16] cifar10-global-growing_reg-resnet56 INFO: Epoch 95/100, Acc=0.9345, Val Loss=0.2592, lr=0.0001
+[07/22 02:51:33] cifar10-global-growing_reg-resnet56 INFO: Epoch 96/100, Acc=0.9335, Val Loss=0.2624, lr=0.0001
+[07/22 02:51:51] cifar10-global-growing_reg-resnet56 INFO: Epoch 97/100, Acc=0.9353, Val Loss=0.2602, lr=0.0001
+[07/22 02:52:08] cifar10-global-growing_reg-resnet56 INFO: Epoch 98/100, Acc=0.9336, Val Loss=0.2606, lr=0.0001
+[07/22 02:52:25] cifar10-global-growing_reg-resnet56 INFO: Epoch 99/100, Acc=0.9341, Val Loss=0.2620, lr=0.0001
+[07/22 02:52:25] cifar10-global-growing_reg-resnet56 INFO: Best Acc=0.9353
