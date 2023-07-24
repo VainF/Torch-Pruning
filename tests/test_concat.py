@@ -24,14 +24,14 @@ class Net(nn.Module):
             nn.BatchNorm2d(in_dim//2)
         )
         self.block2 = nn.Sequential(
-            nn.Conv2d(in_dim + in_dim//2, in_dim, 1),
+            nn.Conv2d(in_dim * 2 + in_dim//2, in_dim, 1),
             nn.BatchNorm2d(in_dim)
         )
         
     def forward(self, x):
         x = self.block1(x)
         x2 = self.parallel_path(x)
-        x = torch.cat([x, x2], dim=1)
+        x = torch.cat([x, x, x2], dim=1)
         x = self.block2(x)
         return x
     
