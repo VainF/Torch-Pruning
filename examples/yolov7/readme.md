@@ -27,7 +27,7 @@ python yolov7_detect_pruned.py --weights yolov7.pt --conf 0.25 --img-size 640 --
 
 # Training with pruned yolov7 (The training part is not validated)
 # Please download the pretrained yolov7_training.pt from https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7.pt.
-python yolov7_train_pruned.py --workers 8 --device 0 --batch-size 1 --data data/coco.yaml --img 640 640 --cfg cfg/training/yolov7.yaml --weights 'yolov7_training.pt' --name yolov7 --hyp data/hyp.scratch.p5.yaml
+python yolov7_train_pruned.py --workers 8 --device 0 --batch-size 1 --data data/coco.yaml --img 640 640 --cfg cfg/training/yolov7.yaml --weights 'yolov7.pt' --name yolov7 --hyp data/hyp.scratch.p5.yaml
 ```
 
 #### Screenshot for yolov7_train_pruned.py:
