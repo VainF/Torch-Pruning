@@ -118,13 +118,13 @@ class MetaPruner:
         
         # detect group convs & group norms
         for m in self.model.modules():
-            if isinstance(m, ops.TORCH_CONV) \
-                and m.groups > 1 \
-                    and m.groups != m.out_channels:
-                self.channel_groups[m] = m.groups
-            if isinstance(m, ops.TORCH_GROUPNORM):
-                self.channel_groups[m] = m.num_groups
-        
+            layer_pruner = self.DG.get_pruner_of_module(m)
+            channel_groups = layer_pruner.get_channel_groups(m)
+            if channel_groups > 1:
+                if isinstance(m, ops.TORCH_CONV) and m.groups == m.out_channels:
+                    continue
+                self.channel_groups[m] = channel_groups
+                
         # count the number of total channels at initialization
         if self.global_pruning:
             initial_total_channels = 0

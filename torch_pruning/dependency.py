@@ -467,7 +467,7 @@ class DependencyGraph(object):
                 dep, idxs = processing_stack.pop(-1)
                 node, fn = dep.target, dep.handler
                 visited_node.add(node)
-                #print(dep)
+    
                 for new_dep in node.dependencies:
                     if new_dep.is_triggered_by(fn):
                         new_indices = idxs
@@ -475,8 +475,6 @@ class DependencyGraph(object):
                             if mapping is not None:
                                 new_indices = mapping(new_indices)
 
-                                #print(len(new_indices))
-                        #print()
                         if len(new_indices) == 0:
                             continue
                         if (new_dep.target in visited_node) and group.has_pruning_op(
@@ -509,12 +507,13 @@ class DependencyGraph(object):
         ignored_layers = ignored_layers+self.IGNORED_LAYERS
 
         for m in list(self.module2node.keys()):
+ 
             if m in ignored_layers:
                 continue
 
             if not isinstance(m, tuple(root_module_types)):
                 continue
-
+     
             pruner = self.get_pruner_of_module(m)
             if pruner is None or pruner.get_out_channels(m) is None:
                 continue
@@ -783,6 +782,9 @@ class DependencyGraph(object):
                     module = ops._SplitOp(self._op_id)
                     self._op_id+=1
                 elif "view" in grad_fn.name().lower() or 'reshape' in grad_fn.name().lower():
+                    #if 'reshape' in grad_fn.name().lower():
+                        #print(grad_fn.__dir__())
+                        #print(grad_fn._saved_self_sizes)
                     module = ops._ReshapeOp(self._op_id)
                     self._op_id+=1
                 else:
@@ -830,22 +832,6 @@ class DependencyGraph(object):
                             if not is_unwrapped_param:
                                 continue
                         input_node = create_node_if_not_exists(f[0])
-
-                        #allow_dumplicated = False
-
-                        # TODO: support duplicated concat/split like torch.cat([x, x], dim=1)
-                        # The following implementation is can achieve this but will introduce some bugs. 
-                        # will be fixed in the future version
-                        #if node.type == ops.OPTYPE.CONCAT:
-                        #    allow_dumplicated = (node not in visited_as_output_node)
-                        #    node.add_input(input_node, allow_dumplicated=allow_dumplicated)
-                        #    input_node.add_output(node, allow_dumplicated=allow_dumplicated)
-                        #    print(node, node.inputs)
-                        #elif input_node.type == ops.OPTYPE.SPLIT:
-                        #    allow_dumplicated = (node not in visited_as_output_node)
-                        #    node.add_input(input_node, allow_dumplicated=allow_dumplicated)
-                        #    input_node.add_output(node, allow_dumplicated=allow_dumplicated)
-                        #else:
                         node.add_input(input_node, allow_dumplicated=True)
                         input_node.add_output(node, allow_dumplicated=True)
                         processing_stack.append(f[0])

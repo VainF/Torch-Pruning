@@ -1,7 +1,6 @@
 import torch.nn as nn
 from enum import IntEnum
 
-
 class DummyMHA(nn.Module):
     def __init__(self):
         super(DummyMHA, self).__init__()
@@ -69,6 +68,9 @@ class DummyPruner(object):
 
     def get_in_channels(self, layer):
         return None
+
+    def get_channel_groups(self, layer):
+        return 1
 
 
 class ConcatPruner(DummyPruner):

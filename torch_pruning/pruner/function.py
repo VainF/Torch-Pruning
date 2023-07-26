@@ -81,6 +81,9 @@ class BasePruningFunc(ABC):
         layer = pruning_fn(layer, idxs)
         return layer
 
+    def get_channel_groups(self, layer):
+        return 1
+
     def _prune_parameter_and_grad(self, weight, keep_idxs, pruning_dim):
         pruned_weight = torch.nn.Parameter(torch.index_select(weight, pruning_dim, torch.LongTensor(keep_idxs).to(weight.device)))
         if weight.grad is not None:
@@ -122,6 +125,9 @@ class ConvPruner(BasePruningFunc):
 
     def get_in_channels(self, layer):
         return layer.in_channels
+
+    def get_channel_groups(self, layer):
+        return layer.groups
 
 
 class DepthwiseConvPruner(ConvPruner):
@@ -248,6 +254,9 @@ class GroupNormPruner(BasePruningFunc):
 
     def get_in_channels(self, layer):
         return layer.num_channels
+
+    def get_channel_groups(self, layer):
+        return layer.num_groups
 
 class InstanceNormPruner(BasePruningFunc):
     def prune_out_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
