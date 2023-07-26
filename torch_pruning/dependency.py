@@ -238,7 +238,13 @@ class Group(object):
     def add_and_merge(self, dep, idxs):
         for i, (_dep, _idxs) in enumerate(self._group):
             if _dep.target == dep.target and _dep.handler == dep.handler:
-                self._group[i] = GroupItem(dep=_dep, idxs=list(set(_idxs + idxs)))
+                visited_idxs = set()
+                merged_idxs = []
+                for index in _idxs + idxs:
+                    if index.idx not in visited_idxs:
+                        merged_idxs.append(index)
+                        visited_idxs.add(index.idx)
+                self._group[i] = GroupItem(dep=_dep, idxs=merged_idxs)
                 return
         self.add_dep(dep, idxs)
 
@@ -259,9 +265,9 @@ class Group(object):
         fmt += "\n" + "-" * 32 + "\n"
         for i, (dep, idxs) in enumerate(self._group):
             if i==0: 
-                fmt += "[{}] {}, idxs={} (Pruning Root)\n".format(i, dep, idxs)
+                fmt += "[{}] {}, idxs ({}) ={}  (Pruning Root)\n".format(i, dep, len(idxs), idxs)
             else:
-                fmt += "[{}] {}, idxs={}\n".format(i, dep, idxs)
+                fmt += "[{}] {}, idxs ({}) ={} \n".format(i, dep, len(idxs), idxs)
         fmt += "-" * 32 + "\n"
         return fmt
 
@@ -461,8 +467,7 @@ class DependencyGraph(object):
                 dep, idxs = processing_stack.pop(-1)
                 node, fn = dep.target, dep.handler
                 visited_node.add(node)
-                #print(dep)
-                #print(node.dependencies)
+    
                 for new_dep in node.dependencies:
                     if new_dep.is_triggered_by(fn):
                         new_indices = idxs
@@ -470,8 +475,6 @@ class DependencyGraph(object):
                             if mapping is not None:
                                 new_indices = mapping(new_indices)
 
-                                #print(len(new_indices))
-                        #print()
                         if len(new_indices) == 0:
                             continue
                         if (new_dep.target in visited_node) and group.has_pruning_op(
@@ -485,7 +488,7 @@ class DependencyGraph(object):
                             )
 
         _fix_dependency_graph_non_recursive(*group[0])
-
+        
         # merge pruning ops
         merged_group = Group()
         for dep, idxs in group.items:
@@ -504,12 +507,13 @@ class DependencyGraph(object):
         ignored_layers = ignored_layers+self.IGNORED_LAYERS
 
         for m in list(self.module2node.keys()):
+ 
             if m in ignored_layers:
                 continue
 
             if not isinstance(m, tuple(root_module_types)):
                 continue
-
+     
             pruner = self.get_pruner_of_module(m)
             if pruner is None or pruner.get_out_channels(m) is None:
                 continue
@@ -630,7 +634,7 @@ class DependencyGraph(object):
             unwrapped_parameters = []
         unwrapped_detected = list( set(unwrapped_detected) - set([p for (p, _) in unwrapped_parameters]) )
         if len(unwrapped_detected)>0 and self.verbose:
-            warning_str = "Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last non-singleton dimension of a parameter. If you wish to customize this behavior, please provide an unwrapped_parameters argument.".format([_param_to_name[p] for p in unwrapped_detected])
+            warning_str = "Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last non-singleton dimension of these parameters. If you wish to change this behavior, please provide an unwrapped_parameters argument.".format([_param_to_name[p] for p in unwrapped_detected])
             warnings.warn(warning_str)
         
         # set default pruning dim for unwrapped parameters
@@ -724,9 +728,11 @@ class DependencyGraph(object):
         if output_transform is not None:
             out = output_transform(out)
         module2node = {} # create a mapping from nn.Module to tp.dependency.Node
+
+        visited = set()
         for o in utils.flatten_as_list(out):
             self._trace_computational_graph(
-                module2node, o.grad_fn, gradfn2module, reused)
+                module2node, o.grad_fn, gradfn2module, reused, visited=visited)
 
         # TODO: Improving ViT pruning
         # This is a corner case for pruning ViT,
@@ -749,13 +755,11 @@ class DependencyGraph(object):
                                     stack.append(ni)
         return module2node
 
-    def _trace_computational_graph(self, module2node, grad_fn_root, gradfn2module, reused):
+    def _trace_computational_graph(self, module2node, grad_fn_root, gradfn2module, reused, visited=set()):
 
         def create_node_if_not_exists(grad_fn):
             module = gradfn2module.get(grad_fn, None)
-            if module is not None \
-                and module in module2node \
-                    and module not in reused:
+            if module is not None and module in module2node and module not in reused:
                 return module2node[module]
 
             # 1. link grad_fns and modules
@@ -804,13 +808,10 @@ class DependencyGraph(object):
 
         # non-recursive construction of computational graph
         processing_stack = [grad_fn_root]
-        visited = set()
-        visited_as_output_node = set()
         while len(processing_stack) > 0:
             grad_fn = processing_stack.pop(-1)
             if grad_fn in visited:
                 continue
-            
             node = create_node_if_not_exists(grad_fn=grad_fn)
             if hasattr(grad_fn, "next_functions"):
                 for f in grad_fn.next_functions:
@@ -828,28 +829,11 @@ class DependencyGraph(object):
                             if not is_unwrapped_param:
                                 continue
                         input_node = create_node_if_not_exists(f[0])
-
-                        #allow_dumplicated = False
-
-                        # TODO: support duplicated concat/split like torch.cat([x, x], dim=1)
-                        # The following implementation is can achieve this but will introduce some bugs. 
-                        # will be fixed in the future version
-                        #if node.type == ops.OPTYPE.CONCAT:
-                        #    allow_dumplicated = (node not in visited_as_output_node)
-                        #    node.add_input(input_node, allow_dumplicated=allow_dumplicated)
-                        #    input_node.add_output(node, allow_dumplicated=allow_dumplicated)
-                        #    print(node, node.inputs)
-                        #elif input_node.type == ops.OPTYPE.SPLIT:
-                        #    allow_dumplicated = (node not in visited_as_output_node)
-                        #    node.add_input(input_node, allow_dumplicated=allow_dumplicated)
-                        #    input_node.add_output(node, allow_dumplicated=allow_dumplicated)
-                        #else:
-                        node.add_input(input_node, allow_dumplicated=False)
-                        input_node.add_output(node, allow_dumplicated=False)
-
+                        node.add_input(input_node, allow_dumplicated=True)
+                        input_node.add_output(node, allow_dumplicated=True)
                         processing_stack.append(f[0])
             visited.add(grad_fn)
-            visited_as_output_node.add(node)
+
         
         for (param, dim) in self.unwrapped_parameters:
             module2node[param].pruning_dim = dim
@@ -1000,6 +984,7 @@ class DependencyGraph(object):
             for n in cat_node.inputs:
                 chs.append(self.infer_channels_between(n, cat_node))
             cat_node.module.concat_sizes = chs
+
             
         offsets = [0]
         for ch in chs:

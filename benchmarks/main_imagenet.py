@@ -89,6 +89,7 @@ def get_args_parser(add_help=True):
     parser.add_argument("--target-flops", type=float, default=2.0, help="GFLOPs of pruned model")
     parser.add_argument("--soft-keeping-ratio", type=float, default=0.0)
     parser.add_argument("--reg", type=float, default=1e-4)
+    parser.add_argument("--delta_reg", type=float, default=1e-4)
     parser.add_argument("--max-ch-sparsity", default=1.0, type=float, help="maximum channel sparsity")
     parser.add_argument("--sl-epochs", type=int, default=None)
     parser.add_argument("--sl-resume", type=str, default=None)
@@ -131,6 +132,10 @@ def get_pruner(model, example_inputs, args):
     elif args.method == "group_norm":
         imp = tp.importance.GroupNormImportance(p=2)
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)
+    elif args.method == "group_greg":
+        sparsity_learning = True
+        imp = tp.importance.GroupNormImportance(p=2)
+        pruner_entry = partial(tp.pruner.GrowingRegPruner, reg=args.reg, delta_reg=args.delta_reg, global_pruning=args.global_pruning)
     elif args.method == "group_sl":
         sparsity_learning = True
         imp = tp.importance.GroupNormImportance(p=2)
@@ -163,7 +168,7 @@ def get_pruner(model, example_inputs, args):
 
 
 
-def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema=None, scaler=None, regularizer=None, recover=None):
+def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema=None, scaler=None, pruner=None, recover=None):
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter("lr", utils.SmoothedValue(window_size=1, fmt="{value}"))
@@ -180,17 +185,17 @@ def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, arg
         optimizer.zero_grad()
         if scaler is not None:
             scaler.scale(loss).backward()
-            if regularizer:
+            if pruner:
                 scaler.unscale_(optimizer)
-                regularizer(model)
+                pruner.regularize(model)
             #if recover:
             #    recover(model.module)
             scaler.step(optimizer)
             scaler.update()
         else:
             loss.backward()
-            if regularizer:
-                regularizer(model)
+            if pruner is not None:
+                pruner.regularize(model)
             if recover:
                 recover(model.module)
             if args.clip_grad_norm is not None:
@@ -202,14 +207,16 @@ def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, arg
             if epoch < args.lr_warmup_epochs:
                 # Reset ema buffer to keep copying weights during warmup period
                 model_ema.n_averaged.fill_(0)
-
+            
         acc1, acc5 = utils.accuracy(output, target, topk=(1, 5))
         batch_size = image.shape[0]
         metric_logger.update(loss=loss.item(), lr=optimizer.param_groups[0]["lr"])
         metric_logger.meters["acc1"].update(acc1.item(), n=batch_size)
         metric_logger.meters["acc5"].update(acc5.item(), n=batch_size)
         metric_logger.meters["img/s"].update(batch_size / (time.time() - start_time))
-
+        
+    if pruner is not None and isinstance(pruner, tp.pruner.GrowingRegPruner):
+        pruner.update_reg()
 
 def evaluate(model, criterion, data_loader, device, print_freq=100, log_suffix=""):
     model.eval()
@@ -381,7 +388,7 @@ def main(args):
                 train(model, args.sl_epochs, 
                                         lr=args.sl_lr, lr_step_size=args.sl_lr_step_size, lr_warmup_epochs=args.sl_lr_warmup_epochs, 
                                         train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
-                                        device=device, args=args, regularizer=pruner.regularize, state_dict_only=True)
+                                        device=device, args=args, pruner=pruner, state_dict_only=True)
                 #model.load_state_dict( torch.load('regularized_{:.4f}_best.pth'.format(args.reg), map_location='cpu')['model'] )
                 #utils.save_on_master(
                 #    model_without_ddp.state_dict(),
@@ -403,14 +410,14 @@ def main(args):
     train(model, args.epochs, 
             lr=args.lr, lr_step_size=args.lr_step_size, lr_warmup_epochs=args.lr_warmup_epochs, 
             train_sampler=train_sampler, data_loader=data_loader, data_loader_test=data_loader_test, 
-            device=device, args=args, regularizer=None, state_dict_only=(not args.prune))
+            device=device, args=args, pruner=None, state_dict_only=(not args.prune))
 
 def train(
     model, 
     epochs, 
     lr, lr_step_size, lr_warmup_epochs, 
     train_sampler, data_loader, data_loader_test, 
-    device, args, regularizer=None, state_dict_only=True, recover=None):
+    device, args, pruner=None, state_dict_only=True, recover=None):
 
     model.to(device)
     if args.distributed and args.sync_bn:
@@ -421,9 +428,9 @@ def train(
     else:
         criterion = nn.CrossEntropyLoss()
 
-    weight_decay = args.weight_decay if regularizer is None else 0
-    bias_weight_decay = args.bias_weight_decay if regularizer is None else 0
-    norm_weight_decay = args.norm_weight_decay if regularizer is None else 0
+    weight_decay = args.weight_decay if pruner is None else 0
+    bias_weight_decay = args.bias_weight_decay if pruner is None else 0
+    norm_weight_decay = args.norm_weight_decay if pruner is None else 0
 
     custom_keys_weight_decay = []
     if bias_weight_decay is not None:
@@ -534,11 +541,11 @@ def train(
     
     start_time = time.time()
     best_acc = 0
-    prefix = '' if regularizer is None else 'regularized_{:e}_'.format(args.reg)
+    prefix = '' if pruner is None else 'regularized_{:e}_'.format(args.reg)
     for epoch in range(args.start_epoch, epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
-        train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema, scaler, regularizer, recover=recover)
+        train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema, scaler, pruner, recover=recover)
         lr_scheduler.step()
         acc = evaluate(model, criterion, data_loader_test, device=device)
         if model_ema:
