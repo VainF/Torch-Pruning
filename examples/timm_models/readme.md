@@ -1,4 +1,4 @@
-# Pruning Models from Torchvision
+# Pruning Models from Timm
 
 ## 0. Requirements
 
