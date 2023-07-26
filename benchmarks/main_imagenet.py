@@ -134,7 +134,7 @@ def get_pruner(model, example_inputs, args):
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)
     elif args.method == "group_greg":
         sparsity_learning = True
-        imp = tp.importance.MagnitudeImportance(p=2)
+        imp = tp.importance.GroupNormImportance(p=2)
         pruner_entry = partial(tp.pruner.GrowingRegPruner, reg=args.reg, delta_reg=args.delta_reg, global_pruning=args.global_pruning)
     elif args.method == "group_sl":
         sparsity_learning = True
