@@ -634,7 +634,7 @@ class DependencyGraph(object):
             unwrapped_parameters = []
         unwrapped_detected = list( set(unwrapped_detected) - set([p for (p, _) in unwrapped_parameters]) )
         if len(unwrapped_detected)>0 and self.verbose:
-            warning_str = "Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last non-singleton dimension of a parameter. If you wish to customize this behavior, please provide an unwrapped_parameters argument.".format([_param_to_name[p] for p in unwrapped_detected])
+            warning_str = "Unwrapped parameters detected: {}.\n Torch-Pruning will prune the last non-singleton dimension of these parameters. If you wish to change this behavior, please provide an unwrapped_parameters argument.".format([_param_to_name[p] for p in unwrapped_detected])
             warnings.warn(warning_str)
         
         # set default pruning dim for unwrapped parameters
@@ -782,9 +782,6 @@ class DependencyGraph(object):
                     module = ops._SplitOp(self._op_id)
                     self._op_id+=1
                 elif "view" in grad_fn.name().lower() or 'reshape' in grad_fn.name().lower():
-                    #if 'reshape' in grad_fn.name().lower():
-                        #print(grad_fn.__dir__())
-                        #print(grad_fn._saved_self_sizes)
                     module = ops._ReshapeOp(self._op_id)
                     self._op_id+=1
                 else:
