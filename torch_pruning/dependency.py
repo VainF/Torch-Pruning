@@ -14,6 +14,7 @@ from ._helpers import UnwrappedParameters, _HybridIndex, GroupItem
 __all__ = ["Dependency", "Group", "DependencyGraph"]
 
 _PLACEHOLDER = None
+MAX_RECURSION_DEPTH = 100
 
 def equal_func(func1, func2):
     return (
@@ -568,15 +569,18 @@ class DependencyGraph(object):
             return None
         return p.get_in_channels(module)
 
-    def _infer_out_channels_recursively(self, node: Node):
+    def _infer_out_channels_recursively(self, node: Node, recursive_depth: list):
         """ infer the number of output channels recursively
         """     
+        if recursive_depth[0] > MAX_RECURSION_DEPTH:
+            return None
         ch = self.get_out_channels(node)
         if ch is None:
             ch = 0
             for in_node in node.inputs:
                 if node.type == ops.OPTYPE.CONCAT:
-                    sub_ch = self._infer_out_channels_recursively(in_node)
+                    recursive_depth[0]+=1
+                    sub_ch = self._infer_out_channels_recursively(in_node, recursive_depth)
                     if sub_ch is None:
                         return None
                     ch += sub_ch
@@ -586,25 +590,30 @@ class DependencyGraph(object):
                             if split_out_node == node:
                                 ch = in_node.module.split_sizes[i]
                     else:
-                        ch = self._infer_out_channels_recursively(in_node)
+                        recursive_depth[0]+=1
+                        ch = self._infer_out_channels_recursively(in_node, recursive_depth)
             if ch == 0:
                 return None
         return ch
 
-    def _infer_in_channels_recursively(self, node: Node):
+    def _infer_in_channels_recursively(self, node: Node, recursive_depth: list):
         """ infer the number of input channels recursively
         """         
+        if recursive_depth[0] > MAX_RECURSION_DEPTH:
+            return None
         ch = self.get_in_channels(node)
         if ch is None:
             ch = 0
             for out_node in node.outputs:
                 if node.type == ops.OPTYPE.SPLIT:
-                    sub_ch = self._infer_in_channels_recursively(out_node)
+                    recursive_depth[0]+=1
+                    sub_ch = self._infer_in_channels_recursively(out_node, recursive_depth)
                     if sub_ch is None:
                         return None
                     ch += sub_ch
                 else:
-                    ch = self._infer_in_channels_recursively(out_node)
+                    recursive_depth[0]+=1
+                    ch = self._infer_in_channels_recursively(out_node, recursive_depth)
             if ch == 0:
                 return None
         return ch
@@ -707,7 +716,7 @@ class DependencyGraph(object):
             for m in model.modules()
             if (isinstance(m, registered_types) and m not in self.IGNORED_LAYERS)
         ]
-        
+
         # Feed forward to record gradient functions of prunable modules
         if forward_fn is not None:
             out = forward_fn(model, example_inputs)
@@ -875,7 +884,8 @@ class DependencyGraph(object):
                 else: # legency version
                     chs = []
                     for n in node.outputs:
-                        chs.append(self._infer_in_channels_recursively(n))
+                        recursive_depth = [0]
+                        chs.append(self._infer_in_channels_recursively(n, recursive_depth))
                     offsets = [0]
                     for ch in chs:
                         if ch is None: continue
@@ -889,7 +899,8 @@ class DependencyGraph(object):
         fc_in_features = fc_node.module.in_features
         feature_channels = 0
         for n in fc_node.inputs:
-            feature_channels = self._infer_out_channels_recursively(n)
+            recursive_depth = [0]
+            feature_channels = self._infer_out_channels_recursively(n, recursive_depth)
             if feature_channels is not None:  # =0 if there is a residual connection to model inputs
                 break
         if (
@@ -924,13 +935,19 @@ class DependencyGraph(object):
 
         out_channels = None
         for n in reshape_node.outputs:
-            out_channels = self._infer_in_channels_recursively(n)
+            recursive_depth = [0]
+            out_channels = self._infer_in_channels_recursively(n, recursive_depth)
+            if recursive_depth[0] > MAX_RECURSION_DEPTH:
+                return
             if out_channels is not None:  # =0 if there is a residual connection to model inputs
                 break
         
         in_channels = None
         for n in reshape_node.inputs:
-            in_channels = self._infer_out_channels_recursively(n)
+            recursive_depth = [0]
+            in_channels = self._infer_out_channels_recursively(n, recursive_depth)
+            if recursive_depth[0] > MAX_RECURSION_DEPTH:
+                return
             if in_channels is not None:  # =0 if there is a residual connection to model inputs
                 break
         
@@ -1057,7 +1074,8 @@ class DependencyGraph(object):
             for i, n in enumerate(node_1.outputs):
                 if n == node_2:
                     return node_1.module.split_sizes[i]
-        return self._infer_out_channels_recursively(node_1)
+        recursive_depth = [0]
+        return self._infer_out_channels_recursively(node_1, recursive_depth)
 
         
 
