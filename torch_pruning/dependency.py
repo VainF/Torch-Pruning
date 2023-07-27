@@ -117,7 +117,7 @@ class Dependency(Edge):
         self.target = target             
         # Current coordinate system => Standard coordinate system => target coordinate system 
         #                     index_mapping[0]              index_mapping[1]
-        self.index_mapping = [None, None] 
+        self.index_mapping = [_PLACEHOLDER, _PLACEHOLDER] # [None, None] by default
 
     def __call__(self, idxs: list):
         self.handler.__self__.pruning_dim = self.target.pruning_dim # set pruning_dim
@@ -993,7 +993,10 @@ class DependencyGraph(object):
     def _update_concat_index_mapping(self, cat_node: Node):
         if cat_node.type != ops.OPTYPE.CONCAT:
             return
-        
+
+        if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim != cat_node.pruning_dim: # this only works for Pytorch>=1.12
+            return 
+
         if cat_node.module.concat_sizes is not None:
             chs = cat_node.module.concat_sizes
         else:
@@ -1041,7 +1044,10 @@ class DependencyGraph(object):
     def _update_split_index_mapping(self, split_node: Node):
         if split_node.type != ops.OPTYPE.SPLIT:
             return
-
+        
+        if hasattr(split_node.grad_fn, '_saved_dim') and split_node.grad_fn._saved_dim != split_node.pruning_dim: # this only works for Pytorch>=1.12
+            return 
+        
         offsets = split_node.module.offsets
         if offsets is None:
             return
