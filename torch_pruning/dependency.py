@@ -994,7 +994,7 @@ class DependencyGraph(object):
         if cat_node.type != ops.OPTYPE.CONCAT:
             return
 
-        if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim != cat_node.pruning_dim: # this only works for Pytorch>=1.12
+        if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim != 1: # this only works for Pytorch>=1.12
             return 
 
         if cat_node.module.concat_sizes is not None:
@@ -1045,7 +1045,7 @@ class DependencyGraph(object):
         if split_node.type != ops.OPTYPE.SPLIT:
             return
         
-        if hasattr(split_node.grad_fn, '_saved_dim') and split_node.grad_fn._saved_dim != split_node.pruning_dim: # this only works for Pytorch>=1.12
+        if hasattr(split_node.grad_fn, '_saved_dim') and split_node.grad_fn._saved_dim != 1: # this only works for Pytorch>=1.12
             return 
         
         offsets = split_node.module.offsets
