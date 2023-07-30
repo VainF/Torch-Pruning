@@ -55,13 +55,13 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 - [x] [Benchmarks](benchmarks) and [Tutorials](https://github.com/VainF/Torch-Pruning/wiki)
   
 ### **TODO List:**
-- [ ] A strong baseline with bags of tricks from existing methods.
-- [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**81/85=95.3%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility.
+- [ ] A all-in-one pruner for application.
+- [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**81/85=95.3%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility (**119/294=40.5%**).
 - [ ] Pruning from Scratch / at Initialization.
 - [ ] More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), etc.
 - [ ] More Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
 - [ ] Block/Layer/Depth Pruning
-- [ ] Pruning benchmarks for CIFAR, ImageNet and COCO.
+- [ ] Pruning benchmarks for CIFAR, ImageNet, and COCO.
 
 ## Installation
 
