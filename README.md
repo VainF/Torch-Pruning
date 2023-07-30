@@ -40,7 +40,8 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
 * 2023.04.21 Join our Telegram or Wechat group:
   * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
-  * WeChat (Group size exceeded 200): <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/00ae94c9-eb89-41b1-bfa0-0eab54ad89d4">
+  * WeChat (Group size exceeded 200): <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/6c80e758-7692-4dad-b6aa-1e1877e72bf7">
+
 
 
 ### **Features:**
