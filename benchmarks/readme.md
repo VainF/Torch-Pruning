@@ -1,7 +1,5 @@
 # Performance Benchmarks (Beta version)
 
-A Prunability Benchmark is available at [benchmarks/prunability](prunability)
-
 ## 1. ResNet-56 / CIFAR-10 / 2.00x - 2.55x
 
 | Method | Base (%) | Pruned (%) | $\Delta$ Acc (%) | Speed Up |
