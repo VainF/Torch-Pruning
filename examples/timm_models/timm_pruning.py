@@ -17,6 +17,9 @@ unprunable_list = []
 problem_with_input_shape = []
 for i, model_name in enumerate(timm_models):
     print("Pruning %s..."%model_name)
+    if "botnet" in model_name or "coatnet" in model_name or "coatnext" in model_name:
+        unprunable_list.append(model_name)
+        continue
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     #if 'rexnet' in model_name or 'sequencer' in model_name or 'botnet' in model_name:  # pruning process stuck with that architectures - skip them.
     #    unprunable_list.append(model_name)

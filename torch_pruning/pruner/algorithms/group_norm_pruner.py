@@ -7,8 +7,6 @@ from ..._helpers import _FlattenIndexMapping
 
 
 class GroupNormPruner(MetaPruner):
-    """ Only for reproducing our results in the paper. Not recommended for practical use. Please refer to MagnitudePruner for a general implementation of magnitude-based pruning.
-    """
     def __init__(
         self,
         model,
@@ -57,89 +55,10 @@ class GroupNormPruner(MetaPruner):
     def regularize(self, model, base=16):
         for i, group in enumerate(self.groups):
             ch_groups = self.get_channel_groups(group)
-            group_norm = 0
-
-            # Get group norm
-            #print(group)
-            for dep, idxs in group:
-                idxs.sort()
-                layer = dep.target.module
-                prune_fn = dep.handler
-
-                # Conv out_channels
-                if prune_fn in [
-                    function.prune_conv_out_channels,
-                    function.prune_linear_out_channels,
-                ]:
-                    w = layer.weight.data[idxs].flatten(1)
-                    local_norm = w.pow(2).sum(1)
-                    #print(local_norm.shape, layer, idxs, ch_groups)
-                    if ch_groups>1:
-                        local_norm = local_norm.view(ch_groups, -1).sum(0)
-                        local_norm = local_norm.repeat(ch_groups)
-                    group_norm+=local_norm
-                    #if layer.bias is not None:
-                    #    group_norm += layer.bias.data[idxs].pow(2)
-                # Conv in_channels
-                elif prune_fn in [
-                    function.prune_conv_in_channels,
-                    function.prune_linear_in_channels,
-                ]:
-                    w = (layer.weight).transpose(0, 1).flatten(1)
-                    if (
-                        w.shape[0] != group_norm.shape[0]
-                    ):  
-                        if hasattr(dep, 'index_mapping') and isinstance(dep.index_mapping, _FlattenIndexMapping):
-                            # conv - latten
-                            w = w.view(
-                                group_norm.shape[0],
-                                w.shape[0] // group_norm.shape[0],
-                                w.shape[1],
-                            ).flatten(1)
-                        elif ch_groups>1 and prune_fn==function.prune_conv_in_channels and layer.groups==1:
-                            # group conv
-                            w = w.view(w.shape[0] // group_norm.shape[0],
-                                    group_norm.shape[0], w.shape[1]).transpose(0, 1).flatten(1)               
-                    local_norm = w.pow(2).sum(1)
-                    if ch_groups>1:
-                        if len(local_norm)==len(group_norm):
-                            local_norm = local_norm.view(ch_groups, -1).sum(0)
-                        local_norm = local_norm.repeat(ch_groups)
-                    group_norm += local_norm[idxs]
-                # BN
-                elif prune_fn == function.prune_batchnorm_out_channels:
-                    # regularize BN
-                    if layer.affine:
-                        w = layer.weight.data[idxs]
-                        local_norm = w.pow(2)
-                        if ch_groups>1:
-                            local_norm = local_norm.view(ch_groups, -1).sum(0)
-                            local_norm = local_norm.repeat(ch_groups)
-                        group_norm += local_norm
-
-                        #b = layer.bias.data[idxs]
-                        #local_norm = b.pow(2)
-                        #if ch_groups>1:
-                        #    local_norm = local_norm.view(ch_groups, -1).sum(0)
-                        #    local_norm = local_norm.repeat(ch_groups)
-                        #group_norm += local_norm
-
-
-            current_channels = len(group_norm)
-            if ch_groups>1:
-                group_norm = group_norm.view(ch_groups, -1).sum(0)
-                group_stride = current_channels//ch_groups
-                group_norm = torch.cat([group_norm+group_stride*i for i in range(ch_groups)], 0)
-            group_norm = group_norm.sqrt()
+            imp = self.estimate_importance(group).sqrt()
             base = 16
-            scale = base**((group_norm.max() - group_norm) / (group_norm.max() - group_norm.min()))
-            #if self.cnt%1000==0:
-            #    print("="*15)
-            #    print(group)
-            #    print("Group {}".format(i))
-            #    print(group_norm)
-            #    print(scale)
-            
+            gamma = base**((imp.max() - imp) / (imp.max() - imp.min()))
+
             # Update Gradient
             for dep, idxs in group:
                 layer = dep.target.module
@@ -149,34 +68,37 @@ class GroupNormPruner(MetaPruner):
                     function.prune_linear_out_channels,
                 ]:
                     w = layer.weight.data[idxs]
-                    g = w * scale.view( -1, *([1]*(len(w.shape)-1)) ) #/ group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size #group_size #* scale.view( -1, *([1]*(len(w.shape)-1)) )
+                    g = w * gamma.view( -1, *([1]*(len(w.shape)-1)) ) #/ group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size #group_size #* gamma.view( -1, *([1]*(len(w.shape)-1)) )
                     layer.weight.grad.data[idxs]+=self.reg * g 
                     #if layer.bias is not None:
                     #    b = layer.bias.data[idxs]
-                    #    g = b * scale
+                    #    g = b * gamma
                     #    layer.bias.grad.data[idxs]+=self.reg * g 
+
                 elif prune_fn in [
                     function.prune_conv_in_channels,
                     function.prune_linear_in_channels,
                 ]:
-                    gn = group_norm
+                    gn = imp
                     if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexMapping):
-                        gn = group_norm.repeat_interleave(w.shape[1]//group_norm.shape[0])
+                        gn = imp.repeat_interleave(w.shape[1]//imp.shape[0])
+                    
                     # regularize input channels
                     if prune_fn==function.prune_conv_in_channels and layer.groups>1:
-                        scale = scale[:len(idxs)//ch_groups]
+                        gamma = gamma[:len(idxs)//ch_groups]
                         idxs = idxs[:len(idxs)//ch_groups]
+
                     w = layer.weight.data[:, idxs]
-                    g = w * scale.view( 1, -1, *([1]*(len(w.shape)-2))  ) #/ gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * group_size #* scale.view( 1, -1, *([1]*(len(w.shape)-2))  )
+                    g = w * gamma.view( 1, -1, *([1]*(len(w.shape)-2))  ) #/ gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * group_size #* gamma.view( 1, -1, *([1]*(len(w.shape)-2))  )
                     layer.weight.grad.data[:, idxs]+=self.reg * g
+                    
                 elif prune_fn == function.prune_batchnorm_out_channels:
                     # regularize BN
                     if layer.affine is not None:
                         w = layer.weight.data[idxs]
-                        g = w * scale #/ group_norm * group_size
+                        g = w * gamma #/ group_norm * group_size
                         layer.weight.grad.data[idxs]+=self.reg * g 
-
                         #b = layer.bias.data[idxs]
-                        #g = b * scale #/ group_norm * group_size
+                        #g = b * gamma #/ group_norm * group_size
                         #layer.bias.grad.data[idxs]+=self.reg * g 
         self.cnt+=1
