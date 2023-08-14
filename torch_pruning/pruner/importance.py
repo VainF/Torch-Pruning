@@ -34,13 +34,19 @@ class Importance(abc.ABC):
 
 
 class MagnitudeImportance(Importance):
-    """ A general implementation of magnitude importance. By default, it calculates the group L2-norm for each channel/dim, normalized by the mean of the group L2-norms.
-        It supports several variants of magnitude importance, such as:
+    """ A general implementation of magnitude importance. By default, it calculates the group L2-norm for each channel/dim.
+        MagnitudeImportance supports several variants:
             - Standard L1-norm for single layer: MagnitudeImportance(p=1, normalizer=None, group_reduction="first")
             - Group L1-Norm: MagnitudeImportance(p=1, normalizer=None, group_reduction="mean")
             - BN Scaling Factor: MagnitudeImportance(p=1, normalizer=None, group_reduction="mean", target_types=[nn.modules.batchnorm._BatchNorm])
+
+        Args:
+            * p (int): the norm degree. Default: 2
+            * group_reduction (str): the reduction method for group importance. Default: "mean"
+            * normalizer (str): the normalization method for group importance. Default: "mean"
+            * target_types (list): the target types for importance calculation. Default: [nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]
     """
-    def __init__(self, p=2, group_reduction="mean", normalizer='mean', target_types=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
+    def __init__(self, p: int=2, group_reduction: str="mean", normalizer: str='mean', target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
         self.p = p
         self.group_reduction = group_reduction
         self.normalizer = normalizer
@@ -165,30 +171,20 @@ class MagnitudeImportance(Importance):
         return group_imp
 
 
+class GroupNormImportance(MagnitudeImportance):
+    """ DepGraph: Towards Any Structural Pruning. 
+    https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html
+    """
+    pass
+
+
 class BNScaleImportance(MagnitudeImportance):
     """Learning Efficient Convolutional Networks through Network Slimming, 
     https://arxiv.org/abs/1708.06519
     """
 
     def __init__(self, group_reduction='mean', normalizer='mean'):
-        super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer)
-
-    def __call__(self, group, ch_groups=1):
-        group_imp = []
-        group_idxs = []
-        
-        for i, (dep, idxs) in enumerate(group):
-            layer = dep.layer
-            root_idxs = group[i].root_idxs
-            if isinstance(layer, (ops.TORCH_BATCHNORM)) and layer.affine:
-                local_imp = torch.abs(layer.weight.data)[idxs]
-                group_imp.append(local_imp)
-                group_idxs.append(root_idxs)
-        if len(group_imp) == 0:
-            return None
-        group_imp = self._reduce(group_imp, group_idxs)
-        group_imp = self._normalize(group_imp, self.normalizer)
-        return group_imp
+        super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer, target_types=(nn.modules.batchnorm._BatchNorm,))
 
 
 class LAMPImportance(MagnitudeImportance):
@@ -222,38 +218,15 @@ class RandomImportance(Importance):
         return torch.rand(len(idxs))
 
 
-class GroupNormImportance(MagnitudeImportance):
-    """ A magnitude-based importance in the group level. https://arxiv.org/abs/2301.12900
-    """
-    pass
-
-
 class TaylorImportance(MagnitudeImportance):
     """First-order taylor expansion of the loss function.
        https://openaccess.thecvf.com/content_CVPR_2019/papers/Molchanov_Importance_Estimation_for_Neural_Network_Pruning_CVPR_2019_paper.pdf
     """
-    def __init__(self, group_reduction="mean", normalizer='mean', multivariable=False):
+    def __init__(self, group_reduction:str="mean", normalizer:str='mean', multivariable:bool=False, target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
         self.group_reduction = group_reduction
         self.normalizer = normalizer
         self.multivariable = multivariable
-
-    def _normalize(self, group_importance, normalizer):
-        if normalizer is None:
-            return group_importance
-        elif isinstance(normalizer, typing.Callable):
-            return normalizer(group_importance)
-        elif normalizer == "sum":
-            return group_importance / group_importance.sum()
-        elif normalizer == "standarization":
-            return (group_importance - group_importance.min()) / (group_importance.max() - group_importance.min()+1e-8)
-        elif normalizer == "mean":
-            return group_importance / group_importance.mean()
-        elif normalizer == "max":
-            return group_importance / group_importance.max()
-        elif normalizer == 'gaussian':
-            return (group_importance - group_importance.mean()) / (group_importance.std()+1e-8)
-        else:
-            raise NotImplementedError
+        self.target_types = target_types
 
     @torch.no_grad()
     def __call__(self, group, ch_groups=1):
@@ -264,6 +237,9 @@ class TaylorImportance(MagnitudeImportance):
             layer = dep.target.module
             prune_fn = dep.handler
             root_idxs = group[i].root_idxs
+
+            if not isinstance(layer, tuple(self.target_types)):
+                continue
 
             if prune_fn in [
                 function.prune_conv_out_channels,

@@ -9,6 +9,10 @@ import math
 from ..importance import MagnitudeImportance
 
 class BNScalePruner(MetaPruner):
+    """Learning Efficient Convolutional Networks through Network Slimming, 
+    https://arxiv.org/abs/1708.06519
+    """
+    
     def __init__(
         self,
         model,

@@ -7,6 +7,9 @@ from ..._helpers import _FlattenIndexMapping
 
 
 class GroupNormPruner(MetaPruner):
+    """DepGraph: Towards Any Structural Pruning. 
+    https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html
+    """
     def __init__(
         self,
         model,

@@ -6,6 +6,8 @@ load = torch.load
 save = torch.save
 
 def state_dict(model: torch.nn.Module):
+    """ Returns a dictionary containing the state, attributions of a module.
+    """
     full_state_dict = {}
     attributions = {}
     for name, module in model.named_modules():
@@ -25,6 +27,9 @@ def state_dict(model: torch.nn.Module):
     return {'full_state_dict': full_state_dict, 'attributions': attributions}
 
 def load_state_dict(model: torch.nn.Module, state_dict: dict):
+    """ Load a model given a state_dict.  
+    """
+
     full_state_dict = state_dict['full_state_dict']
     attributions = state_dict['attributions']
     for name, module in model.named_modules():
