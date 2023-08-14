@@ -52,12 +52,11 @@ class GroupNormPruner(MetaPruner):
         self.cnt = 0
 
     @torch.no_grad()
-    def regularize(self, model, base=16):
+    def regularize(self, model, alpha=16):
         for i, group in enumerate(self.groups):
             ch_groups = self.get_channel_groups(group)
             imp = self.estimate_importance(group).sqrt()
-            base = 16
-            gamma = base**((imp.max() - imp) / (imp.max() - imp.min()))
+            gamma = alpha**((imp.max() - imp) / (imp.max() - imp.min()))
 
             # Update Gradient
             for dep, idxs in group:
@@ -70,10 +69,11 @@ class GroupNormPruner(MetaPruner):
                     w = layer.weight.data[idxs]
                     g = w * gamma.view( -1, *([1]*(len(w.shape)-1)) ) #/ group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size #group_size #* gamma.view( -1, *([1]*(len(w.shape)-1)) )
                     layer.weight.grad.data[idxs]+=self.reg * g 
-                    #if layer.bias is not None:
-                    #    b = layer.bias.data[idxs]
-                    #    g = b * gamma
-                    #    layer.bias.grad.data[idxs]+=self.reg * g 
+                    
+                    if layer.bias is not None:
+                        b = layer.bias.data[idxs]
+                        g = b * gamma
+                        layer.bias.grad.data[idxs]+=self.reg * g 
 
                 elif prune_fn in [
                     function.prune_conv_in_channels,
@@ -98,7 +98,8 @@ class GroupNormPruner(MetaPruner):
                         w = layer.weight.data[idxs]
                         g = w * gamma #/ group_norm * group_size
                         layer.weight.grad.data[idxs]+=self.reg * g 
-                        #b = layer.bias.data[idxs]
-                        #g = b * gamma #/ group_norm * group_size
-                        #layer.bias.grad.data[idxs]+=self.reg * g 
+                        
+                        b = layer.bias.data[idxs]
+                        g = b * gamma #/ group_norm * group_size
+                        layer.bias.grad.data[idxs]+=self.reg * g 
         self.cnt+=1
