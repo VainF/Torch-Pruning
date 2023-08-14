@@ -54,16 +54,6 @@ Or Join our Discord or WeChat group for a chat:
   * Discord: [link](https://discord.gg/2CXnf5bN)
   * WeChat (Group size exceeded 200): [QR Code](https://github.com/VainF/Torch-Pruning/assets/18592211/6c80e758-7692-4dad-b6aa-1e1877e72bf7)
 
-
-### **TODO List:**
-- [ ] A all-in-one pruner for application.
-- [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**81/85=95.3%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility (**119/294=40.5%**).
-- [ ] Pruning from Scratch / at Initialization.
-- [ ] More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), etc.
-- [ ] More Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
-- [ ] Block/Layer/Depth Pruning
-- [ ] Pruning benchmarks for CIFAR, ImageNet, and COCO.
-
 ## Installation
 
 Torch-Pruning is compatible with both PyTorch 1.x and 2.x versions. However, it is highly recommended to use PyTorch 1.12.1 or higher.
