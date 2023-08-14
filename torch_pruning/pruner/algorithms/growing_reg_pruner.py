@@ -7,6 +7,9 @@ from .. import function
 
 
 class GrowingRegPruner(MetaPruner):
+    """ pruning with growing regularization
+    https://arxiv.org/abs/2012.09243
+    """
     def __init__(
         self,
         model,

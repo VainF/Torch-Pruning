@@ -191,6 +191,7 @@ if __name__ == "__main__":
             importance=importance,
             iterative_steps=1,
             ch_sparsity=0.5,
+            global_pruning=False,
             round_to=round_to,
             unwrapped_parameters=unwrapped_parameters,
             ignored_layers=ignored_layers,
@@ -256,7 +257,7 @@ if __name__ == "__main__":
     successful = []
     unsuccessful = []
     for model_name, entry in entries.items():
-        if 'swin' in model_name.lower(): # stuck
+        if 'swin' in model_name.lower() or 'raft' in model_name.lower() or 'shufflenet' in model_name.lower(): # stuck
             unsuccessful.append(model_name)
             continue
 
@@ -304,3 +305,9 @@ if __name__ == "__main__":
         print("")
         print("Unsuccessful Pruning: %d Models\n"%(len(unsuccessful)), unsuccessful)
         sys.stdout.flush()
+
+print("Finished!")
+
+print("Successful Pruning: %d Models\n"%(len(successful)), successful)
+print("")
+print("Unsuccessful Pruning: %d Models\n"%(len(unsuccessful)), unsuccessful)
