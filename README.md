@@ -20,7 +20,7 @@
 </p>
 
 
-[[Documentation & Tutorials](https://github.com/VainF/Torch-Pruning/wiki)]
+[[Documentation & Tutorials](https://github.com/VainF/Torch-Pruning/wiki)] [[FAQ](https://github.com/VainF/Torch-Pruning/wiki/Frequently-Asked-Questions)]
 
 Torch-Pruning (TP) is a library for structural pruning with the following features:
 
