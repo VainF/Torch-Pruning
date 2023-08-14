@@ -40,9 +40,11 @@ Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pru
 * 2023.05.20 :rocket: [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
 * 2023.05.19 [Structural Pruning for Diffusion Models](https://github.com/VainF/Diff-Pruning) [*[arXiv]*](https://arxiv.org/abs/2305.10924)
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
-* 2023.04.21 Join our Telegram or Wechat group:
-  * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
-  * WeChat (Group size exceeded 200): <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/6c80e758-7692-4dad-b6aa-1e1877e72bf7">
+* 2023.04.21 Join our Discord or WeChat group:
+  
+  * Discord: [link](https://discord.gg/2CXnf5bN)
+  * WeChat (Group size exceeded 200): [QR Code](https://github.com/VainF/Torch-Pruning/assets/18592211/6c80e758-7692-4dad-b6aa-1e1877e72bf7)
+  
 
 
 
