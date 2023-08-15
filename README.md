@@ -48,6 +48,7 @@ For more technical details, please refer to our CVPR'23 paper:
 - [x] Supported operators: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops, etc.
 - [x] [Benchmarks](benchmarks) and [Tutorials](https://github.com/VainF/Torch-Pruning/wiki)
 
+### **Contact Us:**
 Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.   
 Or Join our Discord or WeChat group for a chat:
   * Discord: [link](https://discord.gg/2CXnf5bN)
