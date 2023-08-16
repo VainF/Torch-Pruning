@@ -79,6 +79,8 @@ In structural pruning, a "Group" is defined as the minimal unit that can be remo
 
 ### 1. A Minimal Example
 
+Please ensure that your model is set up to enable AutoGrad without something like ``torch.no_grad`` or ``.requires_grad=False``.
+
 ```python
 import torch
 from torchvision.models import resnet18
