@@ -1,4 +1,4 @@
-from torchvision.models import resnet152 as model_entry
+from torchvision.models import resnet50 as model_entry
 import sys, os
 import time
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -24,14 +24,16 @@ def main():
     # Before Pruning
     macs, params = tp.utils.count_ops_and_params(model, example_input)
     latency_mu, latency_std = test_latency(model, example_input)
-    print(f'Iter 0/{iterative_steps}: MACs {macs/1e9} -> {macs/1e9}, Params {params/1e6} -> {params/1e6}, latency {latency_mu}ms +- {latency_std}ms')
-  
+    # print all with .2f
+    print(f"[Iter 0] MACs: {macs/1e9:.2f} G, Params: {params/1e6:.2f} M, Latency: {latency_mu:.2f} ms +- {latency_std:.2f} ms")
+
     for iter in range(iterative_steps):
         pruner.step()
         _macs, _params = tp.utils.count_ops_and_params(model, example_input)
         latency_mu, latency_std = test_latency(model, example_input)
-        print(f'Iter {iter+1}/{iterative_steps}: MACs {macs/1e9} -> {_macs/1e9}, Params {params/1e6} -> {_params/1e6}, latency {latency_mu}ms +- {latency_std}ms')
+        print(f"[Iter {iter+1}] MACs: {_macs/1e9:.2f} G, Params: {_params/1e6:.2f} M, Latency: {latency_mu:.2f} ms +- {latency_std:.2f} ms")
 
+        # uncomment the following lines to profile
         #with torch.autograd.profiler.profile(use_cuda=True) as prof:
         #    with torch.no_grad():
         #            for _ in range(50):
