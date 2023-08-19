@@ -36,7 +36,7 @@ pruner = tp.pruner.MagnitudePruner(
 )
 
 for g in pruner.step(interactive=True):
-    print(g)
+    #print(g)
     g.prune()
 
 # Modify the attention head size and all head size after pruning

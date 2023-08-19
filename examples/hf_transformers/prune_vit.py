@@ -53,5 +53,5 @@ for m in model.modules():
 print(model)
 test_output = model(example_inputs)
 pruned_macs, pruned_params = tp.utils.count_ops_and_params(model, example_inputs)
-print("Base MACs: %d G, Pruned MACs: %d G"%(base_macs/1e9, pruned_macs/1e9))
-print("Base Params: %d M, Pruned Params: %d M"%(base_params/1e6, pruned_params/1e6))
+print("Base MACs: %f G, Pruned MACs: %f G"%(base_macs/1e9, pruned_macs/1e9))
+print("Base Params: %f M, Pruned Params: %f M"%(base_params/1e6, pruned_params/1e6))
