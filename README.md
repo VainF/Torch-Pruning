@@ -295,7 +295,7 @@ The following [pruning functions](torch_pruning/pruner/function.py) are availabl
 
 ### 5. Customized Layers
 
-Please refer to [examples/hf_transformers/prune_swin.py](examples/hf_transformers/prune_swin.py). 
+Please refer to [examples/hf_transformers/prune_swin.py](examples/hf_transformers/prune_swin.py), which implements a new pruner for the customized module ``SwinPatchMerging``.
 
 ### 6. Benchmarks
 
