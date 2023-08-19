@@ -9,3 +9,8 @@ python prune_vit.py
 ```bash
 python prune_bert.py
 ```
+
+## Pruning HF Swin
+```bash
+python prune_swin.py
+```
