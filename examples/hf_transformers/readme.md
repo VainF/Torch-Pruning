@@ -1,4 +1,4 @@
-# Example for HuggingFace ViT
+# Example for HuggingFace Transformers
 
 ## Pruning HF ViT
 ```bash
