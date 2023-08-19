@@ -295,7 +295,7 @@ The following [pruning functions](torch_pruning/pruner/function.py) are availabl
 
 ### 5. Customized Layers
 
-Please refer to [tests/test_customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_customized_layer.py).
+Please refer to [examples/hf_transformers/prune_swin.py](examples/hf_transformers/prune_swin.py). 
 
 ### 6. Benchmarks
 
