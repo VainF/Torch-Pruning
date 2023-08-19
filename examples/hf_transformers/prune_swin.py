@@ -8,7 +8,7 @@ import torch_pruning as tp
 from transformers.models.swin.modeling_swin import SwinSelfAttention, SwinPatchMerging
 
 
-class SwinPathMergingPruner(tp.BasePruningFunc):
+class SwinPatchMergingPruner(tp.BasePruningFunc):
 
     def prune_out_channels(self, layer: nn.Module, idxs: list):
         tp.prune_linear_out_channels(layer.reduction, idxs)
@@ -68,7 +68,7 @@ pruner = tp.pruner.MagnitudePruner(
                 channel_groups=channel_groups,
                 output_transform=lambda out: out.logits.sum(),
                 ignored_layers=ignored_layers,
-                customized_pruners={SwinPatchMerging: SwinPathMergingPruner()},
+                customized_pruners={SwinPatchMerging: SwinPatchMergingPruner()},
                 root_module_types=(nn.Linear, nn.LayerNorm, SwinPatchMerging),
             )
 
