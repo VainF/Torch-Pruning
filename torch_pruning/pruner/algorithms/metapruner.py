@@ -129,10 +129,10 @@ class MetaPruner:
         if self.global_pruning:
             initial_total_channels = 0
             for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
-                ch_groups = self.get_channel_groups(group)
+                #ch_groups = self.get_channel_groups(group)
+                group = self._downstream_node_as_root_if_unbind(group)
                 # utils.count_prunable_out_channels( group[0][0].target.module )
-                initial_total_channels += (self.DG.get_out_channels(
-                    group[0][0].target.module) // ch_groups)
+                initial_total_channels += (self.DG.get_out_channels(group[0][0].target.module) )
             self.initial_total_channels = initial_total_channels
     
     def pruning_history(self) -> typing.List[typing.Tuple[str, bool, typing.Union[list, tuple]]]:
@@ -173,7 +173,6 @@ class MetaPruner:
             if dep.target.type == ops.OPTYPE.PARAMETER:
                 continue
             if self.DG.is_out_channel_pruning_fn(pruning_fn):
-                target_sparsity = self.get_target_sparsity(module)
                 layer_out_ch = self.DG.get_out_channels(module)
                 if layer_out_ch is None: continue
                 if layer_out_ch < self.layer_init_out_ch[module] * (
@@ -193,31 +192,64 @@ class MetaPruner:
     def get_channel_groups(self, group) -> int:
         if isinstance(self.channel_groups, int):
             return self.channel_groups
+        ch_groups = 1
+        has_unbind = False
+        unbind_node = None
         for dep, _ in group:
             module = dep.target.module
             if module in self.channel_groups:
-                return self.channel_groups[module]
-        return 1  # no channel grouping
+                if self.DG.is_in_channel_pruning_fn(dep.handler) and not isinstance(module, (ops.TORCH_CONV, ops.TORCH_GROUPNORM)):
+                    continue
+                ch_groups = self.channel_groups[module]
+            if dep.source.type==ops.OPTYPE.UNBIND:
+                has_unbind = True
+                unbind_node = dep.source
+        if has_unbind and ch_groups>1:
+            ch_groups = ch_groups // len(unbind_node.outputs) 
+        return ch_groups  # no channel grouping
+
+    def _downstream_node_as_root_if_unbind(self, group):
+        # Use a downstream node as the root if torch.unbind exists. TODO: find a general way to handle torch.unbind in timm
+        qkv_unbind = False
+        downstream_dep = None
+        for _dep, _idxs in group:
+            if _dep.source.type == ops.OPTYPE.UNBIND:
+                qkv_unbind = True
+            if isinstance(_dep.target.module, tuple(self.root_module_types)):
+                downstream_dep = _dep
+        if qkv_unbind and downstream_dep is not None: # use a downstream node as the root node
+            group = self.DG.get_pruning_group(downstream_dep.target.module, downstream_dep.handler, _idxs)
+        return group
 
     def prune_local(self) -> typing.Generator:
         if self.current_step > self.iterative_steps:
             return
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
-            
             if self._check_sparsity(group): # check pruning ratio
                 
+                group = self._downstream_node_as_root_if_unbind(group)
+
                 module = group[0][0].target.module
                 pruning_fn = group[0][0].handler
+                ch_groups = self.get_channel_groups(group) 
 
-                ch_groups = self.get_channel_groups(group)
                 imp = self.estimate_importance(group, ch_groups=ch_groups)
                 if imp is None: continue
-                current_channels = self.DG.get_out_channels(module)
-                target_sparsity = self.get_target_sparsity(module)
-                n_pruned = current_channels - int(
-                    self.layer_init_out_ch[module] *
-                    (1 - target_sparsity)
-                )
+
+                if self.DG.is_out_channel_pruning_fn(pruning_fn):
+                    current_channels = self.DG.get_out_channels(module)
+                    target_sparsity = self.get_target_sparsity(module)
+                    n_pruned = current_channels - int(
+                        self.layer_init_out_ch[module] *
+                        (1 - target_sparsity)
+                    )
+                else:
+                    current_channels = self.DG.get_in_channels(module)
+                    target_sparsity = self.get_target_sparsity(module)
+                    n_pruned = current_channels - int(
+                        self.layer_init_in_ch[module] *
+                        (1 - target_sparsity)
+                    )
 
                 if self.round_to:
                     rounded_channels = current_channels - n_pruned
@@ -228,7 +260,6 @@ class MetaPruner:
 
                 if n_pruned <= 0:
                     continue
-                
                 if ch_groups > 1: # independent pruning for each channel group
                     group_size = current_channels // ch_groups
                     pruning_idxs = []
@@ -243,10 +274,11 @@ class MetaPruner:
                 else: # no channel grouping
                     imp_argsort = torch.argsort(imp)
                     pruning_idxs = imp_argsort[:n_pruned]
+                
 
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs.tolist())
-                
+    
                 if self.DG.check_pruning_group(group):
                     yield group
 
@@ -256,6 +288,7 @@ class MetaPruner:
         global_importance = []
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_sparsity(group):
+                group = self._downstream_node_as_root_if_unbind(group)
                 ch_groups = self.get_channel_groups(group)
                 imp = self.estimate_importance(group, ch_groups=ch_groups)
                 if imp is None: continue

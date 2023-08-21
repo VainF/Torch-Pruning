@@ -1,28 +1,15 @@
 import typing
 import warnings
 from numbers import Number
-from collections import namedtuple
-
 import torch
 import torch.nn as nn
-
 from .pruner import function
 from . import _helpers, utils, ops
 
-from ._helpers import UnwrappedParameters, _HybridIndex, GroupItem
-
 __all__ = ["Dependency", "Group", "DependencyGraph"]
 
-_PLACEHOLDER = None
+INDEX_MAPPING_PLACEHOLDER = None
 MAX_RECURSION_DEPTH = 100
-
-def equal_func(func1, func2):
-    return (
-        hasattr(func1, '__self__') and 
-        hasattr(func2, '__self__') and 
-        isinstance(func1.__self__, type(func2.__self__)) and 
-        func1.__name__ == func2.__name__
-    )
 
 class Node(object):
     """ Node of DepGraph
@@ -32,10 +19,10 @@ class Node(object):
         self.inputs = []  # input nodes
         self.outputs = [] # output nodes
         self.module = module # reference to torch.nn.Module
+        self.grad_fn = grad_fn # grad_fn of nn.module output
 
-        self.grad_fn = grad_fn # gradient function of module output
         self._name = name # node name
-        self.type = ops.module2type(module) # node type (enum) 
+        self.type = ops.module2type(module) # node type (enum), op.OPTYPE
         self.module_class = module.__class__ # class type of the module
 
         # For Dependency Graph
@@ -53,19 +40,13 @@ class Node(object):
                 fmt += " ({})".format(str(self.module))
             return fmt
 
-    def add_input(self, node, allow_dumplicated=False):
-        if allow_dumplicated is True:
-            self.inputs.append(node)
-        else:
-            if node not in self.inputs:
-                self.inputs.append(node)
+    def add_input(self, node):
+        self.inputs.append(node)
 
-    def add_output(self, node, allow_dumplicated=False):
-        if allow_dumplicated is True:
-            self.outputs.append(node)
-        else:
-            if node not in self.outputs:
-                self.outputs.append(node)
+
+    def add_output(self, node):
+        self.outputs.append(node)
+
 
     def __repr__(self):
         return str(self)
@@ -117,11 +98,11 @@ class Dependency(Edge):
         self.target = target             
         # Current coordinate system => Standard coordinate system => target coordinate system 
         #                     index_mapping[0]              index_mapping[1]
-        self.index_mapping = [_PLACEHOLDER, _PLACEHOLDER] # [None, None] by default
+        self.index_mapping = [INDEX_MAPPING_PLACEHOLDER, INDEX_MAPPING_PLACEHOLDER] # [None, None] by default
 
     def __call__(self, idxs: list):
         self.handler.__self__.pruning_dim = self.target.pruning_dim # set pruning_dim
-        if len(idxs)>0 and isinstance(idxs[0], _HybridIndex):
+        if len(idxs)>0 and isinstance(idxs[0], _helpers._HybridIndex):
             idxs = _helpers.to_plain_idxs(idxs)
         result = self.handler(self.target.module, idxs)
         return result
@@ -162,7 +143,7 @@ class Dependency(Edge):
 
 class Group(object):
     """A group that contains dependencies and pruning indices.   
-    Each element is defined as a namedtuple('GroupItem', ['dep', 'idxs']).
+    Each element is defined as a namedtuple('_helpers.GroupItem', ['dep', 'idxs']).
     A group is a iterable List just like
     [ [Dep1, Indices1], [Dep2, Indices2], ..., [DepK, IndicesK] ]
     """
@@ -204,7 +185,7 @@ class Group(object):
             self._DG._pruning_history.append([root_module_name, self._DG.is_out_channel_pruning_fn(pruning_fn), root_pruning_idx])
     
     def add_dep(self, dep, idxs):
-        self._group.append(GroupItem(dep=dep, idxs=idxs))
+        self._group.append(_helpers.GroupItem(dep=dep, idxs=idxs))
 
     def __getitem__(self, k):
         return self._group[k]
@@ -222,7 +203,7 @@ class Group(object):
                 return True
         return False
 
-    def has_pruning_op(self, dep: Dependency, idxs: _HybridIndex):
+    def has_pruning_op(self, dep: Dependency, idxs: _helpers._HybridIndex):
         for _dep, _idxs in self._group:
             #_idxs = _helpers.to_plain_idxs(_idxs)
             if (
@@ -245,7 +226,7 @@ class Group(object):
                     if index.idx not in visited_idxs:
                         merged_idxs.append(index)
                         visited_idxs.add(index.idx)
-                self._group[i] = GroupItem(dep=_dep, idxs=merged_idxs)
+                self._group[i] = _helpers.GroupItem(dep=_dep, idxs=merged_idxs)
                 return
         self.add_dep(dep, idxs)
 
@@ -289,6 +270,7 @@ class DependencyGraph(object):
             ops.OPTYPE.SPLIT: ops.SplitPruner(),
             ops.OPTYPE.ELEMENTWISE: ops.ElementWisePruner(),
             ops.OPTYPE.RESHAPE: ops.ReshapePruner(),
+            ops.OPTYPE.UNBIND: ops.UnbindPruner(),
             ops.OPTYPE.CUSTOMIZED: ops.CustomizedPruner(), # just a placeholder
         }
         self.REGISTERED_PRUNERS = function.PrunerBox.copy()  # shallow copy
@@ -448,7 +430,7 @@ class DependencyGraph(object):
         if isinstance(idxs, Number):
             idxs = [idxs]
         
-        idxs = [ _HybridIndex(idx=i, root_idx=i) for i in idxs ] # idxs == root_idxs for the root layer
+        idxs = [ _helpers._HybridIndex(idx=i, root_idx=i) for i in idxs ] # idxs == root_idxs for the root layer
 
         self.update_index_mapping()
         group = Group()
@@ -489,7 +471,6 @@ class DependencyGraph(object):
                             )
 
         _fix_dependency_graph_non_recursive(*group[0])
-        
         # merge pruning ops
         merged_group = Group()
         for dep, idxs in group.items:
@@ -499,7 +480,7 @@ class DependencyGraph(object):
             hybrid_idxs = merged_group[i].idxs
             idxs = _helpers.to_plain_idxs(hybrid_idxs)
             root_idxs = _helpers.to_root_idxs(hybrid_idxs)
-            merged_group[i] = GroupItem(merged_group[i].dep, idxs) # transform _HybridIndex to plain index
+            merged_group[i] = _helpers.GroupItem(merged_group[i].dep, idxs) # transform _helpers._HybridIndex to plain index
             merged_group[i].root_idxs = root_idxs
         return merged_group
 
@@ -525,7 +506,7 @@ class DependencyGraph(object):
             layer_channels = pruner.get_out_channels(m)
             group = self.get_pruning_group(
                 m, pruner.prune_out_channels, list(range(layer_channels)))
-    
+            
             prunable_group = True
             for dep, _ in group:
                 module = dep.target.module
@@ -573,6 +554,7 @@ class DependencyGraph(object):
         """ infer the number of output channels recursively
         """     
         if recursive_depth[0] > MAX_RECURSION_DEPTH:
+            warnings.warn("Maximum recursive depth reached!")
             return None
         ch = self.get_out_channels(node)
         if ch is None:
@@ -654,7 +636,7 @@ class DependencyGraph(object):
                 return non_singleton_dims[-1] if non_singleton_dims else None
             pruning_dim = last_non_singleton_dim(p)
             if pruning_dim is not None:
-                unwrapped_parameters.append( UnwrappedParameters(parameters=p, pruning_dim=pruning_dim) ) # prune the last non-singleton dim by daufault
+                unwrapped_parameters.append( _helpers.UnwrappedParameters(parameters=p, pruning_dim=pruning_dim) ) # prune the last non-singleton dim by daufault
         return _param_to_name, unwrapped_parameters
     
     def _build_dependency(self, module2node):
@@ -790,6 +772,9 @@ class DependencyGraph(object):
                 elif "split" in grad_fn.name().lower():
                     module = ops._SplitOp(self._op_id)
                     self._op_id+=1
+                elif "unbind" in grad_fn.name().lower():
+                    module = ops._UnbindOp(self._op_id)
+                    self._op_id+=1
                 elif "view" in grad_fn.name().lower() or 'reshape' in grad_fn.name().lower():
                     module = ops._ReshapeOp(self._op_id)
                     self._op_id+=1
@@ -838,8 +823,8 @@ class DependencyGraph(object):
                             if not is_unwrapped_param:
                                 continue
                         input_node = create_node_if_not_exists(f[0])
-                        node.add_input(input_node, allow_dumplicated=True)
-                        input_node.add_output(node, allow_dumplicated=True)
+                        node.add_input(input_node)
+                        input_node.add_output(node)
                         processing_stack.append(f[0])
             visited.add(grad_fn)
 
@@ -859,6 +844,8 @@ class DependencyGraph(object):
                 self._update_split_index_mapping(node)
             if node.type == ops.OPTYPE.RESHAPE:
                 self._update_reshape_index_mapping(node)
+            if node.type == ops.OPTYPE.UNBIND:
+                self._update_unbind_index_mapping(node)
 
     def _init_shape_information(self):
         for module, node in self.module2node.items():
@@ -1069,6 +1056,50 @@ class DependencyGraph(object):
                 if dep.target == split_node:
                     if any((dep is d) for d in addressed_dep): continue
                     if split_node.enable_index_mapping:
+                        dep.index_mapping[0] = (_helpers._SplitIndexMapping(
+                            offset=offsets[i: i + 2], reverse=True
+                        ))
+                        addressed_dep.append(dep)
+                        break
+
+    def _update_unbind_index_mapping(self, unbind_node: Node):
+        if unbind_node.type != ops.OPTYPE.UNBIND:
+            return
+
+        if hasattr(unbind_node.grad_fn, '_saved_dim') and unbind_node.grad_fn._saved_dim != 0: # For timm attention
+            return 
+
+        num_chunks = len(unbind_node.outputs)
+
+        for input_node in unbind_node.inputs:
+            input_dims = self._infer_out_channels_recursively(input_node, [0])
+            if input_dims is not None:
+                break
+        if input_dims is None: return
+        unbind_node.module.offsets = [i*input_dims//num_chunks for i in range(num_chunks+1)]
+
+        #print(input_dims, num_chunks)
+        offsets = unbind_node.module.offsets
+        if offsets is None:
+            return
+        addressed_dep = []
+        for i, out_node in enumerate(unbind_node.outputs):
+            for dep in unbind_node.dependencies:
+                if any((dep is d) for d in addressed_dep): continue
+                if dep.target == out_node:
+                    if unbind_node.enable_index_mapping:
+                        dep.index_mapping[0] = (_helpers._SplitIndexMapping(
+                            offset=offsets[i: i + 2], reverse=False
+                        ))
+                        addressed_dep.append(dep)
+                        break
+        
+        addressed_dep = []
+        for i, out_node in enumerate(unbind_node.outputs):
+            for dep in out_node.dependencies:
+                if dep.target == unbind_node:
+                    if any((dep is d) for d in addressed_dep): continue
+                    if unbind_node.enable_index_mapping:
                         dep.index_mapping[0] = (_helpers._SplitIndexMapping(
                             offset=offsets[i: i + 2], reverse=True
                         ))
