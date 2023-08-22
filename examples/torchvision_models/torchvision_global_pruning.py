@@ -163,8 +163,11 @@ if __name__ == "__main__":
             ignored_layers.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg])
         # For ViT: Rounding the number of channels to the nearest multiple of num_heads
         round_to = None
-        if isinstance( model, VisionTransformer): round_to = model.encoder.layers[0].num_heads
-
+        channel_groups = {}
+        if isinstance( model, VisionTransformer): 
+            for m in model.modules():
+                if isinstance(m, nn.MultiheadAttention):
+                    channel_groups[m] = m.num_heads
         #########################################
         # (Optional) Register unwrapped nn.Parameters 
         # TP will automatically detect unwrapped parameters and prune the last dim for you by default.
@@ -195,6 +198,7 @@ if __name__ == "__main__":
             round_to=round_to,
             unwrapped_parameters=unwrapped_parameters,
             ignored_layers=ignored_layers,
+            channel_groups=channel_groups,
         )
 
 

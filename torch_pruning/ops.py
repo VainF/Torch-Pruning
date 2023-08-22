@@ -80,7 +80,10 @@ class DummyPruner(object):
     def get_in_channels(self, layer):
         return None
 
-    def get_channel_groups(self, layer):
+    def get_in_channel_groups(self, layer):
+        return 1
+    
+    def get_out_channel_groups(self, layer):
         return 1
 
 

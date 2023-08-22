@@ -84,7 +84,7 @@ class Dependency(Edge):
         source: Node,
         target: Node,
     ):
-        """Layer dependency (Edge of DepGraph) in structral neural network pruning. 
+        """Layer dependency (Edge of DepGraph).
         Args:
             trigger (Callable): a pruning function that triggers this dependency
             handler (Callable): a pruning function that can fix the broken dependency
@@ -143,19 +143,19 @@ class Dependency(Edge):
 
 class Group(object):
     """A group that contains dependencies and pruning indices.   
-    Each element is defined as a namedtuple('_helpers.GroupItem', ['dep', 'idxs']).
-    A group is a iterable List just like
-    [ [Dep1, Indices1], [Dep2, Indices2], ..., [DepK, IndicesK] ]
+    Each element is defined as as namedtuple('_helpers.GroupItem'. 
+
+    group := [ (Dep1, Indices1), (Dep2, Indices2), ..., (DepK, IndicesK) ]
     """
 
     def __init__(self):
         self._group = list()
-        self._DG = None # link to the DependencyGraph that produces this group. Will be filled by DependencyGraph.get_pruning_group.
+        self._DG = None # the dependency graph that this group belongs to
 
     def prune(self, idxs=None, record_history=True):
         """Prune all coupled layers in the group
         """
-        if idxs is not None: # prune the group with the specified indices
+        if idxs is not None: # prune the group with user-specified indices
             module = self._group[0].dep.target.module
             pruning_fn = self._group[0].dep.handler
             new_group = self._DG.get_pruning_group(module, pruning_fn, idxs) # create a new group with the specified indices
@@ -281,7 +281,7 @@ class DependencyGraph(object):
         # cache pruning functions for fast lookup
         self._in_channel_pruning_fn = set([p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
         self._out_channel_pruning_fn = set([p.prune_out_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_out_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
-        self._op_id = 0 # operatior id
+        self._op_id = 0 # operatior id, will be increased by 1 for each new operator
 
         # Pruning History
         self._pruning_history = []

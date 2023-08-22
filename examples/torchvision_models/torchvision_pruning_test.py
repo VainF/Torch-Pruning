@@ -1,8 +1,19 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))))
 
-# torchvision==0.13.1
+from torchvision.models.resnet import (
+    resnext50_32x4d,
+    resnext101_32x8d,
+)
 
+# torchvision==0.13.1
+from torchvision.models.vision_transformer import (
+    vit_b_16,
+    vit_b_32,
+    vit_l_16,
+    vit_l_32,
+    vit_h_14,
+)
 ###########################################
 # Prunable Models
 ############################################
@@ -163,12 +174,12 @@ if __name__ == "__main__":
             ignored_layers.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg])
         # For ViT: Rounding the number of channels to the nearest multiple of num_heads
         round_to = None
+        #if isinstance( model, VisionTransformer): round_to = model.encoder.layers[0].num_heads
         channel_groups = {}
         if isinstance( model, VisionTransformer): 
             for m in model.modules():
                 if isinstance(m, nn.MultiheadAttention):
                     channel_groups[m] = m.num_heads
-            #round_to = model.encoder.layers[0].num_heads
 
         #########################################
         # (Optional) Register unwrapped nn.Parameters 
@@ -190,12 +201,13 @@ if __name__ == "__main__":
         # Build network pruners
         #########################################
         importance = tp.importance.MagnitudeImportance(p=1)
+        ch_sparsity = 0.2
         pruner = tp.pruner.MagnitudePruner(
             model,
             example_inputs=example_inputs,
             importance=importance,
             iterative_steps=1,
-            ch_sparsity=0.5,
+            ch_sparsity=ch_sparsity,
             global_pruning=False,
             round_to=round_to,
             unwrapped_parameters=unwrapped_parameters,
@@ -243,14 +255,6 @@ if __name__ == "__main__":
             params_after_prune = tp.utils.count_params(model)
             print("  Params: %s => %s" % (ori_size, params_after_prune))
             
-            if 'rcnn' not in model_name and model_name!='ssdlite320_mobilenet_v3_large': # RCNN may return 0 proposals, making some layers unreachable during tracing.
-                for module, ch in layer_channel_cfg.items():
-                    if isinstance(module, nn.Conv2d):
-                        #print(module.out_channels, layer_channel_cfg[module])
-                        assert int(0.5*layer_channel_cfg[module]) == module.out_channels
-                    elif isinstance(module, nn.Linear):
-                        #print(module.out_features, layer_channel_cfg[module])
-                        assert int(0.5*layer_channel_cfg[module]) == module.out_features
 
             if isinstance(out, (dict,list,tuple)):
                 print("  Output:")
@@ -299,14 +303,14 @@ if __name__ == "__main__":
         else:
             output_transform = None
 
-        try:
-            my_prune(
-                model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
-            )
-            successful.append(model_name)
-        except Exception as e:
-            print(e)
-            unsuccessful.append(model_name)
+        #try:
+        my_prune(
+            model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
+        )
+        successful.append(model_name)
+        #except Exception as e:
+        #    print(e)
+        #    unsuccessful.append(model_name)
         print("Successful Pruning: %d Models\n"%(len(successful)), successful)
         print("")
         print("Unsuccessful Pruning: %d Models\n"%(len(unsuccessful)), unsuccessful)

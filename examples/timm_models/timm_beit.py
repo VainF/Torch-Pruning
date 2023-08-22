@@ -54,7 +54,6 @@ def forward(self, x, shared_rel_pos_bias = None):
 # torch==1.12.1
 
 timm_models = timm.list_models()
-print(timm_models)
 example_inputs = torch.randn(1,3,224,224)
 imp = tp.importance.MagnitudeImportance(p=2, group_reduction="mean")
 prunable_list = []

@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import typing
+import typing, warnings
 
 from .scheduler import linear_scheduler
 from ..import function
@@ -50,12 +50,16 @@ class MetaPruner:
         round_to: int = None,  # round channels to the nearest multiple of round_to
 
         # Advanced
-        channel_groups: typing.Dict[nn.Module, int] = dict(), # channel groups for layers like group convs & group norms
+        in_channel_groups: typing.Dict[nn.Module, int] = dict(), # channel groups for layers inputs
+        out_channel_groups: typing.Dict[nn.Module, int] = dict(), # channel groups for layer outputs
         customized_pruners: typing.Dict[typing.Any, function.BasePruningFunc] = None, # pruners for customized layers. E.g., {nn.Linear: my_linear_pruner}
         unwrapped_parameters: typing.Dict[nn.Parameter, int] = None, # unwrapped nn.Parameters & pruning_dims. For example, {ViT.pos_emb: 0}
         root_module_types: typing.List = [ops.TORCH_CONV, ops.TORCH_LINEAR, ops.TORCH_LSTM],  # root module for each group
         forward_fn: typing.Callable = None, # a function to execute model.forward
         output_transform: typing.Callable = None, # a function to transform network outputs
+
+        # deprecated
+        channel_groups: typing.Dict[nn.Module, int] = dict(), # channel groups for layers
     ):
         self.model = model
         self.importance = importance
@@ -63,10 +67,18 @@ class MetaPruner:
         self.ch_sparsity_dict = ch_sparsity_dict if ch_sparsity_dict is not None else {}
         self.max_ch_sparsity = max_ch_sparsity
         self.global_pruning = global_pruning
-        self.channel_groups = channel_groups
+        
+        if len(channel_groups) > 0:
+            warnings.warn("channel_groups is deprecated. Please use in_channel_groups and out_channel_groups instead.")
+            out_channel_groups.update(channel_groups)
+        
+        self.in_channel_groups = in_channel_groups
+        self.out_channel_groups = out_channel_groups
+
         self.root_module_types = root_module_types
         self.round_to = round_to
 
+        ###############################################
         # Build dependency graph
         self.DG = dependency.DependencyGraph().build_dependency(
             model,
@@ -77,33 +89,27 @@ class MetaPruner:
             customized_pruners=customized_pruners,
         )
 
-        # Ignored layers
+        ###############################################
+        # Ignored layers and submodules
         self.ignored_layers = []
-        if ignored_layers:
+        if ignored_layers is not None:
             for layer in ignored_layers:
                 self.ignored_layers.extend(list(layer.modules()))
 
+        ###############################################
         # Iterative pruning
         # The pruner will prune the model iteratively for several steps to achieve the target sparsity
         # E.g., if iterative_steps=5, ch_sparsity=0.5, the sparsity of each step will be [0.1, 0.2, 0.3, 0.4, 0.5]
         self.iterative_steps = iterative_steps
         self.iterative_sparsity_scheduler = iterative_sparsity_scheduler
         self.current_step = 0
-
-        # initial channels/dims for each layer
-        self.layer_init_out_ch = {}
-        self.layer_init_in_ch = {}
-        for m in self.DG.module2node.keys():
-            if ops.module2type(m) in self.DG.REGISTERED_PRUNERS:
-                self.layer_init_out_ch[m] = self.DG.get_out_channels(m)
-                self.layer_init_in_ch[m] = self.DG.get_in_channels(m)
-
         # channel sparsity for each iterative step
         self.per_step_ch_sparsity = self.iterative_sparsity_scheduler(
             self.ch_sparsity, self.iterative_steps
         )
 
-        # The layer-specific sparsity will cover the global sparsity if specified
+        ###############################################
+        # Layer-specific sparsity. Will cover the global sparsity if specified
         self.ch_sparsity_dict = {}
         if ch_sparsity_dict is not None:
             for module in ch_sparsity_dict:
@@ -115,26 +121,51 @@ class MetaPruner:
                         self.ch_sparsity_dict[submodule] = self.iterative_sparsity_scheduler(
                             sparsity, self.iterative_steps
                         )
-        
-        # detect group convs & group norms
+
+        ###############################################
+        # Detect group convs & group norms
         for m in self.model.modules():
             layer_pruner = self.DG.get_pruner_of_module(m)
-            channel_groups = layer_pruner.get_channel_groups(m)
-            if channel_groups > 1:
-                if isinstance(m, ops.TORCH_CONV) and m.groups == m.out_channels:
+            in_ch_group = layer_pruner.get_in_channel_groups(m)
+            out_ch_group = layer_pruner.get_out_channel_groups(m)
+            if isinstance(m, ops.TORCH_CONV) and m.groups == m.out_channels:
                     continue
-                self.channel_groups[m] = channel_groups
+            if in_ch_group > 1:
+                self.in_channel_groups[m] = in_ch_group
+            if out_ch_group > 1:
+                self.out_channel_groups[m] = out_ch_group
+            
+        ###############################################
+        # Initial channels/dims of each layer
+        self.layer_init_out_ch = {}
+        self.layer_init_in_ch = {}
+        for m in self.DG.module2node.keys():
+            if ops.module2type(m) in self.DG.REGISTERED_PRUNERS:
+                self.layer_init_out_ch[m] = self.DG.get_out_channels(m)
+                self.layer_init_in_ch[m] = self.DG.get_in_channels(m)
                 
-        # count the number of total channels at initialization
+        ###############################################
+        # Count the number of total channels at initialization
         if self.global_pruning:
             initial_total_channels = 0
             for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
-                #ch_groups = self.get_channel_groups(group)
                 group = self._downstream_node_as_root_if_unbind(group)
-                # utils.count_prunable_out_channels( group[0][0].target.module )
-                initial_total_channels += (self.DG.get_out_channels(group[0][0].target.module) )
+                initial_total_channels += ( (self.DG.get_out_channels(group[0][0].target.module) ) // self._get_channel_groups(group) )
             self.initial_total_channels = initial_total_channels
     
+    def step(self, interactive=False)-> typing.Union[typing.Generator, None]:
+        self.current_step += 1
+        pruning_method = self.prune_global if self.global_pruning else self.prune_local
+
+        if interactive: # yield groups for interactive pruning
+            return pruning_method() 
+        else:
+            for group in pruning_method():
+                group.prune()
+
+    def estimate_importance(self, group, ch_groups=1) -> torch.Tensor:
+        return self.importance(group, ch_groups=ch_groups)
+
     def pruning_history(self) -> typing.List[typing.Tuple[str, bool, typing.Union[list, tuple]]]:
         return self.DG.pruning_history()
 
@@ -149,22 +180,9 @@ class MetaPruner:
         self.current_step = 0
 
     def regularize(self, model, loss) -> typing.Any:
-        """ Model regularizor
+        """ Model regularizor for sparse training
         """
         pass
-
-    def step(self, interactive=False)-> typing.Union[typing.Generator, None]:
-        self.current_step += 1
-        pruning_method = self.prune_global if self.global_pruning else self.prune_local
-        
-        if interactive: # yield groups for interactive pruning
-            return pruning_method() 
-        else:
-            for group in pruning_method():
-                group.prune()
-
-    def estimate_importance(self, group, ch_groups=1) -> torch.Tensor:
-        return self.importance(group, ch_groups=ch_groups)
 
     def _check_sparsity(self, group) -> bool:
         for dep, _ in group:
@@ -189,21 +207,23 @@ class MetaPruner:
                     return False
         return True
 
-    def get_channel_groups(self, group) -> int:
-        if isinstance(self.channel_groups, int):
-            return self.channel_groups
+    def _get_channel_groups(self, group) -> int:
         ch_groups = 1
         has_unbind = False
         unbind_node = None
+
         for dep, _ in group:
             module = dep.target.module
-            if module in self.channel_groups:
-                if self.DG.is_in_channel_pruning_fn(dep.handler) and not isinstance(module, (ops.TORCH_CONV, ops.TORCH_GROUPNORM)):
-                    continue
-                ch_groups = self.channel_groups[module]
+            pruning_fn = dep.handler
+            channel_groups = self.out_channel_groups if self.DG.is_out_channel_pruning_fn(pruning_fn) else self.in_channel_groups
+
+            if module in channel_groups:
+                ch_groups = channel_groups[module]
+
             if dep.source.type==ops.OPTYPE.UNBIND:
                 has_unbind = True
                 unbind_node = dep.source
+
         if has_unbind and ch_groups>1:
             ch_groups = ch_groups // len(unbind_node.outputs) 
         return ch_groups  # no channel grouping
@@ -221,17 +241,24 @@ class MetaPruner:
             group = self.DG.get_pruning_group(downstream_dep.target.module, downstream_dep.handler, _idxs)
         return group
 
+    def _round_to(self, n_pruned, current_channels, round_to):
+        rounded_channels = current_channels - n_pruned
+        rounded_channels = rounded_channels + (round_to - rounded_channels % round_to)
+        n_pruned = current_channels - rounded_channels
+        return n_pruned
+
     def prune_local(self) -> typing.Generator:
         if self.current_step > self.iterative_steps:
+            warnings.warn("Pruning exceed the maximum iterative steps, no pruning will be performed.")
             return
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_sparsity(group): # check pruning ratio
-                
+
                 group = self._downstream_node_as_root_if_unbind(group)
 
                 module = group[0][0].target.module
                 pruning_fn = group[0][0].handler
-                ch_groups = self.get_channel_groups(group) 
+                ch_groups = self._get_channel_groups(group) 
 
                 imp = self.estimate_importance(group, ch_groups=ch_groups)
                 if imp is None: continue
@@ -251,16 +278,14 @@ class MetaPruner:
                         (1 - target_sparsity)
                     )
 
+                # round to the nearest multiple of round_to
                 if self.round_to:
-                    rounded_channels = current_channels - n_pruned
-                    # round to the nearest multiple of round_to
-                    rounded_channels = rounded_channels - \
-                        (rounded_channels % self.round_to)
-                    n_pruned = current_channels - rounded_channels
-
+                    n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
+    
                 if n_pruned <= 0:
                     continue
-                if ch_groups > 1: # independent pruning for each channel group
+
+                if ch_groups > 1: # independent pruning for each group
                     group_size = current_channels // ch_groups
                     pruning_idxs = []
                     n_pruned_per_group = n_pruned // ch_groups # max(1, n_pruned // ch_groups)
@@ -275,7 +300,6 @@ class MetaPruner:
                     imp_argsort = torch.argsort(imp)
                     pruning_idxs = imp_argsort[:n_pruned]
                 
-
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs.tolist())
     
@@ -284,42 +308,53 @@ class MetaPruner:
 
     def prune_global(self) -> typing.Generator:
         if self.current_step > self.iterative_steps:
+            warnings.warn("Pruning exceed the maximum iterative steps, no pruning will be performed.")
             return
+        
+        # Pre-compute importance for each group
         global_importance = []
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_sparsity(group):
                 group = self._downstream_node_as_root_if_unbind(group)
-                ch_groups = self.get_channel_groups(group)
+                ch_groups = self._get_channel_groups(group)
                 imp = self.estimate_importance(group, ch_groups=ch_groups)
                 if imp is None: continue
                 if ch_groups > 1:
-                    imp = imp.view(ch_groups, -1).mean(dim=0) # average importance across groups
+                    imp = imp.view(ch_groups, -1).mean(dim=0) # average importance across groups. TODO: find a better way to handle grouped channels
                 global_importance.append((group, ch_groups, imp))
-
         if len(global_importance) == 0:
             return
-                
-        imp = torch.cat([local_imp[-1]
-                        for local_imp in global_importance], dim=0)
+        
+        # Find the threshold for global pruning
+        imp = torch.cat([local_imp[-1] for local_imp in global_importance], dim=0)
         target_sparsity = self.per_step_ch_sparsity[self.current_step]
         n_pruned = len(imp) - int(
             self.initial_total_channels *
             (1 - target_sparsity)
         )
+
         if n_pruned <= 0:
             return
-        
         topk_imp, _ = torch.topk(imp, k=n_pruned, largest=False)
-        thres = topk_imp[-1] # global pruning through thresholding
+        thres = topk_imp[-1]
 
+        # Group-by-group pruning
         for group, ch_groups, imp in global_importance:
             module = group[0][0].target.module
             pruning_fn = group[0][0].handler
+            get_channel_fn = self.DG.get_out_channels if self.DG.is_out_channel_pruning_fn(pruning_fn) else self.DG.get_in_channels
             pruning_indices = (imp <= thres).nonzero().view(-1)
 
             if ch_groups > 1: # re-compute importance for each channel group if channel grouping is enabled
                 n_pruned_per_group = len(pruning_indices)
                 if n_pruned_per_group == 0: continue # skip 
+
+                if self.round_to:
+                    n_pruned = n_pruned_per_group * ch_groups
+                    current_channels = get_channel_fn(module)
+                    n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
+                    n_pruned_per_group = n_pruned // ch_groups
+
                 imp = self.estimate_importance(group, ch_groups=ch_groups) # re-compute importance
                 group_size = len(imp) // ch_groups
                 pruning_indices = []
@@ -329,11 +364,12 @@ class MetaPruner:
                     sub_pruning_idxs = sub_imp_argsort[:n_pruned_per_group]+chg*group_size
                     pruning_indices.append(sub_pruning_idxs)
                 pruning_indices = torch.cat(pruning_indices, 0)
-
-            if self.round_to: # round to the nearest multiple of round_to
-                n_pruned = len(pruning_indices)
-                n_pruned = n_pruned - (n_pruned % self.round_to)
-                pruning_indices = pruning_indices[:n_pruned]
+            else:
+                if self.round_to: 
+                    n_pruned = len(pruning_indices)
+                    current_channels = get_channel_fn(module)
+                    n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
+                    pruning_indices = pruning_indices[:n_pruned]
             
             group = self.DG.get_pruning_group(
                 module, pruning_fn, pruning_indices.tolist())
