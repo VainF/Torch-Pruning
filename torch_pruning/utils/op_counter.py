@@ -13,24 +13,34 @@ import torch.nn as nn
 import torch
 
 @torch.no_grad()
-def count_ops_and_params(model, example_inputs):
+def count_ops_and_params(model, example_inputs, layer_wise=False):
     global CUSTOM_MODULES_MAPPING
-    model = copy.deepcopy(model)
+    ori_model = model 
+    model = copy.deepcopy(model) # deepcopy to avoid changing the original model
     flops_model = add_flops_counting_methods(model)
     flops_model.eval()
     flops_model.start_flops_count(ost=sys.stdout, verbose=False,
-                                  ignore_list=[])
+                                ignore_list=[])
     if isinstance(example_inputs, (tuple, list)):
         _ = flops_model(*example_inputs)
     elif isinstance(example_inputs, dict):
         _ = flops_model(**example_inputs)
     else:
         _ = flops_model(example_inputs)
-    flops_count, params_count = flops_model.compute_average_flops_cost()
+    flops_count, params_count, _layer_flops, _layer_params = flops_model.compute_average_flops_cost()
+    layer_flops = {}
+    layer_params = {}
+
     flops_model.stop_flops_count()
     CUSTOM_MODULES_MAPPING = {}
-    return flops_count, params_count
 
+    for ori_m, m in zip(ori_model.modules(), model.modules()):
+        layer_flops[ori_m] = _layer_flops.get(m)
+        layer_params[ori_m] = _layer_params.get(m)
+        
+    if layer_wise:
+        return flops_count, params_count, layer_flops, layer_params
+    return flops_count, params_count
 
 def empty_flops_counter_hook(module, input, output):
     module.__flops__ += 0
@@ -305,13 +315,15 @@ from functools import partial
 import torch.nn as nn
 import copy
 
-def accumulate_flops(self):
+def accumulate_flops(self, layer_flops):
     if is_supported_instance(self):
+        layer_flops[self] = self.__flops__
         return self.__flops__
     else:
         sum = 0
         for m in self.children():
-            sum += m.accumulate_flops()
+            sum += m.accumulate_flops(layer_flops)
+        layer_flops[self] = sum
         return sum
 
 
@@ -333,7 +345,6 @@ def add_flops_counting_methods(net_main_module):
 
     return net_main_module
 
-
 def compute_average_flops_cost(self):
     """
     A method that will be available after add_flops_counting_methods() is called
@@ -344,14 +355,19 @@ def compute_average_flops_cost(self):
     for m in self.modules():
         m.accumulate_flops = accumulate_flops.__get__(m)
 
-    flops_sum = self.accumulate_flops()
+    layer_flops = {}
+    flops_sum = self.accumulate_flops(layer_flops)
 
     for m in self.modules():
         if hasattr(m, 'accumulate_flops'):
             del m.accumulate_flops
 
+    layer_params = {}
+    for m in self.modules():
+        layer_params[m] = get_model_parameters_number(m)
+
     params_sum = get_model_parameters_number(self)
-    return flops_sum / self.__batch_counter__, params_sum
+    return flops_sum / self.__batch_counter__, params_sum, layer_flops, layer_params
 
 
 def start_flops_count(self, **kwargs):

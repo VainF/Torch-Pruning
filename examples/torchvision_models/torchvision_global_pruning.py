@@ -168,8 +168,6 @@ if __name__ == "__main__":
             for m in model.modules():
                 if isinstance(m, nn.MultiheadAttention):
                     channel_groups[m] = m.num_heads
-            #round_to = model.encoder.layers[0].num_heads
-
         #########################################
         # (Optional) Register unwrapped nn.Parameters 
         # TP will automatically detect unwrapped parameters and prune the last dim for you by default.
@@ -196,7 +194,7 @@ if __name__ == "__main__":
             importance=importance,
             iterative_steps=1,
             ch_sparsity=0.5,
-            global_pruning=False,
+            global_pruning=True,
             round_to=round_to,
             unwrapped_parameters=unwrapped_parameters,
             ignored_layers=ignored_layers,
@@ -242,15 +240,6 @@ if __name__ == "__main__":
             print("{} Pruning: ".format(model_name))
             params_after_prune = tp.utils.count_params(model)
             print("  Params: %s => %s" % (ori_size, params_after_prune))
-            
-            if 'rcnn' not in model_name and model_name!='ssdlite320_mobilenet_v3_large': # RCNN may return 0 proposals, making some layers unreachable during tracing.
-                for module, ch in layer_channel_cfg.items():
-                    if isinstance(module, nn.Conv2d):
-                        #print(module.out_channels, layer_channel_cfg[module])
-                        assert int(0.5*layer_channel_cfg[module]) == module.out_channels
-                    elif isinstance(module, nn.Linear):
-                        #print(module.out_features, layer_channel_cfg[module])
-                        assert int(0.5*layer_channel_cfg[module]) == module.out_features
 
             if isinstance(out, (dict,list,tuple)):
                 print("  Output:")

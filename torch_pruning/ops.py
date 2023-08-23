@@ -12,7 +12,7 @@ class _CustomizedOp(nn.Module):
 
     def __repr__(self):
         return "CustomizedOp({})".format(str(self.op_cls))
-
+    
 
 class _ConcatOp(nn.Module):
     def __init__(self, id):
@@ -35,6 +35,17 @@ class _SplitOp(nn.Module):
     def __repr__(self):
         return "_SplitOp_{}({})".format(self.id,self.offsets)
 
+
+class _UnbindOp(nn.Module):
+    def __init__(self, id):
+        super(_UnbindOp, self).__init__()
+        self.offsets = None
+        self.split_sizes = None  
+        self.id = id
+
+    def __repr__(self):
+        return "_UnbindOp_{}({})".format(self.id,self.offsets)
+    
 class _ReshapeOp(nn.Module):
     def __init__(self, id):
         super(_ReshapeOp, self).__init__()
@@ -69,9 +80,15 @@ class DummyPruner(object):
     def get_in_channels(self, layer):
         return None
 
-    def get_channel_groups(self, layer):
+    def get_in_channel_groups(self, layer):
+        return 1
+    
+    def get_out_channel_groups(self, layer):
         return 1
 
+
+class UnbindPruner(DummyPruner):
+    pass 
 
 class ConcatPruner(DummyPruner):
     def prune_out_channels(self, layer, idxs):
@@ -170,6 +187,7 @@ class OPTYPE(IntEnum):
     RESHAPE = 14
     GN = 15  # nn.GroupNorm
     IN = 16  # nn.InstanceNorm
+    UNBIND = 17
 
 
 def module2type(module):
@@ -206,6 +224,8 @@ def module2type(module):
         return OPTYPE.IN
     elif isinstance(module, _ReshapeOp):
         return OPTYPE.RESHAPE
+    elif isinstance(module, _UnbindOp):
+        return OPTYPE.UNBIND
     else:
         return OPTYPE.ELEMENTWISE
 
@@ -241,6 +261,8 @@ def type2class(op_type):
         return TORCH_LSTM
     elif OPTYPE == OPTYPE.RESHAPE:
         return _ReshapeOp
+    elif OPTYPE == OPTYPE.UNBIND:
+        return _UnbindOp
     else:
         return _ElementWiseOp
 

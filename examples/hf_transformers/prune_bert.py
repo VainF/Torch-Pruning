@@ -36,10 +36,10 @@ pruner = tp.pruner.MagnitudePruner(
 )
 
 for g in pruner.step(interactive=True):
-    print(g)
+    #print(g)
     g.prune()
 
-# Modify the attention head size and all head size aftering pruning
+# Modify the attention head size and all head size after pruning
 for m in model.modules():
     if isinstance(m, BertSelfAttention):
         m.attention_head_size = m.query.out_features // m.num_attention_heads

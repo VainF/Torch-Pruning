@@ -37,7 +37,7 @@ This is modified to save the model with full precision because changing model to
 YOLO v8 replaces saved checkpoint file to half precision after training is done using ```strip_optimizer```. Half precision saving is changed with same reason above.
 
 #### Training
-```
+```bash
 # This example will craft yolov8-half and fine-tune it on the coco128 toy set.
 python yolov8_pruning.py
 ```

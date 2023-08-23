@@ -3,7 +3,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import torch
-from torchvision.models import resnet18 as entry
+from torchvision.models import resnet50 as entry
 import torch_pruning as tp
 from torch import nn
 import torch.nn.functional as F
@@ -21,11 +21,12 @@ def test_pruner():
         if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
             ignored_layers.append(m)
 
-    iterative_steps = 5
+    iterative_steps = 1
     pruner = tp.pruner.MagnitudePruner(
         model,
         example_inputs,
         importance=imp,
+        global_pruning=True,
         iterative_steps=iterative_steps,
         ch_sparsity=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
         ignored_layers=ignored_layers,

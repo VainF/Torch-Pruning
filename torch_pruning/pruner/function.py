@@ -101,7 +101,10 @@ class BasePruningFunc(ABC):
         layer = pruning_fn(layer, idxs)
         return layer
 
-    def get_channel_groups(self, layer):
+    def get_in_channel_groups(self, layer):
+        return 1
+    
+    def get_out_channel_groups(self, layer):
         return 1
 
     def _prune_parameter_and_grad(self, weight, keep_idxs, pruning_dim):
@@ -146,7 +149,10 @@ class ConvPruner(BasePruningFunc):
     def get_in_channels(self, layer):
         return layer.in_channels
 
-    def get_channel_groups(self, layer):
+    def get_in_channel_groups(self, layer):
+        return layer.groups
+    
+    def get_out_channel_groups(self, layer):
         return layer.groups
 
 
@@ -275,7 +281,10 @@ class GroupNormPruner(BasePruningFunc):
     def get_in_channels(self, layer):
         return layer.num_channels
 
-    def get_channel_groups(self, layer):
+    def get_in_channel_groups(self, layer):
+        return layer.num_groups
+    
+    def get_out_channel_groups(self, layer):
         return layer.num_groups
 
 class InstanceNormPruner(BasePruningFunc):

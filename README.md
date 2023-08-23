@@ -6,13 +6,12 @@
 <img src="assets/intro.png" width="50%">
 </div>
 
-
 <p align="center">
   <a href="https://github.com/VainF/Torch-Pruning/actions"><img src="https://img.shields.io/badge/tests-passing-9c27b0.svg" alt="Test Status"></a>
   <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-1.8 %20%7C%201.12 %20%7C%202.0-673ab7.svg" alt="Tested PyTorch Versions"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-4caf50.svg" alt="License"></a>
-  <a href="https://pepy.tech/project/Torch-Pruning"><img src="https://pepy.tech/badge/Torch-Pruning?color=2196f3" alt="Downloads"></a>
-  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.2.2-3f51b5.svg" alt="Latest Version"></a>
+  <a href="https://pepy.tech/project/Torch-Pruning"><img src="https://static.pepy.tech/badge/Torch-Pruning?color=2196f3" alt="Downloads"></a>
+  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.2.3-3f51b5.svg" alt="Latest Version"></a>
   <a href="https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
@@ -20,50 +19,40 @@
 </p>
 
 
-[[Documentation & Tutorials](https://github.com/VainF/Torch-Pruning/wiki)]
+[[Documentation & Tutorials](https://github.com/VainF/Torch-Pruning/wiki)] [[FAQ](https://github.com/VainF/Torch-Pruning/wiki/Frequently-Asked-Questions)]
 
 Torch-Pruning (TP) is a library for structural pruning with the following features:
 
-* **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of deep neural networks, including *[Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [ViT](examples/hf_transformers/), FasterRCNN, SSD, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, DeepLab, etc*. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys a (non-deep) graph algorithm called **DepGraph** to remove parameters physically. Currently, TP is able to prune approximately **81/85=95.3%** of the models from Torchvision 0.13.1. Try this [Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing) for a quick start.
+* **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of deep neural networks, including *[Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [Vision Transformers](examples/hf_transformers/), [Swin Transformers](examples/hf_transformers), [Bert](examples/hf_transformers), FasterRCNN, SSD, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, DeepLab, etc*. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys a (non-deep) graph algorithm called **DepGraph** to remove parameters physically. Currently, TP is able to prune approximately **81/85=95.3%** of the models from Torchvision 0.13.1. Try this [Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing) for a quick start.
 * **[Performance Benchmark](benchmarks)**: Reproduce the our results in the DepGraph paper.
 
 For more technical details, please refer to our CVPR'23 paper:
 > [**DepGraph: Towards Any Structural Pruning**](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)   
 > *[Gongfan Fang](https://fangggf.github.io/), [Xinyin Ma](https://horseee.github.io/), [Mingli Song](https://person.zju.edu.cn/en/msong), [Michael Bi Mi](https://dblp.org/pid/317/0937.html), [Xinchao Wang](https://sites.google.com/site/sitexinchaowang/)*    
 > *[Learning and Vision Lab](http://lv-nus.org/), National University of Singapore*
-
-Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper. 
-
-### Update:
   
+### Update:
+
+* 2023.08.20 :rocket: [Examples for Vision Transformers, Swin Transformers, Bert](examples/hf_transformers/).
 * 2023.07.19 :rocket: Support LLaMA, LLaMA-2, Vicuna, Baichuan in [LLM-Pruner](https://github.com/horseee/LLM-Pruner)
 * 2023.05.20 :rocket: [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
 * 2023.05.19 [Structural Pruning for Diffusion Models](https://github.com/VainF/Diff-Pruning) [*[arXiv]*](https://arxiv.org/abs/2305.10924)
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
-* 2023.04.21 Join our Telegram or Wechat group:
-  * Telegram: https://t.me/+NwjbBDN2ao1lZjZl
-  * WeChat (Group size exceeded 200): <img width="100" alt="image" src="https://github.com/VainF/Torch-Pruning/assets/18592211/6c80e758-7692-4dad-b6aa-1e1877e72bf7">
-
-
 
 ### **Features:**
-- [x] Structural pruning for CNNs, Transformers, Detectors, Language Models and Diffusion Models. Please refer to the [examples](examples).
-- [x] High-level pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), [GrowingRegPruner](https://arxiv.org/abs/2012.09243), RandomPruner, etc.
-- [x] Importance Criteria: L-p Norm, Taylor, Random, BNScaling, etc.
-- [x] Dependency Graph for automatic structrual pruning
+- [x] High-level Pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), [GrowingRegPruner](https://arxiv.org/abs/2012.09243), RandomPruner, etc.
+- [x] Dependency Graph for automatic structural pruning
+- [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
+- [x] Supported Importance Criteria: L-p Norm, Taylor, Random, BNScaling, etc.
 - [x] Supported modules: Linear, (Transposed) Conv, Normalization, PReLU, Embedding, MultiheadAttention, nn.Parameters and [customized modules](tests/test_customized_layer.py).
 - [x] Supported operators: split, concatenation, skip connection, flatten, reshape, view, all element-wise ops, etc.
-- [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
 - [x] [Benchmarks](benchmarks) and [Tutorials](https://github.com/VainF/Torch-Pruning/wiki)
-  
-### **TODO List:**
-- [ ] A all-in-one pruner for application.
-- [ ] A benchmark for [Torchvision](https://pytorch.org/vision/stable/models.html) compatibility (**81/85=95.3%**, :heavy_check_mark:) and [timm](https://github.com/huggingface/pytorch-image-models) compatibility (**119/294=40.5%**).
-- [ ] Pruning from Scratch / at Initialization.
-- [ ] More high-level pruners like [FisherPruner](https://arxiv.org/abs/2108.00708), etc.
-- [ ] More Transformers like Vision Transformers (:heavy_check_mark:), Swin Transformers, PoolFormers.
-- [ ] Block/Layer/Depth Pruning
-- [ ] Pruning benchmarks for CIFAR, ImageNet, and COCO.
+
+### **Contact Us:**
+Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.   
+Or Join our Discord or WeChat group for a chat:
+  * Discord: [link](https://discord.gg/2CXnf5bN)
+  * WeChat (Group size exceeded 200): [QR Code](https://github.com/VainF/Torch-Pruning/assets/18592211/6c80e758-7692-4dad-b6aa-1e1877e72bf7)
 
 ## Installation
 
@@ -90,6 +79,8 @@ In structural pruning, a "Group" is defined as the minimal unit that can be remo
 </div>
 
 ### 1. A Minimal Example
+
+Please ensure that your model is set up to enable AutoGrad without something like ``torch.no_grad`` or ``.requires_grad=False``.
 
 ```python
 import torch
@@ -262,7 +253,6 @@ loaded_state_dict = torch.load('pruned.pth', map_location='cpu')
 tp.load_state_dict(new_model, state_dict=loaded_state_dict)
 ```
 Refer to [tests/test_serialization.py](tests/test_serialization.py) for an ViT example. In this example, we will prune the model and modify some attributes like ``model.hidden_dims``.
-                                        
                                 
 ### 4. Low-level Pruning Functions
 
@@ -303,15 +293,13 @@ The following [pruning functions](torch_pruning/pruner/function.py) are availabl
 'prune_instancenorm_in_channels',
 ```
 
-
-
 ### 5. Customized Layers
 
-Please refer to [tests/test_customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_customized_layer.py).
+Please refer to [examples/hf_transformers/prune_swin.py](examples/hf_transformers/prune_swin.py), which implements a new pruner for the customized module ``SwinPatchMerging``. A more simple example is available at [tests/test_customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_customized_layer.py).
 
 ### 6. Benchmarks
 
-Our results on {ResNet-56 / CIFAR-10 / 2.00x}
+#### Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 
 | Method | Base (%) | Pruned (%) | $\Delta$ Acc (%) | Speed Up |
 |:--    |:--:  |:--:    |:--: |:--:      |
@@ -328,9 +316,36 @@ Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 | Ours-BN | 93.53 | 93.29 | -0.24 | 2.12x |
 | Ours-Group | 93.53 | 93.77 | +0.38 | 2.13x |
 
+#### Latency
+
+Latency test on ResNet-50, Batch Size=64. 
+```
+[Iter 0]        Sparsity: 0.00,         MACs: 4.12 G,   Params: 25.56 M,        Latency: 45.22 ms +- 0.03 ms
+[Iter 1]        Sparsity: 0.05,         MACs: 3.68 G,   Params: 22.97 M,        Latency: 46.53 ms +- 0.06 ms
+[Iter 2]        Sparsity: 0.10,         MACs: 3.31 G,   Params: 20.63 M,        Latency: 43.85 ms +- 0.08 ms
+[Iter 3]        Sparsity: 0.15,         MACs: 2.97 G,   Params: 18.36 M,        Latency: 41.22 ms +- 0.10 ms
+[Iter 4]        Sparsity: 0.20,         MACs: 2.63 G,   Params: 16.27 M,        Latency: 39.28 ms +- 0.20 ms
+[Iter 5]        Sparsity: 0.25,         MACs: 2.35 G,   Params: 14.39 M,        Latency: 34.60 ms +- 0.19 ms
+[Iter 6]        Sparsity: 0.30,         MACs: 2.02 G,   Params: 12.46 M,        Latency: 33.38 ms +- 0.27 ms
+[Iter 7]        Sparsity: 0.35,         MACs: 1.74 G,   Params: 10.75 M,        Latency: 31.46 ms +- 0.20 ms
+[Iter 8]        Sparsity: 0.40,         MACs: 1.50 G,   Params: 9.14 M,         Latency: 29.04 ms +- 0.19 ms
+[Iter 9]        Sparsity: 0.45,         MACs: 1.26 G,   Params: 7.68 M,         Latency: 27.47 ms +- 0.28 ms
+[Iter 10]       Sparsity: 0.50,         MACs: 1.07 G,   Params: 6.41 M,         Latency: 20.68 ms +- 0.13 ms
+[Iter 11]       Sparsity: 0.55,         MACs: 0.85 G,   Params: 5.14 M,         Latency: 20.48 ms +- 0.21 ms
+[Iter 12]       Sparsity: 0.60,         MACs: 0.67 G,   Params: 4.07 M,         Latency: 18.12 ms +- 0.15 ms
+[Iter 13]       Sparsity: 0.65,         MACs: 0.53 G,   Params: 3.10 M,         Latency: 15.19 ms +- 0.01 ms
+[Iter 14]       Sparsity: 0.70,         MACs: 0.39 G,   Params: 2.28 M,         Latency: 13.47 ms +- 0.01 ms
+[Iter 15]       Sparsity: 0.75,         MACs: 0.29 G,   Params: 1.61 M,         Latency: 10.07 ms +- 0.01 ms
+[Iter 16]       Sparsity: 0.80,         MACs: 0.18 G,   Params: 1.01 M,         Latency: 8.96 ms +- 0.02 ms
+[Iter 17]       Sparsity: 0.85,         MACs: 0.10 G,   Params: 0.57 M,         Latency: 7.03 ms +- 0.04 ms
+[Iter 18]       Sparsity: 0.90,         MACs: 0.05 G,   Params: 0.25 M,         Latency: 5.81 ms +- 0.03 ms
+[Iter 19]       Sparsity: 0.95,         MACs: 0.01 G,   Params: 0.06 M,         Latency: 5.70 ms +- 0.03 ms
+[Iter 20]       Sparsity: 1.00,         MACs: 0.01 G,   Params: 0.06 M,         Latency: 5.71 ms +- 0.03 ms
+```
+
 Please refer to [benchmarks](benchmarks) for more details.
 
-### 7. Series of Works
+### 8. Series of Works
 
 > **DepGraph: Towards Any Structural Pruning** [[Project]](https://github.com/VainF/Torch-Pruning) [[Paper]](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)   
 > *Gongfan Fang, Xinyin Ma, Mingli Song, Michael Bi Mi, Xinchao Wang*   

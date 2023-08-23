@@ -25,13 +25,14 @@ def main():
     macs, params = tp.utils.count_ops_and_params(model, example_input)
     latency_mu, latency_std = test_latency(model, example_input)
     # print all with .2f
-    print(f"[Iter 0] MACs: {macs/1e9:.2f} G, Params: {params/1e6:.2f} M, Latency: {latency_mu:.2f} ms +- {latency_std:.2f} ms")
+    print(f"[Iter 0] \tSparsity: 0.00, \tMACs: {macs/1e9:.2f} G, \tParams: {params/1e6:.2f} M, \tLatency: {latency_mu:.2f} ms +- {latency_std:.2f} ms")
 
     for iter in range(iterative_steps):
         pruner.step()
         _macs, _params = tp.utils.count_ops_and_params(model, example_input)
         latency_mu, latency_std = test_latency(model, example_input)
-        print(f"[Iter {iter+1}] MACs: {_macs/1e9:.2f} G, Params: {_params/1e6:.2f} M, Latency: {latency_mu:.2f} ms +- {latency_std:.2f} ms")
+        current_ch_sparsity = 1 / iterative_steps * (iter + 1)
+        print(f"[Iter {iter+1}] \tSparsity: {current_ch_sparsity:.2f}, \tMACs: {_macs/1e9:.2f} G, \tParams: {_params/1e6:.2f} M, \tLatency: {latency_mu:.2f} ms +- {latency_std:.2f} ms")
 
         # uncomment the following lines to profile
         #with torch.autograd.profiler.profile(use_cuda=True) as prof:
