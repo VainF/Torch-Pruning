@@ -24,7 +24,7 @@ python python detect_after_pruning.py --weights yolov5s.pt --source  data/images
 ```
 
 #### Outputs of detect_after_pruning.py:
-```python
+```bash
 DetectMultiBackend(
   (model): DetectionModel(
     (model): Sequential(
