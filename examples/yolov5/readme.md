@@ -1,4 +1,4 @@
-# YOLOv7 Pruning
+# YOLOv5 Pruning
 
 ## 0. Requirements
 
