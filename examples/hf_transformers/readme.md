@@ -1,5 +1,7 @@
 # Examples for HuggingFace Transformers
 
+Our post-training scripts will be released.
+
 ## Pruning HF ViT
 ```bash
 python prune_vit.py
@@ -29,5 +31,7 @@ python prune_bert.py
 Base MACs: 680.150784 M, Pruned MACs: 170.206464 M
 Base Params: 109.482240 M, Pruned Params: 33.507840 M
 ```
+
+
 
 
