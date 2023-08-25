@@ -12,6 +12,18 @@ Base MACs: 16.848735 G, Pruned MACs: 4.241336 G
 Base Params: 86.567656 M, Pruned Params: 22.050664 M
 ```
 
+Some results:
+
+
+
+|| Vit-B/16 - Torchvision |	Vit-B/16 - HF |	ViT_B/32 - Torchvision | Vit-B/16 - 50% - Local Pruning |
+| :-- | :--: | :--: | :--: | :--: |
+| **#Params** | 86.57 M	| 86.56 M	|  	88.22 M | 22.05 M |
+| **MACs** | 17.59 G	| 16.84 G	| 4.41 G |  4.24 G	| 
+| **Top-1 Acc.** | 81.068	| 75.66	| 75.91 |  79.2	| 
+
+
+
 ## Pruning HF Swin
 ```bash
 python prune_swin.py
