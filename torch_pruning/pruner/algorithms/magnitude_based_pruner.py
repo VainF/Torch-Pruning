@@ -4,4 +4,4 @@ class MagnitudePruner(MetaPruner):
     """ Prune the smallest magnitude weights
     """
     pass
-    
+        
