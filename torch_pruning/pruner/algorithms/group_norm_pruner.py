@@ -63,9 +63,10 @@ class GroupNormPruner(MetaPruner):
             
             channel_groups=channel_groups,
         )
+
         self.reg = reg
         self.alpha = alpha
-        self.groups = list(self.DG.get_all_groups())
+        self.groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
         self.cnt = 0
 
     @torch.no_grad()
@@ -76,7 +77,7 @@ class GroupNormPruner(MetaPruner):
             gamma = alpha**((imp.max() - imp) / (imp.max() - imp.min()))
 
             # Update Gradient
-            for dep, idxs in group:
+            for i, (dep, idxs) in enumerate(group):
                 layer = dep.target.module
                 prune_fn = dep.handler
                 if prune_fn in [
@@ -84,13 +85,17 @@ class GroupNormPruner(MetaPruner):
                     function.prune_linear_out_channels,
                 ]:
                     if layer.weight.grad is None: continue
+
+                    root_idxs = group[i].root_idxs
+                    _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
+
                     w = layer.weight.data[idxs]
-                    g = w * gamma.view( -1, *([1]*(len(w.shape)-1)) ) #/ group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size #group_size #* gamma.view( -1, *([1]*(len(w.shape)-1)) )
+                    g = w * _gamma.view( -1, *([1]*(len(w.shape)-1)) ) #/ group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size #group_size #* gamma.view( -1, *([1]*(len(w.shape)-1)) )
                     layer.weight.grad.data[idxs]+=self.reg * g 
                     
                     if bias and layer.bias is not None:
                         b = layer.bias.data[idxs]
-                        g = b * gamma
+                        g = b * _gamma
                         layer.bias.grad.data[idxs]+=self.reg * g 
 
                 elif prune_fn in [
@@ -107,8 +112,11 @@ class GroupNormPruner(MetaPruner):
                         gamma = gamma[:len(idxs)//ch_groups]
                         idxs = idxs[:len(idxs)//ch_groups]
 
+                    root_idxs = group[i].root_idxs
+                    _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
+
                     w = layer.weight.data[:, idxs]
-                    g = w * gamma.view( 1, -1, *([1]*(len(w.shape)-2))  ) #/ gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * group_size #* gamma.view( 1, -1, *([1]*(len(w.shape)-2))  )
+                    g = w * _gamma.view( 1, -1, *([1]*(len(w.shape)-2))  ) #/ gn.view( 1, -1, *([1]*(len(w.shape)-2)) ) * group_size #* gamma.view( 1, -1, *([1]*(len(w.shape)-2))  )
                     layer.weight.grad.data[:, idxs]+=self.reg * g
                     
                 elif prune_fn == function.prune_batchnorm_out_channels:
@@ -116,12 +124,15 @@ class GroupNormPruner(MetaPruner):
                     if layer.affine is not None:
                         if layer.weight.grad is None: continue
 
+                        root_idxs = group[i].root_idxs
+                        _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
+
                         w = layer.weight.data[idxs]
-                        g = w * gamma #/ group_norm * group_size
+                        g = w * _gamma #/ group_norm * group_size
                         layer.weight.grad.data[idxs]+=self.reg * g 
                         
                         if bias and layer.bias is not None:
                             b = layer.bias.data[idxs]
-                            g = b * gamma #/ group_norm * group_size
+                            g = b * _gamma #/ group_norm * group_size
                             layer.bias.grad.data[idxs]+=self.reg * g 
         self.cnt+=1

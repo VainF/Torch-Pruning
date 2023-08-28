@@ -63,7 +63,7 @@ class GrowingRegPruner(MetaPruner):
             channel_groups=channel_groups,
         )
         self.base_reg = reg
-        self._groups = list(self.DG.get_all_groups())
+        self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
 
         group_reg = {}
         for group in self._groups:
@@ -87,29 +87,40 @@ class GrowingRegPruner(MetaPruner):
             group_l2norm_sq = self.estimate_importance(group)
             if group_l2norm_sq is None:
                 continue
-            reg = self.group_reg[group]
-            for dep, idxs in group:
+            gamma = self.group_reg[group]
+            for k, (dep, idxs) in enumerate(group):
                 layer = dep.layer
                 pruning_fn = dep.pruning_fn
 
                 if isinstance(layer, nn.modules.batchnorm._BatchNorm) and layer.affine == True and layer not in self.ignored_layers:
                     if layer.weight.grad is None: continue
-                    layer.weight.grad.data.add_(reg.to(layer.weight.device) * layer.weight.data)
+
+                    root_idxs = group[k].root_idxs
+                    _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
+                    
+                    layer.weight.grad.data[idxs].add_(_gamma.to(layer.weight.device) * layer.weight.data[idxs])
                     if bias and layer.bias is not None:
-                        layer.bias.grad.data.add_(reg.to(layer.weight.device) * layer.bias.data)
+                        layer.bias.grad.data[idxs].add_(_gamma.to(layer.weight.device) * layer.bias.data[idxs])
                 elif isinstance(layer, (nn.modules.conv._ConvNd, nn.Linear)):
                     if pruning_fn in [function.prune_conv_out_channels, function.prune_linear_out_channels] and layer not in self.ignored_layers:
                         if layer.weight.grad is None: continue
+
+                        root_idxs = group[k].root_idxs
+                        _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
+
                         w = layer.weight.data[idxs]
-                        g = w * reg.to(layer.weight.device).view(-1, *([1]*(len(w.shape)-1)))
+                        g = w * _gamma.to(layer.weight.device).view(-1, *([1]*(len(w.shape)-1)))
                         layer.weight.grad.data[idxs] += g
 
                         if bias and layer.bias is not None:
                             b = layer.bias.data[idxs]
-                            g = b * reg.to(layer.weight.device)
+                            g = b * _gamma.to(layer.weight.device)
                             layer.bias.grad.data[idxs] += g
                     elif pruning_fn in [function.prune_conv_in_channels, function.prune_linear_in_channels]:
                         if layer.weight.grad is None: continue
+                        root_idxs = group[k].root_idxs
+                        _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
+
                         w = layer.weight.data[:, idxs]
-                        g = w * reg.to(layer.weight.device).view(1, -1, *([1]*(len(w.shape)-2)))
+                        g = w * _gamma.to(layer.weight.device).view(1, -1, *([1]*(len(w.shape)-2)))
                         layer.weight.grad.data[:, idxs] += g

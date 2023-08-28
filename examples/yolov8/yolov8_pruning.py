@@ -323,24 +323,29 @@ def prune(args):
                 ignored_layers.append(m)
 
         example_inputs = example_inputs.to(model.device)
-        pruner = tp.pruner.MagnitudePruner(
+        pruner = tp.pruner.GroupNormPruner(
             model.model,
             example_inputs,
-            importance=tp.importance.MagnitudeImportance(p=2),  # L2 norm pruning,
+            importance=tp.importance.GroupNormImportance(),  # L2 norm pruning,
             iterative_steps=1,
             ch_sparsity=ch_sparsity,
             ignored_layers=ignored_layers,
             unwrapped_parameters=unwrapped_parameters
         )
-        pruner.step()
 
+        # Test only
+        output = model.model(example_inputs)
+        (output[0].sum() + sum([o.sum() for o in output[1]])).backward()
+        pruner.regularize(model.model)
+        
+        pruner.step()
         # pre fine-tuning validation
         pruning_cfg['name'] = f"step_{i}_pre_val"
         pruning_cfg['batch'] = 1
         validation_model.model = deepcopy(model.model)
         metric = validation_model.val(**pruning_cfg)
         pruned_map = metric.box.map
-        pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(pruner.model, example_inputs)
+        pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(pruner.model, example_inputs.to(model.device))
         current_speed_up = float(macs_list[0]) / pruned_macs
         print(f"After pruning iter {i + 1}: MACs={pruned_macs / 1e9} G, #Params={pruned_nparams / 1e6} M, "
               f"mAP={pruned_map}, speed up={current_speed_up}")
