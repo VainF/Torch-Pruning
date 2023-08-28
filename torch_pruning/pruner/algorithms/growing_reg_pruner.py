@@ -82,7 +82,7 @@ class GrowingRegPruner(MetaPruner):
             reg = reg + self.delta_reg * standarized_imp.to(reg.device)
             self.group_reg[group] = reg
 
-    def regularize(self, model):
+    def regularize(self, model, bias=False):
         for i, group in enumerate(self._groups):
             group_l2norm_sq = self.estimate_importance(group)
             if group_l2norm_sq is None:
@@ -95,12 +95,19 @@ class GrowingRegPruner(MetaPruner):
                 if isinstance(layer, nn.modules.batchnorm._BatchNorm) and layer.affine == True and layer not in self.ignored_layers:
                     if layer.weight.grad is None: continue
                     layer.weight.grad.data.add_(reg.to(layer.weight.device) * layer.weight.data)
+                    if bias and layer.bias is not None:
+                        layer.bias.grad.data.add_(reg.to(layer.weight.device) * layer.bias.data)
                 elif isinstance(layer, (nn.modules.conv._ConvNd, nn.Linear)):
                     if pruning_fn in [function.prune_conv_out_channels, function.prune_linear_out_channels] and layer not in self.ignored_layers:
                         if layer.weight.grad is None: continue
                         w = layer.weight.data[idxs]
                         g = w * reg.to(layer.weight.device).view(-1, *([1]*(len(w.shape)-1)))
                         layer.weight.grad.data[idxs] += g
+
+                        if bias and layer.bias is not None:
+                            b = layer.bias.data[idxs]
+                            g = b * reg.to(layer.weight.device)
+                            layer.bias.grad.data[idxs] += g
                     elif pruning_fn in [function.prune_conv_in_channels, function.prune_linear_in_channels]:
                         if layer.weight.grad is None: continue
                         w = layer.weight.data[:, idxs]

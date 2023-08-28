@@ -79,7 +79,7 @@ class BNScalePruner(MetaPruner):
         if self.group_lasso==False:
             for m in model.modules():
                 if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)) and m.affine==True and m not in self.ignored_layers:
-                    if layer.weight.grad is None: continue
+                    if m.weight.grad is None: continue
                     m.weight.grad.data.add_(reg*torch.sign(m.weight.data))
         else:
             for group in self._groups:

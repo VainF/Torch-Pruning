@@ -220,8 +220,8 @@ class BNScaleImportance(MagnitudeImportance):
     https://arxiv.org/abs/1708.06519
     """
 
-    def __init__(self, group_reduction='mean', normalizer='mean', bias=False):
-        super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer, bias=bias, target_types=(nn.modules.batchnorm._BatchNorm,))
+    def __init__(self, group_reduction='mean', normalizer='mean'):
+        super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer, bias=False, target_types=(nn.modules.batchnorm._BatchNorm,))
 
 
 class LAMPImportance(MagnitudeImportance):

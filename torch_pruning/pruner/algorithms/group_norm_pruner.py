@@ -69,7 +69,7 @@ class GroupNormPruner(MetaPruner):
         self.cnt = 0
 
     @torch.no_grad()
-    def regularize(self, model, alpha=16):
+    def regularize(self, model, alpha=2**4, bias=False):
         for i, group in enumerate(self.groups):
             ch_groups = self._get_channel_groups(group)
             imp = self.estimate_importance(group).sqrt()
@@ -88,7 +88,7 @@ class GroupNormPruner(MetaPruner):
                     g = w * gamma.view( -1, *([1]*(len(w.shape)-1)) ) #/ group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size #group_size #* gamma.view( -1, *([1]*(len(w.shape)-1)) )
                     layer.weight.grad.data[idxs]+=self.reg * g 
                     
-                    if layer.bias is not None:
+                    if bias and layer.bias is not None:
                         b = layer.bias.data[idxs]
                         g = b * gamma
                         layer.bias.grad.data[idxs]+=self.reg * g 
@@ -120,7 +120,8 @@ class GroupNormPruner(MetaPruner):
                         g = w * gamma #/ group_norm * group_size
                         layer.weight.grad.data[idxs]+=self.reg * g 
                         
-                        b = layer.bias.data[idxs]
-                        g = b * gamma #/ group_norm * group_size
-                        layer.bias.grad.data[idxs]+=self.reg * g 
+                        if bias and layer.bias is not None:
+                            b = layer.bias.data[idxs]
+                            g = b * gamma #/ group_norm * group_size
+                            layer.bias.grad.data[idxs]+=self.reg * g 
         self.cnt+=1

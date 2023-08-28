@@ -57,7 +57,7 @@ def test_imp():
     print(mag_imp,  torch.prod(mag_imp_raw, dim=0))
     assert torch.allclose(mag_imp, torch.prod(mag_imp_raw, dim=0))
 
-    bn_scale_importance = tp.importance.BNScaleImportance(normalizer=None, bias=True)
+    bn_scale_importance = tp.importance.BNScaleImportance(normalizer=None)
     bn_imp = bn_scale_importance(pruning_group)
     print("BN Scaling, Group mean: ", bn_imp)   
 
