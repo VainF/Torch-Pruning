@@ -72,7 +72,7 @@ class BNScalePruner(MetaPruner):
         if self.group_lasso:
             self._l2_imp = MagnitudeImportance(p=2, group_reduction='mean', normalizer=None, target_types=[nn.modules.batchnorm._BatchNorm])
     
-    def regularize(self, model, reg=None):
+    def regularize(self, model, reg=None, bias=False):
         if reg is None:
             reg = self.reg # use the default reg
 

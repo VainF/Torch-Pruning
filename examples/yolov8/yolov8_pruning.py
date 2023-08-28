@@ -333,10 +333,10 @@ def prune(args):
             unwrapped_parameters=unwrapped_parameters
         )
 
-        # Test only
-        output = model.model(example_inputs)
-        (output[0].sum() + sum([o.sum() for o in output[1]])).backward()
-        pruner.regularize(model.model)
+        # Test regularization
+        #output = model.model(example_inputs)
+        #(output[0].sum() + sum([o.sum() for o in output[1]])).backward()
+        #pruner.regularize(model.model)
         
         pruner.step()
         # pre fine-tuning validation
