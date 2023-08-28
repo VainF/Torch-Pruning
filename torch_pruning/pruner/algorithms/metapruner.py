@@ -50,8 +50,8 @@ class MetaPruner:
         round_to: int = None,  # round channels to the nearest multiple of round_to
 
         # Advanced
-        in_channel_groups: typing.Dict[nn.Module, int] = dict(), # channel groups for layers inputs
-        out_channel_groups: typing.Dict[nn.Module, int] = dict(), # channel groups for layer outputs
+        in_channel_groups: typing.Dict[nn.Module, int] = dict(), # The number of channel groups for layer input
+        out_channel_groups: typing.Dict[nn.Module, int] = dict(), # The number of channel groups for layer output
         customized_pruners: typing.Dict[typing.Any, function.BasePruningFunc] = None, # pruners for customized layers. E.g., {nn.Linear: my_linear_pruner}
         unwrapped_parameters: typing.Dict[nn.Parameter, int] = None, # unwrapped nn.Parameters & pruning_dims. For example, {ViT.pos_emb: 0}
         root_module_types: typing.List = [ops.TORCH_CONV, ops.TORCH_LINEAR, ops.TORCH_LSTM],  # root module for each group
