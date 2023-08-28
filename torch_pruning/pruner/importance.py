@@ -9,6 +9,15 @@ from .._helpers import _FlattenIndexMapping
 from .. import ops
 import math
 
+__all__ = [
+    "Importance",
+    "MagnitudeImportance",
+    "GroupNormImportance",
+    "BNScaleImportance",
+    "LAMPImportance",
+    "RandomImportance",
+    "TaylorImportance",
+]
 
 class Importance(abc.ABC):
     """ Estimate the importance of a tp.Dependency.Group, and return an 1-D per-channel importance score.
@@ -46,12 +55,28 @@ class MagnitudeImportance(Importance):
             * normalizer (str): the normalization method for group importance. Default: "mean"
             * target_types (list): the target types for importance calculation. Default: [nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]
     """
-    def __init__(self, p: int=2, group_reduction: str="mean", normalizer: str='mean', target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
+    def __init__(self, 
+                 p: int=2, 
+                 group_reduction: str="mean", 
+                 normalizer: str='mean', 
+                 bias=False,
+                 target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
         self.p = p
         self.group_reduction = group_reduction
         self.normalizer = normalizer
         self.target_types = target_types
+        self.bias = bias
 
+    def _lamp(self, imp): # Layer-adaptive Sparsity for the Magnitude-based Pruning
+        argsort_idx = torch.argsort(imp, dim=0, descending=True).tolist()
+        sorted_imp = imp[argsort_idx]
+        cumsum_imp = torch.cumsum(sorted_imp, dim=0)
+        sorted_imp = sorted_imp / cumsum_imp
+        inversed_idx = torch.arange(len(sorted_imp))[
+            argsort_idx
+        ].tolist()  # [0, 1, 2, 3, ..., ]
+        return sorted_imp[inversed_idx]
+    
     def _normalize(self, group_importance, normalizer):
         if normalizer is None:
             return group_importance
@@ -67,6 +92,8 @@ class MagnitudeImportance(Importance):
             return group_importance / group_importance.max()
         elif normalizer == 'gaussian':
             return (group_importance - group_importance.mean()) / (group_importance.std()+1e-8)
+        elif normalizer=='lamp':
+            return self._lamp(group_importance)
         else:
             raise NotImplementedError
 
@@ -104,7 +131,7 @@ class MagnitudeImportance(Importance):
         if self.group_reduction == "mean":
             reduced_imp /= len(group_imp)
         return reduced_imp
-        
+    
     @torch.no_grad()
     def __call__(self, group: Group, ch_groups: int=1):
         group_imp = []
@@ -130,6 +157,11 @@ class MagnitudeImportance(Importance):
                 local_imp = w.abs().pow(self.p).sum(1)
                 group_imp.append(local_imp)
                 group_idxs.append(root_idxs)
+
+                if self.bias and layer.bias is not None:
+                    local_imp = layer.bias.data[idxs].abs().pow(self.p)
+                    group_imp.append(local_imp)
+                    group_idxs.append(root_idxs)
 
             ####################
             # Conv/Linear Input
@@ -163,7 +195,12 @@ class MagnitudeImportance(Importance):
                     local_imp = w.abs().pow(self.p)
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
-                
+
+                    if self.bias and layer.bias is not None:
+                        local_imp = layer.bias.data[idxs].abs().pow(self.p)
+                        group_imp.append(local_imp)
+                        group_idxs.append(root_idxs)
+
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
         group_imp = self._reduce(group_imp, group_idxs)
@@ -183,8 +220,8 @@ class BNScaleImportance(MagnitudeImportance):
     https://arxiv.org/abs/1708.06519
     """
 
-    def __init__(self, group_reduction='mean', normalizer='mean'):
-        super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer, target_types=(nn.modules.batchnorm._BatchNorm,))
+    def __init__(self, group_reduction='mean', normalizer='mean', bias=False):
+        super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer, bias=bias, target_types=(nn.modules.batchnorm._BatchNorm,))
 
 
 class LAMPImportance(MagnitudeImportance):
@@ -192,24 +229,9 @@ class LAMPImportance(MagnitudeImportance):
     https://arxiv.org/abs/2010.07611
     """
 
-    def __init__(self, p=2, group_reduction="mean", normalizer='mean'):
-        super().__init__(p=p, group_reduction=group_reduction, normalizer=normalizer)
-
-    @torch.no_grad()
-    def __call__(self, group, ch_groups=1):
-        group_imp = super().__call__(group, ch_groups)
-        return self.lamp(group_imp)
-
-    def lamp(self, imp):
-        argsort_idx = torch.argsort(imp, dim=0, descending=True).tolist()
-        sorted_imp = imp[argsort_idx]
-        cumsum_imp = torch.cumsum(sorted_imp, dim=0)
-        sorted_imp = sorted_imp / cumsum_imp
-        inversed_idx = torch.arange(len(sorted_imp))[
-            argsort_idx
-        ].tolist()  # [0, 1, 2, 3, ..., ]
-        return sorted_imp[inversed_idx]
-
+    def __init__(self, p=2, group_reduction="mean", normalizer='lamp', bias=False):
+        assert normalizer == 'lamp'
+        super().__init__(p=p, group_reduction=group_reduction, normalizer=normalizer, bias=bias)
 
 class RandomImportance(Importance):
     @torch.no_grad()
@@ -222,11 +244,17 @@ class TaylorImportance(MagnitudeImportance):
     """First-order taylor expansion of the loss function.
        https://openaccess.thecvf.com/content_CVPR_2019/papers/Molchanov_Importance_Estimation_for_Neural_Network_Pruning_CVPR_2019_paper.pdf
     """
-    def __init__(self, group_reduction:str="mean", normalizer:str='mean', multivariable:bool=False, target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
+    def __init__(self, 
+                 group_reduction:str="mean", 
+                 normalizer:str='mean', 
+                 multivariable:bool=False, 
+                 bias=False,
+                 target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
         self.group_reduction = group_reduction
         self.normalizer = normalizer
         self.multivariable = multivariable
         self.target_types = target_types
+        self.bias = bias
 
     @torch.no_grad()
     def __call__(self, group, ch_groups=1):
@@ -259,6 +287,14 @@ class TaylorImportance(MagnitudeImportance):
                 group_imp.append(local_imp)
                 group_idxs.append(root_idxs)
 
+                if self.bias and layer.bias is not None:
+                    b = layer.bias.data[idxs]
+                    db = layer.bias.grad.data[idxs]
+                    local_imp = (b * db).abs()
+                    group_imp.append(local_imp)
+                    group_idxs.append(root_idxs)
+                    
+
             # Conv in_channels
             elif prune_fn in [
                 function.prune_conv_in_channels,
@@ -286,6 +322,13 @@ class TaylorImportance(MagnitudeImportance):
                     local_imp = (w*dw).abs()
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
+
+                    if self.bias and layer.bias is not None:
+                        b = layer.bias.data[idxs]
+                        db = layer.bias.grad.data[idxs]
+                        local_imp = (b * db).abs()
+                        group_imp.append(local_imp)
+                        group_idxs.append(root_idxs)
 
         group_imp = self._reduce(group_imp, group_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)

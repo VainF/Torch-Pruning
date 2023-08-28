@@ -91,6 +91,7 @@ class GrowingRegPruner(MetaPruner):
             for dep, idxs in group:
                 layer = dep.layer
                 pruning_fn = dep.pruning_fn
+
                 if isinstance(layer, nn.modules.batchnorm._BatchNorm) and layer.affine == True and layer not in self.ignored_layers:
                     layer.weight.grad.data.add_(reg.to(layer.weight.device) * layer.weight.data)
                 elif isinstance(layer, (nn.modules.conv._ConvNd, nn.Linear)):
