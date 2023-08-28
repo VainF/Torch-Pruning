@@ -93,13 +93,16 @@ class GrowingRegPruner(MetaPruner):
                 pruning_fn = dep.pruning_fn
 
                 if isinstance(layer, nn.modules.batchnorm._BatchNorm) and layer.affine == True and layer not in self.ignored_layers:
+                    if layer.weight.grad is None: continue
                     layer.weight.grad.data.add_(reg.to(layer.weight.device) * layer.weight.data)
                 elif isinstance(layer, (nn.modules.conv._ConvNd, nn.Linear)):
                     if pruning_fn in [function.prune_conv_out_channels, function.prune_linear_out_channels] and layer not in self.ignored_layers:
+                        if layer.weight.grad is None: continue
                         w = layer.weight.data[idxs]
                         g = w * reg.to(layer.weight.device).view(-1, *([1]*(len(w.shape)-1)))
                         layer.weight.grad.data[idxs] += g
                     elif pruning_fn in [function.prune_conv_in_channels, function.prune_linear_in_channels]:
+                        if layer.weight.grad is None: continue
                         w = layer.weight.data[:, idxs]
                         g = w * reg.to(layer.weight.device).view(1, -1, *([1]*(len(w.shape)-2)))
                         layer.weight.grad.data[:, idxs] += g

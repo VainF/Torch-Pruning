@@ -71,7 +71,7 @@ class GroupNormPruner(MetaPruner):
     @torch.no_grad()
     def regularize(self, model, alpha=16):
         for i, group in enumerate(self.groups):
-            ch_groups = self.get_channel_groups(group)
+            ch_groups = self._get_channel_groups(group)
             imp = self.estimate_importance(group).sqrt()
             gamma = alpha**((imp.max() - imp) / (imp.max() - imp.min()))
 
@@ -83,6 +83,7 @@ class GroupNormPruner(MetaPruner):
                     function.prune_conv_out_channels,
                     function.prune_linear_out_channels,
                 ]:
+                    if layer.weight.grad is None: continue
                     w = layer.weight.data[idxs]
                     g = w * gamma.view( -1, *([1]*(len(w.shape)-1)) ) #/ group_norm.view( -1, *([1]*(len(w.shape)-1)) ) * group_size #group_size #* gamma.view( -1, *([1]*(len(w.shape)-1)) )
                     layer.weight.grad.data[idxs]+=self.reg * g 
@@ -96,6 +97,7 @@ class GroupNormPruner(MetaPruner):
                     function.prune_conv_in_channels,
                     function.prune_linear_in_channels,
                 ]:
+                    if layer.weight.grad is None: continue
                     gn = imp
                     if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexMapping):
                         gn = imp.repeat_interleave(w.shape[1]//imp.shape[0])
@@ -112,6 +114,8 @@ class GroupNormPruner(MetaPruner):
                 elif prune_fn == function.prune_batchnorm_out_channels:
                     # regularize BN
                     if layer.affine is not None:
+                        if layer.weight.grad is None: continue
+
                         w = layer.weight.data[idxs]
                         g = w * gamma #/ group_norm * group_size
                         layer.weight.grad.data[idxs]+=self.reg * g 
