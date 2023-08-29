@@ -165,7 +165,7 @@ for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m) # DO NOT prune the final classifier!
 
-iterative_steps = 5 # progressive pruning
+iterative_steps = 1 # progressive pruning
 pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse training is not required.
     model,
     example_inputs,
