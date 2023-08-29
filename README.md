@@ -190,7 +190,7 @@ for i in range(iterative_steps):
 ```
 #### Global Pruning
 
-With the option of global pruning (``global_pruning=True``), adaptive sparsity is allocated to different layers based on their global rank of importance. While this strategy can offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance.
+With the option of global pruning (``global_pruning=True``), adaptive sparsity is allocated to different layers based on their global rank of importance. While this strategy can offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. **If you're not very familiar with pruning, it's recommended to start by using ``global_pruning=False``.**
 
 
 #### Sparse Training
