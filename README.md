@@ -23,7 +23,8 @@
 
 Torch-Pruning (TP) is a library for structural pruning with the following features:
 
-* **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of deep neural networks, including *[Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [Vision Transformers](examples/hf_transformers/), [Swin Transformers](examples/hf_transformers), [Bert](examples/hf_transformers), FasterRCNN, SSD, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, DeepLab, etc*. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys a (non-deep) graph algorithm called **DepGraph** to remove parameters physically. Currently, TP is able to prune approximately **81/85=95.3%** of the models from Torchvision 0.13.1. Try this [Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing) for a quick start.
+* **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of deep neural networks, including *[Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [Vision Transformers](examples/hf_transformers/), [Swin Transformers](examples/hf_transformers), [BERT](examples/hf_transformers), FasterRCNN, SSD, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, DeepLab, etc*. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys a (non-deep) graph algorithm called **DepGraph** to remove parameters physically. Currently, TP is able to prune approximately **77/85=90.6%** of the models from Torchvision 0.13.1. Try this [Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing) for a quick start.
+* **[Examples](examples)**: Play around with off-the-shelf models from HF Transformers, Timm, Torchvision, Yolo, etc.  
 * **[Performance Benchmark](benchmarks)**: Reproduce the our results in the DepGraph paper.
 
 For more technical details, please refer to our CVPR'23 paper:
@@ -80,7 +81,7 @@ In structural pruning, a "Group" is defined as the minimal unit that can be remo
 
 ### 1. A Minimal Example
 
-Please ensure that your model is set up to enable AutoGrad without something like ``torch.no_grad`` or ``.requires_grad=False``.
+Please ensure that your model is set up to enable AutoGrad without ``torch.no_grad`` or ``.requires_grad=False``.
 
 ```python
 import torch
@@ -144,7 +145,7 @@ for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[
 
 ### 2. High-level Pruners
 
-Leveraging the DependencyGraph, we developed several high-level pruners in this repository to facilitate effortless pruning. By specifying the desired channel sparsity, the pruner will scan all prunable groups, prune the entire model, and fine-tune it using your own training code. For detailed information on this process, please refer to [this tutorial](https://github.com/VainF/Torch-Pruning/blob/master/examples/notebook/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), which shows how to implement a [slimming](https://arxiv.org/abs/1708.06519) pruner from scratch. Additionally, a more practical example is available in [benchmarks/main.py](benchmarks/main.py). 
+Leveraging the DepGraph, we developed several high-level pruners in this repository to facilitate effortless pruning. By specifying the desired channel sparsity, the pruner will scan all prunable groups, prune the entire model, and fine-tune it using your own training code. For detailed information on this process, please refer to [this tutorial](https://github.com/VainF/Torch-Pruning/blob/master/examples/notebook/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), which shows how to implement a [slimming](https://arxiv.org/abs/1708.06519) pruner from scratch. Additionally, a more practical example is available in [benchmarks/main.py](benchmarks/main.py). 
 
 ```python
 import torch
