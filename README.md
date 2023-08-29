@@ -158,7 +158,7 @@ model = resnet18(pretrained=True)
 
 # Importance criteria
 example_inputs = torch.randn(1, 3, 224, 224)
-imp = tp.importance.TaylorImportance()
+imp = tp.importance.TaylorImportance() # or MagnitudeImportance, GroupNormPruner, BNScalePruner, etc.
 
 ignored_layers = []
 for m in model.modules():
@@ -166,7 +166,7 @@ for m in model.modules():
         ignored_layers.append(m) # DO NOT prune the final classifier!
 
 iterative_steps = 5 # progressive pruning
-pruner = tp.pruner.MagnitudePruner(
+pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse training is not required.
     model,
     example_inputs,
     importance=imp,
