@@ -188,6 +188,10 @@ for i in range(iterative_steps):
     # finetune(model)
     # ...
 ```
+#### Global Pruning
+
+With the option of global pruning (``global_pruning=True``), adaptive sparsity is allocated to different layers based on their global rank of importance. While this strategy can offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance.
+
 
 #### Sparse Training
 Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/batchnorm_scale_pruner.py#L45) and [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/group_norm_pruner.py#L53) require sparse training before pruning. This can be easily achieved by inserting one line of code ``pruner.regularize(model)`` just after ``loss.backward()`` and before ``optimizer.step()``. The pruner will update the gradient of trainable parameters.
