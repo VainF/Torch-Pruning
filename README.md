@@ -81,6 +81,8 @@ In structural pruning, a "Group" is defined as the minimal unit that can be remo
 
 ### 1. A Minimal Example
 
+#### Grouping with DepGraph 
+ 
 Please ensure that your model is set up to enable AutoGrad without ``torch.no_grad`` or ``.requires_grad=False``.
 
 ```python
