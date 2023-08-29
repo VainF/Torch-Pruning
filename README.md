@@ -236,7 +236,8 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 </div>
 
 ### 3. Save & Load
-          
+
+#### Method 1:
 The following script saves the whole model object (structure+weights) as a 'model.pth'. 
 ```python
 model.zero_grad() # Remove gradients
@@ -244,6 +245,7 @@ torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the pruned model
 ```
 
+#### Method 2:
 **Experimental Features**: Re-create pruned models from unpruned ones using ``tp.state_dict`` and ``tp.load_state_dict``.
 ```python
 # save the pruned state_dict, which includes both pruned parameters and modified attributes
