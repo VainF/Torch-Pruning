@@ -41,7 +41,7 @@ For more technical details, please refer to our CVPR'23 paper:
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
 
 ### **Features:**
-- [x] High-level Pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), [GrowingRegPruner](https://arxiv.org/abs/2012.09243), RandomPruner, etc. The referenced papers are available on our [wiki page](https://github.com/VainF/Torch-Pruning/wiki/Paper-List).
+- [x] High-level Pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), [GrowingRegPruner](https://arxiv.org/abs/2012.09243), RandomPruner, etc. A paper list is available on our [wiki page](https://github.com/VainF/Torch-Pruning/wiki/Paper-List).
 - [x] Dependency Graph for automatic structural pruning
 - [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
 - [x] Supported Importance Criteria: L-p Norm, Taylor, Random, BNScaling, etc.
