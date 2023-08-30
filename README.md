@@ -25,7 +25,7 @@ Torch-Pruning (TP) is a library for structural pruning with the following featur
 
 * **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of deep neural networks, including *[Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [Vision Transformers](examples/hf_transformers/), [Swin Transformers](examples/hf_transformers), [BERT](examples/hf_transformers), FasterRCNN, SSD, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, DeepLab, etc*. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys a (non-deep) graph algorithm called **DepGraph** to remove parameters physically. Currently, TP is able to prune approximately **77/85=90.6%** of the models from Torchvision 0.13.1. Try this [Colab Demo](https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing) for a quick start.
 * **[Examples](examples)**: Play around with off-the-shelf models from HF Transformers, Timm, Torchvision, Yolo, etc.  
-* **[Performance Benchmark](benchmarks)**: Reproduce the our results in the DepGraph paper.
+* **[Benchmark](benchmarks)**: Reproduce the our results in the DepGraph paper.
 
 For more technical details, please refer to our CVPR'23 paper:
 > [**DepGraph: Towards Any Structural Pruning**](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)   
@@ -41,7 +41,7 @@ For more technical details, please refer to our CVPR'23 paper:
 * 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/prunability)
 
 ### **Features:**
-- [x] High-level Pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), [GrowingRegPruner](https://arxiv.org/abs/2012.09243), RandomPruner, etc.
+- [x] High-level Pruners: [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), [GrowingRegPruner](https://arxiv.org/abs/2012.09243), RandomPruner, etc. The referenced papers are available on our [wiki page](https://github.com/VainF/Torch-Pruning/wiki/Paper-List).
 - [x] Dependency Graph for automatic structural pruning
 - [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
 - [x] Supported Importance Criteria: L-p Norm, Taylor, Random, BNScaling, etc.
