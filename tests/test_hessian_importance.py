@@ -14,8 +14,8 @@ def test_hessian():
         if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
             ignored_layers.append(m) # DO NOT prune the final classifier!
 
-    iterative_steps = 5 # progressive pruning
-    pruner = tp.pruner.MagnitudePruner(
+    iterative_steps = 1 # progressive pruning
+    pruner = tp.pruner.MetaPruner(
         model,
         example_inputs,
         importance=imp,
@@ -38,7 +38,13 @@ def test_hessian():
                 l.backward(retain_graph=True) # simgle-sample gradient
                 imp.accumulate_grad(model) # accumulate g^2
         
-        pruner.step()
+        #for g in pruner.DG.get_all_groups(ignored_layers=pruner.ignored_layers, root_module_types=pruner.root_module_types):
+        #    print(len(imp(g)) == len(imp2(g)))
+            
+        for g in pruner.step(interactive=True):
+            g.prune()
+
+        print(model)
         macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
         print(f"MACs: {macs/base_macs:.2f}, #Params: {nparams/base_nparams:.2f}")
         # finetune your model here

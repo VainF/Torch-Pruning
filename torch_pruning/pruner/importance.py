@@ -17,6 +17,7 @@ __all__ = [
     "LAMPImportance",
     "RandomImportance",
     "TaylorImportance",
+    "HessianImportance",
 ]
 
 class Importance(abc.ABC):
@@ -374,6 +375,11 @@ class HessianImportance(MagnitudeImportance):
         group_imp = []
         group_idxs = []
 
+        if len(self._accu_grad) > 0: # fill gradients so that we can re-use the implementation for Taylor
+            for p, g in self._accu_grad.items():
+                p.grad.data = g / self._counter[p]
+            self.zero_grad()
+
         for i, (dep, idxs) in enumerate(group):
             idxs.sort()
             layer = dep.target.module
@@ -387,21 +393,21 @@ class HessianImportance(MagnitudeImportance):
                 function.prune_conv_out_channels,
                 function.prune_linear_out_channels,
             ]:
-                if layer.weight in self._accu_grad:
+                if layer.weight.grad is not None:
                     if hasattr(layer, "transposed") and layer.transposed:
                         w = layer.weight.data.transpose(1, 0)[idxs].flatten(1)
-                        h = self._accu_grad[layer.weight].data.transpose(1, 0)[idxs].flatten(1) / self._counter[layer.weight]
+                        h = layer.weight.grad.data.transpose(1, 0)[idxs].flatten(1)
                     else:
                         w = layer.weight.data[idxs].flatten(1)
-                        h = self._accu_grad[layer.weight].data[idxs].flatten(1) / self._counter[layer.weight]
+                        h = layer.weight.grad.data[idxs].flatten(1)
 
                     local_imp = (w**2 * h).sum(1)
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
                 
-                if self.bias and layer.bias is not None and layer.bias in self._accu_grad:
+                if self.bias and layer.bias is not None and layer.bias.grad is not None:
                     b = layer.bias.data[idxs]
-                    h = self._accu_grad[layer.bias].data[idxs] / self._counter[layer.weight]
+                    h = layer.bias.grad.data[idxs]
                     local_imp = (b**2 * h)
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
@@ -411,13 +417,13 @@ class HessianImportance(MagnitudeImportance):
                 function.prune_conv_in_channels,
                 function.prune_linear_in_channels,
             ]:
-                if layer.weight in self._accu_grad:
+                if layer.weight.grad is not None:
                     if hasattr(layer, "transposed") and layer.transposed:
                         w = (layer.weight).flatten(1)[idxs]
-                        h = (self._accu_grad[layer.weight]).flatten(1)[idxs] / self._counter[layer.weight]
+                        h = (layer.weight.grad).flatten(1)[idxs]
                     else:
                         w = (layer.weight).transpose(0, 1).flatten(1)[idxs]
-                        h = (self._accu_grad[layer.weight]).transpose(0, 1).flatten(1)[idxs] / self._counter[layer.weight]
+                        h = (layer.weight.grad).transpose(0, 1).flatten(1)[idxs]
 
                     local_imp = (w**2 * h).sum(1)
                     group_imp.append(local_imp)
@@ -428,19 +434,20 @@ class HessianImportance(MagnitudeImportance):
                 # regularize BN
                 if layer.affine:
 
-                    if layer.weight in self._accu_grad:
+                    if layer.weight.grad is not None:
                         w = layer.weight.data[idxs]
-                        h = self._accu_grad[layer.weight].data[idxs] / self._counter[layer.weight]
+                        h = layer.weight.grad.data[idxs]
                         local_imp = (w**2 * h)
                         group_imp.append(local_imp)
                         group_idxs.append(root_idxs)
 
-                    if self.bias and layer.bias is not None:
+                    if self.bias and layer.bias is not None and layer.bias.grad is None:
                         b = layer.bias.data[idxs]
-                        h = self._accu_grad[layer.bias].data[idxs] / self._counter[layer.weight]
+                        h = layer.bias.grad.data[idxs]
                         local_imp = (b**2 * h).abs()
                         group_imp.append(local_imp)
                         group_idxs.append(root_idxs)
+
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
         group_imp = self._reduce(group_imp, group_idxs)

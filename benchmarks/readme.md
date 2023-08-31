@@ -127,7 +127,7 @@ python -m torch.distributed.launch --nproc_per_node=4 --master_port 18119 --use_
 
 ## 4. Latency Test (ResNet-50, Batch Size 64)
 ```bash
-python latency.py
+python Benchmark_latency.py
 ```
 ```
 [Iter 0]        Sparsity: 0.00,         MACs: 4.12 G,   Params: 25.56 M,        Latency: 45.22 ms +- 0.03 ms
