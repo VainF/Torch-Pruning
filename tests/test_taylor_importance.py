@@ -35,6 +35,8 @@ def test_taylor():
         # finetune your model here
         # finetune(model)
         # ...
+    print(model)
+    
 
 if __name__=="__main__":
     test_taylor()
