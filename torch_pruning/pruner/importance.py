@@ -203,6 +203,7 @@ class MagnitudeImportance(Importance):
 
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
+
         group_imp = self._reduce(group_imp, group_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
@@ -329,7 +330,119 @@ class TaylorImportance(MagnitudeImportance):
                         local_imp = (b * db).abs()
                         group_imp.append(local_imp)
                         group_idxs.append(root_idxs)
+        if len(group_imp) == 0: # skip groups without parameterized layers
+            return None
+        group_imp = self._reduce(group_imp, group_idxs)
+        group_imp = self._normalize(group_imp, self.normalizer)
+        return group_imp
 
+class HessianImportance(MagnitudeImportance):
+    """Optimal Brain Damage:
+       https://proceedings.neurips.cc/paper/1989/hash/6c9882bbac1c7093bd25041881277658-Abstract.html
+    """
+    def __init__(self, 
+                 group_reduction:str="mean", 
+                 normalizer:str='mean', 
+                 bias=False,
+                 target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
+        self.group_reduction = group_reduction
+        self.normalizer = normalizer
+        self.target_types = target_types
+        self.bias = bias
+        self._accu_grad = {}
+        self._counter = {}
+
+    def zero_grad(self):
+        self._accu_grad = {}
+        self._counter = {}
+
+    def accumulate_grad(self, model):
+        for name, param in model.named_parameters():
+            if param.grad is not None:
+                if name not in self._accu_grad:
+                    self._accu_grad[param] = param.grad.data.clone().pow(2)
+                else:
+                    self._accu_grad[param] += param.grad.data.clone().pow(2)
+                
+                if name not in self._counter:
+                    self._counter[param] = 1
+                else:
+                    self._counter[param] += 1
+    
+    @torch.no_grad()
+    def __call__(self, group, ch_groups=1):
+        group_imp = []
+        group_idxs = []
+
+        for i, (dep, idxs) in enumerate(group):
+            idxs.sort()
+            layer = dep.target.module
+            prune_fn = dep.handler
+            root_idxs = group[i].root_idxs
+
+            if not isinstance(layer, tuple(self.target_types)):
+                continue
+
+            if prune_fn in [
+                function.prune_conv_out_channels,
+                function.prune_linear_out_channels,
+            ]:
+                if layer.weight in self._accu_grad:
+                    if hasattr(layer, "transposed") and layer.transposed:
+                        w = layer.weight.data.transpose(1, 0)[idxs].flatten(1)
+                        h = self._accu_grad[layer.weight].data.transpose(1, 0)[idxs].flatten(1) / self._counter[layer.weight]
+                    else:
+                        w = layer.weight.data[idxs].flatten(1)
+                        h = self._accu_grad[layer.weight].data[idxs].flatten(1) / self._counter[layer.weight]
+
+                    local_imp = (w**2 * h).sum(1)
+                    group_imp.append(local_imp)
+                    group_idxs.append(root_idxs)
+                
+                if self.bias and layer.bias is not None and layer.bias in self._accu_grad:
+                    b = layer.bias.data[idxs]
+                    h = self._accu_grad[layer.bias].data[idxs] / self._counter[layer.weight]
+                    local_imp = (b**2 * h)
+                    group_imp.append(local_imp)
+                    group_idxs.append(root_idxs)
+                    
+            # Conv in_channels
+            elif prune_fn in [
+                function.prune_conv_in_channels,
+                function.prune_linear_in_channels,
+            ]:
+                if layer.weight in self._accu_grad:
+                    if hasattr(layer, "transposed") and layer.transposed:
+                        w = (layer.weight).flatten(1)[idxs]
+                        h = (self._accu_grad[layer.weight]).flatten(1)[idxs] / self._counter[layer.weight]
+                    else:
+                        w = (layer.weight).transpose(0, 1).flatten(1)[idxs]
+                        h = (self._accu_grad[layer.weight]).transpose(0, 1).flatten(1)[idxs] / self._counter[layer.weight]
+
+                    local_imp = (w**2 * h).sum(1)
+                    group_imp.append(local_imp)
+                    group_idxs.append(root_idxs)
+
+            # BN
+            elif prune_fn == function.prune_groupnorm_out_channels:
+                # regularize BN
+                if layer.affine:
+
+                    if layer.weight in self._accu_grad:
+                        w = layer.weight.data[idxs]
+                        h = self._accu_grad[layer.weight].data[idxs] / self._counter[layer.weight]
+                        local_imp = (w**2 * h)
+                        group_imp.append(local_imp)
+                        group_idxs.append(root_idxs)
+
+                    if self.bias and layer.bias is not None:
+                        b = layer.bias.data[idxs]
+                        h = self._accu_grad[layer.bias].data[idxs] / self._counter[layer.weight]
+                        local_imp = (b**2 * h).abs()
+                        group_imp.append(local_imp)
+                        group_idxs.append(root_idxs)
+        if len(group_imp) == 0: # skip groups without parameterized layers
+            return None
         group_imp = self._reduce(group_imp, group_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
