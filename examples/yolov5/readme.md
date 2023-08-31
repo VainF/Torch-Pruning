@@ -20,7 +20,7 @@ cp detect_after_pruning.py yolov5/
 cd yolov5
 
 # Test only: We only prune and test the YOLOv5 model in this script. COCO dataset is not required.
-python python detect_after_pruning.py --weights yolov5s.pt --source  data/images/bus.jpg
+python detect_after_pruning.py --weights yolov5s.pt --source  data/images/bus.jpg
 ```
 
 #### Outputs of detect_after_pruning.py:
