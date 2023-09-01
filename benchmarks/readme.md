@@ -154,11 +154,15 @@ python benchmark_latency.py
 ```
 
 ## Benchmark of Importance Criteria
+
+ResNet50 pre-trained on ImageNet-1K, local pruning without fine-tuning.
+
 ```bash
 python benchmark_importance_criteria.py
 ```
 
-ResNet50 pre-trained on ImageNet-1K, local pruning without fine-tuning.
+``Single-layer`` means ``group_reduction='first'``, which only leverages the first layer of a group for importance estimation.
+
 <div align="center">
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/8a1fe41c-dc44-4b17-bc6d-1571f77d0a8c" width="45%"></img>
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/47c688c7-0840-41c1-a4fc-dfc5b1f3eda5" width="45%"></img>
