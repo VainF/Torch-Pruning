@@ -354,12 +354,11 @@ Latency test on ResNet-50, Batch Size=64.
 
 #### Benchmark of Importance Criteria
 
-ResNet50, Local Pruning, No Finetuning
+ResNet50 pre-trained on ImageNet-1K, local pruning without fine-tuning.
 <div align="center">
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/8a1fe41c-dc44-4b17-bc6d-1571f77d0a8c" width="45%"></img>
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/47c688c7-0840-41c1-a4fc-dfc5b1f3eda5" width="45%"></img>
 </div>
-
 
 Please refer to [benchmarks](benchmarks) for more details.
 
