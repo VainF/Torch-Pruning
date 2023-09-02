@@ -127,7 +127,7 @@ python -m torch.distributed.launch --nproc_per_node=4 --master_port 18119 --use_
 
 ## 4. Latency Test (ResNet-50, Batch Size 64)
 ```bash
-python Benchmark_latency.py
+python benchmark_latency.py
 ```
 ```
 [Iter 0]        Sparsity: 0.00,         MACs: 4.12 G,   Params: 25.56 M,        Latency: 45.22 ms +- 0.03 ms
@@ -153,7 +153,20 @@ python Benchmark_latency.py
 [Iter 20]       Sparsity: 1.00,         MACs: 0.01 G,   Params: 0.06 M,         Latency: 5.71 ms +- 0.03 ms
 ```
 
+## Benchmark of Importance Criteria
 
+ResNet50 pre-trained on ImageNet-1K, local pruning without fine-tuning.
+
+```bash
+python benchmark_importance_criteria.py
+```
+
+``Single-layer`` means ``group_reduction='first'``, which only leverages the first layer of a group for importance estimation.
+
+<div align="center">
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/775eb01a-4610-4637-90bd-ff53f7ea2d31" width="45%"></img>
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/085aa9ec-a520-4939-97f4-46f65b124929" width="45%"></img>
+</div>
 
 ## References
 

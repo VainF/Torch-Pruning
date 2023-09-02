@@ -352,6 +352,15 @@ Latency test on ResNet-50, Batch Size=64.
 [Iter 20]       Sparsity: 1.00,         MACs: 0.01 G,   Params: 0.06 M,         Latency: 5.71 ms +- 0.03 ms
 ```
 
+#### Benchmark of Importance Criteria
+
+ResNet50 pre-trained on ImageNet-1K, local pruning without fine-tuning.
+<div align="center">
+  
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/775eb01a-4610-4637-90bd-ff53f7ea2d31" width="45%"></img>
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/085aa9ec-a520-4939-97f4-46f65b124929" width="45%"></img>
+</div>
+
 Please refer to [benchmarks](benchmarks) for more details.
 
 ### 8. Series of Works
