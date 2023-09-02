@@ -164,8 +164,8 @@ python benchmark_importance_criteria.py
 ``Single-layer`` means ``group_reduction='first'``, which only leverages the first layer of a group for importance estimation.
 
 <div align="center">
-<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/8a1fe41c-dc44-4b17-bc6d-1571f77d0a8c" width="45%"></img>
-<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/47c688c7-0840-41c1-a4fc-dfc5b1f3eda5" width="45%"></img>
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/775eb01a-4610-4637-90bd-ff53f7ea2d31" width="45%"></img>
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/085aa9ec-a520-4939-97f4-46f65b124929" width="45%"></img>
 </div>
 
 ## References
