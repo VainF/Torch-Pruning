@@ -7,6 +7,7 @@ import os
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+N_batchs = 10
 imagenet_root = '~/Datasets/shared/imagenet/'
 print('Parsing dataset...')
 train_dst = ImageFolder(os.path.join(imagenet_root, 'train'), transform=T.Compose(
@@ -31,11 +32,8 @@ val_dst = ImageFolder(os.path.join(imagenet_root, 'val'), transform=T.Compose(
         ),
     ])
 )
-train_loader = torch.utils.data.DataLoader(train_dst, batch_size=32, shuffle=True, num_workers=4)
+train_loader = torch.utils.data.DataLoader(train_dst, batch_size=64, shuffle=True, num_workers=4)
 val_loader = torch.utils.data.DataLoader(val_dst, batch_size=128, shuffle=False, num_workers=4)
-reference_images, reference_labels = next(iter(train_loader)) # for taylor/hessian importance
-reference_images = reference_images.cuda()
-reference_labels = reference_labels.cuda()
 
 def validate_model(model, val_loader):
     model.eval()
@@ -55,16 +53,16 @@ imp_dict = {
     'Group Hessian': tp.importance.HessianImportance(group_reduction='mean'),
     'Single-layer Hessian': tp.importance.HessianImportance(group_reduction='first'),
 
-    'Random': tp.importance.RandomImportance(),
+    'Group Taylor': tp.importance.TaylorImportance(group_reduction='mean'),
+    'Single-layer Taylor': tp.importance.TaylorImportance(group_reduction='first'),    
 
     'Group L1': tp.importance.MagnitudeImportance(p=1, group_reduction='mean'),
     'Single-layer L1': tp.importance.MagnitudeImportance(p=1, group_reduction='first'),
     
     'Group Slimming': tp.importance.BNScaleImportance(group_reduction='mean'),
     'Single-layer Slimming': tp.importance.BNScaleImportance(group_reduction='first'),
-    
-    'Group Taylor': tp.importance.TaylorImportance(group_reduction='mean'),
-    'Single-layer Taylor': tp.importance.TaylorImportance(group_reduction='first'),    
+
+    'Random': tp.importance.RandomImportance(),
 }
 
 params_record = {}
@@ -81,10 +79,10 @@ print(f"MACs: {base_macs/base_macs:.2f}, #Params: {base_nparams/base_nparams:.2f
 for imp_name, imp in imp_dict.items():
     print(imp_name)
     if imp_name not in params_record:
-        loss_record[imp_name] = [base_val_loss]
-        acc_record[imp_name] = [base_val_acc]
-        params_record[imp_name] = [base_nparams]
-        macs_record[imp_name] = [base_macs]
+        loss_record[imp_name] = []
+        acc_record[imp_name] = []
+        params_record[imp_name] = []
+        macs_record[imp_name] = []
 
     model = resnet50(pretrained=True).eval().cuda()
     example_inputs = torch.randn(1, 3, 224, 224).cuda()
@@ -113,19 +111,27 @@ for imp_name, imp in imp_dict.items():
     for i in range(iterative_steps):
         if isinstance(imp, tp.importance.HessianImportance):
             # loss = F.cross_entropy(model(images), targets)
-            output = model(reference_images) 
-            # compute loss for each sample
-            loss = torch.nn.functional.cross_entropy(output, reference_labels, reduction='none')
-            imp.zero_grad() # clear accumulated gradients
-            for l in loss:
-                model.zero_grad() # clear gradients
-                l.backward(retain_graph=True) # simgle-sample gradient
-                imp.accumulate_grad(model) # accumulate g^2
+            for k, (imgs, lbls) in enumerate(train_loader):
+                if k>=N_batchs: break
+                imgs = imgs.cuda()
+                lbls = lbls.cuda()
+                output = model(imgs) 
+                # compute loss for each sample
+                loss = torch.nn.functional.cross_entropy(output, lbls, reduction='none')
+                imp.zero_grad() # clear accumulated gradients
+                for l in loss:
+                    model.zero_grad() # clear gradients
+                    l.backward(retain_graph=True) # simgle-sample gradient
+                    imp.accumulate_grad(model) # accumulate g^2
         elif isinstance(imp, tp.importance.TaylorImportance):
             # loss = F.cross_entropy(model(images), targets)
-            output = model(reference_images)
-            loss = torch.nn.functional.cross_entropy(output, reference_labels).to(output.device)
-            loss.backward()
+            for k, (imgs, lbls) in enumerate(train_loader):
+                if k>=N_batchs: break
+                imgs = imgs.cuda()
+                lbls = lbls.cuda()
+                output = model(imgs)
+                loss = torch.nn.functional.cross_entropy(output, lbls)
+                loss.backward()
 
         pruner.step()
         macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
