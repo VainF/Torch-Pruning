@@ -66,12 +66,17 @@ class GroupNormPruner(MetaPruner):
 
         self.reg = reg
         self.alpha = alpha
-        self.groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
+        self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
         self.cnt = 0
+
+    def step(self, interactive=False): 
+        super(GroupNormPruner, self).step(interactive=interactive)
+        # update the group list after pruning
+        self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
 
     @torch.no_grad()
     def regularize(self, model, alpha=2**4, bias=False):
-        for i, group in enumerate(self.groups):
+        for i, group in enumerate(self._groups):
             ch_groups = self._get_channel_groups(group)
             imp = self.estimate_importance(group).sqrt()
             gamma = alpha**((imp.max() - imp) / (imp.max() - imp.min()))

@@ -25,7 +25,7 @@ def test_pruner():
         for m in model.modules():
             if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
                 ignored_layers.append(m)
-        iterative_steps = 1
+        iterative_steps = 5
         pruner = pruner_cls(
             model,
             example_inputs,
@@ -35,20 +35,22 @@ def test_pruner():
             ch_sparsity=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
             ignored_layers=ignored_layers,
         )
-        model(example_inputs).sum().backward()
-        grad_dict = {}
-        for p in model.parameters():
-            if p.grad is not None:
-                grad_dict[p] = p.grad.clone()
-            else:
-                grad_dict[p] = None
-
-        pruner.regularize(model)
-        for name, p in model.named_parameters():
-            if p.grad is not None and grad_dict[p] is not None:
-                print(name, (grad_dict[p] - p.grad).abs().sum())
-            else:
-                print(name, "has no grad")
+        
+        for i in range(iterative_steps):
+            model(example_inputs).sum().backward()
+            grad_dict = {}
+            for p in model.parameters():
+                if p.grad is not None:
+                    grad_dict[p] = p.grad.clone()
+                else:
+                    grad_dict[p] = None
+            pruner.regularize(model)
+            for name, p in model.named_parameters():
+                if p.grad is not None and grad_dict[p] is not None:
+                    print(name, (grad_dict[p] - p.grad).abs().sum())
+                else:
+                    print(name, "has no grad")
+            pruner.step()
     
 if __name__ == "__main__":
     test_pruner()
