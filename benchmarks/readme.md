@@ -170,19 +170,19 @@ python benchmark_importance_criteria.py
 
 ## References
 
-<a id="1">[1]</a> Nisp: Pruning networks using neuron impor- tance score propagation. 
+<a id="1">[1]</a> Nisp: Pruning networks using neuron importance score propagation. 
 
-<a id="2">[2]</a> Filter pruning via geometric median for deep con-volutional neural networks acceleration. 
+<a id="2">[2]</a> Filter pruning via geometric median for deep convolutional neural networks acceleration. 
 
 <a id="3">[3]</a> Neuron-level structured pruning using polarization regularizer.  
 
 <a id="4">[4]</a> Pruning Filters for Efficient ConvNets.
 
-<a id="5">[5]</a> Amc: Automl for model compression and ac- 933 celeration on mobile devices.
+<a id="5">[5]</a> Amc: Automl for model compression and acceleration on mobile devices.
 
 <a id="6">[6]</a> Hrank: Filter pruning using high-rank feature map.
 
-<a id="7">[7]</a> Soft filter pruning for accelerating deep convolutional 929 neural networks
+<a id="7">[7]</a> Soft filter pruning for accelerating deep convolutional neural networks
 
 <a id="8">[8]</a> Resrep: Lossless cnn pruning via decoupling remembering and forgetting.
 
