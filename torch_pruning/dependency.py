@@ -347,7 +347,7 @@ class DependencyGraph(object):
         self._param_to_name, self.unwrapped_parameters = self._detect_unwrapped_parameters(unwrapped_parameters)
 
         # Detect torch.no_grad()
-        assert torch.is_grad_enabled(), "Dependency graph relies on backward. Please enable gradient computation."
+        assert torch.is_grad_enabled(), "Dependency graph relies on autograd for tracing. Please make sure there is no torch.no_grad() in your code."
         
         # Build computational graph through tracing. 
         self.module2node = self._trace(

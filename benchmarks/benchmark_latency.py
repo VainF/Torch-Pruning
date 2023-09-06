@@ -9,7 +9,7 @@ import torch
 def main():
 
     model = model_entry(pretrained=True).to('cuda:0')
-    example_input = torch.rand(64, 3, 224, 224).to('cuda:0')
+    example_input = torch.rand(32, 3, 224, 224).to('cuda:0')
     importance = tp.importance.MagnitudeImportance(p=2)
     iterative_steps = 20
     pruner = tp.pruner.MagnitudePruner(
