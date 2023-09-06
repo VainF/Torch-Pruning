@@ -18,8 +18,8 @@ Some results:
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
 | **#Params** | 86.57 M	| 86.56 M	|  	88.22 M | 22.05 M | 22.05 M | 22.8 M |
 | **MACs** | 17.59 G	| 16.84 G	| 4.41 G |  4.24 G	| 4.24G | 4.30G |
-| **Acc @ Epoch 300** | 81.068	| 75.66	| 75.91 |  79.20	| 79.61 | 79.11 |
-| **Acc @ Epoch 50** | -	| -	| - |  69.24	| 71.93 | 71.54 |
+| **Acc @ Ep 300** | 81.068	| 75.66	| 75.91 |  79.20	| 79.61 | 79.11 |
+| **Acc @ Ep 50** | -	| -	| - |  69.24	| 71.93 | 71.54 |
 
 * Uniform - The same pruning ratio for all layers.
 * Bottleneck - Only prune the internal dimensions of Attention & FFN.
