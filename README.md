@@ -356,9 +356,14 @@ Latency test on ResNet-50, Batch Size=64.
 
 ResNet50 pre-trained on ImageNet-1K, local pruning without fine-tuning.
 <div align="center">
-  
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/775eb01a-4610-4637-90bd-ff53f7ea2d31" width="45%"></img>
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/085aa9ec-a520-4939-97f4-46f65b124929" width="45%"></img>
+</div>
+
+ViT pre-trained on ImageNet-1K, local pruning without fine-tuning.
+<div align="center">
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/6dc0ff4a-ffa1-423a-8d0b-c1f4162d6662" width="45%"></img>
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/9933ac5a-fcce-469d-8144-29b59f609198" width="45%"></img>
 </div>
 
 Please refer to [benchmarks](benchmarks) for more details.
