@@ -74,6 +74,9 @@ Base MACs: 680.150784 M, Pruned MACs: 170.206464 M
 Base Params: 109.482240 M, Pruned Params: 33.507840 M
 ```
 
+## Ackowledgement
+
+The training code was adpated from [Torchvision Reference](https://github.com/pytorch/vision/tree/main/references/classification).
 
 
 
