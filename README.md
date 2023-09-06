@@ -362,8 +362,8 @@ ResNet50 pre-trained on ImageNet-1K, local pruning without fine-tuning.
 
 ViT pre-trained on ImageNet-1K, local pruning without fine-tuning.
 <div align="center">
-<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/6dc0ff4a-ffa1-423a-8d0b-c1f4162d6662" width="45%"></img>
-<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/9933ac5a-fcce-469d-8144-29b59f609198" width="45%"></img>
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/6f99aa90-259d-41e8-902a-35675a9c9d90" width="45%"></img>
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/11473499-d28a-434b-a8d6-1a53c4b3b7c0" width="45%"></img>
 </div>
 
 Please refer to [benchmarks](benchmarks) for more details.
