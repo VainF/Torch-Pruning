@@ -12,6 +12,12 @@ import numpy as np
 import torch.nn as nn
 import torch
 
+try:
+    import timm
+    has_timm = True
+except:
+    has_timm = False
+
 @torch.no_grad()
 def count_ops_and_params(model, example_inputs, layer_wise=False):
     global CUSTOM_MODULES_MAPPING
@@ -223,17 +229,14 @@ def multihead_attention_counter_hook(multihead_attention_module, input, output):
 
     # Q scaling
     flops += qlen * qdim
-
     # Initial projections
     flops += (
         (qlen * qdim * qdim)  # QW
         + (klen * kdim * kdim)  # KW
         + (vlen * vdim * vdim)  # VW
     )
-
     if multihead_attention_module.in_proj_bias is not None:
         flops += (qlen + klen + vlen) * qdim
-
     # attention heads: scale, matmul, softmax, matmul
     qk_head_dim = qdim // num_heads
     v_head_dim = vdim // num_heads
@@ -243,14 +246,53 @@ def multihead_attention_counter_hook(multihead_attention_module, input, output):
         + (qlen * klen)  # softmax
         + (qlen * klen * v_head_dim)  # AV
     )
-
     flops += num_heads * head_flops
-
     # final projection, bias is always enabled
     flops += qlen * vdim * (vdim + 1)
-
     flops *= batch_size
     multihead_attention_module.__flops__ += int(flops)
+
+def timm_multihead_attention_counter_hook(multihead_attention_module, input, output):
+    flops = 0
+    
+    q, k, v = input[0], input[0], input[0]
+    input_dim = input[0].shape[2]
+    input_len = input[0].shape[1]
+    batch_size = input[0].shape[0]
+
+    kdim = qdim = vdim = multihead_attention_module.qkv.out_features//3
+    qlen = klen = vlen = input_len
+
+    num_heads = multihead_attention_module.num_heads
+    assert qdim == multihead_attention_module.head_dim * multihead_attention_module.num_heads
+    
+    flops = 0
+    # Q scaling
+    flops += qlen * qdim
+    # Initial projections
+    flops += (
+        (qlen * input_dim * qdim)  # QW
+        + (klen * input_dim * kdim)  # KW
+        + (vlen * input_dim * vdim)  # VW
+    )
+
+    if multihead_attention_module.qkv.bias is not None:
+        flops += (qlen + klen + vlen) * qdim
+    # attention heads: scale, matmul, softmax, matmul
+    qk_head_dim = qdim // num_heads
+    v_head_dim = vdim // num_heads
+
+    head_flops = (
+        (qlen * klen * qk_head_dim)  # QK^T
+        + (qlen * klen)  # softmax
+        + (qlen * klen * v_head_dim)  # AV
+    )
+    flops += num_heads * head_flops
+    # final projection, bias is always enabled
+    flops += qlen * vdim * (vdim + 1)
+    flops *= batch_size
+    multihead_attention_module.__flops__ += int(flops)
+
 
 
 CUSTOM_MODULES_MAPPING = {}
@@ -305,6 +347,13 @@ MODULES_MAPPING = {
     nn.GRUCell: rnn_cell_flops_counter_hook,
     nn.MultiheadAttention: multihead_attention_counter_hook
 }
+
+if has_timm:
+    MODULES_MAPPING.update(
+        {
+            timm.models.vision_transformer.Attention: timm_multihead_attention_counter_hook,
+        }
+    )
 
 if hasattr(nn, 'GELU'):
     MODULES_MAPPING[nn.GELU] = relu_flops_counter_hook
