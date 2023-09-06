@@ -58,8 +58,6 @@ for m in model.modules():
     if isinstance(m, timm.models.vision_transformer.Attention):
         m.forward = timm_attention_forward.__get__(m, Attention) # https://stackoverflow.com/questions/50599045/python-replacing-a-function-within-a-class-of-a-module
         ch_groups[m.qkv] = m.num_heads * 3
-    if isinstance(m, timm.models.vision_transformer.Mlp):
-        ignored_layers.append(m.fc2)
 
 input_size = model.default_cfg['input_size']
 example_inputs = torch.randn(1, *input_size).to(device)
@@ -73,7 +71,7 @@ pruner = tp.pruner.MagnitudePruner(
                 global_pruning=False, # If False, a uniform sparsity will be assigned to different layers.
                 importance=imp, # importance criterion for parameter selection
                 iterative_steps=1, # the number of iterations to achieve target sparsity
-                ch_sparsity=0.75,
+                ch_sparsity=0.5,
                 ignored_layers=ignored_layers,
                 channel_groups=ch_groups,
             )
