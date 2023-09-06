@@ -12,12 +12,16 @@ import math
 __all__ = [
     "Importance",
     "MagnitudeImportance",
-    "GroupNormImportance",
     "BNScaleImportance",
     "LAMPImportance",
     "RandomImportance",
     "TaylorImportance",
     "HessianImportance",
+    
+    # Group Importance
+    "GroupNormImportance",
+    "GroupTaylorImportance",
+    "GroupHessianImportance",
 ]
 
 class Importance(abc.ABC):
@@ -208,13 +212,6 @@ class MagnitudeImportance(Importance):
         group_imp = self._reduce(group_imp, group_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
-
-
-class GroupNormImportance(MagnitudeImportance):
-    """ DepGraph: Towards Any Structural Pruning. 
-    https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html
-    """
-    pass
 
 
 class BNScaleImportance(MagnitudeImportance):
@@ -453,3 +450,14 @@ class HessianImportance(MagnitudeImportance):
         group_imp = self._reduce(group_imp, group_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
+
+
+# Aliases
+class GroupNormImportance(MagnitudeImportance):
+    pass
+
+class GroupTaylorImportance(TaylorImportance):
+    pass
+
+class GroupHessianImportance(HessianImportance):
+    pass

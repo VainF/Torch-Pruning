@@ -1,47 +1,134 @@
-from transformers import ViTImageProcessor, ViTForImageClassification
-from transformers.models.vit.modeling_vit import ViTSelfAttention
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))))
+import torch
+import torch.nn.functional as F
 import torch_pruning as tp
-from PIL import Image
-import requests
+from transformers import ViTForImageClassification
+from transformers.models.vit.modeling_vit import ViTSelfAttention, ViTSelfOutput
+import warnings
+from torchvision.datasets import ImageFolder
+import torchvision.transforms as T
+from tqdm import tqdm
 
-url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
-image = Image.open(requests.get(url, stream=True).raw)
+import argparse
 
-processor = ViTImageProcessor.from_pretrained('google/vit-base-patch16-224')
-model = ViTForImageClassification.from_pretrained('google/vit-base-patch16-224')
-example_inputs = processor(images=image, return_tensors="pt")["pixel_values"]
-#outputs = model(example_inputs)
-#logits = outputs.logits
-# model predicts one of the 1000 ImageNet classes
-#predicted_class_idx = logits.argmax(-1).item()
-#print("Predicted class:", model.config.id2label[predicted_class_idx])
+parser = argparse.ArgumentParser(description='ViT Pruning')
+parser.add_argument('--model_name', default='google/vit-base-patch16-224', type=str, help='model name')
+parser.add_argument('--dataset_root', default='~/Datasets/shared/imagenet/', type=str, help='model name')
+parser.add_argument('--taylor_batchs', default=10, type=int, help='number of batchs for taylor criterion')
+parser.add_argument('--pruning_ratio', default=0.5, type=float, help='prune ratio')
+parser.add_argument('--bottleneck', default=False, action='store_true', help='bottleneck or uniform')
+parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l1'])
+parser.add_argument('--test_accuracy', default=False, action='store_true', help='test accuracy')
+parser.add_argument('--global_pruning', default=False, action='store_true', help='global pruning')
 
-print(model)
-imp = tp.importance.MagnitudeImportance(p=2, group_reduction="mean")
+parser.add_argument('--train_batch_size', default=64, type=int, help='train batch size')
+parser.add_argument('--val_batch_size', default=128, type=int, help='val batch size')
+args = parser.parse_args()
+
+def prepare_imagenet(imagenet_root, train_batch_size=64, val_batch_size=128, num_workers=4):
+    """The imagenet_root should contain train and val folders.
+    """
+
+    print('Parsing dataset...')
+    train_dst = ImageFolder(os.path.join(imagenet_root, 'train'), transform=T.Compose(
+        [
+            T.Resize(256),
+            T.CenterCrop(224),
+            T.ToTensor(),
+            T.Normalize(
+                mean=[0.485, 0.456, 0.406], 
+                std=[0.229, 0.224, 0.225]
+            ),
+        ])
+    )
+    val_dst = ImageFolder(os.path.join(imagenet_root, 'val'), transform=T.Compose(
+        [
+            T.Resize(256),
+            T.CenterCrop(224),
+            T.ToTensor(),
+            T.Normalize(
+                mean=[0.485, 0.456, 0.406], 
+                std=[0.229, 0.224, 0.225]
+            ),
+        ])
+    )
+    train_loader = torch.utils.data.DataLoader(train_dst, batch_size=train_batch_size, shuffle=True, num_workers=num_workers)
+    val_loader = torch.utils.data.DataLoader(val_dst, batch_size=val_batch_size, shuffle=False, num_workers=num_workers)
+    return train_loader, val_loader
+
+def validate_model(model, val_loader, device):
+    model.eval()
+    correct = 0
+    loss = 0
+    with torch.no_grad():
+        for images, labels in tqdm(val_loader):
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images).logits
+            loss += torch.nn.functional.cross_entropy(outputs, labels, reduction='sum').item()
+            _, predicted = torch.max(outputs, 1)
+            correct += (predicted == labels).sum().item()
+    return correct / len(val_loader.dataset), loss / len(val_loader.dataset)
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+example_inputs = torch.randn(1,3,224,224).to(device)
+
+if args.pruning_type == 'random':
+    imp = tp.importance.RandomImportance()
+elif args.pruning_type == 'taylor':
+    imp = tp.importance.TaylorImportance()
+elif args.pruning_type == 'l1':
+    imp = tp.importance.MagnitudeImportance(p=1)
+else: raise NotImplementedError
+
+if args.pruning_type=='taylor' or args.test_accuracy:
+    train_loader, val_loader = prepare_imagenet(args.dataset_root, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size)
+
+# Load the model
+model = ViTForImageClassification.from_pretrained(args.model_name).to(device)
 base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
-channel_groups = {}
+print(base_macs/1e9, base_params/1e6)
 
+if args.test_accuracy:
+    print("Testing accuracy of the original model...")
+    acc_ori, loss_ori = validate_model(model, val_loader, device)
+    print("Accuracy: %.4f, Loss: %.4f"%(acc_ori, loss_ori))
+
+print("Pruning %s..."%args.model_name)
+channel_groups = {}
+ignored_layers = [model.classifier]
 # All heads should be pruned simultaneously, so we group channels by head.
 for m in model.modules():
     if isinstance(m, ViTSelfAttention):
         channel_groups[m.query] = m.num_attention_heads
         channel_groups[m.key] = m.num_attention_heads
         channel_groups[m.value] = m.num_attention_heads
+    if args.bottleneck and isinstance(m, ViTSelfOutput):
+        ignored_layers.append(m.dense)
 
-pruner = tp.pruner.MagnitudePruner(
+pruner = tp.pruner.MetaPruner(
                 model, 
                 example_inputs, 
-                global_pruning=False, # If False, a uniform sparsity will be assigned to different layers.
+                global_pruning=args.global_pruning, # If False, a uniform sparsity will be assigned to different layers.
                 importance=imp, # importance criterion for parameter selection
-                iterative_steps=1, # the number of iterations to achieve target sparsity
-                ch_sparsity=0.5,
-                channel_groups=channel_groups,
+                ch_sparsity=args.pruning_ratio, # target sparsity
+                ignored_layers=ignored_layers,
                 output_transform=lambda out: out.logits.sum(),
-                ignored_layers=[model.classifier],
-            )
+                channel_groups=channel_groups,
+)
+
+if isinstance(imp, tp.importance.TaylorImportance):
+    model.zero_grad()
+    print("Accumulating gradients for taylor pruning...")
+    for k, (imgs, lbls) in enumerate(train_loader):
+        if k>=args.taylor_batchs: break
+        imgs = imgs.to(device)
+        lbls = lbls.to(device)
+        output = model(imgs).logits
+        loss = torch.nn.functional.cross_entropy(output, lbls)
+        loss.backward()
 
 for g in pruner.step(interactive=True):
-    #print(g)
     g.prune()
 
 # Modify the attention head size and all head size aftering pruning
@@ -51,7 +138,17 @@ for m in model.modules():
         m.all_head_size = m.query.out_features
 
 print(model)
-test_output = model(example_inputs)
+
+if args.test_accuracy:
+    print("Testing accuracy of the pruned model...")
+    acc_pruned, loss_pruned = validate_model(model, val_loader, device)
+    print("Accuracy: %.4f, Loss: %.4f"%(acc_pruned, loss_pruned))
+
+print("----------------------------------------")
+print("Summary:")
 pruned_macs, pruned_params = tp.utils.count_ops_and_params(model, example_inputs)
-print("Base MACs: %f G, Pruned MACs: %f G"%(base_macs/1e9, pruned_macs/1e9))
-print("Base Params: %f M, Pruned Params: %f M"%(base_params/1e6, pruned_params/1e6))
+print("Base MACs: %.2f G, Pruned MACs: %.2f G"%(base_macs/1e9, pruned_macs/1e9))
+print("Base Params: %.2f M, Pruned Params: %.2f M"%(base_params/1e6, pruned_params/1e6))
+if args.test_accuracy:
+    print("Base Loss: %.4f, Pruned Loss: %.4f"%(loss_ori, loss_pruned))
+    print("Base Accuracy: %.4f, Pruned Accuracy: %.4f"%(acc_ori, acc_pruned))
