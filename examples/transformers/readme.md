@@ -2,7 +2,7 @@
 
 ## Pruning ViT from [Timm](https://github.com/huggingface/pytorch-image-models)
 
-#### Pruning
+### Pruning
 ```bash
 bash scripts/prune_timm_vit_b_16.sh
 ```
@@ -18,7 +18,7 @@ Base Accuracy: 0.8108, Pruned Accuracy: 0.0033
 Saving the pruned model to output/pruned/vit_base_patch16_224_pruned.pth...
 ```
 
-#### Finetuning
+### Finetuning
 ```bash
 bash scripts/finetune_timm_vit_b_16.sh
 ```
@@ -38,6 +38,13 @@ Some results:
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/24de19ff-60aa-4402-94e3-527670ffb55e" width="80%"></img>
 </div>
 
+### Which pruner should be used for ViT pruning?
+
+* Pruning a Vision Transformer pre-trained on ImageNet-1K without fine-tuning.
+<div align="center">
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/6f99aa90-259d-41e8-902a-35675a9c9d90" width="45%"></img>
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/11473499-d28a-434b-a8d6-1a53c4b3b7c0" width="45%"></img>
+</div>
 
 
 ## Pruning Other Transformers
