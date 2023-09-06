@@ -52,7 +52,7 @@ Base MACs: 16.848735 G, Pruned MACs: 4.241336 G
 Base Params: 86.567656 M, Pruned Params: 22.050664 M
 ```
 
-## Swin Transformers from [HF Transformers](https://huggingface.co/docs/transformers/index)
+### Swin Transformers from [HF Transformers](https://huggingface.co/docs/transformers/index)
 ```bash
 python prune_hf_swin.py
 ```
@@ -62,7 +62,7 @@ Base MACs: 4.350805 G, Pruned MACs: 1.438424 G
 Base Params: 28.288354 M, Pruned Params: 9.462802 M
 ```
 
-## Bert from [HF Transformers](https://huggingface.co/docs/transformers/index)
+### Bert from [HF Transformers](https://huggingface.co/docs/transformers/index)
 ```bash
 python prune_hf_bert.py
 ```
