@@ -1,7 +1,5 @@
 # Examples for Transformers
 
-Our post-training scripts will be released.
-
 ## Pruning ViT from [Timm](https://github.com/huggingface/pytorch-image-models)
 
 #### Pruning
