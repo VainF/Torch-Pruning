@@ -4,30 +4,32 @@ import torch
 import torch.nn.functional as F
 import torch_pruning as tp
 import timm
-import warnings
 from torchvision.datasets import ImageFolder
 import torchvision.transforms as T
 from tqdm import tqdm
 
 import argparse
 
-parser = argparse.ArgumentParser(description='Timm ViT Pruning')
-parser.add_argument('--model_name', default='vit_base_patch16_224', type=str, help='model name')
-parser.add_argument('--dataset_root', default='~/Datasets/shared/imagenet/', type=str, help='model name')
-parser.add_argument('--taylor_batchs', default=10, type=int, help='number of batchs for taylor criterion')
-parser.add_argument('--pruning_ratio', default=0.5, type=float, help='prune ratio')
-parser.add_argument('--bottleneck', default=False, action='store_true', help='bottleneck or uniform')
-parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l1'])
-parser.add_argument('--test_accuracy', default=False, action='store_true', help='test accuracy')
-parser.add_argument('--global_pruning', default=False, action='store_true', help='global pruning')
+def parse_args():
+    parser = argparse.ArgumentParser(description='Timm ViT Pruning')
+    parser.add_argument('--model_name', default='vit_base_patch16_224', type=str, help='model name')
+    parser.add_argument('--dataset_root', default='~/Datasets/shared/imagenet/', type=str, help='model name')
+    parser.add_argument('--taylor_batchs', default=10, type=int, help='number of batchs for taylor criterion')
+    parser.add_argument('--pruning_ratio', default=0.5, type=float, help='prune ratio')
+    parser.add_argument('--bottleneck', default=False, action='store_true', help='bottleneck or uniform')
+    parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l1'])
+    parser.add_argument('--test_accuracy', default=False, action='store_true', help='test accuracy')
+    parser.add_argument('--global_pruning', default=False, action='store_true', help='global pruning')
 
-parser.add_argument('--train_batch_size', default=64, type=int, help='train batch size')
-parser.add_argument('--val_batch_size', default=128, type=int, help='val batch size')
-args = parser.parse_args()
+    parser.add_argument('--train_batch_size', default=64, type=int, help='train batch size')
+    parser.add_argument('--val_batch_size', default=128, type=int, help='val batch size')
+    parser.add_argument('--save_as', default=None, type=str, help='save the pruned model')
+    args = parser.parse_args()
+    return args
 
 # Here we re-implement the forward function of timm.models.vision_transformer.Attention
 # as the original forward function requires the input and output channels to be identical.
-def timm_attention_forward(self, x):
+def forward(self, x):
     B, N, C = x.shape
     qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
     q, k, v = qkv.unbind(0)
@@ -94,82 +96,92 @@ def validate_model(model, val_loader, device):
             correct += (predicted == labels).sum().item()
     return correct / len(val_loader.dataset), loss / len(val_loader.dataset)
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-example_inputs = torch.randn(1,3,224,224)
+def main():
+    args = parse_args()
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    example_inputs = torch.randn(1,3,224,224)
 
-if args.pruning_type == 'random':
-    imp = tp.importance.RandomImportance()
-elif args.pruning_type == 'taylor':
-    imp = tp.importance.TaylorImportance()
-elif args.pruning_type == 'l1':
-    imp = tp.importance.MagnitudeImportance(p=1)
-else: raise NotImplementedError
+    if args.pruning_type == 'random':
+        imp = tp.importance.RandomImportance()
+    elif args.pruning_type == 'taylor':
+        imp = tp.importance.TaylorImportance()
+    elif args.pruning_type == 'l1':
+        imp = tp.importance.MagnitudeImportance(p=1)
+    else: raise NotImplementedError
 
-if args.pruning_type=='taylor' or args.test_accuracy:
-    train_loader, val_loader = prepare_imagenet(args.dataset_root, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size)
+    if args.pruning_type=='taylor' or args.test_accuracy:
+        train_loader, val_loader = prepare_imagenet(args.dataset_root, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size)
 
-# Load the model
-model = timm.create_model(args.model_name, pretrained=True).eval().to(device)
+    # Load the model
+    model = timm.create_model(args.model_name, pretrained=True).eval().to(device)
+    input_size = [3, 224, 224]
+    example_inputs = torch.randn(1, *input_size).to(device)
+    base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
+    print(base_macs/1e9, base_params/1e6)
 
+    print("Pruning %s..."%args.model_name)
+    ch_groups = {}
+    ignored_layers = [model.head]
+    for m in model.modules():
+        if isinstance(m, timm.models.vision_transformer.Attention):
+            m.forward = forward.__get__(m, timm.models.vision_transformer.Attention) # https://stackoverflow.com/questions/50599045/python-replacing-a-function-within-a-class-of-a-module
+            ch_groups[m.qkv] = m.num_heads * 3
+        if args.bottleneck and isinstance(m, timm.models.vision_transformer.Mlp): 
+            ignored_layers.append(m.fc2) # only prune the internal layers of FFN & Attention
 
-print("Pruning %s..."%args.model_name)
-ch_groups = {}
-ignored_layers = [model.head]
-for m in model.modules():
-    if isinstance(m, timm.models.vision_transformer.Attention):
-        m.forward = timm_attention_forward.__get__(m, timm.models.vision_transformer.Attention) # https://stackoverflow.com/questions/50599045/python-replacing-a-function-within-a-class-of-a-module
-        ch_groups[m.qkv] = m.num_heads * 3
-    if args.bottleneck and isinstance(m, timm.models.vision_transformer.Mlp): 
-        ignored_layers.append(m.fc2) # only prune the internal layers of FFN & Attention
+    if args.test_accuracy:
+        print("Testing accuracy of the original model...")
+        acc_ori, loss_ori = validate_model(model, val_loader, device)
+        print("Accuracy: %.4f, Loss: %.4f"%(acc_ori, loss_ori))
 
-if args.test_accuracy:
-    print("Testing accuracy of the original model...")
-    acc_ori, loss_ori = validate_model(model, val_loader, device)
-    print("Accuracy: %.4f, Loss: %.4f"%(acc_ori, loss_ori))
+    pruner = tp.pruner.MetaPruner(
+                    model, 
+                    example_inputs, 
+                    global_pruning=args.global_pruning, # If False, a uniform sparsity will be assigned to different layers.
+                    importance=imp, # importance criterion for parameter selection
+                    ch_sparsity=args.pruning_ratio, # target sparsity
+                    ignored_layers=ignored_layers,
+                    channel_groups=ch_groups,
+    )
+    if isinstance(imp, tp.importance.TaylorImportance):
+        model.zero_grad()
+        print("Accumulating gradients for taylor pruning...")
+        for k, (imgs, lbls) in enumerate(train_loader):
+            if k>=args.taylor_batchs: break
+            imgs = imgs.to(device)
+            lbls = lbls.to(device)
+            output = model(imgs)
+            loss = torch.nn.functional.cross_entropy(output, lbls)
+            loss.backward()
 
-#input_size = model.default_cfg['input_size']
-input_size = [3, 224, 224]
-example_inputs = torch.randn(1, *input_size).to(device)
-base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
-pruner = tp.pruner.MetaPruner(
-                model, 
-                example_inputs, 
-                global_pruning=args.global_pruning, # If False, a uniform sparsity will be assigned to different layers.
-                importance=imp, # importance criterion for parameter selection
-                ch_sparsity=args.pruning_ratio, # target sparsity
-                ignored_layers=ignored_layers,
-                channel_groups=ch_groups,
-)
-if isinstance(imp, tp.importance.TaylorImportance):
-    model.zero_grad()
-    print("Accumulating gradients for taylor pruning...")
-    for k, (imgs, lbls) in enumerate(train_loader):
-        if k>=args.taylor_batchs: break
-        imgs = imgs.to(device)
-        lbls = lbls.to(device)
-        output = model(imgs)
-        loss = torch.nn.functional.cross_entropy(output, lbls)
-        loss.backward()
+    for i, g in enumerate(pruner.step(interactive=True)):
+        g.prune()
 
-for i, g in enumerate(pruner.step(interactive=True)):
-    g.prune()
+    # Modify the attention head size and all head size aftering pruning
+    for m in model.modules():
+        if isinstance(m, timm.models.vision_transformer.Attention):
+            m.head_dim = m.qkv.out_features // (3 * m.num_heads)
+    print(model)
 
-# Modify the attention head size and all head size aftering pruning
-for m in model.modules():
-    if isinstance(m, timm.models.vision_transformer.Attention):
-        m.head_dim = m.qkv.out_features // (3 * m.num_heads)
-print(model)
+    if args.test_accuracy:
+        print("Testing accuracy of the pruned model...")
+        acc_pruned, loss_pruned = validate_model(model, val_loader, device)
+        print("Accuracy: %.4f, Loss: %.4f"%(acc_pruned, loss_pruned))
 
-if args.test_accuracy:
-    print("Testing accuracy of the pruned model...")
-    acc_pruned, loss_pruned = validate_model(model, val_loader, device)
-    print("Accuracy: %.4f, Loss: %.4f"%(acc_pruned, loss_pruned))
+    print("----------------------------------------")
+    print("Summary:")
+    pruned_macs, pruned_params = tp.utils.count_ops_and_params(model, example_inputs)
+    print("Base MACs: %.2f G, Pruned MACs: %.2f G"%(base_macs/1e9, pruned_macs/1e9))
+    print("Base Params: %.2f M, Pruned Params: %.2f M"%(base_params/1e6, pruned_params/1e6))
+    if args.test_accuracy:
+        print("Base Loss: %.4f, Pruned Loss: %.4f"%(loss_ori, loss_pruned))
+        print("Base Accuracy: %.4f, Pruned Accuracy: %.4f"%(acc_ori, acc_pruned))
 
-print("----------------------------------------")
-print("Summary:")
-pruned_macs, pruned_params = tp.utils.count_ops_and_params(model, example_inputs)
-print("Base MACs: %.2f G, Pruned MACs: %.2f G"%(base_macs/1e9, pruned_macs/1e9))
-print("Base Params: %.2f M, Pruned Params: %.2f M"%(base_params/1e6, pruned_params/1e6))
-if args.test_accuracy:
-    print("Base Loss: %.4f, Pruned Loss: %.4f"%(loss_ori, loss_pruned))
-    print("Base Accuracy: %.4f, Pruned Accuracy: %.4f"%(acc_ori, acc_pruned))
+    if args.save_as is not None:
+        print("Saving the pruned model to %s..."%args.save_as)
+        os.makedirs(os.path.dirname(args.save_as), exist_ok=True)
+        model.zero_grad()
+        torch.save(model, args.save_as)
+
+if __name__=='__main__':
+    main()

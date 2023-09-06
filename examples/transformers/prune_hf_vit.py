@@ -71,7 +71,7 @@ def validate_model(model, val_loader, device):
     return correct / len(val_loader.dataset), loss / len(val_loader.dataset)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-example_inputs = torch.randn(1,3,224,224)
+example_inputs = torch.randn(1,3,224,224).to(device)
 
 if args.pruning_type == 'random':
     imp = tp.importance.RandomImportance()
@@ -86,6 +86,8 @@ if args.pruning_type=='taylor' or args.test_accuracy:
 
 # Load the model
 model = ViTForImageClassification.from_pretrained(args.model_name).to(device)
+base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
+print(base_macs/1e9, base_params/1e6)
 
 if args.test_accuracy:
     print("Testing accuracy of the original model...")
@@ -104,9 +106,6 @@ for m in model.modules():
     if args.bottleneck and isinstance(m, ViTSelfOutput):
         ignored_layers.append(m.dense)
 
-
-example_inputs = torch.randn(1, 3, 224, 224).to(device)
-base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
 pruner = tp.pruner.MetaPruner(
                 model, 
                 example_inputs, 
