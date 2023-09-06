@@ -58,7 +58,7 @@ for m in model.modules():
         channel_groups[m.key] = m.num_attention_heads
         channel_groups[m.value] = m.num_attention_heads
 
-pruner = tp.pruner.MagnitudePruner(
+pruner = tp.pruner.MetaPruner(
                 model, 
                 example_inputs, 
                 global_pruning=False, # If False, a uniform sparsity will be assigned to different layers.
