@@ -17,7 +17,7 @@ Some results:
 | | Vit-B/16 - Torchvision |	Vit-B/16 - HF |	ViT_B/32 - Torchvision | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) |
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
 | **#Params** | 86.57 M	| 86.56 M	|  	88.22 M | 22.05 M | 22.05 M | 22.8 M |
-| **MACs** | 17.59 G	| 16.84 G	| 4.41 G |  4.24 G	| 4.24G | 4.30G |
+| **MACs** | 17.59 G	| 17.59 G	| 4.41 G |  4.61 G	| 4.61 G | 4.23 G |
 | **Acc @ Ep 300** | 81.068	| 75.66	| 75.91 |  79.20	| 79.61 | 79.11 |
 | **Acc @ Ep 50** | -	| -	| - |  69.24	| 71.93 | 71.54 |
 
