@@ -1,4 +1,4 @@
-# Examples for HuggingFace Transformers
+# Examples for Transformers
 
 Our post-training scripts will be released.
 
