@@ -25,3 +25,4 @@ torch_pruning_bak
 .idea/
 .pytest_cache
 benchmarks/run
+output
