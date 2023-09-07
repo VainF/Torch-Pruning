@@ -2,6 +2,25 @@
 
 ## Pruning ViT from [Timm](https://github.com/huggingface/pytorch-image-models)
 
+### Data
+Please prepare the ImageNet-1K dataset as follows and modify the data root in the script.
+```
+imagenet/
+  train/
+    n01440764/
+      n01440764_10026.JPEG
+      ...
+    n01773157/
+    n02051845/
+    ...
+  val/
+    n01440764/
+      ILSVRC2012_val_00000293.JPEG
+      ...
+    n01773157/
+    n02051845/
+```
+
 ### Pruning
 ```bash
 bash scripts/prune_timm_vit_b_16.sh
