@@ -171,17 +171,16 @@ pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse train
 
 # 3. Prune & finetune the model
 base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
-for i in range(iterative_steps):
-    if isinstance(imp, tp.importance.GroupTaylorImportance):
-        # Taylor expansion requires gradients for importance estimation
-        # A dummy loss, please replace it with your loss function and data!
-        loss = model(example_inputs).sum() 
-        loss.backward() # before pruner.step()
-    pruner.step()
-    macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
-    # finetune the pruned model here
-    # finetune(model)
-    # ...
+if isinstance(imp, tp.importance.GroupTaylorImportance):
+    # Taylor expansion requires gradients for importance estimation
+    # A dummy loss, please replace it with your loss function and data!
+    loss = model(example_inputs).sum() 
+    loss.backward() # before pruner.step()
+pruner.step()
+macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
+# finetune the pruned model here
+# finetune(model)
+# ...
 ```
 #### Global Pruning
 
