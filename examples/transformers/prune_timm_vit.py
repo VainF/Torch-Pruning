@@ -13,7 +13,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='Timm ViT Pruning')
     parser.add_argument('--model_name', default='vit_base_patch16_224', type=str, help='model name')
-    parser.add_argument('--dataset_root', default='~/Datasets/shared/imagenet/', type=str, help='model name')
+    parser.add_argument('--data_path', default='~/Datasets/shared/imagenet/', type=str, help='model name')
     parser.add_argument('--taylor_batchs', default=10, type=int, help='number of batchs for taylor criterion')
     parser.add_argument('--pruning_ratio', default=0.5, type=float, help='prune ratio')
     parser.add_argument('--bottleneck', default=False, action='store_true', help='bottleneck or uniform')
@@ -110,7 +110,7 @@ def main():
     else: raise NotImplementedError
 
     if args.pruning_type=='taylor' or args.test_accuracy:
-        train_loader, val_loader = prepare_imagenet(args.dataset_root, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size)
+        train_loader, val_loader = prepare_imagenet(args.data_path, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size)
 
     # Load the model
     model = timm.create_model(args.model_name, pretrained=True).eval().to(device)
