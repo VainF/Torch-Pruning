@@ -145,17 +145,26 @@ def main():
                     ignored_layers=ignored_layers,
                     channel_groups=ch_groups,
     )
-    if isinstance(imp, tp.importance.TaylorImportance):
+    if isinstance(imp, (tp.importance.GroupTaylorImportance, tp.importance.GroupHessianImportance)):
         model.zero_grad()
+        if isinstance(imp, tp.importance.GroupHessianImportance):
+            imp.zero_grad()
         print("Accumulating gradients for taylor pruning...")
         for k, (imgs, lbls) in enumerate(train_loader):
             if k>=args.taylor_batchs: break
             imgs = imgs.to(device)
             lbls = lbls.to(device)
             output = model(imgs)
-            loss = torch.nn.functional.cross_entropy(output, lbls)
-            loss.backward()
-
+            if isinstance(imp, tp.importance.GroupHessianImportance):
+                loss = torch.nn.functional.cross_entropy(output, lbls, reduction='none')
+                for l in loss:
+                    model.zero_grad()
+                    l.backward(retain_graph=True)
+                    imp.accumulate_grad()
+            elif isinstance(imp, tp.importance.GroupTaylorImportance):
+                loss = torch.nn.functional.cross_entropy(output, lbls)
+                loss.backward()
+                
     for i, g in enumerate(pruner.step(interactive=True)):
         g.prune()
 
