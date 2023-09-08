@@ -43,12 +43,12 @@ bash scripts/finetune_timm_vit_b_16_taylor_uniform.sh
 ```
 Some results:
 
-| | Vit-B/16 (Timm) | Vit-B/16 (HF) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) |
-| :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| **#Params** | 86.57 M	| 86.56 M	|  	88.22 M | 22.05 M | 22.05 M | 22.8 M |
-| **MACs** | 17.59 G	| 17.59 G	| 4.41 G |  4.61 G	| 4.61 G | 4.23 G |
-| **Acc @ Ep 300** | 81.08	| 75.66	| 72.26 |  79.20	| 79.61 | 79.11 |
-| **Acc @ Ep 50** | -	| -	| - |  69.24	| 71.93 | 71.54 |
+| | Vit-B/16 (Timm) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) |
+| :-- | :--: | :--: | :--: | :--: | :--: |
+| **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 22.8 M |
+| **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.23 G |
+| **Acc @ Ep 300** | 81.08		| 72.26 | 79.20	| 80.21 | 79.11 |
+| **Acc @ Ep 50** | -	| - |  69.24	| 71.93 | 71.54 |
 
 * Uniform - The same pruning ratio for all layers.
 * Bottleneck - Only prune the internal dimensions of Attention & FFN.
