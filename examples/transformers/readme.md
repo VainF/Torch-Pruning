@@ -23,7 +23,7 @@ imagenet/
 
 ### Pruning
 ```bash
-bash scripts/prune_timm_vit_b_16.sh
+bash scripts/prune_timm_vit_b_16_taylor_uniform.sh
 ```
 
 ```
@@ -34,12 +34,12 @@ Base MACs: 17.59 G, Pruned MACs: 4.61 G
 Base Params: 86.57 M, Pruned Params: 22.05 M
 Base Loss: 0.7774, Pruned Loss: 7.1335
 Base Accuracy: 0.8108, Pruned Accuracy: 0.0033
-Saving the pruned model to output/pruned/vit_base_patch16_224_pruned.pth...
+Saving the pruned model to output/pruned/vit_base_patch16_224_pruned_taylor_uniform.pth...
 ```
 
 ### Finetuning
 ```bash
-bash scripts/finetune_timm_vit_b_16.sh
+bash scripts/finetune_timm_vit_b_16_taylor_uniform.sh
 ```
 Some results:
 

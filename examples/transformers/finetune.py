@@ -16,7 +16,32 @@ from torchvision.transforms.functional import InterpolationMode
 from transforms import get_mixup_cutmix
 import sys
 
+import timm
+
 import torch_pruning as tp
+
+def forward(self, x):
+    B, N, C = x.shape
+    qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
+    q, k, v = qkv.unbind(0)
+    q, k = self.q_norm(q), self.k_norm(k)
+
+    if self.fused_attn:
+        x = F.scaled_dot_product_attention(
+            q, k, v,
+            dropout_p=self.attn_drop.p,
+        )
+    else:
+        q = q * self.scale
+        attn = q @ k.transpose(-2, -1)
+        attn = attn.softmax(dim=-1)
+        attn = self.attn_drop(attn)
+        x = attn @ v
+
+    x = x.transpose(1, 2).reshape(B, N, -1)
+    x = self.proj(x)
+    x = self.proj_drop(x)
+    return x
 
 def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema=None, scaler=None):
     model.train()
@@ -253,8 +278,11 @@ def main(args):
     if args.pruned_model is not None:
         model = torch.load(args.pruned_model, map_location='cpu') #torchvision.models.get_model(args.model, weights=args.weights, num_classes=num_classes)
     else:
-        from transformers import ViTForImageClassification
-        model = ViTForImageClassification.from_pretrained(args.model)
+        model = timm.create_model(args.model, pretrained=True)
+    
+    for m in model.modules():
+        if isinstance(m, timm.models.vision_transformer.Attention):
+            m.forward = forward.__get__(m, timm.models.vision_transformer.Attention) # https://stackoverflow.com/questions/50599045/python-replacing-a-function-within-a-class-of-a-module
 
     model.to(device)
     macs, params = tp.utils.count_ops_and_params(model, torch.randn(1, 3, 224, 224).to(device))
@@ -408,7 +436,7 @@ def get_args_parser(add_help=True):
 
     parser = argparse.ArgumentParser(description="PyTorch Classification Training", add_help=add_help)
 
-    parser.add_argument("--model", required=True, type=str, help="model_name")
+    parser.add_argument("--model", default='vit_base_patch16_224', type=str, help="model_name")
     parser.add_argument("--pruned-model", default=None, type=str, help="path to the pruned model")
     parser.add_argument("--data-path", default="~/Datasets/imagenet", type=str, help="dataset path")
     parser.add_argument("--device", default="cuda", type=str, help="device (Use cuda or cpu Default: cuda)")

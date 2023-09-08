@@ -7,4 +7,4 @@ python prune_timm_vit.py \
     --test_accuracy \
     --train_batch_size 64 \
     --val_batch_size 64 \
-    --save_as output/pruned/vit_base_patch16_224_pruned.pth \
+    --save_as output/pruned/vit_base_patch16_224_pruned_taylor_uniform.pth \
