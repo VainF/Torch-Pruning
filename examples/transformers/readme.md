@@ -44,7 +44,7 @@ bash scripts/finetune_timm_vit_b_16_taylor_uniform.sh
 Some results:
 
 | | Vit-B/16 (Timm) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) | Group Hessian (Uniform) |
-| :-- | :--: | :--: | :--: | :--: | :--: |
+| :-- | :--: | :--: | :--: | :--: | :--: | :--: |
 | **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 22.8 M | 22.05 M |
 | **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.23 G | 4.61 G |
 | **Acc @ Ep 300** | 81.08		| 72.26 | 79.20	| 80.21 | 79.11 |     |
