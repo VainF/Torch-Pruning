@@ -12,7 +12,7 @@ def parse_acc_from_file(file_path):
             acc.append(float(line.split(' ')[-3]))
     return acc
 
-acc_taylor_bottleneck = parse_acc_from_file('output/vit_b_16_pruning_taylor_bottleneck/train.log')
+acc_taylor_bottleneck = parse_acc_from_file('output/vit_b_16_taylor_pruning_taylor_bottleneck/train.log')
 acc_taylor_uniform = parse_acc_from_file('output/vit_b_16_pruning_taylor_uniform/train.log')
 acc_l1_uniform = parse_acc_from_file('output/vit_b_16_pruning_l1_uniform/train.log')
 
