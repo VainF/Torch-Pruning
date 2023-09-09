@@ -13,6 +13,7 @@ from sampler import RASampler
 from torch import nn
 from torch.utils.data.dataloader import default_collate
 from torchvision.transforms.functional import InterpolationMode
+
 from transforms import get_mixup_cutmix
 import sys
 
@@ -165,6 +166,8 @@ def load_data(traindir, valdir, args):
         dataset = torchvision.datasets.ImageFolder(
             traindir,
             presets.ClassificationPresetTrain(
+                mean=[0.5, 0.5, 0.5],
+                std=[0.5, 0.5, 0.5],
                 crop_size=train_crop_size,
                 interpolation=interpolation,
                 auto_augment_policy=auto_augment_policy,
@@ -196,6 +199,8 @@ def load_data(traindir, valdir, args):
 
         else:
             preprocessing = presets.ClassificationPresetEval(
+                mean=[0.5, 0.5, 0.5],
+                std=[0.5, 0.5, 0.5],
                 crop_size=val_crop_size,
                 resize_size=val_resize_size,
                 interpolation=interpolation,
@@ -543,7 +548,7 @@ def get_args_parser(add_help=True):
         "--use-deterministic-algorithms", action="store_true", help="Forces the use of deterministic algorithms only."
     )
     parser.add_argument(
-        "--interpolation", default="bilinear", type=str, help="the interpolation method (default: bilinear)"
+        "--interpolation", default="bicubic", type=str, help="the interpolation method (default: bicubic)"
     )
     parser.add_argument(
         "--val-resize-size", default=256, type=int, help="the resize size used for validation (default: 256)"

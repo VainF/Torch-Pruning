@@ -7,6 +7,9 @@ import timm
 from torchvision.datasets import ImageFolder
 import torchvision.transforms as T
 from tqdm import tqdm
+from torchvision.transforms.functional import InterpolationMode
+
+import presets
 
 import argparse
 
@@ -57,27 +60,23 @@ def prepare_imagenet(imagenet_root, train_batch_size=64, val_batch_size=128, num
     """
 
     print('Parsing dataset...')
-    train_dst = ImageFolder(os.path.join(imagenet_root, 'train'), transform=T.Compose(
-        [
-            T.Resize(256),
-            T.CenterCrop(224),
-            T.ToTensor(),
-            T.Normalize(
-                mean=[0.485, 0.456, 0.406], 
-                std=[0.229, 0.224, 0.225]
-            ),
-        ])
+    train_dst = ImageFolder(os.path.join(imagenet_root, 'train'), 
+                            transform=presets.ClassificationPresetEval(
+                                mean=[0.5, 0.5, 0.5],
+                                std=[0.5, 0.5, 0.5],
+                                crop_size=224,
+                                resize_size=256,
+                                interpolation=InterpolationMode.BICUBIC,
+                            )
     )
-    val_dst = ImageFolder(os.path.join(imagenet_root, 'val'), transform=T.Compose(
-        [
-            T.Resize(256),
-            T.CenterCrop(224),
-            T.ToTensor(),
-            T.Normalize(
-                mean=[0.485, 0.456, 0.406], 
-                std=[0.229, 0.224, 0.225]
-            ),
-        ])
+    val_dst = ImageFolder(os.path.join(imagenet_root, 'val'), 
+                          transform=presets.ClassificationPresetEval(
+                                mean=[0.5, 0.5, 0.5],
+                                std=[0.5, 0.5, 0.5],
+                                crop_size=224,
+                                resize_size=256,
+                                interpolation=InterpolationMode.BICUBIC,
+                            )
     )
     train_loader = torch.utils.data.DataLoader(train_dst, batch_size=train_batch_size, shuffle=True, num_workers=num_workers)
     val_loader = torch.utils.data.DataLoader(val_dst, batch_size=val_batch_size, shuffle=False, num_workers=num_workers)

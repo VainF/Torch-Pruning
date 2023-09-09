@@ -26,3 +26,4 @@ torch_pruning_bak
 .pytest_cache
 benchmarks/run
 output
+acc.png
