@@ -119,7 +119,6 @@ def main():
     input_size = [3, 224, 224]
     example_inputs = torch.randn(1, *input_size).to(device)
     base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
-    print(base_macs/1e9, base_params/1e6)
 
     print("Pruning %s..."%args.model_name)
     ch_groups = {}

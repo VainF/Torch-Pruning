@@ -21,9 +21,10 @@ print("acc_taylor_bottleneck:", acc_taylor_bottleneck[-1])
 print("acc_taylor_uniform:", acc_taylor_uniform[-1])
 print("acc_l1_uniform:", acc_l1_uniform[-1])
 print("")
-#print("[50 Ep]")
-#print("acc_taylor_bottleneck:", acc_taylor_bottleneck[49])
-#print("acc_taylor_uniform:", acc_taylor_uniform[49])
+print("[0 Ep]")
+print("acc_taylor_bottleneck:", acc_taylor_bottleneck[0])
+print("acc_taylor_uniform:", acc_taylor_uniform[0])
+print("acc_l1_uniform:", acc_l1_uniform[0])
 
 #draw fig
 plt.figure(figsize=(8, 4), dpi=200)
