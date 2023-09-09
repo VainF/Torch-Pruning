@@ -53,7 +53,6 @@ Some results:
 *Notes:*
 * Uniform - We apply the same pruning ratio to all layers.
 * Bottleneck - We only prune the internal dimensions of Attention & FFN, leading to bottleneck structures.
-* The pre-trained model was [pre-trained on ImageNet-21k](https://github.com/huggingface/pytorch-image-models/blob/730b907b4d45a4713cbc425cbf224c46089fd514/timm/models/vision_transformer.py#L1603) and finetuned to ImageNet-1k. We only use ImageNet-1K for pruning & finetuning.
 * Please adjust the learning rate accordingly if the batch size and number of GPUs are changed. Refer to [this paper](https://arxiv.org/pdf/1706.02677.pdf) for more details about linear LR scaling with large mini-batch.
 
 <div align="center">
