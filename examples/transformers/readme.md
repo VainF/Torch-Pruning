@@ -47,7 +47,7 @@ Some results:
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
 | **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 24.83 M | 22.05 M |
 | **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.62 G | 4.61 G |
-| **Acc @ Ep 300** | 81.08		| 72.26 | 76.14	| 80.21 | 79.87 |     |
+| **Acc @ Ep 300** | 81.08		| 72.26 | 76.14	| 80.21 |  79.90 |     |
 
 *Notes:*
 * Uniform - We apply the same pruning ratio to all layers.
@@ -56,6 +56,7 @@ Some results:
 * Please adjust the learning rate accordingly if the batch size and number of GPUs are changed. Refer to [this paper](https://arxiv.org/pdf/1706.02677.pdf) for more details about linear LR scaling with large mini-batch.
 
 <div align="center">
+  <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/28de54dd-fd40-4889-abe0-00a49436a702" width="100%"></img>
 </div>
 
 ### Which pruner should be used for ViT pruning?
