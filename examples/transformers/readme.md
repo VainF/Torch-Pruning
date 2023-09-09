@@ -53,7 +53,6 @@ Some results:
 * Bottleneck - Only prune the internal dimensions of Attention & FFN.
 
 <div align="center">
-<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/24de19ff-60aa-4402-94e3-527670ffb55e" width="80%"></img>
 </div>
 
 ### Which pruner should be used for ViT pruning?
