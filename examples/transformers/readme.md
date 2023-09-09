@@ -60,7 +60,7 @@ Some results:
 
 ### Which pruner should be used for ViT pruning?
 
-* Pruning a Vision Transformer pre-trained on ImageNet-1K without fine-tuning.
+* Pruning a Vision Transformer (HF Transformers) pre-trained on ImageNet-1K without fine-tuning.
 <div align="center">
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/6f99aa90-259d-41e8-902a-35675a9c9d90" width="45%"></img>
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/11473499-d28a-434b-a8d6-1a53c4b3b7c0" width="45%"></img>
