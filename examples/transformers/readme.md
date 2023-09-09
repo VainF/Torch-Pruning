@@ -52,7 +52,7 @@ Some results:
 Notes:
 * Uniform - The same pruning ratio for all layers.
 * Bottleneck - Only prune the internal dimensions of Attention & FFN.
-* The pre-trained model was pre-trained on ImageNet-21k and finetuned to ImageNet-1k. We only use ImageNet-1K for pruning & finetuning.
+* The pre-trained model was [pre-trained on ImageNet-21k](https://github.com/huggingface/pytorch-image-models/blob/730b907b4d45a4713cbc425cbf224c46089fd514/timm/models/vision_transformer.py#L1603) and finetuned to ImageNet-1k. We only use ImageNet-1K for pruning & finetuning.
 
 <div align="center">
 </div>
