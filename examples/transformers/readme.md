@@ -43,18 +43,21 @@ bash scripts/finetune_timm_vit_b_16_taylor_uniform.sh
 ```
 Some results:
 
-| | Vit-B/16 (Timm) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) | Group Hessian (Uniform) |
+|  | Vit-B/16 (Timm) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) | Group Hessian (Uniform) |
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 22.8 M | 22.05 M |
-| **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.23 G | 4.61 G |
-| **Acc @ Ep 300** | 81.08		| 72.26 | 79.20	| 80.21 | 79.11 |     |
-| **Acc @ Ep 50** | -	| - |  69.24	| 71.93 | 71.54 | |
+| **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 24.83 M | 22.05 M |
+| **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.62 G | 4.61 G |
+| **Acc @ Epoch 300** | 81.08		| 72.26 | 76.14	| 80.21 |  79.90 |     |
+| **Acc @ Epoch 1** | -		| - | 11.24	| 51.75 | 58.38 |     |
 
-* Uniform - The same pruning ratio for all layers.
-* Bottleneck - Only prune the internal dimensions of Attention & FFN.
+*Notes:*
+* Uniform - We apply the same pruning ratio to all layers.
+* Bottleneck - We only prune the internal dimensions of Attention & FFN, leading to bottleneck structures.
+* The pre-trained model was [pre-trained on ImageNet-21k](https://github.com/huggingface/pytorch-image-models/blob/730b907b4d45a4713cbc425cbf224c46089fd514/timm/models/vision_transformer.py#L1603) and finetuned to ImageNet-1k. We only use ImageNet-1K for pruning & finetuning.
+* Please adjust the learning rate accordingly if the batch size and number of GPUs are changed. Refer to [this paper](https://arxiv.org/pdf/1706.02677.pdf) for more details about linear LR scaling with large mini-batch.
 
 <div align="center">
-<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/24de19ff-60aa-4402-94e3-527670ffb55e" width="80%"></img>
+  <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/28de54dd-fd40-4889-abe0-00a49436a702" width="100%"></img>
 </div>
 
 ### Which pruner should be used for ViT pruning?

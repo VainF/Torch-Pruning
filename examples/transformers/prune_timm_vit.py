@@ -17,7 +17,7 @@ def parse_args():
     parser.add_argument('--taylor_batchs', default=10, type=int, help='number of batchs for taylor criterion')
     parser.add_argument('--pruning_ratio', default=0.5, type=float, help='prune ratio')
     parser.add_argument('--bottleneck', default=False, action='store_true', help='bottleneck or uniform')
-    parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l1'])
+    parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l1', 'hessian'])
     parser.add_argument('--test_accuracy', default=False, action='store_true', help='test accuracy')
     parser.add_argument('--global_pruning', default=False, action='store_true', help='global pruning')
 
@@ -111,7 +111,7 @@ def main():
         imp = tp.importance.GroupHessianImportance()
     else: raise NotImplementedError
 
-    if args.pruning_type=='taylor' or args.test_accuracy:
+    if args.pruning_type in ['taylor', 'hessian'] or args.test_accuracy:
         train_loader, val_loader = prepare_imagenet(args.data_path, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size)
 
     # Load the model
@@ -148,7 +148,7 @@ def main():
         model.zero_grad()
         if isinstance(imp, tp.importance.GroupHessianImportance):
             imp.zero_grad()
-        print("Accumulating gradients for taylor pruning...")
+        print("Accumulating gradients for pruning...")
         for k, (imgs, lbls) in enumerate(train_loader):
             if k>=args.taylor_batchs: break
             imgs = imgs.to(device)
@@ -159,7 +159,7 @@ def main():
                 for l in loss:
                     model.zero_grad()
                     l.backward(retain_graph=True)
-                    imp.accumulate_grad()
+                    imp.accumulate_grad(model)
             elif isinstance(imp, tp.importance.GroupTaylorImportance):
                 loss = torch.nn.functional.cross_entropy(output, lbls)
                 loss.backward()
