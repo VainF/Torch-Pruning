@@ -45,10 +45,9 @@ Some results:
 
 | | Vit-B/16 (Timm) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) | Group Hessian (Uniform) |
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 22.8 M | 22.05 M |
-| **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.23 G | 4.61 G |
-| **Acc @ Ep 300** | 81.08		| 72.26 | 79.20	| 80.21 | 79.11 |     |
-| **Acc @ Ep 50** | -	| - |  69.24	| 71.93 | 71.54 | |
+| **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 24.83 M | 22.05 M |
+| **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.62 G | 4.61 G |
+| **Acc @ Ep 300** | 81.08		| 72.26 | 76.14	| 80.21 | 79.87 |     |
 
 * Uniform - The same pruning ratio for all layers.
 * Bottleneck - Only prune the internal dimensions of Attention & FFN.
