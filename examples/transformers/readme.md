@@ -49,8 +49,10 @@ Some results:
 | **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.62 G | 4.61 G |
 | **Acc @ Ep 300** | 81.08		| 72.26 | 76.14	| 80.21 | 79.87 |     |
 
+Notes:
 * Uniform - The same pruning ratio for all layers.
 * Bottleneck - Only prune the internal dimensions of Attention & FFN.
+* The pre-trained model was pre-trained on ImageNet-21k and finetuned to ImageNet-1k. We only use ImageNet-1K for pruning & finetuning.
 
 <div align="center">
 </div>
