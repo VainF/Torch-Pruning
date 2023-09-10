@@ -8,6 +8,7 @@ import torch
 import torch.utils.data
 import torchvision
 import torchvision.transforms
+import torch.nn.functional as F
 import utils
 from sampler import RASampler
 from torch import nn
@@ -20,6 +21,7 @@ import sys
 import timm
 
 import torch_pruning as tp
+
 
 def forward(self, x):
     B, N, C = x.shape
