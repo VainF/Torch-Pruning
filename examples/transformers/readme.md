@@ -32,8 +32,8 @@ bash scripts/prune_timm_vit_b_16_taylor_uniform.sh
 Summary:
 Base MACs: 17.59 G, Pruned MACs: 4.61 G
 Base Params: 86.57 M, Pruned Params: 22.05 M
-Base Loss: 0.7774, Pruned Loss: 7.1335
-Base Accuracy: 0.8108, Pruned Accuracy: 0.0033
+Base Loss: 0.6516, Pruned Loss: 7.2412
+Base Accuracy: 0.8521, Pruned Accuracy: 0.0016
 Saving the pruned model to output/pruned/vit_base_patch16_224_pruned_taylor_uniform.pth...
 ```
 
@@ -47,8 +47,7 @@ Some results:
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
 | **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 24.83 M | 22.05 M |
 | **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.62 G | 4.61 G |
-| **Acc @ Epoch 300** | 81.08		| 72.26 | 76.14	| 80.21 |  79.90 |     |
-| **Acc @ Epoch 1** | -		| - | 11.24	| 51.75 | 58.38 |     |
+| **Acc @ Epoch 300** | 85.21	| 80.68  | 80.19 |  |   |     |
 
 *Notes:*
 * Uniform - We apply the same pruning ratio to all layers.
@@ -61,7 +60,7 @@ Some results:
 
 ### Which pruner should be used for ViT pruning?
 
-* Pruning a Vision Transformer pre-trained on ImageNet-1K without fine-tuning.
+* Pruning a Vision Transformer (HF Transformers) pre-trained on ImageNet-1K without fine-tuning.
 <div align="center">
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/6f99aa90-259d-41e8-902a-35675a9c9d90" width="45%"></img>
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/11473499-d28a-434b-a8d6-1a53c4b3b7c0" width="45%"></img>
