@@ -47,7 +47,8 @@ Some results:
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
 | **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 24.83 M | 22.05 M |
 | **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.62 G | 4.61 G |
-| **Acc @ Epoch 300** | 85.21	| 80.68  | 80.19 |  |   |     |
+| **Acc @ Epoch 300** | 85.21	| 80.68  | 74.96 | 80.19 |   | 80.15   |
+| **Latency (Bs=1, A5000)** | 	|   |  |  |   |     |
 
 *Notes:*
 * Uniform - We apply the same pruning ratio to all layers.
