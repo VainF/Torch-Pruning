@@ -23,6 +23,7 @@ plt.figure(figsize=(8, 4), dpi=200)
 for exp_name, log_path in log_dict.items():
     acc = parse_acc_from_file(log_path)
     plt.plot(acc, label=exp_name)
+    print(exp_name, "| Last Epoch:", acc[-1], "| Best Epoch:", max(acc))
                                                                                                                                                                                                                                                                                                                                                                                                        #plt.plot(acc_random, label='Random-uniform')rplt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 plt.legend()
