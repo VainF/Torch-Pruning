@@ -38,7 +38,11 @@ def forward(self, x):
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if os.path.isfile(args.model):
-        model = torch.load(args.model, map_location='cpu')['model'].to(device)
+        loaded_pth = torch.load(args.model, map_location='cpu')
+        if isinstance(loaded_pth, dict):
+            model = loaded_pth['model'].to(device)
+        else:
+            model = loaded_pth.to(device)
     else:
         model = timm.create_model(args.model, pretrained=True).to(device)
         
@@ -51,12 +55,12 @@ def main():
     latency_mu, latency_std = test_latency(model, example_input)
     print(f"MACs: {macs/1e9:.2f} G, \tParams: {params/1e6:.2f} M, \tLatency: {latency_mu:.2f} ms +- {latency_std:.2f} ms")
 
-def test_latency(model, example_inputs, repetitions=50):
+def test_latency(model, example_inputs, repetitions=300):
     import numpy as np
     starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
     timings=np.zeros((repetitions,1))
 
-    for _ in range(5):
+    for _ in range(50):
         _ = model(example_inputs)
 
     with torch.no_grad():
