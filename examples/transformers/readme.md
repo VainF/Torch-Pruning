@@ -52,11 +52,11 @@ Results on ImageNet-21K-ft-1K (Timm):
 
 Results on ImageNet-1K (HF Transformers):
 
-| | ViT-B/16 - Torchvision |	ViT-B/16 - HF |	ViT_B/32 - Torchvision | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) |
+| | ViT-B/16 <br> (HF) | ViT-B/16 <br> (Torchvision) |	ViT_B/32 <br> (Torchvision) | Group L1 <br> (Uniform) | Group Taylor <br> (Uniform) | Group Taylor <br> (Bottleneck) |
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| **#Params** | 86.57 M	| 86.56 M	|  	88.22 M | 22.05 M | 22.05 M | 22.8 M |
-| **MACs** | 17.59 G	| 17.59 G	| 4.41 G |  4.61 G	| 4.61 G | 4.23 G |
-| **Acc @ Ep 300** | 81.068	| 75.66	| 75.91 |  79.20	| 79.61 | 79.11 |
+| **#Params** |  86.56 M	| 86.57 M	|  	88.22 M | 22.05 M | 22.05 M | 22.8 M |
+| **MACs** | 17.59 G	| 17.59 G	|  4.41 G |  4.61 G	| 4.61 G | 4.23 G |
+| **Acc @ Ep 300** | 75.66 | 81.068	|  75.91 |  79.20	| 79.61 | 79.11 |
 
 *Notes:*
 * Uniform - We apply the same pruning ratio to all layers.
