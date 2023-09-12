@@ -41,7 +41,7 @@ Saving the pruned model to output/pruned/vit_base_patch16_224_pruned_taylor_unif
 ```bash
 bash scripts/finetune_timm_vit_b_16_taylor_uniform.sh
 ```
-Some results:
+Results on ImageNet-21K-ft-1K (Timm):
 
 |  | Vit-B/16 (Timm) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) | Group Hessian (Uniform) |
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
@@ -49,6 +49,14 @@ Some results:
 | **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.62 G | 4.61 G |
 | **Acc @ Epoch 300** | 85.21	| 80.68  | 74.96 | 80.19 | 80.06 | 80.15   |
 | **Latency (Bs=1, A5000)** | 5.21 ms <br> +- 0.05 ms	|  3.87 ms <br> +- 0.05 ms | 3.99 ms <br> +- 0.10 ms | 3.99 ms <br> +- 0.10 ms  |  3.87 ms <br> +- 0.14 ms  |  3.99 ms <br> +- 0.10 ms    |
+
+Results on ImageNet-1K (HF Transformers):
+
+| | Vit-B/16 - Torchvision |	Vit-B/16 - HF |	ViT_B/32 - Torchvision | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) |
+| :-- | :--: | :--: | :--: | :--: | :--: | :--: |
+| **#Params** | 86.57 M	| 86.56 M	|  	88.22 M | 22.05 M | 22.05 M | 22.8 M |
+| **MACs** | 17.59 G	| 17.59 G	| 4.41 G |  4.61 G	| 4.61 G | 4.23 G |
+| **Acc @ Ep 300** | 81.068	| 75.66	| 75.91 |  79.20	| 79.61 | 79.11 |
 
 *Notes:*
 * Uniform - We apply the same pruning ratio to all layers.
