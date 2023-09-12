@@ -166,6 +166,7 @@ pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse train
     example_inputs,
     importance=imp,
     ch_sparsity=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+    # ch_sparsity_dict = {model.conv1: 0.2, model.layer2: 0.8} # customized sparsity for layers or blocks
     ignored_layers=ignored_layers,
 )
 
