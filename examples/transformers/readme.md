@@ -1,6 +1,6 @@
 # Transformers
 
-## Pruning ViT from [Timm](https://github.com/huggingface/pytorch-image-models)
+## Pruning ViT-ImageNet-21K-ft-1K from [Timm](https://github.com/huggingface/pytorch-image-models)
 
 ### Data
 Please prepare the ImageNet-1K dataset as follows and modify the data root in the script.
@@ -92,16 +92,26 @@ wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pr
 python test_latency.py --model pretrained/vit_b_16_pruning_taylor_uniform.pth
 ```
 
-## Pruning Other Transformers
+## Pruning ViT-ImageNet-1K from [HF Transformers](https://huggingface.co/docs/transformers/index)
 
-### ViT from [HF Transformers](https://huggingface.co/docs/transformers/index)
+### Pruning
 ```bash
-python prune_hf_vit.py
+bash scripts/prune_hf_vit_b_16_taylor_uniform.sh  
 ```
 ```
 ...
-Base MACs: 16.848735 G, Pruned MACs: 4.241336 G
-Base Params: 86.567656 M, Pruned Params: 22.050664 M
+----------------------------------------
+Summary:
+Base MACs: 16.85 G, Pruned MACs: 4.24 G
+Base Params: 86.57 M, Pruned Params: 22.05 M
+Base Loss: 0.9717, Pruned Loss: 7.0871
+Base Accuracy: 0.7566, Pruned Accuracy: 0.0015
+Saving the pruned model to output/pruned/hf_vit_base_patch16_224_pruned_taylor_uniform.pth...
+```
+
+### Finetuning
+```bash
+bash scripts/finetune_hf_vit_b_16_taylor_uniform.sh
 ```
 
 Pruning results for ImageNet-1K (HF Transformers):
@@ -112,7 +122,7 @@ Pruning results for ImageNet-1K (HF Transformers):
 | **MACs** | 17.59 G	| 17.59 G	|  4.41 G |  4.61 G	| 4.61 G | 4.23 G |
 | **Acc @ Ep 300** | 75.66 | 81.068	|  75.91 |  79.20	| 79.61 | 79.11 |
 
-### Swin Transformers from [HF Transformers](https://huggingface.co/docs/transformers/index)
+## Pruning Swin Transformers from [HF Transformers](https://huggingface.co/docs/transformers/index)
 ```bash
 python prune_hf_swin.py
 ```
@@ -122,7 +132,7 @@ Base MACs: 4.350805 G, Pruned MACs: 1.438424 G
 Base Params: 28.288354 M, Pruned Params: 9.462802 M
 ```
 
-### Bert from [HF Transformers](https://huggingface.co/docs/transformers/index)
+## Pruning Bert from [HF Transformers](https://huggingface.co/docs/transformers/index)
 ```bash
 python prune_hf_bert.py
 ```
