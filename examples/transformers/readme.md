@@ -63,13 +63,13 @@ Some results:
 
 In short, `tp.importance.GroupTaylorImportance` + `tp.pruner.MetaPruner` is a good choice for ViT pruning.
 
-* Pruning a Vision Transformer (HF Transformers) pre-trained on ImageNet-1K without fine-tuning.
+* Prune a Vision Transformer (ImageNet-1K) from HF Transformers without fine-tuning.
 <div align="center">
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/6f99aa90-259d-41e8-902a-35675a9c9d90" width="45%"></img>
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/11473499-d28a-434b-a8d6-1a53c4b3b7c0" width="45%"></img>
 </div>
 
-* Pruning a Vision Transformer (Timm) pre-trained on ImageNet-21K and transferred to ImageNet-1k without finetuning
+* Prune a Vision Transformer (ImageNet-21K-ft-1K) from timm without finetuning
 <div align="center">
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/8726aaf3-129a-4ff6-855e-c73573a8d3e4" width="45%"></img>
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/5ff31ebe-3d0e-417b-8020-68afaa19dc65" width="45%"></img>
