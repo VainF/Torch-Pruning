@@ -1,4 +1,4 @@
-# Examples for Transformers
+![acc](https://github.com/VainF/Torch-Pruning/assets/18592211/da521161-09fc-4867-884c-d0c54fa42d3b)# Examples for Transformers
 
 ## Pruning ViT from [Timm](https://github.com/huggingface/pytorch-image-models)
 
@@ -56,7 +56,7 @@ Some results:
 * Please adjust the learning rate accordingly if the batch size and number of GPUs are changed. Refer to [this paper](https://arxiv.org/pdf/1706.02677.pdf) for more details about linear LR scaling with large mini-batch.
 
 <div align="center">
-  <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/28de54dd-fd40-4889-abe0-00a49436a702" width="100%"></img>
+  <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/27f04428-4113-4c6f-b19e-8d0f905a2181" width="100%"></img>
 </div>
 
 ### Which pruner should be used for ViT pruning?
@@ -67,6 +67,11 @@ Some results:
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/11473499-d28a-434b-a8d6-1a53c4b3b7c0" width="45%"></img>
 </div>
 
+* Pruning a Vision Transformer (Timm) pre-trained on ImageNet-21K and transferred to ImageNet-1k without finetuning
+<div align="center">
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/8726aaf3-129a-4ff6-855e-c73573a8d3e4" width="45%"></img>
+<img src="https://github.com/VainF/Torch-Pruning/assets/18592211/5ff31ebe-3d0e-417b-8020-68afaa19dc65" width="45%"></img>
+</div>
 
 ### Latency
 
