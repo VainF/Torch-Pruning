@@ -27,3 +27,4 @@ torch_pruning_bak
 benchmarks/run
 output
 acc.png
+pretrained
