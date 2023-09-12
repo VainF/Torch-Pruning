@@ -43,7 +43,7 @@ bash scripts/finetune_timm_vit_b_16_taylor_uniform.sh
 ```
 Results on ImageNet-21K-ft-1K (Timm):
 
-|  | Vit-B/16 (Timm) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) | Group Hessian (Uniform) |
+|  | ViT-B/16 (Timm) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) | Group Hessian (Uniform) |
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
 | **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 24.83 M | 22.05 M |
 | **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.62 G | 4.61 G |
@@ -52,7 +52,7 @@ Results on ImageNet-21K-ft-1K (Timm):
 
 Results on ImageNet-1K (HF Transformers):
 
-| | Vit-B/16 - Torchvision |	Vit-B/16 - HF |	ViT_B/32 - Torchvision | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) |
+| | ViT-B/16 - Torchvision |	ViT-B/16 - HF |	ViT_B/32 - Torchvision | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) |
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
 | **#Params** | 86.57 M	| 86.56 M	|  	88.22 M | 22.05 M | 22.05 M | 22.8 M |
 | **MACs** | 17.59 G	| 17.59 G	| 4.41 G |  4.61 G	| 4.61 G | 4.23 G |
