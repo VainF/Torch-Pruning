@@ -50,14 +50,6 @@ Pruning results for ImageNet-21K-ft-1K (Timm):
 | **Acc @ Epoch 300** | 85.21	| 80.68  | 74.96 | 80.19 | 80.06 | 80.15   |
 | **Latency (Bs=1, A5000)** | 5.21 ms <br> +- 0.05 ms	|  3.87 ms <br> +- 0.05 ms | 3.99 ms <br> +- 0.10 ms | 3.99 ms <br> +- 0.10 ms  |  3.87 ms <br> +- 0.14 ms  |  3.99 ms <br> +- 0.10 ms    |
 
-Pruning results for ImageNet-1K (HF Transformers):
-
-| | ViT-B/16 <br> (HF) | ViT-B/16 <br> (Torchvision) |	ViT_B/32 <br> (Torchvision) | Group L1 <br> (Uniform) | Group Taylor <br> (Uniform) | Group Taylor <br> (Bottleneck) |
-| :-- | :--: | :--: | :--: | :--: | :--: | :--: |
-| **#Params** |  86.56 M	| 86.57 M	|  	88.22 M | 22.05 M | 22.05 M | 22.8 M |
-| **MACs** | 17.59 G	| 17.59 G	|  4.41 G |  4.61 G	| 4.61 G | 4.23 G |
-| **Acc @ Ep 300** | 75.66 | 81.068	|  75.91 |  79.20	| 79.61 | 79.11 |
-
 *Notes:*
 * Uniform - We apply the same pruning ratio to all layers.
 * Bottleneck - We only prune the internal dimensions of Attention & FFN, leading to bottleneck structures.
@@ -111,6 +103,14 @@ python prune_hf_vit.py
 Base MACs: 16.848735 G, Pruned MACs: 4.241336 G
 Base Params: 86.567656 M, Pruned Params: 22.050664 M
 ```
+
+Pruning results for ImageNet-1K (HF Transformers):
+
+| | ViT-B/16 <br> (HF) | ViT-B/16 <br> (Torchvision) |	ViT_B/32 <br> (Torchvision) | Group L1 <br> (Uniform) | Group Taylor <br> (Uniform) | Group Taylor <br> (Bottleneck) |
+| :-- | :--: | :--: | :--: | :--: | :--: | :--: |
+| **#Params** |  86.56 M	| 86.57 M	|  	88.22 M | 22.05 M | 22.05 M | 22.8 M |
+| **MACs** | 17.59 G	| 17.59 G	|  4.41 G |  4.61 G	| 4.61 G | 4.23 G |
+| **Acc @ Ep 300** | 75.66 | 81.068	|  75.91 |  79.20	| 79.61 | 79.11 |
 
 ### Swin Transformers from [HF Transformers](https://huggingface.co/docs/transformers/index)
 ```bash
