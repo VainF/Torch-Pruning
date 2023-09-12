@@ -154,7 +154,7 @@ model = resnet18(pretrained=True)
 example_inputs = torch.randn(1, 3, 224, 224)
 
 # 1. Importance criterion
-imp = tp.importance.GroupTaylorImportance() # or GroupNormPruner, GroupHessianImportance, etc.
+imp = tp.importance.GroupTaylorImportance() # or GroupNormImportance(p=2), GroupHessianImportance(), etc.
 
 # 2. Initialize a pruner with the model and the importance criterion
 ignored_layers = []
