@@ -1,4 +1,4 @@
-![acc](https://github.com/VainF/Torch-Pruning/assets/18592211/da521161-09fc-4867-884c-d0c54fa42d3b)# Examples for Transformers
+# Transformers
 
 ## Pruning ViT from [Timm](https://github.com/huggingface/pytorch-image-models)
 
