@@ -61,7 +61,7 @@ Some results:
 
 ### Which pruner should be used for ViT pruning?
 
-In short, `tp.importance.GroupTaylor` is a good choice for ViT pruning.
+In short, `tp.importance.GroupTaylorImportance` + `tp.pruner.MetaPruner` is a good choice for ViT pruning.
 
 * Pruning a Vision Transformer (HF Transformers) pre-trained on ImageNet-1K without fine-tuning.
 <div align="center">
