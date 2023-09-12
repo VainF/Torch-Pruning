@@ -92,7 +92,7 @@ model = resnet18(pretrained=True).eval()
 # 1. Build dependency graph for resnet18
 DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
-# 2. Group all coupled layers
+# 2. Group coupled layers for model.conv1
 group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )
 
 # 3. Prune grouped layers altogether
