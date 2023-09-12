@@ -68,6 +68,23 @@ Some results:
 </div>
 
 
+### Latency
+
+* Download our finetuned models
+```bash
+mkdir pretrained
+cd pretrained
+wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_taylor_uniform.pth
+wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_taylor_bottleneck.pth
+wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_l1_uniform.pth
+wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_hessian_uniform.pth
+```
+
+* Measure the latency of the pruned models
+```bash
+python test_latency.py --model pretrained/vit_b_16_pruning_taylor_uniform.pth
+```
+
 ## Pruning Other Transformers
 
 ### ViT from [HF Transformers](https://huggingface.co/docs/transformers/index)
