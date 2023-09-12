@@ -14,7 +14,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='ViT Pruning')
 parser.add_argument('--model_name', default='google/vit-base-patch16-224', type=str, help='model name')
-parser.add_argument('--dataset_root', default='~/Datasets/shared/imagenet/', type=str, help='model name')
+parser.add_argument('--data_path', default='~/Datasets/shared/imagenet/', type=str, help='model name')
 parser.add_argument('--taylor_batchs', default=10, type=int, help='number of batchs for taylor criterion')
 parser.add_argument('--pruning_ratio', default=0.5, type=float, help='prune ratio')
 parser.add_argument('--bottleneck', default=False, action='store_true', help='bottleneck or uniform')
@@ -24,6 +24,7 @@ parser.add_argument('--global_pruning', default=False, action='store_true', help
 
 parser.add_argument('--train_batch_size', default=64, type=int, help='train batch size')
 parser.add_argument('--val_batch_size', default=128, type=int, help='val batch size')
+parser.add_argument('--save_as', default=None, type=str, help='save as')
 args = parser.parse_args()
 
 def prepare_imagenet(imagenet_root, train_batch_size=64, val_batch_size=128, num_workers=4):
@@ -82,7 +83,7 @@ elif args.pruning_type == 'l1':
 else: raise NotImplementedError
 
 if args.pruning_type=='taylor' or args.test_accuracy:
-    train_loader, val_loader = prepare_imagenet(args.dataset_root, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size)
+    train_loader, val_loader = prepare_imagenet(args.data_path, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size)
 
 # Load the model
 model = ViTForImageClassification.from_pretrained(args.model_name).to(device)
@@ -152,3 +153,9 @@ print("Base Params: %.2f M, Pruned Params: %.2f M"%(base_params/1e6, pruned_para
 if args.test_accuracy:
     print("Base Loss: %.4f, Pruned Loss: %.4f"%(loss_ori, loss_pruned))
     print("Base Accuracy: %.4f, Pruned Accuracy: %.4f"%(acc_ori, acc_pruned))
+
+if args.save_as is not None:
+    print("Saving the pruned model to %s..."%args.save_as)
+    os.makedirs(os.path.dirname(args.save_as), exist_ok=True)
+    model.zero_grad()
+    torch.save(model, args.save_as)

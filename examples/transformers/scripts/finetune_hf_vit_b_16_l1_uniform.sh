@@ -1,5 +1,5 @@
 torchrun --nproc_per_node=8 finetune.py \
-    --model "output/pruned/vit_base_patch16_224_pruned_taylor_bottleneck.pth" \
+    --model "output/pruned/hf_vit_base_patch16_224_pruned_l1_uniform.pth" \
     --epochs 300 \
     --batch-size 256 \
     --opt adamw \
@@ -17,4 +17,5 @@ torchrun --nproc_per_node=8 finetune.py \
     --ra-sampler \
     --cutmix-alpha 1.0 \
     --data-path "~/Datasets/shared/imagenet/" \
-    --output-dir output/vit_b_16_pruning_taylor_bottleneck
+    --output-dir output/hf_vit_b_16_pruning_l1_uniform \
+    --is_huggingface \
