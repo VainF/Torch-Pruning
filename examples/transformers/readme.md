@@ -41,7 +41,7 @@ Saving the pruned model to output/pruned/vit_base_patch16_224_pruned_taylor_unif
 ```bash
 bash scripts/finetune_timm_vit_b_16_taylor_uniform.sh
 ```
-Results on ImageNet-21K-ft-1K (Timm):
+Pruning results for ImageNet-21K-ft-1K (Timm):
 
 |  | ViT-B/16 (Timm) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) | Group Hessian (Uniform) |
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
@@ -50,7 +50,7 @@ Results on ImageNet-21K-ft-1K (Timm):
 | **Acc @ Epoch 300** | 85.21	| 80.68  | 74.96 | 80.19 | 80.06 | 80.15   |
 | **Latency (Bs=1, A5000)** | 5.21 ms <br> +- 0.05 ms	|  3.87 ms <br> +- 0.05 ms | 3.99 ms <br> +- 0.10 ms | 3.99 ms <br> +- 0.10 ms  |  3.87 ms <br> +- 0.14 ms  |  3.99 ms <br> +- 0.10 ms    |
 
-Results on ImageNet-1K (HF Transformers):
+Pruning results for ImageNet-1K (HF Transformers):
 
 | | ViT-B/16 <br> (HF) | ViT-B/16 <br> (Torchvision) |	ViT_B/32 <br> (Torchvision) | Group L1 <br> (Uniform) | Group Taylor <br> (Uniform) | Group Taylor <br> (Bottleneck) |
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
