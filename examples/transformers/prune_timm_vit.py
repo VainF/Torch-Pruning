@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument('--taylor_batchs', default=10, type=int, help='number of batchs for taylor criterion')
     parser.add_argument('--pruning_ratio', default=0.5, type=float, help='prune ratio')
     parser.add_argument('--bottleneck', default=False, action='store_true', help='bottleneck or uniform')
-    parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l1', 'hessian'])
+    parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l2', 'hessian'])
     parser.add_argument('--test_accuracy', default=False, action='store_true', help='test accuracy')
     parser.add_argument('--global_pruning', default=False, action='store_true', help='global pruning')
 
@@ -104,8 +104,8 @@ def main():
         imp = tp.importance.RandomImportance()
     elif args.pruning_type == 'taylor':
         imp = tp.importance.GroupTaylorImportance()
-    elif args.pruning_type == 'l1':
-        imp = tp.importance.GroupNormImportance(p=1)
+    elif args.pruning_type == 'l2':
+        imp = tp.importance.GroupNormImportance(p=2)
     elif args.pruning_type == 'hessian':
         imp = tp.importance.GroupHessianImportance()
     else: raise NotImplementedError
