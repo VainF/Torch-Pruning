@@ -204,7 +204,7 @@ for epoch in range(epochs):
 ```
 
 #### Interactive Pruning (Advanced)
-All high-level pruners offer support for interactive pruning. You can utilize the method "pruner.step(interactive=True)" to retrieve all the groups and interactively prune them by calling "group.prune()". This feature is particularly useful when you want to have control over or monitor the pruning process.
+All high-level pruners offer support for interactive pruning. You can utilize the method `pruner.step(interactive=True)` to retrieve all the groups and interactively prune them by calling `group.prune()`. This feature is particularly useful when you want to have control over or monitor the pruning process.
 
 ```python
 for i in range(iterative_steps):
