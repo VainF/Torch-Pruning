@@ -178,6 +178,7 @@ if isinstance(imp, tp.importance.GroupTaylorImportance):
     # A dummy loss, please replace it with your loss function and data!
     loss = model(example_inputs).sum() 
     loss.backward() # before pruner.step()
+
 pruner.step()
 macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
 # finetune the pruned model here
