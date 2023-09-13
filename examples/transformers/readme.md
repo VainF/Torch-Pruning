@@ -43,13 +43,13 @@ bash scripts/finetune_timm_vit_b_16_taylor_uniform.sh
 ```
 Pruning results for ImageNet-21K-ft-1K (Timm):
 
-|  | ViT-B/16 (Timm) |	ViT_B/32 (Timm) | Group L1 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) | Group Hessian (Uniform) |
+|  | ViT-B/16 (Timm) |	ViT_B/32 (Timm) | Group L2 (Uniform) | Group Taylor (Uniform) | Group Taylor (Bottleneck) | Group Hessian (Uniform) |
 | :-- | :--: | :--: | :--: | :--: | :--: | :--: |
 | **#Params** | 86.57 M		|  	88.22 M | 22.05 M | 22.05 M | 24.83 M | 22.05 M |
 | **MACs** | 17.59 G		| 4.41 G |  4.61 G	| 4.61 G | 4.62 G | 4.61 G |
-| **Acc @ Epoch 300** | 85.21	| 80.68  | 74.96 | 80.19 | 80.06 | 80.15   |
+| **Acc @ Epoch 300** | 85.21	| 80.68  | 78.11 | 80.19 | 80.06 | 80.15   |
 | **Latency (Bs=1, A5000)** | 5.21 ms <br> +- 0.05 ms	|  3.87 ms <br> +- 0.05 ms | 3.99 ms <br> +- 0.10 ms | 3.99 ms <br> +- 0.10 ms  |  3.87 ms <br> +- 0.14 ms  |  3.99 ms <br> +- 0.10 ms    |
-| **Checkpoints** | - | - | [ckpt](https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_l1_uniform.pth) | [ckpt](https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_taylor_uniform.pth) | [ckpt](https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_taylor_bottleneck.pth) | [ckpt](https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_hessian_uniform.pth) |
+| **Checkpoints** | - | - | [ckpt](https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_l2_uniform.pth) | [ckpt](https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_taylor_uniform.pth) | [ckpt](https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_taylor_bottleneck.pth) | [ckpt](https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_hessian_uniform.pth) |
 
 *Notes:*
 * Uniform - We apply the same pruning ratio to all layers.
@@ -57,7 +57,7 @@ Pruning results for ImageNet-21K-ft-1K (Timm):
 * Please adjust the learning rate accordingly if the batch size and number of GPUs are changed. Refer to [this paper](https://arxiv.org/pdf/1706.02677.pdf) for more details about linear LR scaling with large mini-batch.
 
 <div align="center">
-  <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/27f04428-4113-4c6f-b19e-8d0f905a2181" width="100%"></img>
+  <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/2537a09f-6d62-4879-8300-6ceec722ebe9" width="100%"></img>
 </div>
 
 ### Which pruner should be used for ViT pruning?
@@ -84,7 +84,7 @@ mkdir pretrained
 cd pretrained
 wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_taylor_uniform.pth
 wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_taylor_bottleneck.pth
-wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_l1_uniform.pth
+wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_l2_uniform.pth
 wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pruning_hessian_uniform.pth
 ```
 
