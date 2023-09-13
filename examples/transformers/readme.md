@@ -57,7 +57,7 @@ Pruning results for ImageNet-21K-ft-1K (Timm):
 * Please adjust the learning rate accordingly if the batch size and number of GPUs are changed. Refer to [this paper](https://arxiv.org/pdf/1706.02677.pdf) for more details about linear LR scaling with large mini-batch.
 
 <div align="center">
-  <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/27f04428-4113-4c6f-b19e-8d0f905a2181" width="100%"></img>
+  <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/2537a09f-6d62-4879-8300-6ceec722ebe9" width="100%"></img>
 </div>
 
 ### Which pruner should be used for ViT pruning?
