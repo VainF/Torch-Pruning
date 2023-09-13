@@ -1,5 +1,5 @@
 torchrun --nproc_per_node=8 finetune.py \
-    --pruned-model "output/pruned/vit_base_patch16_224_pruned_l2_uniform.pth" \
+    --model "output/pruned/vit_base_patch16_224_pruned_l1_uniform.pth" \
     --epochs 300 \
     --batch-size 256 \
     --opt adamw \
