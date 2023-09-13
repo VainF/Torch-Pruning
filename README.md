@@ -224,7 +224,7 @@ for i in range(iterative_steps):
 
 #### Group-level Pruning
 
-With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. In Torch-pruning, all pruners work in the group level. Check the following results to see how grouping improves the performance of pruning.
+With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. This feature can be also used to sparsify coupled layers, making all the to-be-pruned parameters consistently unimportant. In Torch-pruning, all pruners work at the group level. Check the following results to see how grouping improves the performance of pruning.
 
 <div align="center">
 <img src="assets/group_sparsity.png" width="80%">
