@@ -17,6 +17,7 @@ log_dict = {
     'Taylor-uniform': 'output/vit_b_16_pruning_taylor_uniform/train.log',
     'Taylor-bottleneck': 'output/vit_b_16_pruning_taylor_bottleneck/train.log',
     'L1-uniform': 'output/vit_b_16_pruning_l1_uniform/train.log',
+    'L2-uniform': 'output/vit_b_16_pruning_l2_uniform/train.log',
 }
 
 plt.figure(figsize=(8, 4), dpi=200)
