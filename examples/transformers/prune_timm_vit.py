@@ -106,6 +106,8 @@ def main():
         imp = tp.importance.GroupTaylorImportance()
     elif args.pruning_type == 'l2':
         imp = tp.importance.GroupNormImportance(p=2)
+    elif args.pruning_type == 'l1':
+        imp = tp.importance.GroupNormImportance(p=1)
     elif args.pruning_type == 'hessian':
         imp = tp.importance.GroupHessianImportance()
     else: raise NotImplementedError
