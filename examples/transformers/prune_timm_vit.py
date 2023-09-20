@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l2', 'l1', 'hessian'])
     parser.add_argument('--test_accuracy', default=False, action='store_true', help='test accuracy')
     parser.add_argument('--global_pruning', default=False, action='store_true', help='global pruning')
-
+    parser.add_argument('--use_imagenet_mean_std', default=False, action='store_true', help='use imagenet mean and std')
     parser.add_argument('--train_batch_size', default=64, type=int, help='train batch size')
     parser.add_argument('--val_batch_size', default=128, type=int, help='val batch size')
     parser.add_argument('--save_as', default=None, type=str, help='save the pruned model')
@@ -55,27 +55,27 @@ def forward(self, x):
     x = self.proj_drop(x)
     return x
 
-def prepare_imagenet(imagenet_root, train_batch_size=64, val_batch_size=128, num_workers=4):
+def prepare_imagenet(imagenet_root, train_batch_size=64, val_batch_size=128, num_workers=4, use_imagenet_mean_std=False):
     """The imagenet_root should contain train and val folders.
     """
 
     print('Parsing dataset...')
     train_dst = ImageFolder(os.path.join(imagenet_root, 'train'), 
                             transform=presets.ClassificationPresetEval(
-                                mean=[0.5, 0.5, 0.5],
-                                std=[0.5, 0.5, 0.5],
+                                mean=[0.485, 0.456, 0.406] if use_imagenet_mean_std else [0.5, 0.5, 0.5],
+                                std=[0.229, 0.224, 0.225] if use_imagenet_mean_std else [0.5, 0.5, 0.5],
                                 crop_size=224,
                                 resize_size=256,
-                                interpolation=InterpolationMode.BICUBIC,
+                                interpolation=InterpolationMode.BILINEAR,
                             )
     )
     val_dst = ImageFolder(os.path.join(imagenet_root, 'val'), 
                           transform=presets.ClassificationPresetEval(
-                                mean=[0.5, 0.5, 0.5],
-                                std=[0.5, 0.5, 0.5],
+                                mean=[0.485, 0.456, 0.406] if use_imagenet_mean_std else [0.5, 0.5, 0.5],
+                                std=[0.229, 0.224, 0.225] if use_imagenet_mean_std else [0.5, 0.5, 0.5],
                                 crop_size=224,
                                 resize_size=256,
-                                interpolation=InterpolationMode.BICUBIC,
+                                interpolation=InterpolationMode.BILINEAR,
                             )
     )
     train_loader = torch.utils.data.DataLoader(train_dst, batch_size=train_batch_size, shuffle=True, num_workers=num_workers)
@@ -113,7 +113,7 @@ def main():
     else: raise NotImplementedError
 
     if args.pruning_type in ['taylor', 'hessian'] or args.test_accuracy:
-        train_loader, val_loader = prepare_imagenet(args.data_path, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size)
+        train_loader, val_loader = prepare_imagenet(args.data_path, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size, use_imagenet_mean_std=args.use_imagenet_mean_std)
 
     # Load the model
     model = timm.create_model(args.model_name, pretrained=True).eval().to(device)
@@ -144,6 +144,7 @@ def main():
                     ch_sparsity=args.pruning_ratio, # target sparsity
                     ignored_layers=ignored_layers,
                     channel_groups=ch_groups,
+                    round_to=16,
     )
     if isinstance(imp, (tp.importance.GroupTaylorImportance, tp.importance.GroupHessianImportance)):
         model.zero_grad()

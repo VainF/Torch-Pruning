@@ -172,8 +172,8 @@ def load_data(traindir, valdir, args):
         dataset = torchvision.datasets.ImageFolder(
             traindir,
             presets.ClassificationPresetTrain(
-                mean=(0.485, 0.456, 0.406) if args.is_huggingface else (0.5, 0.5, 0.5) ,
-                std=(0.229, 0.224, 0.225) if args.is_huggingface else (0.5, 0.5, 0.5),
+                mean=(0.485, 0.456, 0.406) if (args.is_huggingface or args.use_imagenet_mean_std) else (0.5, 0.5, 0.5) ,
+                std=(0.229, 0.224, 0.225) if (args.is_huggingface or args.use_imagenet_mean_std) else (0.5, 0.5, 0.5),
                 crop_size=train_crop_size,
                 interpolation=interpolation,
                 auto_augment_policy=auto_augment_policy,
@@ -205,8 +205,8 @@ def load_data(traindir, valdir, args):
 
         else:
             preprocessing = presets.ClassificationPresetEval(
-                mean=(0.485, 0.456, 0.406) if args.is_huggingface else (0.5, 0.5, 0.5) ,
-                std=(0.229, 0.224, 0.225) if args.is_huggingface else (0.5, 0.5, 0.5),
+                mean=(0.485, 0.456, 0.406) if (args.is_huggingface or args.use_imagenet_mean_std) else (0.5, 0.5, 0.5) ,
+                std=(0.229, 0.224, 0.225) if (args.is_huggingface or args.use_imagenet_mean_std) else (0.5, 0.5, 0.5),
                 crop_size=val_crop_size,
                 resize_size=val_resize_size,
                 interpolation=interpolation,
@@ -561,7 +561,7 @@ def get_args_parser(add_help=True):
         "--use-deterministic-algorithms", action="store_true", help="Forces the use of deterministic algorithms only."
     )
     parser.add_argument(
-        "--interpolation", default="bicubic", type=str, help="the interpolation method (default: bicubic)"
+        "--interpolation", default="bilinear", type=str, help="the interpolation method (default: bicubic)"
     )
     parser.add_argument(
         "--val-resize-size", default=256, type=int, help="the resize size used for validation (default: 256)"
@@ -584,6 +584,7 @@ def get_args_parser(add_help=True):
     parser.add_argument("--is_huggingface", action="store_true", help="Use huggingface models")
 
     parser.add_argument("--checkpoint-interval", default=10, type=int, help="checkpoint interval (default: 10)")
+    parser.add_argument("--use_imagenet_mean_std", default=False, action="store_true", help="Use imagenet mean and std")
     return parser
 
 

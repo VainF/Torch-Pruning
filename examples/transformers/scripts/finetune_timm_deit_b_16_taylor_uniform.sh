@@ -1,5 +1,5 @@
 torchrun --nproc_per_node=8 finetune.py \
-    --model "output/pruned/vit_base_patch16_224_pruned_taylor_uniform.pth" \
+    --model "output/pruned/deit_base_patch16_224_pruned_taylor_uniform.pth" \
     --epochs 300 \
     --batch-size 256 \
     --opt adamw \
@@ -18,4 +18,5 @@ torchrun --nproc_per_node=8 finetune.py \
     --random-erase 0.25 \
     --cutmix-alpha 1.0 \
     --data-path "~/Datasets/shared/imagenet/" \
-    --output-dir output/vit_b_16_pruning_taylor_uniform_v2
+    --output-dir output/deit_b_16_pruning_taylor_uniform \
+    --use_imagenet_mean_std \
