@@ -52,10 +52,10 @@ def main():
 
     example_input = torch.rand(args.batch_size, 3, 224, 224).to(device)
     macs, params = tp.utils.count_ops_and_params(model, example_input)
-    latency_mu, latency_std = test_latency(model, example_input)
+    latency_mu, latency_std = estimate_latency(model, example_input)
     print(f"MACs: {macs/1e9:.2f} G, \tParams: {params/1e6:.2f} M, \tLatency: {latency_mu:.2f} ms +- {latency_std:.2f} ms")
 
-def test_latency(model, example_inputs, repetitions=300):
+def estimate_latency(model, example_inputs, repetitions=300):
     import numpy as np
     starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
     timings=np.zeros((repetitions,1))
