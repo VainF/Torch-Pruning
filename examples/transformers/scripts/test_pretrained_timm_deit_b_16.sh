@@ -1,0 +1,21 @@
+python finetune.py \
+    --model "deit_base_distilled_patch16_224" \
+    --epochs 300 \
+    --batch-size 32 \
+    --opt adamw \
+    --lr 0.00015 \
+    --wd 0.3 \
+    --lr-scheduler cosineannealinglr \
+    --lr-warmup-method linear \
+    --lr-warmup-epochs 0 \
+    --lr-warmup-decay 0.033 \
+    --amp \
+    --label-smoothing 0.11 \
+    --mixup-alpha 0.2 \
+    --auto-augment ra \
+    --clip-grad-norm 1 \
+    --ra-sampler \
+    --cutmix-alpha 1.0 \
+    --data-path "~/Datasets/shared/imagenet/" \
+    --test-only \
+    --use_imagenet_mean_std \

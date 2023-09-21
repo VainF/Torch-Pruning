@@ -11,7 +11,7 @@
   <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-1.8 %20%7C%201.12 %20%7C%202.0-673ab7.svg" alt="Tested PyTorch Versions"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-4caf50.svg" alt="License"></a>
   <a href="https://pepy.tech/project/Torch-Pruning"><img src="https://static.pepy.tech/badge/Torch-Pruning?color=2196f3" alt="Downloads"></a>
-  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.2.4-3f51b5.svg" alt="Latest Version"></a>
+  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.2.5-3f51b5.svg" alt="Latest Version"></a>
   <a href="https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
@@ -23,7 +23,7 @@
 
 Torch-Pruning (TP) is a library for structural pruning with the following features:
 
-* **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of deep neural networks, including [Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [Vision Transformers](examples/hf_transformers/), [Swin Transformers](examples/hf_transformers), [BERT](examples/hf_transformers), FasterRCNN, SSD, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, DeepLab, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys a (non-deep) graph algorithm called **[DepGraph](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)** to remove parameters physically. 
+* **General-purpose Pruning Toolkit:** TP enables structural pruning for a wide range of deep neural networks, including [Large Language Models (LLMs)](https://github.com/horseee/LLM-Pruner), [Diffusion Models](https://github.com/VainF/Diff-Pruning), [Yolov7](examples/yolov7/), [yolov8](examples/yolov8/), [Vision Transformers](examples/transformers/), [Swin Transformers](examples/transformers#swin-transformers-from-hf-transformers), [BERT](examples/transformers#bert-from-hf-transformers), FasterRCNN, SSD, ResNe(X)t, ConvNext, DenseNet, ConvNext, RegNet, DeepLab, etc. Different from [torch.nn.utils.prune](https://pytorch.org/tutorials/intermediate/pruning_tutorial.html) that zeroizes parameters through masking, Torch-Pruning deploys an algorithm called **[DepGraph](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)** to remove parameters physically. Check our [Paper List](https://github.com/VainF/Torch-Pruning/wiki/0.-Paper-List) for more details.
 * **[Examples](examples)**: Play around with off-the-shelf models from Huggingface Transformers, Timm, Torchvision, Yolo, etc.  
 * **[Benchmark](benchmarks)**: Reproduce the our results in the DepGraph paper.
 
@@ -33,14 +33,14 @@ For more technical details, please refer to our CVPR'23 paper:
 > *[Learning and Vision Lab](http://lv-nus.org/), National University of Singapore*
   
 ### Update:
-* 2023.09.06 [Pruning & Finetuning Examples for Vision Transformers, Swin Transformers, Bert](examples/transformers/).
-* 2023.07.19 :rocket: Support LLaMA, LLaMA-2, Vicuna, Baichuan, Bloom in [LLM-Pruner](https://github.com/horseee/LLM-Pruner)
-* 2023.05.20 :rocket: [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
-* 2023.05.19 [Structural Pruning for Diffusion Models](https://github.com/VainF/Diff-Pruning) [*[arXiv]*](https://arxiv.org/abs/2305.10924)
-* 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/examples)
+- [x] 2023.09.06 [Pruning & Finetuning Examples for Vision Transformers, Swin Transformers, Bert](examples/transformers/).
+- [x] 2023.07.19 :rocket: Support LLaMA, LLaMA-2, Vicuna, Baichuan, Bloom in [LLM-Pruner](https://github.com/horseee/LLM-Pruner)
+- [x] 2023.05.20 :rocket: [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
+- [x] 2023.05.19 [Structural Pruning for Diffusion Models](https://github.com/VainF/Diff-Pruning) [*[arXiv]*](https://arxiv.org/abs/2305.10924)
+- [x] 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/examples)
 
 ### **Features:**
-- [x] High-level Pruners: [MetaPruner](torch_pruning/pruner/algorithms/metapruner.py), [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), [GrowingRegPruner](https://arxiv.org/abs/2012.09243), RandomPruner, etc. A paper list is available on our [wiki page](https://github.com/VainF/Torch-Pruning/wiki/Paper-List).
+- [x] High-level Pruners: [MetaPruner](torch_pruning/pruner/algorithms/metapruner.py), [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), [GrowingRegPruner](https://arxiv.org/abs/2012.09243), RandomPruner, etc. A paper list is available on our [wiki page](https://github.com/VainF/Torch-Pruning/wiki/0.-Paper-List).
 - [x] Dependency Graph for automatic structural pruning
 - [x] [Low-level pruning functions](torch_pruning/pruner/function.py)
 - [x] Supported Importance Criteria: L-p Norm, Taylor, Random, BNScaling, etc.
@@ -51,7 +51,7 @@ For more technical details, please refer to our CVPR'23 paper:
 ### **Contact Us:**
 Please do not hesitate to open a [discussion](https://github.com/VainF/Torch-Pruning/discussions) or [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.   
 Or Join our Discord or WeChat group for a chat:
-  * Discord: [link](https://discord.gg/2CXnf5bN)
+  * Discord: [link](https://discord.gg/hjX24XA9)
   * WeChat (Group size exceeded 200): [QR Code](https://github.com/VainF/Torch-Pruning/assets/18592211/6c80e758-7692-4dad-b6aa-1e1877e72bf7)
 
 ## Installation
@@ -92,7 +92,7 @@ model = resnet18(pretrained=True).eval()
 # 1. Build dependency graph for resnet18
 DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
 
-# 2. Group all coupled layers
+# 2. Group coupled layers for model.conv1
 group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )
 
 # 3. Prune grouped layers altogether
@@ -154,34 +154,36 @@ model = resnet18(pretrained=True)
 example_inputs = torch.randn(1, 3, 224, 224)
 
 # 1. Importance criterion
-imp = tp.importance.GroupTaylorImportance() # or GroupNormPruner, GroupHessianImportance, etc.
+imp = tp.importance.GroupTaylorImportance() # or GroupNormImportance(p=2), GroupHessianImportance(), etc.
 
 # 2. Initialize a pruner with the model and the importance criterion
 ignored_layers = []
 for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m) # DO NOT prune the final classifier!
+
 pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse training is not required.
     model,
     example_inputs,
     importance=imp,
     ch_sparsity=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+    # ch_sparsity_dict = {model.conv1: 0.2, model.layer2: 0.8}, # customized sparsity for layers or blocks
     ignored_layers=ignored_layers,
 )
 
 # 3. Prune & finetune the model
 base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
-for i in range(iterative_steps):
-    if isinstance(imp, tp.importance.GroupTaylorImportance):
-        # Taylor expansion requires gradients for importance estimation
-        # A dummy loss, please replace it with your loss function and data!
-        loss = model(example_inputs).sum() 
-        loss.backward() # before pruner.step()
-    pruner.step()
-    macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
-    # finetune the pruned model here
-    # finetune(model)
-    # ...
+if isinstance(imp, tp.importance.GroupTaylorImportance):
+    # Taylor expansion requires gradients for importance estimation
+    # A dummy loss, please replace it with your loss function and data!
+    loss = model(example_inputs).sum() 
+    loss.backward() # before pruner.step()
+
+pruner.step()
+macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
+# finetune the pruned model here
+# finetune(model)
+# ...
 ```
 #### Global Pruning
 
@@ -204,7 +206,7 @@ for epoch in range(epochs):
 ```
 
 #### Interactive Pruning (Advanced)
-All high-level pruners offer support for interactive pruning. You can utilize the method "pruner.step(interactive=True)" to retrieve all the groups and interactively prune them by calling "group.prune()". This feature is particularly useful when you want to have control over or monitor the pruning process.
+All high-level pruners offer support for interactive pruning. You can utilize the method `pruner.step(interactive=True)` to retrieve all the groups and interactively prune them by calling `group.prune()`. This feature is particularly useful when you want to have control over or monitor the pruning process.
 
 ```python
 for i in range(iterative_steps):
@@ -224,7 +226,7 @@ for i in range(iterative_steps):
 
 #### Group-level Pruning
 
-With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. In Torch-pruning, all pruners work in the group level. Check the following results to see how grouping improves the performance of pruning.
+With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. This feature can be also used to sparsify coupled layers, making all the to-be-pruned parameters consistently unimportant. In Torch-pruning, all pruners work at the group level. Check the following results to see how grouping improves the performance of pruning.
 
 <div align="center">
 <img src="assets/group_sparsity.png" width="80%">
@@ -312,7 +314,7 @@ The following [pruning functions](torch_pruning/pruner/function.py) are availabl
 
 ### 5. Customized Layers
 
-Please refer to [examples/hf_transformers/prune_swin.py](examples/hf_transformers/prune_swin.py), which implements a new pruner for the customized module ``SwinPatchMerging``. A more simple example is available at [tests/test_customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_customized_layer.py).
+Please refer to [examples/transformers/prune_hf_swin.py](examples/transformers/prune_hf_swin.py), which implements a new pruner for the customized module ``SwinPatchMerging``. A more simple example is available at [tests/test_customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_customized_layer.py).
 
 ### 6. Benchmarks
 

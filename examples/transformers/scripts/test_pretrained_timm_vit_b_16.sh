@@ -1,8 +1,7 @@
-torchrun --nproc_per_node=8 finetune.py \
-    --pruned-model "output/pruned/vit_base_patch16_224_pruned.pth" \
-    --model google/vit-base-patch16-224 \
+python finetune.py \
+    --model "vit_base_patch16_224" \
     --epochs 300 \
-    --batch-size 256 \
+    --batch-size 32 \
     --opt adamw \
     --lr 0.00015 \
     --wd 0.3 \
@@ -18,4 +17,4 @@ torchrun --nproc_per_node=8 finetune.py \
     --ra-sampler \
     --cutmix-alpha 1.0 \
     --data-path "~/Datasets/shared/imagenet/" \
-    --output-dir output/vit_b_16_taylor_pruning
+    --test-only \

@@ -8,15 +8,43 @@ import torch
 import torch.utils.data
 import torchvision
 import torchvision.transforms
+import torch.nn.functional as F
 import utils
 from sampler import RASampler
 from torch import nn
 from torch.utils.data.dataloader import default_collate
 from torchvision.transforms.functional import InterpolationMode
+
 from transforms import get_mixup_cutmix
 import sys
 
+import timm
+
 import torch_pruning as tp
+
+
+def forward(self, x):
+    B, N, C = x.shape
+    qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
+    q, k, v = qkv.unbind(0)
+    q, k = self.q_norm(q), self.k_norm(k)
+
+    if self.fused_attn:
+        x = F.scaled_dot_product_attention(
+            q, k, v,
+            dropout_p=self.attn_drop.p,
+        )
+    else:
+        q = q * self.scale
+        attn = q @ k.transpose(-2, -1)
+        attn = attn.softmax(dim=-1)
+        attn = self.attn_drop(attn)
+        x = attn @ v
+
+    x = x.transpose(1, 2).reshape(B, N, -1)
+    x = self.proj(x)
+    x = self.proj_drop(x)
+    return x
 
 def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema=None, scaler=None):
     model.train()
@@ -30,6 +58,8 @@ def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, arg
         image, target = image.to(device), target.to(device)
         with torch.cuda.amp.autocast(enabled=scaler is not None):
             output = model(image)
+            if args.is_huggingface:
+                output = output.logits
             loss = criterion(output, target)
 
         optimizer.zero_grad()
@@ -72,6 +102,8 @@ def evaluate(model, criterion, data_loader, device, print_freq=100, log_suffix="
             image = image.to(device, non_blocking=True)
             target = target.to(device, non_blocking=True)
             output = model(image)
+            if args.is_huggingface:
+                output = output.logits
             loss = criterion(output, target)
 
             acc1, acc5 = utils.accuracy(output, target, topk=(1, 5))
@@ -140,6 +172,8 @@ def load_data(traindir, valdir, args):
         dataset = torchvision.datasets.ImageFolder(
             traindir,
             presets.ClassificationPresetTrain(
+                mean=(0.485, 0.456, 0.406) if (args.is_huggingface or args.use_imagenet_mean_std) else (0.5, 0.5, 0.5) ,
+                std=(0.229, 0.224, 0.225) if (args.is_huggingface or args.use_imagenet_mean_std) else (0.5, 0.5, 0.5),
                 crop_size=train_crop_size,
                 interpolation=interpolation,
                 auto_augment_policy=auto_augment_policy,
@@ -171,6 +205,8 @@ def load_data(traindir, valdir, args):
 
         else:
             preprocessing = presets.ClassificationPresetEval(
+                mean=(0.485, 0.456, 0.406) if (args.is_huggingface or args.use_imagenet_mean_std) else (0.5, 0.5, 0.5) ,
+                std=(0.229, 0.224, 0.225) if (args.is_huggingface or args.use_imagenet_mean_std) else (0.5, 0.5, 0.5),
                 crop_size=val_crop_size,
                 resize_size=val_resize_size,
                 interpolation=interpolation,
@@ -250,11 +286,21 @@ def main(args):
     )
 
     print("Creating model")
-    if args.pruned_model is not None:
-        model = torch.load(args.pruned_model, map_location='cpu') #torchvision.models.get_model(args.model, weights=args.weights, num_classes=num_classes)
-    else:
+    if os.path.isfile(args.model):
+        print(f"Loading pruned model from {args.model}")
+        model = torch.load(args.model, map_location='cpu') #torchvision.models.get_model(args.model, weights=args.weights, num_classes=num_classes)
+    elif args.is_huggingface:
+        print(f"Loading Huggingface model from {args.model}")
         from transformers import ViTForImageClassification
         model = ViTForImageClassification.from_pretrained(args.model)
+    else:
+        print(f"Loading timm model from {args.model}")
+        model = timm.create_model(args.model, pretrained=True)
+    
+    if not args.is_huggingface:
+        for m in model.modules():
+            if isinstance(m, timm.models.vision_transformer.Attention):
+                m.forward = forward.__get__(m, timm.models.vision_transformer.Attention) # https://stackoverflow.com/questions/50599045/python-replacing-a-function-within-a-class-of-a-module
 
     model.to(device)
     macs, params = tp.utils.count_ops_and_params(model, torch.randn(1, 3, 224, 224).to(device))
@@ -408,8 +454,8 @@ def get_args_parser(add_help=True):
 
     parser = argparse.ArgumentParser(description="PyTorch Classification Training", add_help=add_help)
 
-    parser.add_argument("--model", required=True, type=str, help="model_name")
-    parser.add_argument("--pruned-model", default=None, type=str, help="path to the pruned model")
+    parser.add_argument("--model", default='vit_base_patch16_224', type=str, help="path or name of the (pruned) model")
+    #parser.add_argument("--pruned-model", default=None, type=str, help="path to the pruned model")
     parser.add_argument("--data-path", default="~/Datasets/imagenet", type=str, help="dataset path")
     parser.add_argument("--device", default="cuda", type=str, help="device (Use cuda or cpu Default: cuda)")
     parser.add_argument(
@@ -515,7 +561,7 @@ def get_args_parser(add_help=True):
         "--use-deterministic-algorithms", action="store_true", help="Forces the use of deterministic algorithms only."
     )
     parser.add_argument(
-        "--interpolation", default="bilinear", type=str, help="the interpolation method (default: bilinear)"
+        "--interpolation", default="bilinear", type=str, help="the interpolation method (default: bicubic)"
     )
     parser.add_argument(
         "--val-resize-size", default=256, type=int, help="the resize size used for validation (default: 256)"
@@ -535,7 +581,10 @@ def get_args_parser(add_help=True):
     parser.add_argument("--backend", default="PIL", type=str.lower, help="PIL or tensor - case insensitive")
     parser.add_argument("--use-v2", action="store_true", help="Use V2 transforms")
 
+    parser.add_argument("--is_huggingface", action="store_true", help="Use huggingface models")
+
     parser.add_argument("--checkpoint-interval", default=10, type=int, help="checkpoint interval (default: 10)")
+    parser.add_argument("--use_imagenet_mean_std", default=False, action="store_true", help="Use imagenet mean and std")
     return parser
 
 
