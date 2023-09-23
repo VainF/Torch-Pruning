@@ -367,13 +367,16 @@ Please refer to [benchmarks](benchmarks) for more details.
 ### 8. Series of Works
 
 > **DepGraph: Towards Any Structural Pruning** [[Project]](https://github.com/VainF/Torch-Pruning) [[Paper]](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)   
-> *Gongfan Fang, Xinyin Ma, Mingli Song, Michael Bi Mi, Xinchao Wang*   
+> *Gongfan Fang, Xinyin Ma, Mingli Song, Michael Bi Mi, Xinchao Wang*  
+> CVPR 2023
 
 > **LLM-Pruner: On the Structural Pruning of Large Language Models** [[Project]](https://github.com/horseee/LLM-Pruner) [[arXiv]](https://arxiv.org/abs/2305.11627)   
-> *Xinyin Ma, Gongfan Fang, Xinchao Wang*   
+> *Xinyin Ma, Gongfan Fang, Xinchao Wang*  
+> NeurIPS 2023
 
 > **Structural Pruning for Diffusion Models** [[Project]](https://github.com/VainF/Diff-Pruning) [[arxiv]](https://arxiv.org/abs/2305.10924)  
-> *Gongfan Fang, Xinyin Ma, Xinchao Wang*    
+> *Gongfan Fang, Xinyin Ma, Xinchao Wang*  
+> NeurIPS 2023
 
 
 ## Citation
