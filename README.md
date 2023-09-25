@@ -1,6 +1,6 @@
 <br>
 <div align="center">
-<img src="https://user-images.githubusercontent.com/18592211/232830417-0b21a874-516e-4420-8984-4de414a35085.png" width="400px"></img>
+<img src="https://user-images.githubusercontent.com/18592211/232830417-0b21a874-516e-4420-8984-4de414a35085.png" width="350px"></img>
 <h2>Towards Any Structural Pruning<h2>
 <img src="assets/intro.png" width="50%">
 </div>
