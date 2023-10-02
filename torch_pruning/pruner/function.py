@@ -246,7 +246,8 @@ class LayernormPruner(BasePruningFunc):
         keep_idxs.sort()
         if layer.elementwise_affine:
             layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, pruning_dim)
-            layer.bias = self._prune_parameter_and_grad(layer.bias, keep_idxs, pruning_dim)
+            if layer.bias is not None:
+                layer.bias = self._prune_parameter_and_grad(layer.bias, keep_idxs, pruning_dim)
         if pruning_dim != -1:
             layer.normalized_shape = layer.normalized_shape[:pruning_dim] + (
                 keep_idxs.size(0), ) + layer.normalized_shape[pruning_dim+1:]
