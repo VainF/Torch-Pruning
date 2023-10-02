@@ -262,7 +262,7 @@ class Scale(nn.Module):
     def forward(self, x):
         return x * self.scale.view(self.shape) # => x * self.scale.view(-1, 1, 1), this works for pruning
 ```
-where the ```forward``` function relies on ``self.shape`` during forwarding. But, ``self.shape`` changed after pruning, which should be manually adjusted accordingly. 
+where the ```forward``` function relies on ``self.shape`` during forwarding. But, the true ``self.shape`` changed after pruning, which should be manually adjusted accordingly. 
 
 
 ### 3. Save & Load
