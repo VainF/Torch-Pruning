@@ -306,7 +306,6 @@ class MetaPruner:
                 
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs.tolist())
-    
                 if self.DG.check_pruning_group(group):
                     yield group
 
