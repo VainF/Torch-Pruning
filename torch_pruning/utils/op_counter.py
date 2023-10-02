@@ -36,14 +36,12 @@ def count_ops_and_params(model, example_inputs, layer_wise=False):
     flops_count, params_count, _layer_flops, _layer_params = flops_model.compute_average_flops_cost()
     layer_flops = {}
     layer_params = {}
-
-    flops_model.stop_flops_count()
-    CUSTOM_MODULES_MAPPING = {}
-
     for ori_m, m in zip(ori_model.modules(), model.modules()):
         layer_flops[ori_m] = _layer_flops.get(m)
         layer_params[ori_m] = _layer_params.get(m)
-        
+
+    flops_model.stop_flops_count()
+    CUSTOM_MODULES_MAPPING = {}
     if layer_wise:
         return flops_count, params_count, layer_flops, layer_params
     return flops_count, params_count
@@ -87,6 +85,12 @@ def bn_flops_counter_hook(module, input, output):
         batch_flops *= 2
     module.__flops__ += int(batch_flops)
 
+def ln_flops_counter_hook(module, input, output):
+    input = input[0]
+    batch_flops = np.prod(input.shape)
+    if module.elementwise_affine:
+        batch_flops *= 2
+    module.__flops__ += int(batch_flops)
 
 def conv_flops_counter_hook(conv_module, input, output):
     # Can have multiple inputs, getting the first one
@@ -330,6 +334,7 @@ MODULES_MAPPING = {
     nn.InstanceNorm2d: bn_flops_counter_hook,
     nn.InstanceNorm3d: bn_flops_counter_hook,
     nn.GroupNorm: bn_flops_counter_hook,
+    nn.LayerNorm: ln_flops_counter_hook,
     # FC
     nn.Linear: linear_flops_counter_hook,
     # Upscale
