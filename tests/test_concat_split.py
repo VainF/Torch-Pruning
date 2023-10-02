@@ -60,13 +60,13 @@ def test_pruner():
         ch_sparsity=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
         ignored_layers=ignored_layers,
     )
-    print(model)
+
     base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
     for i in range(iterative_steps):
         for g in pruner.step(interactive=True):
-            print(g.details())
+            #print(g.details())
             g.prune()
-            print(model)
+        print(model)
         macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
         print(model(example_inputs).shape)
         print(

@@ -14,7 +14,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='ViT Pruning')
 parser.add_argument('--model_name', default='google/vit-base-patch16-224', type=str, help='model name')
-parser.add_argument('--data_path', default='~/Datasets/shared/imagenet/', type=str, help='model name')
+parser.add_argument('--data_path', default='data/imagenet', type=str, help='model name')
 parser.add_argument('--taylor_batchs', default=10, type=int, help='number of batchs for taylor criterion')
 parser.add_argument('--pruning_ratio', default=0.5, type=float, help='prune ratio')
 parser.add_argument('--bottleneck', default=False, action='store_true', help='bottleneck or uniform')
@@ -96,14 +96,14 @@ if args.test_accuracy:
     print("Accuracy: %.4f, Loss: %.4f"%(acc_ori, loss_ori))
 
 print("Pruning %s..."%args.model_name)
-channel_groups = {}
+num_heads = {}
 ignored_layers = [model.classifier]
 # All heads should be pruned simultaneously, so we group channels by head.
 for m in model.modules():
     if isinstance(m, ViTSelfAttention):
-        channel_groups[m.query] = m.num_attention_heads
-        channel_groups[m.key] = m.num_attention_heads
-        channel_groups[m.value] = m.num_attention_heads
+        num_heads[m.query] = m.num_attention_heads
+        num_heads[m.key] = m.num_attention_heads
+        num_heads[m.value] = m.num_attention_heads
     if args.bottleneck and isinstance(m, ViTSelfOutput):
         ignored_layers.append(m.dense)
 
@@ -115,7 +115,7 @@ pruner = tp.pruner.MetaPruner(
                 ch_sparsity=args.pruning_ratio, # target sparsity
                 ignored_layers=ignored_layers,
                 output_transform=lambda out: out.logits.sum(),
-                channel_groups=channel_groups,
+                num_heads=num_heads,
 )
 
 if isinstance(imp, tp.importance.TaylorImportance):

@@ -5,7 +5,7 @@
 ### Data
 Please prepare the ImageNet-1K dataset as follows and modify the data root in the script.
 ```
-imagenet/
+./data/imagenet/
   train/
     n01440764/
       n01440764_10026.JPEG
@@ -90,7 +90,7 @@ wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pr
 
 * Measure the latency of the pruned models
 ```bash
-python estimate_latency.py --model pretrained/vit_b_16_pruning_taylor_uniform.pth
+python measure_latency.py --model pretrained/vit_b_16_pruning_taylor_uniform.pth
 ```
 
 ## Pruning ViT-ImageNet-1K from [HF Transformers](https://huggingface.co/docs/transformers/index)

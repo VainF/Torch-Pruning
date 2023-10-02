@@ -17,5 +17,5 @@ torchrun --nproc_per_node=8 finetune.py \
     --ra-sampler \
     --random-erase 0.25 \
     --cutmix-alpha 1.0 \
-    --data-path "~/Datasets/shared/imagenet/" \
+    --data-path "data/imagenet" \
     --output-dir output/vit_b_16_pruning_taylor_uniform_v2

@@ -8,7 +8,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 N_batchs = 10
-imagenet_root = '~/Datasets/shared/imagenet/'
+imagenet_root = 'data/imagenet'
 print('Parsing dataset...')
 train_dst = ImageFolder(os.path.join(imagenet_root, 'train'), transform=T.Compose(
     [

@@ -27,11 +27,17 @@ class MetaPruner:
             * round_to (int): round channels to the nearest multiple of round_to. E.g., round_to=8 means channels will be rounded to 8x. Default: None.
             
             # Adavanced
+            * in_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer input. Default: dict().
+            * out_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer output. Default: dict().
+            * num_heads (Dict[nn.Module, int]): The number of heads for multi-head attention. Default: dict().
             * customized_pruners (dict): a dict containing module-pruner pairs. Default: None.
             * unwrapped_parameters (dict): a dict containing unwrapped parameters & pruning dims. Default: None.
             * root_module_types (list): types of prunable modules. Default: [nn.Conv2d, nn.Linear, nn.LSTM].
             * forward_fn (Callable): A function to execute model.forward. Default: None.
             * output_transform (Callable): A function to transform network outputs. Default: None.
+
+            # Deprecated
+            * channel_groups (Dict[nn.Module, int]): output channel grouping. Default: dict().
         """
 
     def __init__(
@@ -52,6 +58,7 @@ class MetaPruner:
         # Advanced
         in_channel_groups: typing.Dict[nn.Module, int] = dict(), # The number of channel groups for layer input
         out_channel_groups: typing.Dict[nn.Module, int] = dict(), # The number of channel groups for layer output
+        num_heads: typing.Dict[nn.Module, int] = dict(), # The number of heads for multi-head attention
         customized_pruners: typing.Dict[typing.Any, function.BasePruningFunc] = None, # pruners for customized layers. E.g., {nn.Linear: my_linear_pruner}
         unwrapped_parameters: typing.Dict[nn.Parameter, int] = None, # unwrapped nn.Parameters & pruning_dims. For example, {ViT.pos_emb: 0}
         root_module_types: typing.List = [ops.TORCH_CONV, ops.TORCH_LINEAR, ops.TORCH_LSTM],  # root module for each group
@@ -59,7 +66,7 @@ class MetaPruner:
         output_transform: typing.Callable = None, # a function to transform network outputs
 
         # deprecated
-        channel_groups: typing.Dict[nn.Module, int] = dict(), # channel groups for layers
+        channel_groups: typing.Dict[nn.Module, int] = dict(), # channel grouping
     ):
         self.model = model
         self.importance = importance
@@ -72,9 +79,12 @@ class MetaPruner:
             warnings.warn("channel_groups is deprecated. Please use in_channel_groups and out_channel_groups instead.")
             out_channel_groups.update(channel_groups)
         
+        if len(num_heads) > 0:
+            out_channel_groups.update(num_heads)
+
         self.in_channel_groups = in_channel_groups
         self.out_channel_groups = out_channel_groups
-
+        self.num_heads = num_heads
         self.root_module_types = root_module_types
         self.round_to = round_to
 
@@ -129,7 +139,7 @@ class MetaPruner:
             in_ch_group = layer_pruner.get_in_channel_groups(m)
             out_ch_group = layer_pruner.get_out_channel_groups(m)
             if isinstance(m, ops.TORCH_CONV) and m.groups == m.out_channels:
-                    continue
+                continue
             if in_ch_group > 1:
                 self.in_channel_groups[m] = in_ch_group
             if out_ch_group > 1:
@@ -149,7 +159,7 @@ class MetaPruner:
         if self.global_pruning:
             initial_total_channels = 0
             for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
-                group = self._downstream_node_as_root_if_unbind(group)
+                group = self._downstream_node_as_root_if_attention(group)
                 initial_total_channels += ( (self.DG.get_out_channels(group[0][0].target.module) ) // self._get_channel_groups(group) )
             self.initial_total_channels = initial_total_channels
     
@@ -209,8 +219,8 @@ class MetaPruner:
 
     def _get_channel_groups(self, group) -> int:
         ch_groups = 1
-        has_unbind = False
-        unbind_node = None
+        #has_unbind = False
+        #unbind_node = None
 
         for dep, _ in group:
             module = dep.target.module
@@ -220,24 +230,24 @@ class MetaPruner:
             if module in channel_groups:
                 ch_groups = channel_groups[module]
 
-            if dep.source.type==ops.OPTYPE.UNBIND:
-                has_unbind = True
-                unbind_node = dep.source
+            #if dep.source.type==ops.OPTYPE.UNBIND:
+            #    has_unbind = True
+            #    unbind_node = dep.source
 
-        if has_unbind and ch_groups>1:
-            ch_groups = ch_groups // len(unbind_node.outputs) 
+        #if has_unbind and ch_groups>1:
+        #    ch_groups = ch_groups // len(unbind_node.outputs) 
         return ch_groups  # no channel grouping
 
-    def _downstream_node_as_root_if_unbind(self, group):
+    def _downstream_node_as_root_if_attention(self, group):
         # Use a downstream node as the root if torch.unbind exists. TODO: find a general way to handle torch.unbind in timm
-        qkv_unbind = False
+        is_attention = False
         downstream_dep = None
         for _dep, _idxs in group:
-            if _dep.source.type == ops.OPTYPE.UNBIND:
-                qkv_unbind = True
+            if _dep.source.module in self.num_heads:
+                is_attention = True
             if isinstance(_dep.target.module, tuple(self.root_module_types)):
                 downstream_dep = _dep
-        if qkv_unbind and downstream_dep is not None: # use a downstream node as the root node
+        if is_attention and downstream_dep is not None: # use a downstream node as the root node for attention layers
             group = self.DG.get_pruning_group(downstream_dep.target.module, downstream_dep.handler, _idxs)
         return group
 
@@ -254,7 +264,7 @@ class MetaPruner:
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_sparsity(group): # check pruning ratio
 
-                group = self._downstream_node_as_root_if_unbind(group)
+                group = self._downstream_node_as_root_if_attention(group)
 
                 module = group[0][0].target.module
                 pruning_fn = group[0][0].handler
@@ -302,7 +312,6 @@ class MetaPruner:
                 
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs.tolist())
-    
                 if self.DG.check_pruning_group(group):
                     yield group
 
@@ -315,7 +324,7 @@ class MetaPruner:
         global_importance = []
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_sparsity(group):
-                group = self._downstream_node_as_root_if_unbind(group)
+                group = self._downstream_node_as_root_if_attention(group)
                 ch_groups = self._get_channel_groups(group)
                 imp = self.estimate_importance(group, ch_groups=ch_groups)
                 if imp is None: continue
