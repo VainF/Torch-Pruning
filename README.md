@@ -244,7 +244,7 @@ With DepGraph, it is easy to design some "group-level" criteria to estimate the 
 <img src="https://github.com/VainF/Torch-Pruning/assets/18592211/11473499-d28a-434b-a8d6-1a53c4b3b7c0" width="45%"></img>
 </div>
 
-#### Modify model attributes
+#### Modify attributes or forward functions
 
 In some implementation, model forward might rely on some static attributes. For example in [``convformer_s18``](https://github.com/huggingface/pytorch-image-models/blob/054c763fcaa7d241564439ae05fbe919ed85e614/timm/models/metaformer.py#L107) of timm, we have:
 
