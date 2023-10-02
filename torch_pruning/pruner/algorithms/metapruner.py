@@ -27,11 +27,17 @@ class MetaPruner:
             * round_to (int): round channels to the nearest multiple of round_to. E.g., round_to=8 means channels will be rounded to 8x. Default: None.
             
             # Adavanced
+            * in_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer input. Default: dict().
+            * out_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer output. Default: dict().
+            * num_heads (Dict[nn.Module, int]): The number of heads for multi-head attention. Default: dict().
             * customized_pruners (dict): a dict containing module-pruner pairs. Default: None.
             * unwrapped_parameters (dict): a dict containing unwrapped parameters & pruning dims. Default: None.
             * root_module_types (list): types of prunable modules. Default: [nn.Conv2d, nn.Linear, nn.LSTM].
             * forward_fn (Callable): A function to execute model.forward. Default: None.
             * output_transform (Callable): A function to transform network outputs. Default: None.
+
+            # Deprecated
+            * channel_groups (Dict[nn.Module, int]): output channel grouping. Default: dict().
         """
 
     def __init__(
