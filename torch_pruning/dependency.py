@@ -705,9 +705,9 @@ class DependencyGraph(object):
             out = model(**example_inputs)
         else:
             try:
-                out = model(example_inputs)
-            except:
                 out = model(*example_inputs)
+            except:
+                out = model(example_inputs)
         for hook in hooks:
             hook.remove()
 
