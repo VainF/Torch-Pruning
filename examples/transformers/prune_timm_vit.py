@@ -33,6 +33,7 @@ def parse_args():
 # Here we re-implement the forward function of timm.models.vision_transformer.Attention
 # as the original forward function requires the input and output channels to be identical.
 def forward(self, x):
+    """https://github.com/huggingface/pytorch-image-models/blob/054c763fcaa7d241564439ae05fbe919ed85e614/timm/models/vision_transformer.py#L79"""
     B, N, C = x.shape
     qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
     q, k, v = qkv.unbind(0)
@@ -50,7 +51,7 @@ def forward(self, x):
         attn = self.attn_drop(attn)
         x = attn @ v
 
-    x = x.transpose(1, 2).reshape(B, N, -1)
+    x = x.transpose(1, 2).reshape(B, N, -1) # original implementation: x = x.transpose(1, 2).reshape(B, N, C)
     x = self.proj(x)
     x = self.proj_drop(x)
     return x
