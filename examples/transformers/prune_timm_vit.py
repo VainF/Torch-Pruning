@@ -123,12 +123,12 @@ def main():
     base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
 
     print("Pruning %s..."%args.model_name)
-    ch_groups = {}
+    num_heads = {}
     ignored_layers = [model.head]
     for m in model.modules():
         if isinstance(m, timm.models.vision_transformer.Attention):
             m.forward = forward.__get__(m, timm.models.vision_transformer.Attention) # https://stackoverflow.com/questions/50599045/python-replacing-a-function-within-a-class-of-a-module
-            ch_groups[m.qkv] = m.num_heads * 3
+            num_heads[m.qkv] = m.num_heads 
         if args.bottleneck and isinstance(m, timm.models.vision_transformer.Mlp): 
             ignored_layers.append(m.fc2) # only prune the internal layers of FFN & Attention
 
@@ -144,7 +144,7 @@ def main():
                     importance=imp, # importance criterion for parameter selection
                     ch_sparsity=args.pruning_ratio, # target sparsity
                     ignored_layers=ignored_layers,
-                    channel_groups=ch_groups,
+                    num_heads=num_heads, # number of heads in self attention
                     round_to=16,
     )
     if isinstance(imp, (tp.importance.GroupTaylorImportance, tp.importance.GroupHessianImportance)):

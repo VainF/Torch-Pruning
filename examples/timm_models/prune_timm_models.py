@@ -27,7 +27,6 @@ def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = timm.create_model(args.model, pretrained=args.pretrained, no_jit=True).eval().to(device)
 
-
     imp = tp.importance.GroupNormImportance()
     print("Pruning %s..."%args.model)
         
