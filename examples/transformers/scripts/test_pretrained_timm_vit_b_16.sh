@@ -16,5 +16,5 @@ python finetune.py \
     --clip-grad-norm 1 \
     --ra-sampler \
     --cutmix-alpha 1.0 \
-    --data-path "~/Datasets/shared/imagenet/" \
+    --data-path "data/imagenet" \
     --test-only \

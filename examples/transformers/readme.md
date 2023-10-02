@@ -5,7 +5,7 @@
 ### Data
 Please prepare the ImageNet-1K dataset as follows and modify the data root in the script.
 ```
-imagenet/
+./data/imagenet/
   train/
     n01440764/
       n01440764_10026.JPEG

@@ -4,7 +4,7 @@ python prune_timm_vit.py \
     --pruning_ratio 0.5 \
     --taylor_batchs 10 \
     --test_accuracy \
-    --data_path ~/Datasets/shared/imagenet \
+    --data_path data/imagenet \
     --train_batch_size 64 \
     --val_batch_size 64 \
     --save_as output/pruned/vit_base_patch16_224_pruned_hessian_uniform.pth \

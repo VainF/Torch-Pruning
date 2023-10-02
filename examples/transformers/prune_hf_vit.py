@@ -14,7 +14,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='ViT Pruning')
 parser.add_argument('--model_name', default='google/vit-base-patch16-224', type=str, help='model name')
-parser.add_argument('--data_path', default='~/Datasets/shared/imagenet/', type=str, help='model name')
+parser.add_argument('--data_path', default='data/imagenet', type=str, help='model name')
 parser.add_argument('--taylor_batchs', default=10, type=int, help='number of batchs for taylor criterion')
 parser.add_argument('--pruning_ratio', default=0.5, type=float, help='prune ratio')
 parser.add_argument('--bottleneck', default=False, action='store_true', help='bottleneck or uniform')
