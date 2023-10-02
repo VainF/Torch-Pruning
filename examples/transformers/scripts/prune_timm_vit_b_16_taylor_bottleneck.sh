@@ -3,7 +3,7 @@ python prune_timm_vit.py \
     --pruning_type taylor \
     --pruning_ratio 0.73 \
     --taylor_batchs 10 \
-    --data_path ~/Datasets/shared/imagenet \
+    --data_path data/imagenet \
     --bottleneck \
     --train_batch_size 64 \
     --val_batch_size 64 \

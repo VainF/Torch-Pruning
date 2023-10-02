@@ -506,7 +506,6 @@ class DependencyGraph(object):
             layer_channels = pruner.get_out_channels(m)
             group = self.get_pruning_group(
                 m, pruner.prune_out_channels, list(range(layer_channels)))
-            
             prunable_group = True
             for dep, _ in group:
                 module = dep.target.module
@@ -852,8 +851,10 @@ class DependencyGraph(object):
             
             if node.type == ops.OPTYPE.SPLIT:
                 grad_fn = node.grad_fn
-                if hasattr(grad_fn, '_saved_self_sizes'):
+    
+                if hasattr(grad_fn, '_saved_self_sizes') or hasattr(grad_fn, '_saved_split_sizes'):
                     MAX_LEGAL_DIM = 100
+                    
                     if hasattr(grad_fn, '_saved_split_sizes') and hasattr(grad_fn, '_saved_dim') :
                         if grad_fn._saved_dim != 1 and grad_fn._saved_dim < MAX_LEGAL_DIM: # a temp fix for pytorch==1.11, where the _saved_dim is an uninitialized value like 118745347895359
                             continue
@@ -1036,6 +1037,7 @@ class DependencyGraph(object):
             return 
         
         offsets = split_node.module.offsets
+
         if offsets is None:
             return
         addressed_dep = []

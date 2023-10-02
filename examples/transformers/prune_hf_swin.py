@@ -48,15 +48,15 @@ print("Predicted class:", model.config.id2label[predicted_class_idx])
 print(model)
 imp = tp.importance.MagnitudeImportance(p=2, group_reduction="mean")
 base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
-channel_groups = {}
+num_heads = {}
 
 ignored_layers = [model.classifier]
 # All heads should be pruned simultaneously, so we group channels by head.
 for m in model.modules():
     if isinstance(m, SwinSelfAttention):
-        channel_groups[m.query] = m.num_attention_heads
-        channel_groups[m.key] = m.num_attention_heads
-        channel_groups[m.value] = m.num_attention_heads
+        num_heads[m.query] = m.num_attention_heads
+        num_heads[m.key] = m.num_attention_heads
+        num_heads[m.value] = m.num_attention_heads
 
 pruner = tp.pruner.MetaPruner(
                 model, 
@@ -65,7 +65,7 @@ pruner = tp.pruner.MetaPruner(
                 importance=imp, # importance criterion for parameter selection
                 iterative_steps=1, # the number of iterations to achieve target sparsity
                 ch_sparsity=0.5,
-                channel_groups=channel_groups,
+                num_heads=num_heads,
                 output_transform=lambda out: out.logits.sum(),
                 ignored_layers=ignored_layers,
                 customized_pruners={SwinPatchMerging: SwinPatchMergingPruner()},
