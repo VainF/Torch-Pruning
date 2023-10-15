@@ -193,7 +193,7 @@ if __name__ == "__main__":
             example_inputs=example_inputs,
             importance=importance,
             iterative_steps=1,
-            ch_sparsity=0.5,
+            pruning_ratio=0.5,
             global_pruning=True,
             round_to=round_to,
             unwrapped_parameters=unwrapped_parameters,

@@ -17,7 +17,7 @@ Output:
 Some models might require additional modifications to enable pruning. For example, we need to reimplement the forward function of `vit` to relax the constraint in structure. Refer to [examples/transformers/prune_timm_vit.py](../transformers/prune_timm_vit.py) for more details.
 
 ```bash
-python prune_timm_models.py --model convnext_xxlarge --ch_sparsity 0.5 # --global_pruning
+python prune_timm_models.py --model convnext_xxlarge --pruning_ratio 0.5 # --global_pruning
 ```
 
 #### Outputs:

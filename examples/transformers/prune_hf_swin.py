@@ -61,10 +61,10 @@ for m in model.modules():
 pruner = tp.pruner.MetaPruner(
                 model, 
                 example_inputs, 
-                global_pruning=False, # If False, a uniform sparsity will be assigned to different layers.
+                global_pruning=False, # If False, a uniform pruning ratio will be assigned to different layers.
                 importance=imp, # importance criterion for parameter selection
-                iterative_steps=1, # the number of iterations to achieve target sparsity
-                ch_sparsity=0.5,
+                iterative_steps=1, # the number of iterations to achieve target pruning ratio
+                pruning_ratio=0.5,
                 num_heads=num_heads,
                 output_transform=lambda out: out.logits.sum(),
                 ignored_layers=ignored_layers,

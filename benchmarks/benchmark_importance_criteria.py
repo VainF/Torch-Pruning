@@ -97,7 +97,7 @@ for imp_name, imp in imp_dict.items():
         example_inputs,
         iterative_steps=iterative_steps,
         importance=imp,
-        ch_sparsity=0.3, 
+        pruning_ratio=0.3, 
         ignored_layers=ignored_layers,
     )
 

@@ -19,11 +19,11 @@ class GroupNormPruner(MetaPruner):
         reg=1e-4, # regularization coefficient
         alpha=4, # regularization scaling factor, [2^0, 2^alpha]
         global_pruning: bool = False, # https://pytorch.org/tutorials/intermediate/pruning_tutorial.html#global-pruning.
-        ch_sparsity: float = 0.5,  # channel/dim sparsity, also known as pruning ratio
-        ch_sparsity_dict: typing.Dict[nn.Module, float] = None, # layer-specific sparsity, will cover ch_sparsity if specified
-        max_ch_sparsity: float = 1.0, # maximum sparsity. useful if over-pruning happens.
+        pruning_ratio: float = 0.5,  # channel/dim pruning ratio, also known as pruning ratio
+        pruning_ratio_dict: typing.Dict[nn.Module, float] = None, # layer-specific pruning ratio, will cover pruning_ratio if specified
+        max_pruning_ratio: float = 1.0, # maximum pruning ratio. useful if over-pruning happens.
         iterative_steps: int = 1,  # for iterative pruning
-        iterative_sparsity_scheduler: typing.Callable = linear_scheduler, # scheduler for iterative pruning.
+        iterative_pruning_ratio_scheduler: typing.Callable = linear_scheduler, # scheduler for iterative pruning.
         ignored_layers: typing.List[nn.Module] = None, # ignored layers
         round_to: int = None,  # round channels to the nearest multiple of round_to
 
@@ -45,11 +45,11 @@ class GroupNormPruner(MetaPruner):
             example_inputs=example_inputs,
             importance=importance,
             global_pruning=global_pruning,
-            ch_sparsity=ch_sparsity,
-            ch_sparsity_dict=ch_sparsity_dict,
-            max_ch_sparsity=max_ch_sparsity,
+            pruning_ratio=pruning_ratio,
+            pruning_ratio_dict=pruning_ratio_dict,
+            max_pruning_ratio=max_pruning_ratio,
             iterative_steps=iterative_steps,
-            iterative_sparsity_scheduler=iterative_sparsity_scheduler,
+            iterative_pruning_ratio_scheduler=iterative_pruning_ratio_scheduler,
             ignored_layers=ignored_layers,
             round_to=round_to,
             

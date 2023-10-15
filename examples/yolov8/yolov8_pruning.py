@@ -308,7 +308,7 @@ def prune(args):
     print(f"Before Pruning: MACs={base_macs / 1e9: .5f} G, #Params={base_nparams / 1e6: .5f} M, mAP={init_map: .5f}")
 
     # prune same ratio of filter based on initial size
-    ch_sparsity = 1 - math.pow((1 - args.target_prune_rate), 1 / args.iterative_steps)
+    pruning_ratio = 1 - math.pow((1 - args.target_prune_rate), 1 / args.iterative_steps)
 
     for i in range(args.iterative_steps):
 
@@ -328,7 +328,7 @@ def prune(args):
             example_inputs,
             importance=tp.importance.GroupNormImportance(),  # L2 norm pruning,
             iterative_steps=1,
-            ch_sparsity=ch_sparsity,
+            pruning_ratio=pruning_ratio,
             ignored_layers=ignored_layers,
             unwrapped_parameters=unwrapped_parameters
         )

@@ -19,7 +19,7 @@ def test_serialization():
         example_inputs=torch.randn(1, 3, 224, 224),
         importance=importance,
         iterative_steps=1,
-        ch_sparsity=0.5,
+        pruning_ratio=0.5,
         round_to=round_to,
     )
     pruner.step()

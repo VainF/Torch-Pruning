@@ -385,11 +385,11 @@ class DependencyGraph(object):
         Args:
             group (Group): a depenedency group
         """
-
         for dep, idxs in group:
             if self.is_out_channel_pruning_fn(dep.handler):
                 prunable_chs = self.get_out_channels(
                     dep.target.module)
+                #print(prunable_chs, len(idxs))
                 if prunable_chs is None: continue
                 if prunable_chs <= len(idxs):
                     return False
@@ -397,6 +397,7 @@ class DependencyGraph(object):
             if self.is_in_channel_pruning_fn(dep.handler):
                 prunable_in_chs = self.get_in_channels(
                     dep.target.module)
+                #print(prunable_in_chs, len(idxs))
                 if prunable_in_chs is None: continue
                 if prunable_in_chs <= len(idxs):
                     return False
@@ -489,13 +490,13 @@ class DependencyGraph(object):
         ignored_layers = ignored_layers+self.IGNORED_LAYERS
 
         for m in list(self.module2node.keys()):
- 
+            
             if m in ignored_layers:
                 continue
-
+            
             if not isinstance(m, tuple(root_module_types)):
                 continue
-     
+
             pruner = self.get_pruner_of_module(m)
             if pruner is None or pruner.get_out_channels(m) is None:
                 continue
@@ -506,6 +507,7 @@ class DependencyGraph(object):
             layer_channels = pruner.get_out_channels(m)
             group = self.get_pruning_group(
                 m, pruner.prune_out_channels, list(range(layer_channels)))
+            
             prunable_group = True
             for dep, _ in group:
                 module = dep.target.module
@@ -675,6 +677,7 @@ class DependencyGraph(object):
         visited = {}
         self._2d_4d = True # only for pytorch<=1.8
         def _record_grad_fn(module, inputs, outputs):
+            
             if module not in visited:
                 visited[module] = 1
             else:
@@ -687,7 +690,9 @@ class DependencyGraph(object):
                 outputs = outputs[0]
             if isinstance(outputs, torch.nn.utils.rnn.PackedSequence):
                 outputs = outputs.data
+
             gradfn2module[outputs.grad_fn] = module
+            
 
         # Register hooks for prunable modules
         registered_types = tuple(ops.type2class(

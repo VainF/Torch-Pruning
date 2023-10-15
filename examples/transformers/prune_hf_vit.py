@@ -110,12 +110,15 @@ for m in model.modules():
 pruner = tp.pruner.MetaPruner(
                 model, 
                 example_inputs, 
-                global_pruning=args.global_pruning, # If False, a uniform sparsity will be assigned to different layers.
+                global_pruning=args.global_pruning, # If False, a uniform pruning ratio will be assigned to different layers.
                 importance=imp, # importance criterion for parameter selection
-                ch_sparsity=args.pruning_ratio, # target sparsity
+                pruning_ratio=args.pruning_ratio, # target pruning ratio
                 ignored_layers=ignored_layers,
                 output_transform=lambda out: out.logits.sum(),
                 num_heads=num_heads,
+                prune_head_dims=True,
+                prune_num_heads=False,
+                head_pruning_ratio=0.5, # disabled when prune_num_heads=False
 )
 
 if isinstance(imp, tp.importance.TaylorImportance):
@@ -135,9 +138,13 @@ for g in pruner.step(interactive=True):
 # Modify the attention head size and all head size aftering pruning
 for m in model.modules():
     if isinstance(m, ViTSelfAttention):
+        print(m)
+        print("num_heads:", m.num_attention_heads, 'head_dims:', m.attention_head_size, 'all_head_size:', m.all_head_size, '=>')
+        m.num_attention_heads = pruner.num_heads[m.query]
         m.attention_head_size = m.query.out_features // m.num_attention_heads
         m.all_head_size = m.query.out_features
-
+        print("num_heads:", m.num_attention_heads, 'head_dims:', m.attention_head_size, 'all_head_size:', m.all_head_size)
+        print()
 print(model)
 
 if args.test_accuracy:

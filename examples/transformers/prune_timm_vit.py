@@ -123,6 +123,7 @@ def main():
     base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
 
     print("Pruning %s..."%args.model_name)
+    print(model)
     num_heads = {}
     ignored_layers = [model.head]
     for m in model.modules():
@@ -138,15 +139,19 @@ def main():
         print("Accuracy: %.4f, Loss: %.4f"%(acc_ori, loss_ori))
 
     pruner = tp.pruner.MetaPruner(
-                    model, 
-                    example_inputs, 
-                    global_pruning=args.global_pruning, # If False, a uniform sparsity will be assigned to different layers.
-                    importance=imp, # importance criterion for parameter selection
-                    ch_sparsity=args.pruning_ratio, # target sparsity
-                    ignored_layers=ignored_layers,
-                    num_heads=num_heads, # number of heads in self attention
-                    round_to=16,
+        model, 
+        example_inputs, 
+        global_pruning=args.global_pruning, # If False, a uniform pruning ratio will be assigned to different layers.
+        importance=imp, # importance criterion for parameter selection
+        pruning_ratio=args.pruning_ratio, # target pruning ratio
+        ignored_layers=ignored_layers,
+        num_heads=num_heads, # number of heads in self attention
+        prune_num_heads=False, # reduce num_heads by pruning entire heads (default: False)
+        prune_head_dims=True, # reduce head_dim by pruning featrues dims of each head (default: True)
+        head_pruning_ratio=0.5, # remove 50% heads, only works when prune_num_heads=True (default: 0.0)
+        round_to=2
     )
+
     if isinstance(imp, (tp.importance.GroupTaylorImportance, tp.importance.GroupHessianImportance)):
         model.zero_grad()
         if isinstance(imp, tp.importance.GroupHessianImportance):
@@ -171,9 +176,17 @@ def main():
         g.prune()
 
     # Modify the attention head size and all head size aftering pruning
+    head_id = 0
     for m in model.modules():
         if isinstance(m, timm.models.vision_transformer.Attention):
+            print("Head #%d"%head_id)
+            print("[Before Pruning] Num Heads: %d, Head Dim: %d =>"%(m.num_heads, m.head_dim))
+            m.num_heads = pruner.num_heads[m.qkv]
             m.head_dim = m.qkv.out_features // (3 * m.num_heads)
+            print("[After Pruning] Num Heads: %d, Head Dim: %d"%(m.num_heads, m.head_dim))
+            print()
+            head_id+=1
+
     print(model)
 
     if args.test_accuracy:

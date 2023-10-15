@@ -1,3 +1,3 @@
 
-def linear_scheduler(ch_sparsity_dict, steps):
-    return [((i) / float(steps)) * ch_sparsity_dict for i in range(steps+1)]
+def linear_scheduler(pruning_ratio_dict, steps):
+    return [((i) / float(steps)) * pruning_ratio_dict for i in range(steps+1)]

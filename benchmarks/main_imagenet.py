@@ -90,7 +90,7 @@ def get_args_parser(add_help=True):
     parser.add_argument("--soft-keeping-ratio", type=float, default=0.0)
     parser.add_argument("--reg", type=float, default=1e-4)
     parser.add_argument("--delta_reg", type=float, default=1e-4)
-    parser.add_argument("--max-ch-sparsity", default=1.0, type=float, help="maximum channel sparsity")
+    parser.add_argument("--max-pruning-ratio", default=1.0, type=float, help="maximum channel pruning ratio")
     parser.add_argument("--sl-epochs", type=int, default=None)
     parser.add_argument("--sl-resume", type=str, default=None)
     parser.add_argument("--sl-lr", default=None, type=float, help="learning rate")
@@ -145,7 +145,7 @@ def get_pruner(model, example_inputs, args):
     args.data_dependency = data_dependency
     args.sparsity_learning = sparsity_learning
     ignored_layers = []
-    ch_sparsity_dict = {}
+    pruning_ratio_dict = {}
     for m in model.modules():
         if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
             ignored_layers.append(m)
@@ -157,9 +157,9 @@ def get_pruner(model, example_inputs, args):
         example_inputs,
         importance=imp,
         iterative_steps=100,
-        ch_sparsity=1.0,
-        ch_sparsity_dict=ch_sparsity_dict,
-        max_ch_sparsity=args.max_ch_sparsity,
+        pruning_ratio=1.0,
+        pruning_ratio_dict=pruning_ratio_dict,
+        max_pruning_ratio=args.max_pruning_ratio,
         ignored_layers=ignored_layers,
         round_to=round_to,
         unwrapped_parameters=unwrapped_parameters,

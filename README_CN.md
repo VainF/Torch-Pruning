@@ -168,7 +168,7 @@ pruner = tp.pruner.MagnitudePruner(
     example_inputs,
     importance=imp,
     iterative_steps=iterative_steps,
-    ch_sparsity=0.5, # 整体移除50%通道, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+    pruning_ratio=0.5, # 整体移除50%通道, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
     ignored_layers=ignored_layers,
 )
 

@@ -18,11 +18,11 @@ class MetaPruner:
             * example_inputs (torch.Tensor or List): dummy inputs for graph tracing.
             * importance (Callable): importance estimator. 
             * global_pruning (bool): enable global pruning. Default: False.
-            * ch_sparsity (float): global channel sparisty. Also known as pruning ratio. Default: 0.5.
-            * ch_sparsity_dict (Dict[nn.Module, float]): layer-specific sparsity. Will cover ch_sparsity if specified. Default: None.
-            * max_ch_sparsity (float): maximum channel sparsity. Default: 1.0.
+            * pruning_ratio (float): global channel sparisty. Also known as pruning ratio. Default: 0.5.
+            * pruning_ratio_dict (Dict[nn.Module, float]): layer-specific pruning ratio. Will cover pruning_ratio if specified. Default: None.
+            * max_pruning_ratio (float): the maximum pruning ratio. Default: 1.0.
             * iterative_steps (int): number of steps for iterative pruning. Default: 1.
-            * iterative_sparsity_scheduler (Callable): scheduler for iterative pruning. Default: linear_scheduler.
+            * iterative_pruning_ratio_scheduler (Callable): scheduler for iterative pruning. Default: linear_scheduler.
             * ignored_layers (List[nn.Module | typing.Type]): ignored modules. Default: None.
             * round_to (int): round channels to the nearest multiple of round_to. E.g., round_to=8 means channels will be rounded to 8x. Default: None.
             
@@ -30,6 +30,9 @@ class MetaPruner:
             * in_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer input. Default: dict().
             * out_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer output. Default: dict().
             * num_heads (Dict[nn.Module, int]): The number of heads for multi-head attention. Default: dict().
+            * prune_num_heads (bool): remove entire heads in multi-head attention. Default: False.
+            * prune_head_dims (bool): remove head dimensions in multi-head attention. Default: True.
+            * head_pruning_ratio (float): head pruning ratio. Default: 0.0.
             * customized_pruners (dict): a dict containing module-pruner pairs. Default: None.
             * unwrapped_parameters (dict): a dict containing unwrapped parameters & pruning dims. Default: None.
             * root_module_types (list): types of prunable modules. Default: [nn.Conv2d, nn.Linear, nn.LSTM].
@@ -38,6 +41,8 @@ class MetaPruner:
 
             # Deprecated
             * channel_groups (Dict[nn.Module, int]): output channel grouping. Default: dict().
+            * ch_sparsity (float): the same as pruning_ratio. Default: None.
+            * ch_sparsity_dict (Dict[nn.Module, float]): the same as pruning_ratio_dict. Default: None.
         """
 
     def __init__(
@@ -47,11 +52,11 @@ class MetaPruner:
         example_inputs: torch.Tensor, # a dummy input for graph tracing. Should be on the same 
         importance: typing.Callable, # tp.importance.Importance for group importance estimation
         global_pruning: bool = False, # https://pytorch.org/tutorials/intermediate/pruning_tutorial.html#global-pruning.
-        ch_sparsity: float = 0.5,  # channel/dim sparsity, also known as pruning ratio
-        ch_sparsity_dict: typing.Dict[nn.Module, float] = None, # layer-specific sparsity, will cover ch_sparsity if specified
-        max_ch_sparsity: float = 1.0, # maximum sparsity. useful if over-pruning happens.
+        pruning_ratio: float = 0.5,  # channel/dim pruning ratio, also known as pruning ratio
+        pruning_ratio_dict: typing.Dict[nn.Module, float] = None, # layer-specific pruning ratio, will cover pruning_ratio if specified
+        max_pruning_ratio: float = 1.0, # maximum pruning ratio. useful if over-pruning happens.
         iterative_steps: int = 1,  # for iterative pruning
-        iterative_sparsity_scheduler: typing.Callable = linear_scheduler, # scheduler for iterative pruning.
+        iterative_pruning_ratio_scheduler: typing.Callable = linear_scheduler, # scheduler for iterative pruning.
         ignored_layers: typing.List[nn.Module] = None, # ignored layers
         round_to: int = None,  # round channels to the nearest multiple of round_to
 
@@ -59,6 +64,10 @@ class MetaPruner:
         in_channel_groups: typing.Dict[nn.Module, int] = dict(), # The number of channel groups for layer input
         out_channel_groups: typing.Dict[nn.Module, int] = dict(), # The number of channel groups for layer output
         num_heads: typing.Dict[nn.Module, int] = dict(), # The number of heads for multi-head attention
+        prune_num_heads: bool = False, # remove entire heads in multi-head attention
+        prune_head_dims: bool = True, # remove head dimensions in multi-head attention
+        head_pruning_ratio: float = 0.0, # head pruning ratio
+        head_pruning_ratio_dict: typing.Dict[nn.Module, float] = None, # layer-specific head pruning ratio
         customized_pruners: typing.Dict[typing.Any, function.BasePruningFunc] = None, # pruners for customized layers. E.g., {nn.Linear: my_linear_pruner}
         unwrapped_parameters: typing.Dict[nn.Parameter, int] = None, # unwrapped nn.Parameters & pruning_dims. For example, {ViT.pos_emb: 0}
         root_module_types: typing.List = [ops.TORCH_CONV, ops.TORCH_LINEAR, ops.TORCH_LSTM],  # root module for each group
@@ -67,12 +76,22 @@ class MetaPruner:
 
         # deprecated
         channel_groups: typing.Dict[nn.Module, int] = dict(), # channel grouping
+        ch_sparsity: float = None,
+        ch_sparsity_dict: typing.Dict[nn.Module, float] = None, 
     ):
         self.model = model
         self.importance = importance
-        self.ch_sparsity = ch_sparsity
-        self.ch_sparsity_dict = ch_sparsity_dict if ch_sparsity_dict is not None else {}
-        self.max_ch_sparsity = max_ch_sparsity
+
+        if ch_sparsity is not None:
+            warnings.warn("ch_sparsity is deprecated in v1.3.0. Please use pruning_ratio.")
+            pruning_ratio = pruning_ratio_dict
+        if ch_sparsity_dict is not None:
+            warnings.warn("ch_sparsity_dict is deprecated in v1.3.0. Please use pruning_ratio_dict instead.")
+            pruning_ratio_dict = ch_sparsity_dict
+
+        self.pruning_ratio = pruning_ratio
+        self.pruning_ratio_dict = pruning_ratio_dict if pruning_ratio_dict is not None else {}
+        self.max_pruning_ratio = max_pruning_ratio
         self.global_pruning = global_pruning
         
         if len(channel_groups) > 0:
@@ -84,9 +103,14 @@ class MetaPruner:
 
         self.in_channel_groups = in_channel_groups
         self.out_channel_groups = out_channel_groups
-        self.num_heads = num_heads
         self.root_module_types = root_module_types
         self.round_to = round_to
+
+        # MHA
+        self.num_heads = num_heads
+        self.prune_num_heads = prune_num_heads
+        self.prune_head_dims = prune_head_dims
+        self.head_pruning_ratio = head_pruning_ratio
 
         ###############################################
         # Build dependency graph
@@ -108,28 +132,43 @@ class MetaPruner:
 
         ###############################################
         # Iterative pruning
-        # The pruner will prune the model iteratively for several steps to achieve the target sparsity
-        # E.g., if iterative_steps=5, ch_sparsity=0.5, the sparsity of each step will be [0.1, 0.2, 0.3, 0.4, 0.5]
+        # The pruner will prune the model iteratively for several steps to achieve the target pruning ratio
+        # E.g., if iterative_steps=5, pruning_ratio=0.5, the pruning ratio of each step will be [0.1, 0.2, 0.3, 0.4, 0.5]
         self.iterative_steps = iterative_steps
-        self.iterative_sparsity_scheduler = iterative_sparsity_scheduler
+        self.iterative_pruning_ratio_scheduler = iterative_pruning_ratio_scheduler
         self.current_step = 0
-        # channel sparsity for each iterative step
-        self.per_step_ch_sparsity = self.iterative_sparsity_scheduler(
-            self.ch_sparsity, self.iterative_steps
+        # channel pruning ratio for each iterative step
+        self.per_step_pruning_ratio = self.iterative_pruning_ratio_scheduler(
+            self.pruning_ratio, self.iterative_steps
+        )
+        self.per_step_head_pruning_ratio = self.iterative_pruning_ratio_scheduler(
+            self.head_pruning_ratio, self.iterative_steps
         )
 
         ###############################################
-        # Layer-specific sparsity. Will cover the global sparsity if specified
-        self.ch_sparsity_dict = {}
-        if ch_sparsity_dict is not None:
-            for module in ch_sparsity_dict:
-                sparsity = ch_sparsity_dict[module]
+        # Layer-specific pruning ratios. Will cover the global ratio if specified
+        self.pruning_ratio_dict = {}
+        if pruning_ratio_dict is not None:
+            for module in pruning_ratio_dict:
+                ratio = pruning_ratio_dict[module]
                 for submodule in module.modules():
                     prunable_types = tuple([ops.type2class(
                         prunable_type) for prunable_type in self.DG.REGISTERED_PRUNERS.keys()])
                     if isinstance(submodule, prunable_types):
-                        self.ch_sparsity_dict[submodule] = self.iterative_sparsity_scheduler(
-                            sparsity, self.iterative_steps
+                        self.pruning_ratio_dict[submodule] = self.iterative_pruning_ratio_scheduler(
+                            ratio, self.iterative_steps
+                        )
+        # Head pruning ratio
+        self.head_pruning_ratio_dict = {}
+        if head_pruning_ratio_dict is not None:
+            for module in head_pruning_ratio_dict:
+                ratio = head_pruning_ratio_dict[module]
+                for submodule in module.modules():
+                    prunable_types = tuple([ops.type2class(
+                        prunable_type) for prunable_type in self.DG.REGISTERED_PRUNERS.keys()])
+                    if isinstance(submodule, prunable_types):
+                        self.head_pruning_ratio_dict[submodule] = self.iterative_pruning_ratio_scheduler(
+                            ratio, self.iterative_steps
                         )
 
         ###############################################
@@ -149,20 +188,30 @@ class MetaPruner:
         # Initial channels/dims of each layer
         self.layer_init_out_ch = {}
         self.layer_init_in_ch = {}
+        self.init_num_heads = {}
         for m in self.DG.module2node.keys():
             if ops.module2type(m) in self.DG.REGISTERED_PRUNERS:
                 self.layer_init_out_ch[m] = self.DG.get_out_channels(m)
                 self.layer_init_in_ch[m] = self.DG.get_in_channels(m)
-                
+                if m in self.num_heads:
+                    self.init_num_heads[m] = self.num_heads[m]
+        
         ###############################################
         # Count the number of total channels at initialization
         if self.global_pruning:
             initial_total_channels = 0
+            initial_total_heads = 0
             for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
                 group = self._downstream_node_as_root_if_attention(group)
                 initial_total_channels += ( (self.DG.get_out_channels(group[0][0].target.module) ) // self._get_channel_groups(group) )
+                for dep, _ in group:
+                    if dep.target.module in self.num_heads and self.DG.is_out_channel_pruning_fn(dep.handler):
+                        initial_total_heads += self.num_heads[dep.target.module]
+                        break # only count heads once
             self.initial_total_channels = initial_total_channels
-    
+            self.initial_total_heads = initial_total_heads
+
+
     def step(self, interactive=False)-> typing.Union[typing.Generator, None]:
         self.current_step += 1
         pruning_method = self.prune_global if self.global_pruning else self.prune_local
@@ -182,9 +231,13 @@ class MetaPruner:
     def load_pruning_history(self, pruning_history) -> None:
         self.DG.load_pruning_history(pruning_history)
 
-    def get_target_sparsity(self, module) -> float:
-        s = self.ch_sparsity_dict.get(module, self.per_step_ch_sparsity)[self.current_step]
-        return min(s, self.max_ch_sparsity)
+    def get_target_pruning_ratio(self, module) -> float:
+        s = self.pruning_ratio_dict.get(module, self.per_step_pruning_ratio)[self.current_step]
+        return min(s, self.max_pruning_ratio)
+
+    def get_target_head_pruning_ratio(self, module) -> float:
+        s = self.head_pruning_ratio_dict.get(module, self.per_step_head_pruning_ratio)[self.current_step]
+        return min(s, 1)
 
     def reset(self) -> None:
         self.current_step = 0
@@ -194,7 +247,7 @@ class MetaPruner:
         """
         pass
 
-    def _check_sparsity(self, group) -> bool:
+    def _check_pruning_ratio(self, group) -> bool:
         for dep, _ in group:
             module = dep.target.module
             pruning_fn = dep.handler
@@ -204,7 +257,7 @@ class MetaPruner:
                 layer_out_ch = self.DG.get_out_channels(module)
                 if layer_out_ch is None: continue
                 if layer_out_ch < self.layer_init_out_ch[module] * (
-                    1 - self.max_ch_sparsity
+                    1 - self.max_pruning_ratio
                 ) or layer_out_ch == 1:
                     return False
 
@@ -212,10 +265,21 @@ class MetaPruner:
                 layer_in_ch = self.DG.get_in_channels(module)
                 if layer_in_ch is None: continue
                 if layer_in_ch < self.layer_init_in_ch[module] * (
-                    1 - self.max_ch_sparsity
+                    1 - self.max_pruning_ratio
                 ) or layer_in_ch == 1:
                     return False
         return True
+
+    def _is_attn_group(self, group) -> bool:
+        is_attn = False
+        qkv_layers = []
+        for dep, _ in group:
+            module = dep.target.module
+            pruning_fn = dep.handler
+            if self.DG.is_out_channel_pruning_fn(pruning_fn) and module in self.num_heads:
+                qkv_layers.append(module)
+                is_attn = True
+        return is_attn, qkv_layers
 
     def _get_channel_groups(self, group) -> int:
         ch_groups = 1
@@ -261,11 +325,13 @@ class MetaPruner:
         if self.current_step > self.iterative_steps:
             warnings.warn("Pruning exceed the maximum iterative steps, no pruning will be performed.")
             return
+        
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
-            if self._check_sparsity(group): # check pruning ratio
+
+            if self._check_pruning_ratio(group): # check pruning ratio
 
                 group = self._downstream_node_as_root_if_attention(group)
-
+                
                 module = group[0][0].target.module
                 pruning_fn = group[0][0].handler
                 ch_groups = self._get_channel_groups(group) 
@@ -275,19 +341,19 @@ class MetaPruner:
 
                 if self.DG.is_out_channel_pruning_fn(pruning_fn):
                     current_channels = self.DG.get_out_channels(module)
-                    target_sparsity = self.get_target_sparsity(module)
+                    target_pruning_ratio = self.get_target_pruning_ratio(module)
                     n_pruned = current_channels - int(
                         self.layer_init_out_ch[module] *
-                        (1 - target_sparsity)
+                        (1 - target_pruning_ratio)
                     )
                 else:
                     current_channels = self.DG.get_in_channels(module)
-                    target_sparsity = self.get_target_sparsity(module)
+                    target_pruning_ratio = self.get_target_pruning_ratio(module)
                     n_pruned = current_channels - int(
                         self.layer_init_in_ch[module] *
-                        (1 - target_sparsity)
+                        (1 - target_pruning_ratio)
                     )
-
+                
                 # round to the nearest multiple of round_to
                 if self.round_to:
                     n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
@@ -298,20 +364,44 @@ class MetaPruner:
                 if ch_groups > 1: # independent pruning for each group
                     group_size = current_channels // ch_groups
                     pruning_idxs = []
-                    n_pruned_per_group = n_pruned // ch_groups # max(1, n_pruned // ch_groups)
-                    if n_pruned_per_group == 0: continue # skip 
-                    for chg in range(ch_groups):
-                        sub_group_imp = imp[chg*group_size: (chg+1)*group_size]
-                        sub_imp_argsort = torch.argsort(sub_group_imp)
-                        sub_pruning_idxs = sub_imp_argsort[:n_pruned_per_group] + chg*group_size # offset
-                        pruning_idxs.append(sub_pruning_idxs)
-                    pruning_idxs = torch.cat(pruning_idxs, 0)
+
+                    _is_attn, qkv_layers = self._is_attn_group(group)
+                    n_heads_removed = 0
+                    head_pruning_idxs = []
+                    if _is_attn and self.prune_num_heads and self.get_target_head_pruning_ratio(qkv_layers[0])>0: # Prune entire attn heads 
+                        target_head_pruning_ratio = self.get_target_head_pruning_ratio(module)
+                        n_heads_removed = self.num_heads[qkv_layers[0]] - int(self.init_num_heads[qkv_layers[0]] * (1 - target_head_pruning_ratio))
+                        head_imp = imp.view(ch_groups, -1).mean(1)
+                        for head_id in torch.argsort(head_imp)[:n_heads_removed]:
+                            head_pruning_idxs.append( torch.arange(head_id*group_size, (head_id+1)*group_size) )
+                        if len(head_pruning_idxs)>0:
+                            head_pruning_idxs = torch.cat(head_pruning_idxs, 0).tolist()
+
+                    # Prune attn dims or grouped dims
+                    dim_pruning_idxs = []
+                    if (self.prune_head_dims and _is_attn) or (not _is_attn):
+                        n_pruned_per_group = n_pruned // ch_groups 
+                        if n_pruned_per_group == 0: continue # skip 
+                        for chg in range(ch_groups):
+                            sub_group_imp = imp[chg*group_size: (chg+1)*group_size]
+                            sub_imp_argsort = torch.argsort(sub_group_imp)
+                            sub_pruning_idxs = sub_imp_argsort[:n_pruned_per_group] + chg*group_size # offset
+                            dim_pruning_idxs.append(sub_pruning_idxs)
+                        dim_pruning_idxs = torch.cat(dim_pruning_idxs, 0).tolist()
+                    pruning_idxs = list(set(dim_pruning_idxs + head_pruning_idxs))
+                    pruning_idxs.sort()
+
+                    # Update num heads after pruning
+                    if n_heads_removed>0:
+                        for dep, _ in group:
+                            if dep.target.module in self.num_heads:
+                                self.num_heads[dep.target.module] -= n_heads_removed
                 else: # no channel grouping
                     imp_argsort = torch.argsort(imp)
-                    pruning_idxs = imp_argsort[:n_pruned]
-                
+                    pruning_idxs = imp_argsort[:n_pruned].tolist()
                 group = self.DG.get_pruning_group(
-                    module, pruning_fn, pruning_idxs.tolist())
+                    module, pruning_fn, pruning_idxs)
+
                 if self.DG.check_pruning_group(group):
                     yield group
 
@@ -322,31 +412,49 @@ class MetaPruner:
         
         # Pre-compute importance for each group
         global_importance = []
+        global_head_importance = {}
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
-            if self._check_sparsity(group):
+            if self._check_pruning_ratio(group):
                 group = self._downstream_node_as_root_if_attention(group)
                 ch_groups = self._get_channel_groups(group)
                 imp = self.estimate_importance(group, ch_groups=ch_groups)
                 if imp is None: continue
                 if ch_groups > 1:
-                    imp = imp.view(ch_groups, -1).mean(dim=0) # average importance across groups. TODO: find a better way to handle grouped channels
-                global_importance.append((group, ch_groups, imp))
+                    dim_imp = imp.view(ch_groups, -1).mean(dim=0) # average importance across groups. TODO: find a better way to handle grouped channels
+                else:
+                    dim_imp = imp
+                global_importance.append((group, ch_groups, dim_imp))
+
+                _is_attn, qkv_layers = self._is_attn_group(group)
+                if _is_attn and self.prune_num_heads and self.get_target_head_pruning_ratio(qkv_layers[0])>0:
+                    head_imp = imp.view(ch_groups, -1).mean(1) # average importance by head.
+                    global_head_importance[group] = (ch_groups, head_imp, qkv_layers)
+
         if len(global_importance) == 0:
             return
         
         # Find the threshold for global pruning
         imp = torch.cat([local_imp[-1] for local_imp in global_importance], dim=0)
-        target_sparsity = self.per_step_ch_sparsity[self.current_step]
+        target_pruning_ratio = self.per_step_pruning_ratio[self.current_step]
         n_pruned = len(imp) - int(
             self.initial_total_channels *
-            (1 - target_sparsity)
+            (1 - target_pruning_ratio)
         )
+        if n_pruned>0:
+            topk_imp, _ = torch.topk(imp, k=n_pruned, largest=False)
+            thres = topk_imp[-1]
 
-        if n_pruned <= 0:
-            return
-        topk_imp, _ = torch.topk(imp, k=n_pruned, largest=False)
-        thres = topk_imp[-1]
-
+        if len(global_head_importance)>0:
+            global_head_imp = torch.cat([local_imp[-2] for local_imp in global_head_importance.values()], dim=0)
+            target_head_pruning_ratio = self.per_step_head_pruning_ratio[self.current_step]
+            n_heads_removed = len(global_head_imp) - int(
+                self.initial_total_heads *
+                (1 - target_head_pruning_ratio)
+            )
+            if n_heads_removed>0:
+                topk_head_imp, _ = torch.topk(global_head_imp, k=n_heads_removed, largest=False)
+                head_thres = topk_head_imp[-1]
+        
         # Group-by-group pruning
         for group, ch_groups, imp in global_importance:
             module = group[0][0].target.module
@@ -357,7 +465,6 @@ class MetaPruner:
             if ch_groups > 1: # re-compute importance for each channel group if channel grouping is enabled
                 n_pruned_per_group = len(pruning_indices)
                 if n_pruned_per_group == 0: continue # skip 
-
                 if self.round_to:
                     n_pruned = n_pruned_per_group * ch_groups
                     current_channels = get_channel_fn(module)
@@ -373,15 +480,26 @@ class MetaPruner:
                     sub_pruning_idxs = sub_imp_argsort[:n_pruned_per_group]+chg*group_size
                     pruning_indices.append(sub_pruning_idxs)
                 pruning_indices = torch.cat(pruning_indices, 0)
+                
+                # Prune heads
+                if group in global_head_importance and n_heads_removed>0:
+                    ch_groups, head_imp, qkv_layers = global_head_importance[group]
+                    head_pruning_indices = (head_imp <= head_thres).nonzero().view(-1)
+                    if len(head_pruning_indices)>0:
+                        for head_id in head_pruning_indices:
+                            pruning_indices = torch.cat([pruning_indices, torch.arange(head_id*group_size, (head_id+1)*group_size, device=pruning_indices.device)], 0)
+                    for qkv_layer in qkv_layers:
+                        self.num_heads[qkv_layer] -= len(head_pruning_indices) 
+                pruning_indices = torch.unique(pruning_indices)     
             else:
                 if self.round_to: 
                     n_pruned = len(pruning_indices)
                     current_channels = get_channel_fn(module)
                     n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
                     pruning_indices = pruning_indices[:n_pruned]
-            
+
             group = self.DG.get_pruning_group(
                 module, pruning_fn, pruning_indices.tolist())
-            
+
             if self.DG.check_pruning_group(group):
                 yield group 

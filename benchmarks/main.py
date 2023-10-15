@@ -30,7 +30,7 @@ parser.add_argument('--output-dir', default='run', help='path where to save')
 # For pruning
 parser.add_argument("--method", type=str, default=None)
 parser.add_argument("--speed-up", type=float, default=2)
-parser.add_argument("--max-sparsity", type=float, default=1.0)
+parser.add_argument("--max-pruning-ratio", type=float, default=1.0)
 parser.add_argument("--soft-keeping-ratio", type=float, default=0.0)
 parser.add_argument("--reg", type=float, default=5e-4)
 parser.add_argument("--delta_reg", type=float, default=1e-4, help='for growing regularization')
@@ -198,7 +198,7 @@ def get_pruner(model, example_inputs):
     #args.is_accum_importance = is_accum_importance
     unwrapped_parameters = []
     ignored_layers = []
-    ch_sparsity_dict = {}
+    pruning_ratio_dict = {}
     # ignore output layers
     for m in model.modules():
         if isinstance(m, torch.nn.Linear) and m.out_features == args.num_classes:
@@ -213,9 +213,9 @@ def get_pruner(model, example_inputs):
         example_inputs,
         importance=imp,
         iterative_steps=args.iterative_steps,
-        ch_sparsity=1.0,
-        ch_sparsity_dict=ch_sparsity_dict,
-        max_ch_sparsity=args.max_sparsity,
+        pruning_ratio=1.0,
+        pruning_ratio_dict=pruning_ratio_dict,
+        max_pruning_ratio=args.max_pruning_ratio,
         ignored_layers=ignored_layers,
         unwrapped_parameters=unwrapped_parameters,
     )

@@ -59,7 +59,7 @@ def test_pruner():
         example_inputs,
         importance=imp,
         iterative_steps=iterative_steps,
-        ch_sparsity=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+        pruning_ratio=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
         ignored_layers=ignored_layers,
     )
     for g in pruner.DG.get_all_groups():

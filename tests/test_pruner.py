@@ -28,7 +28,7 @@ def test_pruner():
         importance=imp,
         global_pruning=True,
         iterative_steps=iterative_steps,
-        ch_sparsity=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+        pruning_ratio=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
         ignored_layers=ignored_layers,
     )
 
@@ -98,7 +98,7 @@ def test_pruner_TransposeConv():
                 example_inputs,
                 importance=imp,
                 iterative_steps=iterative_steps,
-                ch_sparsity=0.5,  # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+                pruning_ratio=0.5,  # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
                 ignored_layers=ignored_layers,
             )
 
