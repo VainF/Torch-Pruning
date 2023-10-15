@@ -27,4 +27,4 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test with pytest
       run: |
-        pytest --ignore=tests/test_unwrapped_parameters.py --ignore=tests/test_backward.py --ignore=tests/test_concat_split.py --ignore=tests/test_serialization.py --ignore=tests/test_non_feature_dim_cat.py
+        pytest --ignore=tests/test_unwrapped_parameters.py --ignore=tests/test_backward.py --ignore=tests/test_concat_split.py --ignore=tests/test_serialization.py --ignore=tests/test_non_feature_dim_cat.py --ignore=tests/test_benchmark.py 
