@@ -93,6 +93,65 @@ wget https://github.com/VainF/Torch-Pruning/releases/download/v1.2.5/vit_b_16_pr
 python measure_latency.py --model pretrained/vit_b_16_pruning_taylor_uniform.pth
 ```
 
+### Pruning attention heads
+
+```bash
+python prune_timm_vit.py --prune_num_heads --head_pruning_ratio 0.5 
+```
+
+```bash
+...
+Head #0
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #1
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #2
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #3
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #4
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #5
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #6
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #7
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #8
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #9
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #10
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+
+Head #11
+[Before Pruning] Num Heads: 12, Head Dim: 64 =>
+[After Pruning] Num Heads: 6, Head Dim: 64
+...
+```
+
+
 ## Pruning ViT-ImageNet-1K from [HF Transformers](https://huggingface.co/docs/transformers/index)
 
 ### Pruning

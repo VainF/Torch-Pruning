@@ -23,6 +23,8 @@ def parse_args():
     parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l2', 'l1', 'hessian'])
     parser.add_argument('--test_accuracy', default=False, action='store_true', help='test accuracy')
     parser.add_argument('--global_pruning', default=False, action='store_true', help='global pruning')
+    parser.add_argument('--prune_num_heads', default=False, action='store_true', help='global pruning')
+    parser.add_argument('--head_pruning_ratio', default=0.0, type=float, help='head pruning ratio')
     parser.add_argument('--use_imagenet_mean_std', default=False, action='store_true', help='use imagenet mean and std')
     parser.add_argument('--train_batch_size', default=64, type=int, help='train batch size')
     parser.add_argument('--val_batch_size', default=128, type=int, help='val batch size')
@@ -146,9 +148,9 @@ def main():
         pruning_ratio=args.pruning_ratio, # target pruning ratio
         ignored_layers=ignored_layers,
         num_heads=num_heads, # number of heads in self attention
-        prune_num_heads=False, # reduce num_heads by pruning entire heads (default: False)
-        prune_head_dims=True, # reduce head_dim by pruning featrues dims of each head (default: True)
-        head_pruning_ratio=0.5, # remove 50% heads, only works when prune_num_heads=True (default: 0.0)
+        prune_num_heads=args.prune_num_heads, # reduce num_heads by pruning entire heads (default: False)
+        prune_head_dims=not args.prune_num_heads, # reduce head_dim by pruning featrues dims of each head (default: True)
+        head_pruning_ratio=args.head_pruning_ratio, # remove 50% heads, only works when prune_num_heads=True (default: 0.0)
         round_to=2
     )
 
