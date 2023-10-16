@@ -33,6 +33,11 @@ class BNScalePruner(MetaPruner):
         # Advanced
         in_channel_groups: typing.Dict[nn.Module, int] = dict(), # The number of channel groups for layer input
         out_channel_groups: typing.Dict[nn.Module, int] = dict(), # The number of channel groups for layer output
+        num_heads: typing.Dict[nn.Module, int] = dict(), # The number of heads for multi-head attention
+        prune_num_heads: bool = False, # remove entire heads in multi-head attention
+        prune_head_dims: bool = True, # remove head dimensions in multi-head attention
+        head_pruning_ratio: float = 0.0, # head pruning ratio
+        head_pruning_ratio_dict: typing.Dict[nn.Module, float] = None, # layer-specific head pruning ratio
         customized_pruners: typing.Dict[typing.Any, function.BasePruningFunc] = None, # pruners for customized layers. E.g., {nn.Linear: my_linear_pruner}
         unwrapped_parameters: typing.Dict[nn.Parameter, int] = None, # unwrapped nn.Parameters & pruning_dims. For example, {ViT.pos_emb: 0}
         root_module_types: typing.List = [ops.TORCH_CONV, ops.TORCH_LINEAR, ops.TORCH_LSTM],  # root module for each group
@@ -41,7 +46,8 @@ class BNScalePruner(MetaPruner):
 
         # deprecated
         channel_groups: typing.Dict[nn.Module, int] = dict(), # channel groups for layers
-
+        ch_sparsity: float = None,
+        ch_sparsity_dict: typing.Dict[nn.Module, float] = None,
     ):
         super(BNScalePruner, self).__init__(
             model=model,
@@ -58,6 +64,11 @@ class BNScalePruner(MetaPruner):
             
             in_channel_groups=in_channel_groups,
             out_channel_groups=out_channel_groups,
+            num_heads=num_heads,
+            prune_num_heads=prune_num_heads,
+            prune_head_dims=prune_head_dims,
+            head_pruning_ratio=head_pruning_ratio,
+            head_pruning_ratio_dict=head_pruning_ratio_dict,
             customized_pruners=customized_pruners,
             unwrapped_parameters=unwrapped_parameters,
             root_module_types=root_module_types,
@@ -65,6 +76,8 @@ class BNScalePruner(MetaPruner):
             output_transform=output_transform,
             
             channel_groups=channel_groups,
+            ch_sparsity=ch_sparsity,
+            ch_sparsity_dict=ch_sparsity_dict
         )
         self.reg = reg
         self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))

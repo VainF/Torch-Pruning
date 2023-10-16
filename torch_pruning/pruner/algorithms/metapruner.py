@@ -113,6 +113,17 @@ class MetaPruner:
         self.head_pruning_ratio = head_pruning_ratio
 
         ###############################################
+        # Ignored layers and submodules
+        self.ignored_layers = []
+        self.ignored_params = []
+        if ignored_layers is not None:
+            for layer in ignored_layers:
+                if isinstance(layer, nn.Module):
+                    self.ignored_layers.extend(list(layer.modules()))
+                elif isinstance(layer, nn.Parameter):
+                    self.ignored_params.append(layer)
+
+        ###############################################
         # Build dependency graph
         self.DG = dependency.DependencyGraph().build_dependency(
             model,
@@ -121,15 +132,12 @@ class MetaPruner:
             output_transform=output_transform,
             unwrapped_parameters=unwrapped_parameters,
             customized_pruners=customized_pruners,
+            ignored_layers=self.ignored_layers,
+            ignored_params=self.ignored_params,
         )
 
-        ###############################################
-        # Ignored layers and submodules
-        self.ignored_layers = []
-        if ignored_layers is not None:
-            for layer in ignored_layers:
-                self.ignored_layers.extend(list(layer.modules()))
-
+        
+     
         ###############################################
         # Iterative pruning
         # The pruner will prune the model iteratively for several steps to achieve the target pruning ratio
@@ -329,7 +337,7 @@ class MetaPruner:
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
 
             if self._check_pruning_ratio(group): # check pruning ratio
-
+                
                 group = self._downstream_node_as_root_if_attention(group)
                 
                 module = group[0][0].target.module
@@ -390,19 +398,18 @@ class MetaPruner:
                         dim_pruning_idxs = torch.cat(dim_pruning_idxs, 0).tolist()
                     pruning_idxs = list(set(dim_pruning_idxs + head_pruning_idxs))
                     pruning_idxs.sort()
-
-                    # Update num heads after pruning
-                    if n_heads_removed>0:
-                        for dep, _ in group:
-                            if dep.target.module in self.num_heads:
-                                self.num_heads[dep.target.module] -= n_heads_removed
                 else: # no channel grouping
                     imp_argsort = torch.argsort(imp)
                     pruning_idxs = imp_argsort[:n_pruned].tolist()
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs)
-
+                
                 if self.DG.check_pruning_group(group):
+                    # Update num heads after pruning
+                    if ch_groups > 1 and n_heads_removed>0:
+                        for dep, _ in group:
+                            if dep.target.module in self.num_heads:
+                                self.num_heads[dep.target.module] -= n_heads_removed
                     yield group
 
     def prune_global(self) -> typing.Generator:

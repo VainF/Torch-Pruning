@@ -312,6 +312,8 @@ class DependencyGraph(object):
         output_transform: typing.Callable = None,
         unwrapped_parameters: typing.Dict[nn.Parameter, int] = None,
         customized_pruners: typing.Dict[ typing.Union[typing.Any, torch.nn.Module],function.BasePruningFunc] = None,
+        ignored_layers: typing.List[nn.Module] = None,
+        ignored_params: typing.List[nn.Parameter] = None,
         verbose: bool = True,
     ) -> "DependencyGraph":
         """Build a dependency graph through tracing.
@@ -334,6 +336,9 @@ class DependencyGraph(object):
             for customized_type, customized_pruner in customized_pruners.items():
                 self.register_customized_layer(customized_type, customized_pruner)
         
+        if ignored_layers is None:
+            self.IGNORED_LAYERS.extend(ignored_layers)
+        self.ignored_params = ignored_params
         # Ignore all sub-modules of customized layers as they will be handled by the customized pruners
         for layer_type_or_instance in self.CUSTOMIZED_PRUNERS.keys():            
             for m in self.model.modules():
@@ -389,7 +394,6 @@ class DependencyGraph(object):
             if self.is_out_channel_pruning_fn(dep.handler):
                 prunable_chs = self.get_out_channels(
                     dep.target.module)
-                #print(prunable_chs, len(idxs))
                 if prunable_chs is None: continue
                 if prunable_chs <= len(idxs):
                     return False
@@ -397,7 +401,6 @@ class DependencyGraph(object):
             if self.is_in_channel_pruning_fn(dep.handler):
                 prunable_in_chs = self.get_in_channels(
                     dep.target.module)
-                #print(prunable_in_chs, len(idxs))
                 if prunable_in_chs is None: continue
                 if prunable_in_chs <= len(idxs):
                     return False
@@ -475,6 +478,14 @@ class DependencyGraph(object):
         # merge pruning ops
         merged_group = Group()
         for dep, idxs in group.items:
+            if isinstance(dep.target.module, nn.Parameter): #and dep.target.module in self.ignored_params:
+                skip=False
+                for ignored_p in self.ignored_params:
+                    if dep.target.module is ignored_p:
+                        skip=True
+                        break
+                if skip:
+                    continue
             merged_group.add_and_merge(dep, idxs)
         merged_group._DG = self
         for i in range(len(merged_group)):
