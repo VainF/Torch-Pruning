@@ -31,6 +31,9 @@ pruner = tp.pruner.MetaPruner(
     iterative_steps=1, # the number of iterations to achieve target pruning ratio
     pruning_ratio=0.5,
     num_heads=num_heads,
+    prune_head_dims=False,
+    prune_num_heads=True,
+    head_pruning_ratio=0.5,
     output_transform=lambda out: out.pooler_output.sum(),
     ignored_layers=[model.pooler],
 )
@@ -42,8 +45,12 @@ for g in pruner.step(interactive=True):
 # Modify the attention head size and all head size after pruning
 for m in model.modules():
     if isinstance(m, BertSelfAttention):
+        print("Num heads: %d, head size: %d =>"%(m.num_attention_heads, m.attention_head_size))
+        m.num_attention_heads = pruner.num_heads[m.query]
         m.attention_head_size = m.query.out_features // m.num_attention_heads
         m.all_head_size = m.query.out_features
+        print("Num heads: %d, head size: %d"%(m.num_attention_heads, m.attention_head_size))
+        print()
 
 print(model)
 test_output = model(**example_inputs)
