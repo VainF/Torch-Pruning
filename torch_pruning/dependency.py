@@ -336,7 +336,7 @@ class DependencyGraph(object):
             for customized_type, customized_pruner in customized_pruners.items():
                 self.register_customized_layer(customized_type, customized_pruner)
         
-        if ignored_layers is None:
+        if ignored_layers is not None:
             self.IGNORED_LAYERS.extend(ignored_layers)
         self.ignored_params = ignored_params
         # Ignore all sub-modules of customized layers as they will be handled by the customized pruners
