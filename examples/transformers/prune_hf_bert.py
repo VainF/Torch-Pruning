@@ -26,7 +26,7 @@ for m in model.modules():
 pruner = tp.pruner.MetaPruner(
     model, 
     example_inputs, 
-    global_pruning=False, # If False, a uniform pruning ratio will be assigned to different layers.
+    global_pruning=True, # If False, a uniform pruning ratio will be assigned to different layers.
     importance=imp, # importance criterion for parameter selection
     iterative_steps=1, # the number of iterations to achieve target pruning ratio
     pruning_ratio=0.5,
