@@ -328,6 +328,19 @@ class TaylorImportance(MagnitudeImportance):
                         local_imp = (b * db).abs()
                         group_imp.append(local_imp)
                         group_idxs.append(root_idxs)
+            elif prune_fn == function.prune_layernorm_out_channels:
+                if layer.elementwise_affine:
+                    w = layer.weight.data[idxs]
+                    dw = layer.weight.grad.data[idxs]
+                    local_imp = (w*dw).abs()
+                    group_imp.append(local_imp)
+                    group_idxs.append(root_idxs)
+                    if self.bias and layer.bias is not None:
+                        b = layer.bias.data[idxs]
+                        db = layer.bias.grad.data[idxs]
+                        local_imp = (b * db).abs()
+                        group_imp.append(local_imp)
+                        group_idxs.append(root_idxs)
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
         group_imp = self._reduce(group_imp, group_idxs)
