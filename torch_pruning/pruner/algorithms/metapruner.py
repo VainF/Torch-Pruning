@@ -322,7 +322,7 @@ class MetaPruner:
 
     def _round_to(self, n_pruned, current_channels, round_to):
         rounded_channels = current_channels - n_pruned
-        rounded_channels = rounded_channels + (round_to - rounded_channels % round_to)
+        rounded_channels = rounded_channels - rounded_channels % round_to
         n_pruned = current_channels - rounded_channels
         return max(n_pruned, 0)
 
@@ -374,6 +374,8 @@ class MetaPruner:
                 if n_pruned > 0:
                     if (self.prune_head_dims and _is_attn) or (not _is_attn):
                         n_pruned_per_group = n_pruned // ch_groups 
+                        if self.round_to:
+                            n_pruned_per_group = self._round_to(n_pruned_per_group, group_size, self.round_to)
                         if n_pruned_per_group>0:
                             for chg in range(ch_groups):
                                 sub_group_imp = imp[chg*group_size: (chg+1)*group_size]
@@ -491,10 +493,7 @@ class MetaPruner:
                     n_pruned_per_group = len((imp <= thres).nonzero().view(-1))
                     if n_pruned_per_group>0:
                         if self.round_to:
-                            n_pruned = n_pruned_per_group * ch_groups
-                            current_channels = get_channel_fn(module)
-                            n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
-                            n_pruned_per_group = n_pruned // ch_groups
+                            n_pruned_per_group = self._round_to(n_pruned_per_group, group_size, self.round_to)
                         _is_attn, _ = self._is_attn_group(group)
                         if not _is_attn or self.prune_head_dims==True:
                             raw_imp = self.estimate_importance(group, ch_groups=ch_groups) # re-compute importance
@@ -505,11 +504,12 @@ class MetaPruner:
                                 pruning_indices.append(sub_pruning_idxs)
                 else:
                     _pruning_indices = (imp <= thres).nonzero().view(-1)
-                    if len(pruning_indices)>0 and self.round_to: 
+                    imp_argsort = torch.argsort(imp)
+                    if len(_pruning_indices)>0 and self.round_to: 
                         n_pruned = len(_pruning_indices)
                         current_channels = get_channel_fn(module)
                         n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
-                        _pruning_indices = _pruning_indices[:n_pruned]
+                        _pruning_indices = imp_argsort[:n_pruned]
                     pruning_indices.append(_pruning_indices)
                         
             # Prune heads
