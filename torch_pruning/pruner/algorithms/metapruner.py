@@ -132,12 +132,9 @@ class MetaPruner:
             output_transform=output_transform,
             unwrapped_parameters=unwrapped_parameters,
             customized_pruners=customized_pruners,
-            ignored_layers=self.ignored_layers,
             ignored_params=self.ignored_params,
         )
 
-        
-     
         ###############################################
         # Iterative pruning
         # The pruner will prune the model iteratively for several steps to achieve the target pruning ratio
