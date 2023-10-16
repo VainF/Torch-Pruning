@@ -150,7 +150,7 @@ def main():
         num_heads=num_heads, # number of heads in self attention
         prune_num_heads=args.prune_num_heads, # reduce num_heads by pruning entire heads (default: False)
         prune_head_dims=not args.prune_num_heads, # reduce head_dim by pruning featrues dims of each head (default: True)
-        head_pruning_ratio=args.head_pruning_ratio, # remove 50% heads, only works when prune_num_heads=True (default: 0.0)
+        head_pruning_ratio=0.5, #args.head_pruning_ratio, # remove 50% heads, only works when prune_num_heads=True (default: 0.0)
         round_to=2
     )
 
