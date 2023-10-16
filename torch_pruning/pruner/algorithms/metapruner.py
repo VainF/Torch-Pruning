@@ -84,7 +84,7 @@ class MetaPruner:
 
         if ch_sparsity is not None:
             warnings.warn("ch_sparsity is deprecated in v1.3.0. Please use pruning_ratio.")
-            pruning_ratio = pruning_ratio
+            pruning_ratio = ch_sparsity
         if ch_sparsity_dict is not None:
             warnings.warn("ch_sparsity_dict is deprecated in v1.3.0. Please use pruning_ratio_dict instead.")
             pruning_ratio_dict = ch_sparsity_dict
