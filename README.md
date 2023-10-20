@@ -175,8 +175,7 @@ pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse train
 base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
 if isinstance(imp, tp.importance.GroupTaylorImportance):
     # Taylor expansion requires gradients for importance estimation
-    # A dummy loss, please replace it with your loss function and data!
-    loss = model(example_inputs).sum() 
+    loss = model(example_inputs).sum() # A dummy loss, please replace this line with your loss function and data!
     loss.backward() # before pruner.step()
 
 pruner.step()
