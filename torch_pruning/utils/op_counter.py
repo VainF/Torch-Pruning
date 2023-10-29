@@ -268,7 +268,7 @@ def timm_multihead_attention_counter_hook(multihead_attention_module, input, out
     qlen = klen = vlen = input_len
 
     num_heads = multihead_attention_module.num_heads
-    assert qdim == multihead_attention_module.head_dim * multihead_attention_module.num_heads
+    head_dim = multihead_attention_module.qkv.out_features // num_heads
     
     flops = 0
     # Q scaling
@@ -357,6 +357,7 @@ if has_timm:
     MODULES_MAPPING.update(
         {
             timm.models.vision_transformer.Attention: timm_multihead_attention_counter_hook,
+            timm.models.swin_transformer.WindowAttention: timm_multihead_attention_counter_hook,
         }
     )
 
