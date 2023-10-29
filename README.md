@@ -51,8 +51,8 @@ For more technical details, please refer to our CVPR'23 paper:
 ### **Contact Us:**
 Please do not hesitate to open an [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.   
 Or Join our Discord or WeChat group for a chat:
-  * Discord: [link](https://discord.gg/hjX24XA9)
-  * WeChat (Group size exceeded 300): [QR Code](https://github.com/VainF/Torch-Pruning/assets/18592211/6c80e758-7692-4dad-b6aa-1e1877e72bf7)
+  * Discord: [link](https://discord.gg/k7WRzgSx)
+  * WeChat (Group size exceeded 300): [QR Code](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3)
 
 ## Installation
 
@@ -78,7 +78,7 @@ In structural pruning, a "Group" is defined as the minimal unit that can be remo
 <img src="assets/dep.png" width="100%">
 </div>
 
-### 1. A Minimal Example
+### 1. A Minimal Example of DepGraph
  
 Please ensure that your model is set up to enable AutoGrad without ``torch.no_grad`` or ``.requires_grad=False``.
 
@@ -175,8 +175,7 @@ pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse train
 base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
 if isinstance(imp, tp.importance.GroupTaylorImportance):
     # Taylor expansion requires gradients for importance estimation
-    # A dummy loss, please replace it with your loss function and data!
-    loss = model(example_inputs).sum() 
+    loss = model(example_inputs).sum() # A dummy loss, please replace this line with your loss function and data!
     loss.backward() # before pruner.step()
 
 pruner.step()
@@ -226,7 +225,7 @@ for i in range(iterative_steps):
 
 #### Group-level Pruning
 
-With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. This feature can be also used to sparsify coupled layers, making all the to-be-pruned parameters consistently unimportant. In Torch-pruning, all pruners work at the group level. Check the following results to see how grouping improves the performance of pruning.
+With DepGraph, it is easy to design some "group-level" criteria to estimate the importance of a whole group rather than a single layer. This feature can be also used to sparsify coupled layers, making all the to-be-pruned parameters consistently sparse. In Torch-pruning, all pruners work at the group level. Check the following results to see how grouping improves the performance of pruning.
 
 <div align="center">
 <img src="assets/group_sparsity.png" width="80%">
