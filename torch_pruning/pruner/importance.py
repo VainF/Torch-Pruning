@@ -65,7 +65,7 @@ class MagnitudeImportance(Importance):
                  group_reduction: str="mean", 
                  normalizer: str='mean', 
                  bias=False,
-                 target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
+                 target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm, nn.LayerNorm]):
         self.p = p
         self.group_reduction = group_reduction
         self.normalizer = normalizer
@@ -205,6 +205,21 @@ class MagnitudeImportance(Importance):
                         local_imp = layer.bias.data[idxs].abs().pow(self.p)
                         group_imp.append(local_imp)
                         group_idxs.append(root_idxs)
+            ####################
+            # LayerNorm
+            ####################
+            elif prune_fn == function.prune_layernorm_out_channels:
+
+                if layer.elementwise_affine:
+                    w = layer.weight.data[idxs]
+                    local_imp = w.abs().pow(self.p)
+                    group_imp.append(local_imp)
+                    group_idxs.append(root_idxs)
+
+                    if self.bias and layer.bias is not None:
+                        local_imp = layer.bias.data[idxs].abs().pow(self.p)
+                        group_imp.append(local_imp)
+                        group_idxs.append(root_idxs)
 
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
@@ -248,7 +263,7 @@ class TaylorImportance(MagnitudeImportance):
                  normalizer:str='mean', 
                  multivariable:bool=False, 
                  bias=False,
-                 target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
+                 target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm, nn.modules.LayerNorm]):
         self.group_reduction = group_reduction
         self.normalizer = normalizer
         self.multivariable = multivariable
@@ -267,7 +282,8 @@ class TaylorImportance(MagnitudeImportance):
 
             if not isinstance(layer, tuple(self.target_types)):
                 continue
-
+            
+            # Conv/Linear Output
             if prune_fn in [
                 function.prune_conv_out_channels,
                 function.prune_linear_out_channels,
@@ -293,8 +309,7 @@ class TaylorImportance(MagnitudeImportance):
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
                     
-
-            # Conv in_channels
+            # Conv/Linear Input
             elif prune_fn in [
                 function.prune_conv_in_channels,
                 function.prune_linear_in_channels,
@@ -328,6 +343,8 @@ class TaylorImportance(MagnitudeImportance):
                         local_imp = (b * db).abs()
                         group_imp.append(local_imp)
                         group_idxs.append(root_idxs)
+            
+            # LN
             elif prune_fn == function.prune_layernorm_out_channels:
                 if layer.elementwise_affine:
                     w = layer.weight.data[idxs]
@@ -355,7 +372,7 @@ class HessianImportance(MagnitudeImportance):
                  group_reduction:str="mean", 
                  normalizer:str='mean', 
                  bias=False,
-                 target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]):
+                 target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm, nn.modules.LayerNorm]):
         self.group_reduction = group_reduction
         self.normalizer = normalizer
         self.target_types = target_types
@@ -440,10 +457,8 @@ class HessianImportance(MagnitudeImportance):
                     group_idxs.append(root_idxs)
 
             # BN
-            elif prune_fn == function.prune_groupnorm_out_channels:
-                # regularize BN
+            elif prune_fn == function.prune_batchnorm_out_channels:
                 if layer.affine:
-
                     if layer.weight.grad is not None:
                         w = layer.weight.data[idxs]
                         h = layer.weight.grad.data[idxs]
@@ -457,6 +472,23 @@ class HessianImportance(MagnitudeImportance):
                         local_imp = (b**2 * h).abs()
                         group_imp.append(local_imp)
                         group_idxs.append(root_idxs)
+            
+            # LN
+            elif prune_fn == function.prune_layernorm_out_channels:
+                if layer.elementwise_affine:
+                    if layer.weight.grad is not None:
+                        w = layer.weight.data[idxs]
+                        h = layer.weight.grad.data[idxs]
+                        local_imp = (w**2 * h)
+                        group_imp.append(local_imp)
+                        group_idxs.append(root_idxs)
+                    if self.bias and layer.bias is not None and layer.bias.grad is not None:
+                        b = layer.bias.data[idxs]
+                        h = layer.bias.grad.data[idxs]
+                        local_imp = (b**2 * h)
+                        group_imp.append(local_imp)
+                        group_idxs.append(root_idxs)
+            
 
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
