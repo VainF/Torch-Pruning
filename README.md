@@ -188,7 +188,6 @@ macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
 
 With the option of global pruning (``global_pruning=True``), adaptive sparsity will be allocated to different layers based on their global rank of importance. While this strategy can offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. **If you're not very familiar with pruning, it's recommended to begin with ``global_pruning=False``.**
 
-
 #### Sparse Training (Advanced)
 Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/batchnorm_scale_pruner.py#L45) and [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/group_norm_pruner.py#L53) support sparse training. This can be easily achieved by inserting one line of code ``pruner.regularize(model)`` just between ``loss.backward()`` and ``optimizer.step()``. The pruner will update the gradient of trainable parameters.
 ```python
@@ -222,6 +221,10 @@ for i in range(iterative_steps):
     # finetune(model)
     # ...
 ```
+
+#### Soft Pruning
+
+It is easy to implement Soft Pruning leveraging ``interactive=True``, which zeros out parameters without removing them. An example can be found in [tests/test_soft_pruning.py](https://github.com/VainF/Torch-Pruning/blob/c9cea192a31f64e5ea26c095a70e2e93acf0be77/tests/test_soft_pruning.py#L39)
 
 #### Group-level Pruning
 
