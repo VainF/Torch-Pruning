@@ -315,15 +315,21 @@ class TaylorImportance(MagnitudeImportance):
                 function.prune_linear_in_channels,
             ]:
                 if hasattr(layer, "transposed") and layer.transposed:
-                    w = (layer.weight).flatten(1)[idxs]
-                    dw = (layer.weight.grad).flatten(1)[idxs]
+                    w = (layer.weight).flatten(1)
+                    dw = (layer.weight.grad).flatten(1)
                 else:
-                    w = (layer.weight).transpose(0, 1).flatten(1)[idxs]
-                    dw = (layer.weight.grad).transpose(0, 1).flatten(1)[idxs]
+                    w = (layer.weight).transpose(0, 1).flatten(1)
+                    dw = (layer.weight.grad).transpose(0, 1).flatten(1)
                 if self.multivariable:
                     local_imp = (w * dw).sum(1).abs()
                 else:
                     local_imp = (w * dw).abs().sum(1)
+                
+                # repeat importance for group convolutions
+                if prune_fn == function.prune_conv_in_channels and layer.groups != layer.in_channels and layer.groups != 1:
+                    local_imp = local_imp.repeat(ch_groups)
+                local_imp = local_imp[idxs]
+
                 group_imp.append(local_imp)
                 group_idxs.append(root_idxs)
 
@@ -446,13 +452,16 @@ class HessianImportance(MagnitudeImportance):
             ]:
                 if layer.weight.grad is not None:
                     if hasattr(layer, "transposed") and layer.transposed:
-                        w = (layer.weight).flatten(1)[idxs]
-                        h = (layer.weight.grad).flatten(1)[idxs]
+                        w = (layer.weight).flatten(1)
+                        h = (layer.weight.grad).flatten(1)
                     else:
-                        w = (layer.weight).transpose(0, 1).flatten(1)[idxs]
-                        h = (layer.weight.grad).transpose(0, 1).flatten(1)[idxs]
+                        w = (layer.weight).transpose(0, 1).flatten(1)
+                        h = (layer.weight.grad).transpose(0, 1).flatten(1)
 
                     local_imp = (w**2 * h).sum(1)
+                    if prune_fn == function.prune_conv_in_channels and layer.groups != layer.in_channels and layer.groups != 1:
+                        local_imp = local_imp.repeat(ch_groups)
+                    local_imp = local_imp[idxs]
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
 
