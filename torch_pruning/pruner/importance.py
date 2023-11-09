@@ -97,6 +97,10 @@ class MagnitudeImportance(Importance):
             return group_importance / group_importance.max()
         elif normalizer == 'gaussian':
             return (group_importance - group_importance.mean()) / (group_importance.std()+1e-8)
+        elif normalizer.startswith('sentinel'): # normalize the score with the k-th smallest element. e.g. sentinel_0.5 means median normalization
+            sentinel = float(normalizer.split('_')[1]) * len(group_importance)
+            sentinel = torch.argsort(group_importance, dim=0, descending=False)[int(sentinel)]
+            return group_importance / (group_importance[sentinel]+1e-8)
         elif normalizer=='lamp':
             return self._lamp(group_importance)
         else:
