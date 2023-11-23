@@ -54,6 +54,27 @@ Or Join our Discord or WeChat group for a chat:
   * Discord: [link](https://discord.gg/NTbuBt59)
   * WeChat (Group size exceeded 300): [QR Code](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3)
 
+## Table of Contents
+- [Installation](#installation)
+- [Quickstart](#quickstart)
+   - [How It Works](#how-it-works)
+   - [A Minimal Example of DepGraph](#a-minimal-example-of-depgraph)
+   - [High-level Pruners](#high-level-pruners)
+     - [Global Pruning](#global-pruning)
+     - [Sparse Training](#sparse-training)
+     - [Interactive Pruning](#interactive-pruning)
+     - [Soft Pruning](#soft-pruning)
+     - [Group-level Pruning](#group-level-pruning)
+     - [Modify Module Attributes or Forward Function](#modify-module-attributes-or-forward-function)
+   - [Save & Load](#save-and-load)
+   - [Low-level Pruning Functions](#low-level-pruning-functions)
+   - [Customized Layers](#customized-layers)
+   - [Benchmarks](#benchmarks)
+     - [Our Results on {ResNet-56 / CIFAR-10 / 2.00x}](#our-results-on-resnet-56--cifar-10--200x)
+     - [Latency](#latency)
+   - [Series of Works](#series-of-works)
+- [Citation](#citation)
+
 ## Installation
 
 Torch-Pruning is compatible with both PyTorch 1.x and 2.x versions. However, it is highly recommended to use PyTorch 1.12.1 or higher.
@@ -70,7 +91,7 @@ git clone https://github.com/VainF/Torch-Pruning.git
   
 Here we provide a quick start for Torch-Pruning. More explained details can be found in [Tutorals](https://github.com/VainF/Torch-Pruning/wiki)
 
-### 0. How It Works
+### How It Works
 
 In structural pruning, a "Group" is defined as the minimal unit that can be removed within deep networks. These groups are composed of multiple layers that are interdependent and need to be pruned together in order to maintain the integrity of the resulting structures. However, deep networks often have complex dependencies among their layers, making structural pruning a challenging task. This work addresses this challenge by introducing an automated mechanism called "DepGraph." DepGraph allows for seamless parameter grouping and facilitates pruning in various types of deep networks.
 
@@ -78,7 +99,7 @@ In structural pruning, a "Group" is defined as the minimal unit that can be remo
 <img src="assets/dep.png" width="100%">
 </div>
 
-### 1. A Minimal Example of DepGraph
+### A Minimal Example of DepGraph
  
 Please ensure that your model is set up to enable AutoGrad without ``torch.no_grad`` or ``.requires_grad=False``.
 
@@ -141,7 +162,7 @@ for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[
     print(group)
 ```
 
-### 2. High-level Pruners
+### High-level Pruners
 
 With DepGraph, we developed several high-level pruners in this repository to facilitate effortless pruning. By specifying the desired channel pruning ratio, a pruner will scan all prunable groups, estimate the importance, prune the entire model, and fine-tune it using your own training code. For detailed information on this process, please refer to [this tutorial](https://github.com/VainF/Torch-Pruning/blob/master/examples/notebook/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), which shows how to implement a [slimming](https://arxiv.org/abs/1708.06519) pruner from scratch. Additionally, a more practical example is available in [benchmarks/main.py](benchmarks/main.py).
 
@@ -188,7 +209,7 @@ macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
 
 With the option of global pruning (``global_pruning=True``), adaptive sparsity will be allocated to different layers based on their global rank of importance. While this strategy can offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. **If you're not very familiar with pruning, it's recommended to begin with ``global_pruning=False``.**
 
-#### Sparse Training (Advanced)
+#### Sparse Training
 Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/batchnorm_scale_pruner.py#L45) and [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/group_norm_pruner.py#L53) support sparse training. This can be easily achieved by inserting one line of code ``pruner.regularize(model)`` just between ``loss.backward()`` and ``optimizer.step()``. The pruner will update the gradient of trainable parameters.
 ```python
 for epoch in range(epochs):
@@ -203,7 +224,7 @@ for epoch in range(epochs):
         optimizer.step() # before optimizer.step()
 ```
 
-#### Interactive Pruning (Advanced)
+#### Interactive Pruning
 All high-level pruners offer support for interactive pruning. You can utilize the method `pruner.step(interactive=True)` to retrieve all the groups and interactively prune them by calling `group.prune()`. This feature is particularly useful when you want to have control over or monitor the pruning process.
 
 ```python
@@ -267,7 +288,7 @@ class Scale(nn.Module):
 where the ```forward``` function relies on ``self.shape`` during forwarding. But, the true ``self.shape`` changed after pruning, which should be manually updated. 
 
 
-### 3. Save & Load
+### Save and Load
 
 #### Method 1:
 The following script saves the whole model object (structure+weights) as a 'model.pth'. 
@@ -293,7 +314,7 @@ tp.load_state_dict(new_model, state_dict=loaded_state_dict)
 ```
 Refer to [tests/test_serialization.py](tests/test_serialization.py) for an ViT example. In this example, we will prune the model and modify some attributes like ``model.hidden_dims``.
                                 
-### 4. Low-level Pruning Functions
+### Low-level Pruning Functions
 
 Although it is possible to manually prune your model using low-level functions, this approach can be cumbersome and time-consuming due to the need for meticulous management of dependencies. Therefore, we strongly recommend utilizing the high-level pruners mentioned earlier to streamline and simplify the pruning process. These pruners provide a more convenient and efficient way to perform pruning on your models. To manually prune the ``model.conv1`` of a ResNet-18, the pruning pipeline should look like this:
 
@@ -332,11 +353,11 @@ The following [pruning functions](torch_pruning/pruner/function.py) are availabl
 'prune_instancenorm_in_channels',
 ```
 
-### 5. Customized Layers
+### Customized Layers
 
 Please refer to [examples/transformers/prune_hf_swin.py](examples/transformers/prune_hf_swin.py), which implements a new pruner for the customized module ``SwinPatchMerging``. A more simple example is available at [tests/test_customized_layer.py](https://github.com/VainF/Torch-Pruning/blob/master/tests/test_customized_layer.py).
 
-### 6. Benchmarks
+### Benchmarks
 
 #### Our results on {ResNet-56 / CIFAR-10 / 2.00x}
 
@@ -384,7 +405,7 @@ Latency test on ResNet-50, Batch Size=64.
 
 Please refer to [benchmarks](benchmarks) for more details.
 
-### 8. Series of Works
+### Series of Works
 
 > **DepGraph: Towards Any Structural Pruning** [[Project]](https://github.com/VainF/Torch-Pruning) [[Paper]](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)   
 > *Gongfan Fang, Xinyin Ma, Mingli Song, Michael Bi Mi, Xinchao Wang*  
