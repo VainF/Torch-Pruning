@@ -276,7 +276,8 @@ class DependencyGraph(object):
         self.REGISTERED_PRUNERS = function.PrunerBox.copy()  # shallow copy
         self.REGISTERED_PRUNERS.update(_dummy_pruners) # merge dummy pruners
         self.CUSTOMIZED_PRUNERS = {} # user-customized pruners
-        self.IGNORED_LAYERS = []
+
+        self.IGNORED_LAYERS_IN_TRACING = []
 
         # cache pruning functions for fast lookup
         self._in_channel_pruning_fn = set([p.prune_in_channels for p in self.REGISTERED_PRUNERS.values() if p is not None] + [p.prune_in_channels for p in self.CUSTOMIZED_PRUNERS.values() if p is not None])
@@ -324,6 +325,8 @@ class DependencyGraph(object):
             output_transform (Callable): a function to transform network outputs.
             unwrapped_parameters (typing.Dict[nn.Parameter, int]): unwrapped nn.parameters that do not belong to standard nn.Module.
             customized_pruners (typing.Dict[ typing.Union[typing.Any, torch.nn.Module],function.BasePruningFunc]): customized pruners for a specific layer type or a specific layer instance.
+            ignored_layers (typing.List[nn.Module]): ignored layers that will not be traced in the dependency graph.
+            ignored_params (typing.List[nn.Parameter]): ignored nn.Parameter that will not be pruned.
             verbose (bool): verbose mode.
         """
 
@@ -337,22 +340,22 @@ class DependencyGraph(object):
                 self.register_customized_layer(customized_type, customized_pruner)
         
         if ignored_layers is not None:
-            self.IGNORED_LAYERS.extend(ignored_layers)
+            self.IGNORED_LAYERS_IN_TRACING.extend(ignored_layers)
         self.ignored_params = ignored_params
-        # Ignore all sub-modules of customized layers as they will be handled by the customized pruners
+        # Ignore all sub-modules of customized layers since they will be handled by the customized pruner
         for layer_type_or_instance in self.CUSTOMIZED_PRUNERS.keys():            
             for m in self.model.modules():
                 # a layer instance or a layer type
                 if (m==layer_type_or_instance) or (not isinstance(layer_type_or_instance, torch.nn.Module) and isinstance(m, layer_type_or_instance)):
                     for sub_module in m.modules(): 
                         if sub_module != m:
-                            self.IGNORED_LAYERS.append(sub_module)
+                            self.IGNORED_LAYERS_IN_TRACING.append(sub_module)
 
-        # Detect unwrapped nn.parameters
+        # Detect unwrapped nn.parameters that can not be handled by self.REGISTED_PRUNERS
         self._param_to_name, self.unwrapped_parameters = self._detect_unwrapped_parameters(unwrapped_parameters)
 
         # Detect torch.no_grad()
-        assert torch.is_grad_enabled(), "Dependency graph relies on autograd for tracing. Please make sure there is no torch.no_grad() in your code."
+        assert torch.is_grad_enabled(), "Dependency graph relies on autograd for tracing. Please check and disable the torch.no_grad() in your code."
         
         # Build computational graph through tracing. 
         self.module2node = self._trace(
@@ -362,7 +365,7 @@ class DependencyGraph(object):
         # Build dependency graph
         self._build_dependency(self.module2node)
         
-        # Init Shape information
+        # Initialize shape information
         self._init_shape_information()
 
         # Update index mapping for torch.cat/split/chunck/...
@@ -498,7 +501,7 @@ class DependencyGraph(object):
 
     def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
         visited_layers = []
-        ignored_layers = ignored_layers+self.IGNORED_LAYERS
+        ignored_layers = ignored_layers+self.IGNORED_LAYERS_IN_TRACING
 
         for m in list(self.module2node.keys()):
             
@@ -711,7 +714,7 @@ class DependencyGraph(object):
         hooks = [
             m.register_forward_hook(_record_grad_fn)
             for m in model.modules()
-            if (isinstance(m, registered_types) and m not in self.IGNORED_LAYERS)
+            if (isinstance(m, registered_types) and m not in self.IGNORED_LAYERS_IN_TRACING)
         ]
 
         # Feed forward to record gradient functions of prunable modules
@@ -729,12 +732,11 @@ class DependencyGraph(object):
 
         # for recursive models or layers
         reused = [m for (m, count) in visited.items() if count > 1]
-
-        # Graph tracing
         if output_transform is not None:
             out = output_transform(out)
-        module2node = {} # create a mapping from nn.Module to tp.dependency.Node
 
+        # Graph tracing
+        module2node = {} # create a mapping from nn.Module to tp.dependency.Node
         visited = set()
         for o in utils.flatten_as_list(out):
             self._trace_computational_graph(
@@ -1132,8 +1134,3 @@ class DependencyGraph(object):
         recursive_depth = [0]
         return self._infer_out_channels_recursively(node_1, recursive_depth)
 
-        
-
-
-
-        
