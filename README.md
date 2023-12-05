@@ -419,6 +419,10 @@ Please refer to [benchmarks](benchmarks) for more details.
 > *Gongfan Fang, Xinyin Ma, Xinchao Wang*  
 > NeurIPS 2023
 
+> **DeepCache: Accelerating Diffusion Models for Free** [[Project]](https://github.com/horseee/DeepCache) [[Arxiv]](https://arxiv.org/abs/2312.00858)  
+> *Xinyin Ma, Gongfan Fang, and Xinchao Wang*   
+> Preprint 2023  
+
 
 ## Citation
 ```
