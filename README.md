@@ -77,7 +77,7 @@ Or Join our Discord or WeChat group for a chat:
 
 ## Installation
 
-Torch-Pruning is compatible with both PyTorch 1.x and 2.x versions. However, it is highly recommended to use PyTorch 1.12.1 or higher.
+Torch-Pruning is compatible with both PyTorch 1.x and 2.x versions. However, it is highly recommended to use PyTorch 2.0.
 
 ```bash
 pip install torch-pruning 
