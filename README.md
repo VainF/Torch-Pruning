@@ -421,7 +421,11 @@ Please refer to [benchmarks](benchmarks) for more details.
 
 > **DeepCache: Accelerating Diffusion Models for Free** [[Project]](https://github.com/horseee/DeepCache) [[Arxiv]](https://arxiv.org/abs/2312.00858)  
 > *Xinyin Ma, Gongfan Fang, and Xinchao Wang*   
-> Preprint 2023  
+> Preprint 2023
+
+> **0.1% Data Makes Segment Anything Slim** [[Project]](https://github.com/czg1225/SlimSAM) [[Arxiv]](https://arxiv.org/abs/2312.05284)    
+> *Zigeng Chen, Gongfan Fang, Xinyin Ma, Xinchao Wang*   
+> Preprint 2023
 
 
 ## Citation
