@@ -87,6 +87,7 @@ class BNScalePruner(MetaPruner):
     
     def step(self, interactive=False): 
         yield super(BNScalePruner, self).step(interactive=interactive)
+        # Update the group list after pruning
         self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
         
     def regularize(self, model, reg=None, bias=False):

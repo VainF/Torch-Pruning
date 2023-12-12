@@ -98,6 +98,7 @@ class GrowingRegPruner(MetaPruner):
 
     def step(self, interactive=False): 
         yield super(GrowingRegPruner, self).step(interactive=interactive)
+        # Update the group list after pruning
         self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
         group_reg = {}
         for group in self._groups:
