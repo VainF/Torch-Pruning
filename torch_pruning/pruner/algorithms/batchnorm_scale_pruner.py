@@ -86,10 +86,9 @@ class BNScalePruner(MetaPruner):
             self._l2_imp = MagnitudeImportance(p=2, group_reduction='mean', normalizer=None, target_types=[nn.modules.batchnorm._BatchNorm])
     
     def step(self, interactive=False): 
-        super(BNScalePruner, self).step(interactive=interactive)
-        # update the group list after pruning
+        yield super(BNScalePruner, self).step(interactive=interactive)
         self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
-
+        
     def regularize(self, model, reg=None, bias=False):
         if reg is None:
             reg = self.reg # use the default reg

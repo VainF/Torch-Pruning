@@ -97,13 +97,13 @@ class GrowingRegPruner(MetaPruner):
             self.group_reg[group] = reg
 
     def step(self, interactive=False): 
-        super(GrowingRegPruner, self).step(interactive=interactive)
-        # update the group list after pruning
+        yield super(GrowingRegPruner, self).step(interactive=interactive)
         self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
         group_reg = {}
         for group in self._groups:
             group_reg[group] = torch.ones(len(group[0].idxs)) * self.base_reg
         self.group_reg = group_reg
+        
 
     def regularize(self, model, bias=False):
         for i, group in enumerate(self._groups):
