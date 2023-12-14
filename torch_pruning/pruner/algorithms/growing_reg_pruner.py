@@ -109,7 +109,7 @@ class GrowingRegPruner(MetaPruner):
     def regularize(self, model, bias=False):
         for i, group in enumerate(self._groups):
             group_l2norm_sq = self.estimate_importance(group)
-            if group_l2norm_sq is None:
+            if group_l2norm_sq is None or torch.any(torch.isnan(group_l2norm_sq)): # avoid nan
                 continue
             gamma = self.group_reg[group]
             for k, (dep, idxs) in enumerate(group):
