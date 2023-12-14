@@ -183,12 +183,11 @@ class MagnitudeImportance(Importance):
                     w = (layer.weight.data).flatten(1)
                 else:
                     w = (layer.weight.data).transpose(0, 1).flatten(1)
-
                 local_imp = w.abs().pow(self.p).sum(1)
 
                 # repeat importance for group convolutions
                 if prune_fn == function.prune_conv_in_channels and layer.groups != layer.in_channels and layer.groups != 1:
-                    local_imp = local_imp.repeat(ch_groups)
+                    local_imp = local_imp.repeat(layer.groups)
                 
                 local_imp = local_imp[idxs]
                 group_imp.append(local_imp)
@@ -331,7 +330,7 @@ class TaylorImportance(MagnitudeImportance):
                 
                 # repeat importance for group convolutions
                 if prune_fn == function.prune_conv_in_channels and layer.groups != layer.in_channels and layer.groups != 1:
-                    local_imp = local_imp.repeat(ch_groups)
+                    local_imp = local_imp.repeat(layer.groups)
                 local_imp = local_imp[idxs]
 
                 group_imp.append(local_imp)
@@ -464,7 +463,7 @@ class HessianImportance(MagnitudeImportance):
 
                     local_imp = (w**2 * h).sum(1)
                     if prune_fn == function.prune_conv_in_channels and layer.groups != layer.in_channels and layer.groups != 1:
-                        local_imp = local_imp.repeat(ch_groups)
+                        local_imp = local_imp.repeat(layer.groups)
                     local_imp = local_imp[idxs]
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)

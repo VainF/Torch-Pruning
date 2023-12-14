@@ -83,7 +83,7 @@ class GroupNormPruner(MetaPruner):
         self.cnt = 0
 
     def step(self, interactive=False): 
-        yield super(GroupNormPruner, self).step(interactive=interactive)
+        yield from super(GroupNormPruner, self).step(interactive=interactive)
         # update the group list after pruning
         self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
         
