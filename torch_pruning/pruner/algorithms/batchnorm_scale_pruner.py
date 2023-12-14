@@ -101,8 +101,8 @@ class BNScalePruner(MetaPruner):
                     m.weight.grad.data.add_(reg*torch.sign(m.weight.data))
         else:
             for group in self._groups:
-                group_l2norm_sq = self._l2_imp(group)
-                if group_l2norm_sq is None:
+                group_l2norm_sq = self._l2_imp(group) + 1e-9 # + 1e-9 to avoid inf
+                if group_l2norm_sq is None or torch.any(torch.isnan(group_l2norm_sq)):  # avoid nan
                     continue
                 gamma = reg * (1 / group_l2norm_sq.sqrt())
 

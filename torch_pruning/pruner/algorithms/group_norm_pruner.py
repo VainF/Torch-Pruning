@@ -92,6 +92,8 @@ class GroupNormPruner(MetaPruner):
         for i, group in enumerate(self._groups):
             ch_groups = self._get_channel_groups(group)
             imp = self.estimate_importance(group).sqrt()
+            if torch.any(torch.isnan(imp)):  # avoid nan
+                continue
             gamma = alpha**((imp.max() - imp) / (imp.max() - imp.min()))
 
             # Update Gradient
