@@ -189,8 +189,8 @@ if __name__ == "__main__":
         #########################################
         # Build network pruners
         #########################################
-        importance = tp.importance.MagnitudeImportance(p=1)
-        pruner = tp.pruner.MagnitudePruner(
+        importance = tp.importance.GroupNormImportance(p=1)
+        pruner = tp.pruner.GroupNormPruner(
             model,
             example_inputs=example_inputs,
             importance=importance,
@@ -220,7 +220,12 @@ if __name__ == "__main__":
                 elif isinstance(module, nn.Linear):
                     layer_channel_cfg[module] = module.out_features
 
-        pruner.step()
+        for g in pruner.step(interactive=True):
+            g.prune()
+
+        if isinstance(pruner, (tp.pruner.BNScalePruner, tp.pruner.GroupNormPruner, tp.pruner.GrowingRegPruner)):
+            pruner.regularize(model)
+
         if isinstance(
             model, VisionTransformer
         ):  # Torchvision relies on the hidden_dim variable for forwarding, so we have to modify this varaible after pruning

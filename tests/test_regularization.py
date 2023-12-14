@@ -50,7 +50,9 @@ def test_pruner():
                     print(name, (grad_dict[p] - p.grad).abs().sum())
                 else:
                     print(name, "has no grad")
-            pruner.step()
+            for g in pruner.step(interactive=True):
+                g.prune()
+
     
 if __name__ == "__main__":
     test_pruner()
