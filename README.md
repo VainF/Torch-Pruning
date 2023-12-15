@@ -214,6 +214,7 @@ Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd
 ```python
 for epoch in range(epochs):
     model.train()
+    pruner.update_regularizer()
     for i, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
