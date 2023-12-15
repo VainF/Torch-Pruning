@@ -247,6 +247,9 @@ class MetaPruner:
     def reset(self) -> None:
         self.current_step = 0
 
+    def update_regularizer(self) -> None:
+        pass
+
     def regularize(self, model, loss) -> typing.Any:
         """ Model regularizor for sparse training
         """

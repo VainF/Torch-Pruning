@@ -222,8 +222,11 @@ if __name__ == "__main__":
 
         for g in pruner.step(interactive=True):
             g.prune()
-
+        # or 
+        # pruner.step()
+      
         if isinstance(pruner, (tp.pruner.BNScalePruner, tp.pruner.GroupNormPruner, tp.pruner.GrowingRegPruner)):
+            pruner.update_regularizor() # if the model has been pruned, we need to update the regularizor
             pruner.regularize(model)
 
         if isinstance(
@@ -304,14 +307,14 @@ if __name__ == "__main__":
         else:
             output_transform = None
 
-        try:
-            my_prune(
-                model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
-            )
-            successful.append(model_name)
-        except Exception as e:
-            print(e)
-            unsuccessful.append(model_name)
+        #try:
+        my_prune(
+            model, example_inputs=example_inputs, output_transform=output_transform, model_name=model_name
+        )
+        successful.append(model_name)
+        #except Exception as e:
+        #    print(e)
+        #    unsuccessful.append(model_name)
         print("Successful Pruning: %d Models\n"%(len(successful)), successful)
         print("")
         print("Unsuccessful Pruning: %d Models\n"%(len(unsuccessful)), unsuccessful)
