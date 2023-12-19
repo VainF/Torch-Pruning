@@ -210,11 +210,11 @@ macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
 With the option of global pruning (``global_pruning=True``), adaptive sparsity will be allocated to different layers based on their global rank of importance. While this strategy can offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. **If you're not very familiar with pruning, it's recommended to begin with ``global_pruning=False``.**
 
 #### Sparse Training
-Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/batchnorm_scale_pruner.py#L45) and [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/group_norm_pruner.py#L53) support sparse training. This can be easily achieved by inserting one line of code ``pruner.regularize(model)`` just between ``loss.backward()`` and ``optimizer.step()``. The pruner will update the gradient of trainable parameters.
+Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/batchnorm_scale_pruner.py#L45) and [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/group_norm_pruner.py#L53) support sparse training. This can be easily achieved by inserting ``pruner.update_regularizer()`` before training, and ``pruner.regularize(model)`` between ``loss.backward()`` and ``optimizer.step()``. The pruner will accumulate the regularization gradients to ``.grad``.
 ```python
 for epoch in range(epochs):
     model.train()
-    pruner.update_regularizer()
+    pruner.update_regularizer() # <== initialize regularizer
     for i, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
