@@ -33,10 +33,11 @@ For more technical details, please refer to our CVPR'23 paper:
 > *[Learning and Vision Lab](http://lv-nus.org/), National University of Singapore*
   
 ### Update:
-- [x] 2023.12.19 [Introducing SlimSAM: 0.1% Data Makes Segment Anything Slim](https://github.com/czg1225/SlimSAM)
+- [x] 2023.12.19 :rocket: [Introducing **DeepCache: Accelerating Diffusion Models for Free**](https://github.com/horseee/DeepCache)
+- [x] 2023.12.19 :rocket: [**SlimSAM: 0.1% Data Makes Segment Anything Slim**](https://github.com/czg1225/SlimSAM)
 - [x] 2023.09.06 [Pruning & Finetuning Examples for Vision Transformers, Swin Transformers, Bert](examples/transformers/)
-- [x] 2023.07.19 :rocket: Support LLaMA, LLaMA-2, Vicuna, Baichuan, Bloom in [LLM-Pruner](https://github.com/horseee/LLM-Pruner)
-- [x] 2023.05.20 :rocket: [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
+- [x] 2023.07.19 Support LLaMA, LLaMA-2, Vicuna, Baichuan, Bloom in [LLM-Pruner](https://github.com/horseee/LLM-Pruner)
+- [x] 2023.05.20 [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
 - [x] 2023.05.19 [Structural Pruning for Diffusion Models](https://github.com/VainF/Diff-Pruning) [*[arXiv]*](https://arxiv.org/abs/2305.10924)
 - [x] 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/examples)
 
