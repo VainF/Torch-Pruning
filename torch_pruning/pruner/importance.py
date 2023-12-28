@@ -73,13 +73,11 @@ class MagnitudeImportance(Importance):
         self.bias = bias
 
     def _lamp(self, imp): # Layer-adaptive Sparsity for the Magnitude-based Pruning
-        argsort_idx = torch.argsort(imp, dim=0, descending=True).tolist()
-        sorted_imp = imp[argsort_idx]
+        argsort_idx = torch.argsort(imp, dim=0, descending=True)
+        sorted_imp = imp[argsort_idx.tolist()]
         cumsum_imp = torch.cumsum(sorted_imp, dim=0)
         sorted_imp = sorted_imp / cumsum_imp
-        inversed_idx = torch.arange(len(sorted_imp))[
-            argsort_idx
-        ].tolist()  # [0, 1, 2, 3, ..., ]
+        inversed_idx = torch.argsort(argsort_idx).tolist()  # [0, 1, 2, 3, ..., ]
         return sorted_imp[inversed_idx]
     
     def _normalize(self, group_importance, normalizer):
