@@ -847,7 +847,8 @@ class DependencyGraph(object):
 
         
         for (param, dim) in self.unwrapped_parameters:
-            module2node[param].pruning_dim = dim
+            if param in module2node:
+                module2node[param].pruning_dim = dim
         return module2node
 
     def update_index_mapping(self):
@@ -866,10 +867,10 @@ class DependencyGraph(object):
 
     def _init_shape_information(self):
         for module, node in self.module2node.items():
-            
+
             if node.type == ops.OPTYPE.SPLIT:
                 grad_fn = node.grad_fn
-    
+
                 if hasattr(grad_fn, '_saved_self_sizes') or hasattr(grad_fn, '_saved_split_sizes'):
                     MAX_LEGAL_DIM = 100
                     
