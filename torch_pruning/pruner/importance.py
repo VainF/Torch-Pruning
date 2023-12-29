@@ -10,25 +10,29 @@ from .. import ops
 import math
 
 __all__ = [
+    # Base Class
     "Importance",
-    "MagnitudeImportance",
-    "BNScaleImportance",
-    "LAMPImportance",
-    "RandomImportance",
-    "TaylorImportance",
-    "HessianImportance",
-    
-    # Group Importance
+
+    # Basic Group Importance
     "GroupNormImportance",
     "GroupTaylorImportance",
     "GroupHessianImportance",
+
+    # Aliases
+    "MagnitudeImportance",
+    "TaylorImportance",
+    "HessianImportance",
+
+    # Other Importance
+    "BNScaleImportance",
+    "LAMPImportance",
+    "RandomImportance",
 ]
 
 class Importance(abc.ABC):
     """ Estimate the importance of a tp.Dependency.Group, and return an 1-D per-channel importance score.
 
-        It should accept a group and a ch_groups as inputs, and return a 1-D tensor with the same length as the number of channels.
-        ch_groups refer to the number of internal groups, e.g., for a 64-channel **group conv** with groups=ch_groups=4, each group has 16 channels.
+        It should accept a group as inputs, and return a 1-D tensor with the same length as the number of channels.
         All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
         Just ignore the ch_groups if you are not familar with grouping.
 
@@ -37,20 +41,20 @@ class Importance(abc.ABC):
             DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
             group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
             scorer = MagnitudeImportance()    
-            imp_score = scorer(group, ch_groups=1)    
+            imp_score = scorer(group)    
             #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
             min_score = imp_score.min() 
             ``` 
     """
     @abc.abstractclassmethod
-    def __call__(self, group: Group, ch_groups: int=1) -> torch.Tensor: 
+    def __call__(self, group: Group) -> torch.Tensor: 
         raise NotImplementedError
 
 
-class MagnitudeImportance(Importance):
+class GroupNormImportance(Importance):
     """ A general implementation of magnitude importance. By default, it calculates the group L2-norm for each channel/dim.
-        MagnitudeImportance supports several variants:
-            - Standard L1-norm for single layer: MagnitudeImportance(p=1, normalizer=None, group_reduction="first")
+        It supports several variants like:
+            - Standard L1-norm of the first layer in a group: MagnitudeImportance(p=1, normalizer=None, group_reduction="first")
             - Group L1-Norm: MagnitudeImportance(p=1, normalizer=None, group_reduction="mean")
             - BN Scaling Factor: MagnitudeImportance(p=1, normalizer=None, group_reduction="mean", target_types=[nn.modules.batchnorm._BatchNorm])
 
@@ -142,7 +146,7 @@ class MagnitudeImportance(Importance):
         return reduced_imp
     
     @torch.no_grad()
-    def __call__(self, group: Group, ch_groups: int=1):
+    def __call__(self, group: Group):
         group_imp = []
         group_idxs = []
         # Iterate over all groups and estimate group importance
@@ -232,7 +236,7 @@ class MagnitudeImportance(Importance):
         return group_imp
 
 
-class BNScaleImportance(MagnitudeImportance):
+class BNScaleImportance(GroupNormImportance):
     """Learning Efficient Convolutional Networks through Network Slimming, 
     https://arxiv.org/abs/1708.06519
     """
@@ -241,7 +245,7 @@ class BNScaleImportance(MagnitudeImportance):
         super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer, bias=False, target_types=(nn.modules.batchnorm._BatchNorm,))
 
 
-class LAMPImportance(MagnitudeImportance):
+class LAMPImportance(GroupNormImportance):
     """Layer-adaptive Sparsity for the Magnitude-based Pruning,
     https://arxiv.org/abs/2010.07611
     """
@@ -257,8 +261,8 @@ class RandomImportance(Importance):
         return torch.rand(len(idxs))
 
 
-class TaylorImportance(MagnitudeImportance):
-    """First-order taylor expansion of the loss function.
+class GroupTaylorImportance(GroupNormImportance):
+    """Grouped first-order taylor expansion of the loss function.
        https://openaccess.thecvf.com/content_CVPR_2019/papers/Molchanov_Importance_Estimation_for_Neural_Network_Pruning_CVPR_2019_paper.pdf
     """
     def __init__(self, 
@@ -274,7 +278,7 @@ class TaylorImportance(MagnitudeImportance):
         self.bias = bias
 
     @torch.no_grad()
-    def __call__(self, group, ch_groups=1):
+    def __call__(self, group):
         group_imp = []
         group_idxs = []
         for i, (dep, idxs) in enumerate(group):
@@ -373,8 +377,8 @@ class TaylorImportance(MagnitudeImportance):
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
-class HessianImportance(MagnitudeImportance):
-    """Optimal Brain Damage:
+class GroupHessianImportance(GroupNormImportance):
+    """Grouped Optimal Brain Damage:
        https://proceedings.neurips.cc/paper/1989/hash/6c9882bbac1c7093bd25041881277658-Abstract.html
     """
     def __init__(self, 
@@ -407,7 +411,7 @@ class HessianImportance(MagnitudeImportance):
                     self._counter[param] += 1
     
     @torch.no_grad()
-    def __call__(self, group, ch_groups=1):
+    def __call__(self, group):
         group_imp = []
         group_idxs = []
 
@@ -510,11 +514,11 @@ class HessianImportance(MagnitudeImportance):
 
 
 # Aliases
-class GroupNormImportance(MagnitudeImportance):
+class MagnitudeImportance(GroupNormImportance):
     pass
 
-class GroupTaylorImportance(TaylorImportance):
+class TaylorImportance(GroupTaylorImportance):
     pass
 
-class GroupHessianImportance(HessianImportance):
+class HessianImportance(GroupHessianImportance):
     pass
