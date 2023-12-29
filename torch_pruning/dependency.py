@@ -847,7 +847,8 @@ class DependencyGraph(object):
 
         
         for (param, dim) in self.unwrapped_parameters:
-            module2node[param].pruning_dim = dim
+            if param in module2node:
+                module2node[param].pruning_dim = dim
         return module2node
 
     def update_index_mapping(self):
