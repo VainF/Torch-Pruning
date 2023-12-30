@@ -11,7 +11,7 @@
   <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-1.8 %20%7C%201.12 %20%7C%202.0-673ab7.svg" alt="Tested PyTorch Versions"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-4caf50.svg" alt="License"></a>
   <a href="https://pepy.tech/project/Torch-Pruning"><img src="https://static.pepy.tech/badge/Torch-Pruning?color=2196f3" alt="Downloads"></a>
-  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.3.3-3f51b5.svg" alt="Latest Version"></a>
+  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.3.6-3f51b5.svg" alt="Latest Version"></a>
   <a href="https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
@@ -33,9 +33,11 @@ For more technical details, please refer to our CVPR'23 paper:
 > *[Learning and Vision Lab](http://lv-nus.org/), National University of Singapore*
   
 ### Update:
-- [x] 2023.09.06 [Pruning & Finetuning Examples for Vision Transformers, Swin Transformers, Bert](examples/transformers/).
-- [x] 2023.07.19 :rocket: Support LLaMA, LLaMA-2, Vicuna, Baichuan, Bloom in [LLM-Pruner](https://github.com/horseee/LLM-Pruner)
-- [x] 2023.05.20 :rocket: [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
+- [x] 2023.12.19 :rocket: [Introducing **DeepCache: Accelerating Diffusion Models for Free**](https://github.com/horseee/DeepCache)
+- [x] 2023.12.19 :rocket: [**SlimSAM: 0.1% Data Makes Segment Anything Slim**](https://github.com/czg1225/SlimSAM)
+- [x] 2023.09.06 [Pruning & Finetuning Examples for Vision Transformers, Swin Transformers, Bert](examples/transformers/)
+- [x] 2023.07.19 Support LLaMA, LLaMA-2, Vicuna, Baichuan, Bloom in [LLM-Pruner](https://github.com/horseee/LLM-Pruner)
+- [x] 2023.05.20 [**LLM-Pruner: On the Structural Pruning of Large Language Models**](https://github.com/horseee/LLM-Pruner)  [*[arXiv]*](https://arxiv.org/abs/2305.11627)
 - [x] 2023.05.19 [Structural Pruning for Diffusion Models](https://github.com/VainF/Diff-Pruning) [*[arXiv]*](https://arxiv.org/abs/2305.10924)
 - [x] 2023.04.15 [Pruning and Post-training for YOLOv7 / YOLOv8](benchmarks/examples)
 
@@ -210,10 +212,11 @@ macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
 With the option of global pruning (``global_pruning=True``), adaptive sparsity will be allocated to different layers based on their global rank of importance. While this strategy can offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. **If you're not very familiar with pruning, it's recommended to begin with ``global_pruning=False``.**
 
 #### Sparse Training
-Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/batchnorm_scale_pruner.py#L45) and [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/group_norm_pruner.py#L53) support sparse training. This can be easily achieved by inserting one line of code ``pruner.regularize(model)`` just between ``loss.backward()`` and ``optimizer.step()``. The pruner will update the gradient of trainable parameters.
+Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/batchnorm_scale_pruner.py#L45) and [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/group_norm_pruner.py#L53) support sparse training. This can be easily achieved by inserting ``pruner.update_regularizer()`` before training, and ``pruner.regularize(model)`` between ``loss.backward()`` and ``optimizer.step()``. The pruner will accumulate the regularization gradients to ``.grad``.
 ```python
 for epoch in range(epochs):
     model.train()
+    pruner.update_regularizer() # <== initialize regularizer
     for i, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()

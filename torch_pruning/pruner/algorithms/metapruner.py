@@ -227,8 +227,8 @@ class MetaPruner:
             for group in pruning_method():
                 group.prune()
 
-    def estimate_importance(self, group, ch_groups=1) -> torch.Tensor:
-        return self.importance(group, ch_groups=ch_groups)
+    def estimate_importance(self, group) -> torch.Tensor:
+        return self.importance(group)
 
     def pruning_history(self) -> typing.List[typing.Tuple[str, bool, typing.Union[list, tuple]]]:
         return self.DG.pruning_history()
@@ -343,7 +343,7 @@ class MetaPruner:
                 module = group[0][0].target.module
                 pruning_fn = group[0][0].handler
                 ch_groups = self._get_channel_groups(group) 
-                imp = self.estimate_importance(group, ch_groups=ch_groups)
+                imp = self.estimate_importance(group)
                 if imp is None: continue
 
                 ##################################
@@ -425,14 +425,15 @@ class MetaPruner:
             if self._check_pruning_ratio(group):    
                 group = self._downstream_node_as_root_if_attention(group) # use a downstream node as the root node for attention layers
                 ch_groups = self._get_channel_groups(group)
-                imp = self.estimate_importance(group, ch_groups=ch_groups) # raw importance score
+                imp = self.estimate_importance(group) # raw importance score
                 group_size = len(imp) // ch_groups
                 if imp is None: continue
                 if ch_groups > 1:
-                    # average importance across groups. For example:
-                    # imp = [1, 2, 3, 4, 5, 6] with ch_groups=2
-                    # We have two groups [1,2,3] and [4,5,6]
-                    # the average importance is [(1+4)/2, (2+5)/2, (3+6)/2] = [2.5, 3.5, 4.5]
+                    # Corresponding elements of each group will be removed together.
+                    # So we average importance across groups here. For example:
+                    # imp = [1, 2, 3, 4, 5, 6] with ch_groups=2.
+                    # We have two groups [1,2,3] and [4,5,6].
+                    # The average importance should be [(1+4)/2, (2+5)/2, (3+6)/2] = [2.5, 3.5, 4.5]
                     dim_imp = imp.view(ch_groups, -1).mean(dim=0) 
                 else:
                     # no grouping
@@ -499,7 +500,7 @@ class MetaPruner:
                             n_pruned_per_group = self._round_to(n_pruned_per_group, group_size, self.round_to)
                         _is_attn, _ = self._is_attn_group(group)
                         if not _is_attn or self.prune_head_dims==True:
-                            raw_imp = self.estimate_importance(group, ch_groups=ch_groups) # re-compute importance
+                            raw_imp = self.estimate_importance(group) # re-compute importance
                             for chg in range(ch_groups): # determine pruning indices for each channel group independently
                                 sub_group_imp = raw_imp[chg*group_size: (chg+1)*group_size]
                                 sub_imp_argsort = torch.argsort(sub_group_imp)
