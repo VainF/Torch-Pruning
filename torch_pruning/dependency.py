@@ -871,7 +871,7 @@ class DependencyGraph(object):
             if node.type == ops.OPTYPE.SPLIT:
                 grad_fn = node.grad_fn
 
-                if hasattr(grad_fn, '_saved_self_sizes') or hasattr(grad_fn, '_saved_split_sizes'):
+                if hasattr(grad_fn, '_saved_self_sizes') or hasattr(grad_fn, '_saved_split_sizes') or hasattr(grad_fn, '_saved_split_size'):
                     MAX_LEGAL_DIM = 100
                     
                     if hasattr(grad_fn, '_saved_split_sizes') and hasattr(grad_fn, '_saved_dim') :
