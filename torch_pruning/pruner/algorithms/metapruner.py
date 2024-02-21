@@ -33,6 +33,7 @@ class MetaPruner:
             * prune_num_heads (bool): remove entire heads in multi-head attention. Default: False.
             * prune_head_dims (bool): remove head dimensions in multi-head attention. Default: True.
             * head_pruning_ratio (float): head pruning ratio. Default: 0.0.
+            * head_pruning_ratio_dict (Dict[nn.Module, float]): layer-specific head pruning ratio. Default: None.
             * customized_pruners (dict): a dict containing module-pruner pairs. Default: None.
             * unwrapped_parameters (dict): a dict containing unwrapped parameters & pruning dims. Default: None.
             * root_module_types (list): types of prunable modules. Default: [nn.Conv2d, nn.Linear, nn.LSTM].
@@ -226,6 +227,21 @@ class MetaPruner:
         else:
             for group in pruning_method():
                 group.prune()
+
+    def manual_prune(self, layer, pruning_fn, pruning_ratios_or_idxs):
+        if isinstance(pruning_ratios_or_idxs, float):
+            if self.DG.is_out_channel_pruning_fn(pruning_fn):
+                prunable_channels = self.DG.get_out_channels(layer)
+            else:
+                prunable_channels = self.DG.get_in_channels(layer)
+            full_group = self.DG.get_pruning_group(layer, pruning_fn, list(range(prunable_channels)))
+            imp = self.estimate_importance(full_group)
+            imp_argsort = torch.argsort(imp)
+            n_pruned = int(prunable_channels * (1 - pruning_ratios_or_idxs))
+            pruning_idxs = imp_argsort[:n_pruned]
+ 
+        group = self.DG.get_pruning_group(layer, pruning_fn, pruning_idxs)
+        group.prune()
 
     def estimate_importance(self, group) -> torch.Tensor:
         return self.importance(group)

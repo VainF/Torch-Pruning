@@ -1,14 +1,10 @@
 import torch
 import torch.nn as nn
+from copy import deepcopy
+from abc import ABC, abstractclassmethod
+from typing import Sequence, Tuple
 
 from .. import ops
-
-from copy import deepcopy
-from functools import reduce
-from operator import mul
-
-from abc import ABC, abstractclassmethod, abstractmethod, abstractstaticmethod
-from typing import Callable, Sequence, Tuple, Dict
 
 __all__=[
     'BasePruningFunc',

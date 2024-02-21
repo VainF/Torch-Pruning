@@ -5,9 +5,6 @@ import torch.nn as nn
 import typing
 from . import function
 from ..dependency import Group
-from .._helpers import _FlattenIndexMapping
-from .. import ops
-import math
 
 __all__ = [
     # Base Class
@@ -63,6 +60,20 @@ class GroupNormImportance(Importance):
             * group_reduction (str): the reduction method for group importance. Default: "mean"
             * normalizer (str): the normalization method for group importance. Default: "mean"
             * target_types (list): the target types for importance calculation. Default: [nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]
+
+        Example:
+    
+            It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
+            All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
+            
+            ```python
+                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
+                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
+                scorer = GroupNormImportance()    
+                imp_score = scorer(group)    
+                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
+                min_score = imp_score.min() 
+            ``` 
     """
     def __init__(self, 
                  p: int=2, 
@@ -237,6 +248,21 @@ class GroupNormImportance(Importance):
 class BNScaleImportance(GroupNormImportance):
     """Learning Efficient Convolutional Networks through Network Slimming, 
     https://arxiv.org/abs/1708.06519
+
+    Example:
+    
+        It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
+        All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
+        
+        ```python
+            DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
+            group = DG.get_pruning_group( model.bn1, tp.prune_batchnorm_out_channels, idxs=[2, 6, 9] )    
+            scorer = BNScaleImportance()    
+            imp_score = scorer(group)    
+            #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
+            min_score = imp_score.min() 
+        ``` 
+
     """
 
     def __init__(self, group_reduction='mean', normalizer='mean'):
@@ -246,6 +272,20 @@ class BNScaleImportance(GroupNormImportance):
 class LAMPImportance(GroupNormImportance):
     """Layer-adaptive Sparsity for the Magnitude-based Pruning,
     https://arxiv.org/abs/2010.07611
+
+    Example:
+    
+            It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
+            All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
+            
+            ```python
+                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
+                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
+                scorer = LAMPImportance()    
+                imp_score = scorer(group)    
+                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
+                min_score = imp_score.min() 
+            ``` 
     """
 
     def __init__(self, p=2, group_reduction="mean", normalizer='lamp', bias=False):
@@ -253,6 +293,21 @@ class LAMPImportance(GroupNormImportance):
         super().__init__(p=p, group_reduction=group_reduction, normalizer=normalizer, bias=bias)
 
 class RandomImportance(Importance):
+    """ Random importance estimator
+    Example:
+    
+            It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
+            All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
+            
+            ```python
+                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
+                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
+                scorer = RandomImportance()    
+                imp_score = scorer(group)    
+                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
+                min_score = imp_score.min() 
+            ``` 
+    """
     @torch.no_grad()
     def __call__(self, group, **kwargs):
         _, idxs = group[0]
@@ -260,8 +315,25 @@ class RandomImportance(Importance):
 
 
 class GroupTaylorImportance(GroupNormImportance):
-    """Grouped first-order taylor expansion of the loss function.
-       https://openaccess.thecvf.com/content_CVPR_2019/papers/Molchanov_Importance_Estimation_for_Neural_Network_Pruning_CVPR_2019_paper.pdf
+    """ Grouped first-order taylor expansion of the loss function.
+        https://openaccess.thecvf.com/content_CVPR_2019/papers/Molchanov_Importance_Estimation_for_Neural_Network_Pruning_CVPR_2019_paper.pdf
+
+        Example:
+
+            It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
+            All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
+            
+            ```python
+                inputs, labels = ...
+                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
+                loss = loss_fn(model(inputs), labels)
+                loss.backward() # compute gradients
+                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
+                scorer = GroupTaylorImportance()    
+                imp_score = scorer(group)    
+                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
+                min_score = imp_score.min() 
+            ``` 
     """
     def __init__(self, 
                  group_reduction:str="mean", 
@@ -378,6 +450,27 @@ class GroupTaylorImportance(GroupNormImportance):
 class GroupHessianImportance(GroupNormImportance):
     """Grouped Optimal Brain Damage:
        https://proceedings.neurips.cc/paper/1989/hash/6c9882bbac1c7093bd25041881277658-Abstract.html
+
+       Example:
+
+            It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
+            All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
+            
+            ```python
+                inputs, labels = ...
+                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
+                scorer = GroupHessianImportance()   
+                scorer.zero_grad() # clean the acuumulated gradients if necessary
+                loss = loss_fn(model(inputs), labels, reduction='none') # compute loss for each sample
+                for l in loss:
+                    model.zero_grad() # clean the model gradients
+                    l.backward(retain_graph=True) # compute gradients for each sample
+                    scorer.accumulate_grad(model) # accumulate gradients of each sample
+                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
+                imp_score = scorer(group)    
+                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
+                min_score = imp_score.min() 
+            ``` 
     """
     def __init__(self, 
                  group_reduction:str="mean", 
