@@ -316,11 +316,11 @@ def prune(args):
         for name, param in model.model.named_parameters():
             param.requires_grad = True
 
-        ignored_layers = []
+        ignored_layer_outputs = []
         unwrapped_parameters = []
         for m in model.model.modules():
             if isinstance(m, (Detect,)):
-                ignored_layers.append(m)
+                ignored_layer_outputs.append(m)
 
         example_inputs = example_inputs.to(model.device)
         pruner = tp.pruner.GroupNormPruner(
@@ -329,7 +329,7 @@ def prune(args):
             importance=tp.importance.GroupNormImportance(),  # L2 norm pruning,
             iterative_steps=1,
             pruning_ratio=pruning_ratio,
-            ignored_layers=ignored_layers,
+            ignored_layer_outputs=ignored_layer_outputs,
             unwrapped_parameters=unwrapped_parameters
         )
 

@@ -197,14 +197,14 @@ def get_pruner(model, example_inputs):
     
     #args.is_accum_importance = is_accum_importance
     unwrapped_parameters = []
-    ignored_layers = []
+    ignored_layer_outputs = []
     pruning_ratio_dict = {}
     # ignore output layers
     for m in model.modules():
         if isinstance(m, torch.nn.Linear) and m.out_features == args.num_classes:
-            ignored_layers.append(m)
+            ignored_layer_outputs.append(m)
         elif isinstance(m, torch.nn.modules.conv._ConvNd) and m.out_channels == args.num_classes:
-            ignored_layers.append(m)
+            ignored_layer_outputs.append(m)
     
     # Here we fix iterative_steps=200 to prune the model progressively with small steps 
     # until the required speed up is achieved.
@@ -216,7 +216,7 @@ def get_pruner(model, example_inputs):
         pruning_ratio=1.0,
         pruning_ratio_dict=pruning_ratio_dict,
         max_pruning_ratio=args.max_pruning_ratio,
-        ignored_layers=ignored_layers,
+        ignored_layer_outputs=ignored_layer_outputs,
         unwrapped_parameters=unwrapped_parameters,
     )
     return pruner

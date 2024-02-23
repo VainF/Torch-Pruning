@@ -26,7 +26,7 @@ def test_reshape():
     model = Net()
     example_inputs = torch.randn(1, 512)
     imp = tp.importance.MagnitudeImportance()
-    ignored_layers = [model.final]
+    ignored_layer_outputs = [model.final]
 
     iterative_steps = 5
     pruner = tp.pruner.MagnitudePruner(
@@ -35,8 +35,8 @@ def test_reshape():
         importance=imp,
         iterative_steps=iterative_steps,
         pruning_ratio=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
-        ignored_layers=ignored_layers,
-        root_module_types=[nn.ConvTranspose2d, nn.Linear],
+        ignored_layer_outputs=ignored_layer_outputs,
+        target_layer_types=[nn.ConvTranspose2d, nn.Linear],
     )
 
     base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)

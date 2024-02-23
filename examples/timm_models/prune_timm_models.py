@@ -35,12 +35,12 @@ def main():
     input_size = model.default_cfg['input_size']
     example_inputs = torch.randn(1, *input_size).to(device)
     test_output = model(example_inputs)
-    ignored_layers = []
+    ignored_layer_outputs = []
     num_heads = {}
 
     for m in model.modules():
         if hasattr(m, 'head'): #isinstance(m, nn.Linear) and m.out_features == model.num_classes:
-            ignored_layers.append(model.head)
+            ignored_layer_outputs.append(model.head)
             print("Ignore classifier layer: ", m.head)
        
         # Attention layers
@@ -61,7 +61,7 @@ def main():
                     iterative_steps=1, # the number of iterations to achieve target pruning ratio
                     pruning_ratio=args.pruning_ratio, # target pruning ratio
                     num_heads=num_heads,
-                    ignored_layers=ignored_layers,
+                    ignored_layer_outputs=ignored_layer_outputs,
                 )
     for g in pruner.step(interactive=True):
         g.prune()

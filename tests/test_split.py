@@ -46,12 +46,12 @@ def test_pruner():
     # Global metrics
     example_inputs = torch.randn(1, dim, 7, 7)
     imp = tp.importance.RandomImportance()
-    ignored_layers = []
+    ignored_layer_outputs = []
 
     # DO NOT prune the final classifier!
     for m in model.modules():
         if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
-            ignored_layers.append(m)
+            ignored_layer_outputs.append(m)
 
     iterative_steps = 1
     pruner = tp.pruner.MagnitudePruner(
@@ -60,7 +60,7 @@ def test_pruner():
         importance=imp,
         iterative_steps=iterative_steps,
         pruning_ratio=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
-        ignored_layers=ignored_layers,
+        ignored_layer_outputs=ignored_layer_outputs,
     )
     for g in pruner.DG.get_all_groups():
         pass

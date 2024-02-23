@@ -98,7 +98,7 @@ if __name__ == "__main__":
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         ori_size = tp.utils.count_params(model)
         model.cpu().eval()
-        ignored_layers = []
+        ignored_layer_outputs = []
         for p in model.parameters():
             p.requires_grad_(True)
         #########################################
@@ -106,13 +106,13 @@ if __name__ == "__main__":
         #########################################
         for m in model.modules():
             if isinstance(m, nn.Linear) and m.out_features == 1000:
-                ignored_layers.append(m)
+                ignored_layer_outputs.append(m)
             #elif isinstance(m, nn.modules.linear.NonDynamicallyQuantizableLinear):
-            #    ignored_layers.append(m) # this module is used in Self-Attention
+            #    ignored_layer_outputs.append(m) # this module is used in Self-Attention
         if 'ssd' in model_name:
-            ignored_layers.append(model.head)
+            ignored_layer_outputs.append(model.head)
         if model_name=='raft_large':
-            ignored_layers.extend(
+            ignored_layer_outputs.extend(
                 [model.corr_block, model.update_block, model.mask_predictor]
             )
         # For ViT: Rounding the number of channels to the nearest multiple of num_heads
@@ -149,7 +149,7 @@ if __name__ == "__main__":
             pruning_ratio=0.5,
             round_to=round_to,
             unwrapped_parameters=unwrapped_parameters,
-            ignored_layers=ignored_layers,
+            ignored_layer_outputs=ignored_layer_outputs,
         )
 
 

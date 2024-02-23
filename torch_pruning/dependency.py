@@ -325,7 +325,7 @@ class DependencyGraph(object):
             output_transform (Callable): a function to transform network outputs.
             unwrapped_parameters (typing.Dict[nn.Parameter, int]): unwrapped nn.parameters that do not belong to standard nn.Module.
             customized_pruners (typing.Dict[ typing.Union[typing.Any, torch.nn.Module],function.BasePruningFunc]): customized pruners for a specific layer type or a specific layer instance.
-            ignored_layers (typing.List[nn.Module]): ignored layers that will not be traced in the dependency graph.
+            ignored_layer_outputs (typing.List[nn.Module]): ignored layers that will not be traced in the dependency graph.
             ignored_params (typing.List[nn.Parameter]): ignored nn.Parameter that will not be pruned.
             verbose (bool): verbose mode.
         """
@@ -506,39 +506,42 @@ class DependencyGraph(object):
             merged_group[i].root_idxs = root_idxs
         return merged_group
 
-    def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
+    def get_all_groups(self, ignored_layer_inputs=[], ignored_layer_outputs=[], target_layers=None, target_layer_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
         """
-            Get all pruning groups for the given module. Groups are generated on the module typs specified in root_module_types.
+            Get all pruning groups for the given module. Groups are generated on the module typs specified in target_layer_types.
 
             Args:
-                ignored_layers (list): List of layers to be ignored during pruning.
-                root_module_types (tuple): Tuple of root module types to consider for pruning.
+                ignored_layer_outputs (list): List of layers to be ignored during pruning.
+                target_layer_types (tuple): Tuple of root module types to consider for pruning.
 
             Yields:
                 list: A pruning group containing dependencies and their corresponding pruning handlers.
 
             Example:
             ```python
-            for group in DG.get_all_groups(ignored_layers=[layer1, layer2], root_module_types=[nn.Conv2d]):
+            for group in DG.get_all_groups(ignored_layer_outputs=[layer1, layer2], target_layer_types=[nn.Conv2d]):
                 print(group)
             ```
         """
-        visited_layers = []
-        ignored_layers = ignored_layers+self.IGNORED_LAYERS_IN_TRACING
+        visited_roots = []
+        ignored_layer_outputs = ignored_layer_outputs+self.IGNORED_LAYERS_IN_TRACING
+        ignored_layer_inputs = ignored_layer_inputs+self.IGNORED_LAYERS_IN_TRACING
 
-        for m in list(self.module2node.keys()):
-            
-            if m in ignored_layers:
+        if target_layers is None:
+            target_layers = list(self.module2node.keys())
+
+        for m in target_layers:
+            if m in ignored_layer_outputs:
                 continue
             
-            if not isinstance(m, tuple(root_module_types)):
+            if not isinstance(m, tuple(target_layer_types)):
                 continue
 
             pruner = self.get_pruner_of_module(m)
             if pruner is None or pruner.get_out_channels(m) is None:
                 continue
 
-            if m in visited_layers:
+            if m in visited_roots:
                 continue
 
             layer_channels = pruner.get_out_channels(m)
@@ -550,9 +553,13 @@ class DependencyGraph(object):
                 module = dep.target.module
                 pruning_fn = dep.handler
                 if self.is_out_channel_pruning_fn(pruning_fn):
-                    visited_layers.append(module)
-                    if module in ignored_layers:
+                    visited_roots.append(module)
+                    if module in ignored_layer_outputs:
                         prunable_group = False
+                elif self.is_in_channel_pruning_fn(pruning_fn):
+                    if module in ignored_layer_inputs:
+                        prunable_group = False
+
             if prunable_group:
                 yield group
 

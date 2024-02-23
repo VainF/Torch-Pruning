@@ -106,12 +106,12 @@ def train(hyp, opt, device, tb_writer=None):
     example_inputs = torch.randn(1, 3, 224, 224).to(device)
     imp = tp.importance.MagnitudeImportance(p=2) # L2 norm pruning
 
-    ignored_layers = []
+    ignored_layer_outputs = []
     from models.yolo import Detect, IDetect
     from models.common import ImplicitA, ImplicitM
     for m in model.modules():
         if isinstance(m, (Detect,IDetect)):
-            ignored_layers.append(m.m)
+            ignored_layer_outputs.append(m.m)
     unwrapped_parameters = []
     for m in model.modules():
         if isinstance(m, (ImplicitA,ImplicitM)):
@@ -124,7 +124,7 @@ def train(hyp, opt, device, tb_writer=None):
         importance=imp,
         iterative_steps=iterative_steps,
         pruning_ratio=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
-        ignored_layers=ignored_layers,
+        ignored_layer_outputs=ignored_layer_outputs,
         unwrapped_parameters=unwrapped_parameters
     )
     base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)

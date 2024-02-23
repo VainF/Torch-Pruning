@@ -130,10 +130,10 @@ if DG.check_pruning_group(pruning_group):
 更多细节请参考[tutorials/2 - Exploring Dependency Groups](https://github.com/VainF/Torch-Pruning/blob/master/tutorials/2%20-%20Exploring%20Dependency%20Groups.ipynb)
 
 #### 如何遍历所有分组:
-正如我们在[MetaPruner](https://github.com/VainF/Torch-Pruning/blob/b607ae3aa61b9dafe19d2c2364f7e4984983afbf/torch_pruning/pruner/algorithms/metapruner.py#L197)中所实现的, 我们可以利用``DG.get_all_groups(ignored_layers, root_module_types)``来按顺序扫描所有的分组. 每个分组都会以一个"root_module_types"中所指定的层作为起点. 默认情况下,  这些组包含了完整的剪枝索引``idxs=[0,1,2,3,...,K]``, 这个索引列表包含了所有的可修剪参数的索引. 如果我们希望对一个group进行剪枝, 我们需要使用``group.prune(idxs=idxs)``来指定具体的修剪通道/维度.
+正如我们在[MetaPruner](https://github.com/VainF/Torch-Pruning/blob/b607ae3aa61b9dafe19d2c2364f7e4984983afbf/torch_pruning/pruner/algorithms/metapruner.py#L197)中所实现的, 我们可以利用``DG.get_all_groups(ignored_layer_outputs, target_layer_types)``来按顺序扫描所有的分组. 每个分组都会以一个"target_layer_types"中所指定的层作为起点. 默认情况下,  这些组包含了完整的剪枝索引``idxs=[0,1,2,3,...,K]``, 这个索引列表包含了所有的可修剪参数的索引. 如果我们希望对一个group进行剪枝, 我们需要使用``group.prune(idxs=idxs)``来指定具体的修剪通道/维度.
 
 ```python
-for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[nn.Conv2d, nn.Linear]):
+for group in DG.get_all_groups(ignored_layer_outputs=[model.conv1], target_layer_types=[nn.Conv2d, nn.Linear]):
     # handle groups in sequential order
     idxs = [2,4,6] # your pruning indices
     group.prune(idxs=idxs)
@@ -157,10 +157,10 @@ model = resnet18(pretrained=True)
 example_inputs = torch.randn(1, 3, 224, 224)
 imp = tp.importance.MagnitudeImportance(p=2)
 
-ignored_layers = []
+ignored_layer_outputs = []
 for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
-        ignored_layers.append(m) # DO NOT prune the final classifier!
+        ignored_layer_outputs.append(m) # DO NOT prune the final classifier!
 
 iterative_steps = 5 # 迭代式剪枝, 该示例会分五步完成50%通道剪枝 (10%->20%->...->50%)
 pruner = tp.pruner.MagnitudePruner(
@@ -169,7 +169,7 @@ pruner = tp.pruner.MagnitudePruner(
     importance=imp,
     iterative_steps=iterative_steps,
     pruning_ratio=0.5, # 整体移除50%通道, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
-    ignored_layers=ignored_layers,
+    ignored_layer_outputs=ignored_layer_outputs,
 )
 
 base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)

@@ -3,12 +3,10 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import torch
-from torchvision.models import resnet50 as entry
+from torchvision.models import resnet18 as entry
 import torch_pruning as tp
-from torch import nn
-import torch.nn.functional as F
 
-def test_pruner():
+def test_ignored_layers():
     model = entry()
     print(model)
     # Global metrics
@@ -21,21 +19,25 @@ def test_pruner():
         if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
             ignored_layer_outputs.append(m)
 
-    iterative_steps = 1
+    ignored_layer_inputs = [ model.layer2[0].conv2, model.fc ]
+    iterative_steps = 5
     pruner = tp.pruner.MagnitudePruner(
         model,
         example_inputs,
         importance=imp,
-        global_pruning=True,
         iterative_steps=iterative_steps,
         pruning_ratio=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
+        ignored_layer_inputs=ignored_layer_inputs,
         ignored_layer_outputs=ignored_layer_outputs,
     )
 
-    base_macs, base_nparams, base_layer_macs, base_layer_params = tp.utils.count_ops_and_params(model, example_inputs, layer_wise=True)
+    base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
     for i in range(iterative_steps):
-        pruner.step()
-        macs, nparams, layer_macs, layer_params = tp.utils.count_ops_and_params(model, example_inputs, layer_wise=True)
+        for group in pruner.step(interactive=True):
+            print(group)
+            group.prune()
+            
+        macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
         print(model)
         print(model(example_inputs).shape)
         print(
@@ -46,15 +48,9 @@ def test_pruner():
             "  Iter %d/%d, MACs: %.2f G => %.2f G"
             % (i+1, iterative_steps, base_macs / 1e9, macs / 1e9)
         )
-        
-        for name, module in model.named_modules():
-            if name=='': 
-                name = 'ALL'
-            print(name, layer_macs[module]/1e9, "G ", layer_params[module]/1e6, "M")
-
         # finetune your model here
         # finetune(model)
         # ...
-
+        
 if __name__=='__main__':
-    test_pruner()
+    test_ignored_layers()

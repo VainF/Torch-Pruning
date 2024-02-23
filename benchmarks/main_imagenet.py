@@ -144,11 +144,11 @@ def get_pruner(model, example_inputs, args):
         raise NotImplementedError
     args.data_dependency = data_dependency
     args.sparsity_learning = sparsity_learning
-    ignored_layers = []
+    ignored_layer_outputs = []
     pruning_ratio_dict = {}
     for m in model.modules():
         if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
-            ignored_layers.append(m)
+            ignored_layer_outputs.append(m)
     round_to = None
     if 'vit' in args.model:
         round_to = model.encoder.layers[0].num_heads
@@ -160,7 +160,7 @@ def get_pruner(model, example_inputs, args):
         pruning_ratio=1.0,
         pruning_ratio_dict=pruning_ratio_dict,
         max_pruning_ratio=args.max_pruning_ratio,
-        ignored_layers=ignored_layers,
+        ignored_layer_outputs=ignored_layer_outputs,
         round_to=round_to,
         unwrapped_parameters=unwrapped_parameters,
     )

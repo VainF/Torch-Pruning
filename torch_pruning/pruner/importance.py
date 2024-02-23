@@ -15,15 +15,15 @@ __all__ = [
     "GroupTaylorImportance",
     "GroupOBDImportance",
 
-    # Aliases
-    "MagnitudeImportance",
-    "TaylorImportance",
-    "OBDImportance",
-
     # Other Importance
     "BNScaleImportance",
     "LAMPImportance",
     "RandomImportance",
+
+    # Aliases
+    "MagnitudeImportance",
+    "TaylorImportance",
+    "OBDImportance",
 ]
 
 class Importance(abc.ABC):

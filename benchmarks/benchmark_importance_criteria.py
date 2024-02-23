@@ -86,10 +86,10 @@ for imp_name, imp in imp_dict.items():
 
     model = resnet50(pretrained=True).eval().cuda()
     example_inputs = torch.randn(1, 3, 224, 224).cuda()
-    ignored_layers = []
+    ignored_layer_outputs = []
     for m in model.modules():
         if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
-            ignored_layers.append(m) # DO NOT prune the final classifier!
+            ignored_layer_outputs.append(m) # DO NOT prune the final classifier!
     
     iterative_steps = 5
     pruner = tp.pruner.MetaPruner(
@@ -98,7 +98,7 @@ for imp_name, imp in imp_dict.items():
         iterative_steps=iterative_steps,
         importance=imp,
         pruning_ratio=0.3, 
-        ignored_layers=ignored_layers,
+        ignored_layer_outputs=ignored_layer_outputs,
     )
 
     print(f"MACs: {base_macs/base_macs:.2f}, #Params: {base_nparams/base_nparams:.2f}, Acc: {base_val_acc:.4f}, Loss: {base_val_loss:.4f}")

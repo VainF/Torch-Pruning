@@ -35,7 +35,7 @@ pruner = tp.pruner.MetaPruner(
     prune_num_heads=True,
     head_pruning_ratio=0.5,
     output_transform=lambda out: out.pooler_output.sum(),
-    ignored_layers=[model.pooler],
+    ignored_layer_outputs=[model.pooler],
 )
 
 for g in pruner.step(interactive=True):

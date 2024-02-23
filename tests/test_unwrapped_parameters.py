@@ -11,12 +11,12 @@ print(model)
 # Global metrics
 example_inputs = torch.randn(1, 3, 224, 224)
 imp = tp.importance.MagnitudeImportance(p=2)
-ignored_layers = []
+ignored_layer_outputs = []
 
 # DO NOT prune the final classifier!
 for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
-        ignored_layers.append(m)
+        ignored_layer_outputs.append(m)
 
 from torchvision.models.convnext import CNBlock, ConvNeXt
 unwrapped_parameters = []
@@ -31,7 +31,7 @@ pruner = tp.pruner.MagnitudePruner(
     importance=imp,
     iterative_steps=iterative_steps,
     pruning_ratio=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
-    ignored_layers=ignored_layers,
+    ignored_layer_outputs=ignored_layer_outputs,
     unwrapped_parameters=unwrapped_parameters
 )
 

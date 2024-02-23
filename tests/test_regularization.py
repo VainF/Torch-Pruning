@@ -20,11 +20,11 @@ def test_pruner():
         [tp.importance.GroupNormImportance, tp.pruner.GrowingRegPruner],
     ]:
         imp = imp_cls()
-        ignored_layers = []
+        ignored_layer_outputs = []
         # DO NOT prune the final classifier!
         for m in model.modules():
             if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
-                ignored_layers.append(m)
+                ignored_layer_outputs.append(m)
         iterative_steps = 5
         pruner = pruner_cls(
             model,
@@ -33,7 +33,7 @@ def test_pruner():
             global_pruning=True,
             iterative_steps=iterative_steps,
             pruning_ratio=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
-            ignored_layers=ignored_layers,
+            ignored_layer_outputs=ignored_layer_outputs,
         )
         
         for i in range(iterative_steps):

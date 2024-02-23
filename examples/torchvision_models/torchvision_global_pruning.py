@@ -132,7 +132,7 @@ if __name__ == "__main__":
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         ori_size = tp.utils.count_params(model)
         model.cpu().eval()
-        ignored_layers = []
+        ignored_layer_outputs = []
         for p in model.parameters():
             p.requires_grad_(True)
         #########################################
@@ -140,27 +140,27 @@ if __name__ == "__main__":
         #########################################
         for m in model.modules():
             if isinstance(m, nn.Linear) and m.out_features == 1000:
-                ignored_layers.append(m)
+                ignored_layer_outputs.append(m)
             #elif isinstance(m, nn.modules.linear.NonDynamicallyQuantizableLinear):
-            #    ignored_layers.append(m) # this module is used in Self-Attention
+            #    ignored_layer_outputs.append(m) # this module is used in Self-Attention
         if 'ssd' in model_name:
-            ignored_layers.append(model.head)
+            ignored_layer_outputs.append(model.head)
         if model_name=='raft_large':
-            ignored_layers.extend(
+            ignored_layer_outputs.extend(
                 [model.corr_block, model.update_block, model.mask_predictor]
             )
         if 'fasterrcnn' in model_name:
-            ignored_layers.extend([ 
+            ignored_layer_outputs.extend([ 
                  model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.backbone.fpn, model.roi_heads
             ])
         if model_name=='fcos_resnet50_fpn':
-            ignored_layers.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg, model.head.regression_head.bbox_ctrness])
+            ignored_layer_outputs.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg, model.head.regression_head.bbox_ctrness])
         if model_name=='keypointrcnn_resnet50_fpn':
-            ignored_layers.extend([model.rpn.head.cls_logits, model.backbone.fpn.layer_blocks, model.rpn.head.bbox_pred, model.roi_heads.box_head, model.roi_heads.box_predictor, model.roi_heads.keypoint_predictor])
+            ignored_layer_outputs.extend([model.rpn.head.cls_logits, model.backbone.fpn.layer_blocks, model.rpn.head.bbox_pred, model.roi_heads.box_head, model.roi_heads.box_predictor, model.roi_heads.keypoint_predictor])
         if model_name=='maskrcnn_resnet50_fpn_v2':
-            ignored_layers.extend([model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.roi_heads.box_predictor, model.roi_heads.mask_predictor])
+            ignored_layer_outputs.extend([model.rpn.head.cls_logits, model.rpn.head.bbox_pred, model.roi_heads.box_predictor, model.roi_heads.mask_predictor])
         if model_name=='retinanet_resnet50_fpn_v2':
-            ignored_layers.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg])
+            ignored_layer_outputs.extend([model.head.classification_head.cls_logits, model.head.regression_head.bbox_reg])
         # For ViT: Rounding the number of channels to the nearest multiple of num_heads
         round_to = None
         channel_groups = {}
@@ -197,7 +197,7 @@ if __name__ == "__main__":
             global_pruning=True,
             round_to=round_to,
             unwrapped_parameters=unwrapped_parameters,
-            ignored_layers=ignored_layers,
+            ignored_layer_outputs=ignored_layer_outputs,
             channel_groups=channel_groups,
         )
 
@@ -211,7 +211,7 @@ if __name__ == "__main__":
 
         layer_channel_cfg = {}
         for module in model.modules():
-            if module not in pruner.ignored_layers:
+            if module not in pruner.ignored_layer_outputs:
                 #print(module)
                 if isinstance(module, nn.Conv2d):
                     layer_channel_cfg[module] = module.out_channels

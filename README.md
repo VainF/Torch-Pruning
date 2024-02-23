@@ -154,10 +154,10 @@ The above example demonstrates the basic pruning pipeline with DepGraph. The tar
 
   
 #### How to scan all groups (Advanced):
-We can use ``DG.get_all_groups(ignored_layers, root_module_types)`` to scan and prune all groups sequentially. Each group will begin with a layer that matches one type in the `root_module_types` parameter. Note that `DG.get_all_groups` is only responsible for grouping and does not have any knowledge or understanding of which parameters should be pruned. Therefore, it is necessary to specify the pruning idxs using  ``group.prune(idxs=idxs)``. This feature is useful when you want to implement your own pruning algorithms.
+We can use ``DG.get_all_groups(ignored_layer_outputs, target_layer_types)`` to scan and prune all groups sequentially. Each group will begin with a layer that matches one type in the `target_layer_types` parameter. Note that `DG.get_all_groups` is only responsible for grouping and does not have any knowledge or understanding of which parameters should be pruned. Therefore, it is necessary to specify the pruning idxs using  ``group.prune(idxs=idxs)``. This feature is useful when you want to implement your own pruning algorithms.
 
 ```python
-for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[nn.Conv2d, nn.Linear]):
+for group in DG.get_all_groups(ignored_layer_outputs=[model.conv1], target_layer_types=[nn.Conv2d, nn.Linear]):
     # handle groups in sequential order
     idxs = [2,4,6] # your pruning indices
     group.prune(idxs=idxs)
@@ -180,10 +180,10 @@ example_inputs = torch.randn(1, 3, 224, 224)
 imp = tp.importance.GroupTaylorImportance() # or GroupNormImportance(p=2), GroupOBDImportance(), etc.
 
 # 2. Initialize a pruner with the model and the importance criterion
-ignored_layers = []
+ignored_layer_outputs = []
 for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
-        ignored_layers.append(m) # DO NOT prune the final classifier!
+        ignored_layer_outputs.append(m) # DO NOT prune the final classifier!
 
 pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse training is not required.
     model,
@@ -191,7 +191,7 @@ pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse train
     importance=imp,
     pruning_ratio=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
     # pruning_ratio_dict = {model.conv1: 0.2, model.layer2: 0.8}, # customized pruning ratios for layers or blocks
-    ignored_layers=ignored_layers,
+    ignored_layer_outputs=ignored_layer_outputs,
 )
 
 # 3. Prune & finetune the model

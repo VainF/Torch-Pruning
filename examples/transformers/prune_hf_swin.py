@@ -50,7 +50,7 @@ imp = tp.importance.MagnitudeImportance(p=2, group_reduction="mean")
 base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
 num_heads = {}
 
-ignored_layers = [model.classifier]
+ignored_layer_outputs = [model.classifier]
 # All heads should be pruned simultaneously, so we group channels by head.
 for m in model.modules():
     if isinstance(m, SwinSelfAttention):
@@ -67,9 +67,9 @@ pruner = tp.pruner.MetaPruner(
                 pruning_ratio=0.5,
                 num_heads=num_heads,
                 output_transform=lambda out: out.logits.sum(),
-                ignored_layers=ignored_layers,
+                ignored_layer_outputs=ignored_layer_outputs,
                 customized_pruners={SwinPatchMerging: SwinPatchMergingPruner()},
-                root_module_types=(nn.Linear, nn.LayerNorm, SwinPatchMerging),
+                target_layer_types=(nn.Linear, nn.LayerNorm, SwinPatchMerging),
             )
 
 for g in pruner.step(interactive=True):

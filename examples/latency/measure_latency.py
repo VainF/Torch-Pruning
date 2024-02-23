@@ -66,14 +66,14 @@ def main():
 
     for layer in model.modules():
         if isinstance(layer, torch.nn.Linear) and layer.out_features == 1000:
-            ignored_layers = [layer]
+            ignored_layer_outputs = [layer]
 
     for m in model.modules():
         if isinstance(m, timm.models.vision_transformer.Attention):
             m.forward = forward.__get__(m, timm.models.vision_transformer.Attention) # https://stackoverflow.com/questions/50599045/python-replacing-a-function-within-a-class-of-a-module
             num_heads[m.qkv] = m.num_heads 
         if args.bottleneck and isinstance(m, timm.models.vision_transformer.Mlp): 
-            ignored_layers.append(m.fc2) # only prune the internal layers of FFN & Attention
+            ignored_layer_outputs.append(m.fc2) # only prune the internal layers of FFN & Attention
     
     pruner = tp.pruner.MetaPruner(
         model, 
@@ -82,7 +82,7 @@ def main():
         global_pruning=args.global_pruning, # If False, a uniform pruning ratio will be assigned to different layers.
         importance=imp, # importance criterion for parameter selection
         pruning_ratio=1, # target pruning ratio
-        ignored_layers=ignored_layers,
+        ignored_layer_outputs=ignored_layer_outputs,
         num_heads=num_heads, # number of heads in self attention
         prune_num_heads=args.prune_num_heads, # reduce num_heads by pruning entire heads (default: False)
         prune_head_dims=not args.prune_num_heads, # reduce head_dim by pruning featrues dims of each head (default: True)

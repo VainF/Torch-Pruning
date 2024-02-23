@@ -97,7 +97,7 @@ if args.test_accuracy:
 
 print("Pruning %s..."%args.model_name)
 num_heads = {}
-ignored_layers = [model.classifier]
+ignored_layer_outputs = [model.classifier]
 # All heads should be pruned simultaneously, so we group channels by head.
 for m in model.modules():
     if isinstance(m, ViTSelfAttention):
@@ -105,7 +105,7 @@ for m in model.modules():
         num_heads[m.key] = m.num_attention_heads
         num_heads[m.value] = m.num_attention_heads
     if args.bottleneck and isinstance(m, ViTSelfOutput):
-        ignored_layers.append(m.dense)
+        ignored_layer_outputs.append(m.dense)
 
 pruner = tp.pruner.MetaPruner(
                 model, 
@@ -113,7 +113,7 @@ pruner = tp.pruner.MetaPruner(
                 global_pruning=args.global_pruning, # If False, a uniform pruning ratio will be assigned to different layers.
                 importance=imp, # importance criterion for parameter selection
                 pruning_ratio=args.pruning_ratio, # target pruning ratio
-                ignored_layers=ignored_layers,
+                ignored_layer_outputs=ignored_layer_outputs,
                 output_transform=lambda out: out.logits.sum(),
                 num_heads=num_heads,
                 prune_head_dims=True,
