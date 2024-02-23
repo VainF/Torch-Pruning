@@ -30,3 +30,4 @@ acc.png
 pretrained
 data
 examples/yolov7/yolov7
+.pytest_cache
