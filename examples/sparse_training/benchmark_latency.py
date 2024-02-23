@@ -1,7 +1,6 @@
 from torchvision.models import resnet50 as model_entry
 import sys, os
 import time
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import torch_pruning as tp
 import torch
 

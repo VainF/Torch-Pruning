@@ -70,13 +70,18 @@ python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/t
 ```
 
 #### - Group Pruner (This Work)
+
+#### Witout Sparse Training (Ours w/o SL)
 ```bash
-# 2.11x without sparse learning (Ours w/o SL)
+# 2.11x without sparse learning (Ours w/o sparse training)
 python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method group_norm --speed-up 2.11 --global-pruning
 
-# 2.55x without sparse learning (Ours w/o SL)
+# 2.55x without sparse learning (Ours w/o sparse training)
 python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method group_norm --speed-up 2.55 --global-pruning
+```
 
+#### With Sparse Training (Ours)
+```
 # 2.11x (Ours)
 python main.py --mode prune --model resnet56 --batch-size 128 --restore </path/to/pretrained/model> --dataset cifar10  --method group_sl --speed-up 2.11 --global-pruning --reg 5e-4
 

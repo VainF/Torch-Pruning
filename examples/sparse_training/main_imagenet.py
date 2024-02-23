@@ -3,7 +3,6 @@ import os, sys
 import time
 import warnings
 import registry
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 import warnings
