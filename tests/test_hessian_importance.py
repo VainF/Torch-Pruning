@@ -7,7 +7,7 @@ def test_hessian():
 
     # Importance criteria
     example_inputs = torch.randn(1, 3, 224, 224)
-    imp = tp.importance.HessianImportance()
+    imp = tp.importance.OBDImportance()
 
     ignored_layers = []
     for m in model.modules():
@@ -26,7 +26,7 @@ def test_hessian():
 
     base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
     for i in range(iterative_steps):
-        if isinstance(imp, tp.importance.HessianImportance):
+        if isinstance(imp, tp.importance.OBDImportance):
             # loss = F.cross_entropy(model(images), targets)
             dummy_inputs = torch.randn(10, 3, 224, 224)
             output = model(dummy_inputs) 

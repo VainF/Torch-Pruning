@@ -13,12 +13,12 @@ __all__ = [
     # Basic Group Importance
     "GroupNormImportance",
     "GroupTaylorImportance",
-    "GroupHessianImportance",
+    "GroupOBDImportance",
 
     # Aliases
     "MagnitudeImportance",
     "TaylorImportance",
-    "HessianImportance",
+    "OBDImportance",
 
     # Other Importance
     "BNScaleImportance",
@@ -46,8 +46,7 @@ class Importance(abc.ABC):
     @abc.abstractclassmethod
     def __call__(self, group: Group) -> torch.Tensor: 
         raise NotImplementedError
-
-
+    
 class GroupNormImportance(Importance):
     """ A general implementation of magnitude importance. By default, it calculates the group L2-norm for each channel/dim.
         It supports several variants like:
@@ -447,7 +446,7 @@ class GroupTaylorImportance(GroupNormImportance):
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
-class GroupHessianImportance(GroupNormImportance):
+class GroupOBDImportance(GroupNormImportance):
     """Grouped Optimal Brain Damage:
        https://proceedings.neurips.cc/paper/1989/hash/6c9882bbac1c7093bd25041881277658-Abstract.html
 
@@ -459,7 +458,7 @@ class GroupHessianImportance(GroupNormImportance):
             ```python
                 inputs, labels = ...
                 DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
-                scorer = GroupHessianImportance()   
+                scorer = GroupOBDImportance()   
                 scorer.zero_grad() # clean the acuumulated gradients if necessary
                 loss = loss_fn(model(inputs), labels, reduction='none') # compute loss for each sample
                 for l in loss:
@@ -611,5 +610,5 @@ class MagnitudeImportance(GroupNormImportance):
 class TaylorImportance(GroupTaylorImportance):
     pass
 
-class HessianImportance(GroupHessianImportance):
+class OBDImportance(GroupOBDImportance):
     pass

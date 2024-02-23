@@ -112,7 +112,7 @@ def main():
     elif args.pruning_type == 'l1':
         imp = tp.importance.GroupNormImportance(p=1)
     elif args.pruning_type == 'hessian':
-        imp = tp.importance.GroupHessianImportance()
+        imp = tp.importance.GroupOBDImportance()
     else: raise NotImplementedError
 
     if args.pruning_type in ['taylor', 'hessian'] or args.test_accuracy:
@@ -154,9 +154,9 @@ def main():
         round_to=2
     )
 
-    if isinstance(imp, (tp.importance.GroupTaylorImportance, tp.importance.GroupHessianImportance)):
+    if isinstance(imp, (tp.importance.GroupTaylorImportance, tp.importance.GroupOBDImportance)):
         model.zero_grad()
-        if isinstance(imp, tp.importance.GroupHessianImportance):
+        if isinstance(imp, tp.importance.GroupOBDImportance):
             imp.zero_grad()
         print("Accumulating gradients for pruning...")
         for k, (imgs, lbls) in enumerate(train_loader):
@@ -164,7 +164,7 @@ def main():
             imgs = imgs.to(device)
             lbls = lbls.to(device)
             output = model(imgs)
-            if isinstance(imp, tp.importance.GroupHessianImportance):
+            if isinstance(imp, tp.importance.GroupOBDImportance):
                 loss = torch.nn.functional.cross_entropy(output, lbls, reduction='none')
                 for l in loss:
                     model.zero_grad()

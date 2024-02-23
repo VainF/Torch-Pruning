@@ -50,8 +50,8 @@ def validate_model(model, val_loader):
 
 # Importance criteria
 imp_dict = {
-    'Group Hessian': tp.importance.HessianImportance(group_reduction='mean'),
-    'Single-layer Hessian': tp.importance.HessianImportance(group_reduction='first'),
+    'Group Hessian': tp.importance.OBDImportance(group_reduction='mean'),
+    'Single-layer Hessian': tp.importance.OBDImportance(group_reduction='first'),
 
     'Group Taylor': tp.importance.TaylorImportance(group_reduction='mean'),
     'Single-layer Taylor': tp.importance.TaylorImportance(group_reduction='first'),    
@@ -109,7 +109,7 @@ for imp_name, imp in imp_dict.items():
     macs_record[imp_name].append(base_macs)
 
     for i in range(iterative_steps):
-        if isinstance(imp, tp.importance.HessianImportance):
+        if isinstance(imp, tp.importance.OBDImportance):
             # loss = F.cross_entropy(model(images), targets)
             for k, (imgs, lbls) in enumerate(train_loader):
                 if k>=N_batchs: break

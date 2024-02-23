@@ -110,6 +110,23 @@ class BasePruningFunc(ABC):
         return pruned_weight.to(weight.device)
 
 class ConvPruner(BasePruningFunc):
+    """Pruner for Convolutional layers.
+
+    For a convolutional layer, the following parameters are pruned:
+        - weight: (out_channels, in_channels, kernel_size, kernel_size)
+        - bias: (out_channels)
+        - out_channels: number of output channels
+        - in_channels: number of input channels
+
+    prune_out_channels: prune out channels of a layer
+        - weight = weight[keep_idxs, :, :, :]
+        - bias = bias[keep_idxs]
+        - out_channels = len(keep_idxs)
+    
+    prune_in_channels: prune in channels of a layer
+        - weight = weight[:, keep_idxs, :, :]
+        - in_channels = len(keep_idxs)
+    """
     TARGET_MODULE = ops.TORCH_CONV
 
     def prune_out_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
@@ -153,6 +170,23 @@ class ConvPruner(BasePruningFunc):
 
 
 class DepthwiseConvPruner(ConvPruner):
+    """
+    Pruner for DepthwiseConv layers.
+
+    For a depthwise convolutional layer, the following parameters are pruned:
+        - weight: (out_channels, in_channels, kernel_size, kernel_size)
+        - bias: (out_channels)
+        - groups: number of groups, each contains one input channel and one output channel
+        - out_channels: number of output channels
+        - in_channels: number of input channels
+    
+    prune_out_channels/prune_in_channels: prune both out & in channels of a layer
+        - weight = weight[keep_idxs, :, :, :]
+        - bias = bias[keep_idxs]
+        - groups = len(keep_idxs)
+        - out_channels = len(keep_idxs)
+        - in_channels = len(keep_idxs)
+    """
     TARGET_MODULE = ops.TORCH_CONV
 
     def prune_out_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
@@ -172,6 +206,24 @@ class DepthwiseConvPruner(ConvPruner):
 
 
 class LinearPruner(BasePruningFunc):
+    """
+    Pruner for Linear layers.
+
+    For a linear layer, the following parameters are pruned:
+        - weight: (out_features, in_features)
+        - bias: (out_features)
+        - out_features: number of output features
+        - in_features: number of input features
+    
+    prune_out_channels: prune out channels of a layer
+        - weight = weight[keep_idxs, :]
+        - bias = bias[keep_idxs]
+        - out_features = len(keep_idxs)
+    
+    prune_in_channels: prune in channels of a layer
+        - weight = weight[:, keep_idxs]
+        - in_features = len(keep_idxs)
+    """
     TARGET_MODULES = ops.TORCH_LINEAR
 
     def prune_out_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
@@ -198,6 +250,23 @@ class LinearPruner(BasePruningFunc):
 
 
 class BatchnormPruner(BasePruningFunc):
+    """
+    Pruner for Batchnorm layers.
+
+    For a batchnorm layer, the following parameters are pruned:
+        - weight: (num_features)
+        - bias: (num_features)
+        - running_mean: (num_features)
+        - running_var: (num_features)
+        - num_features: number of features
+    
+    prune_out_channels/prune_in_channels: prune both out & in channels of a layer
+        - weight = weight[keep_idxs]
+        - bias = bias[keep_idxs]
+        - running_mean = running_mean[keep_idxs]
+        - running_var = running_var[keep_idxs]
+        - num_features = len(keep_idxs)
+    """
     TARGET_MODULES = ops.TORCH_BATCHNORM
 
     def prune_out_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
@@ -224,6 +293,17 @@ class BatchnormPruner(BasePruningFunc):
 
 
 class LayernormPruner(BasePruningFunc):
+    """
+    Pruner for Layernorm layers.
+    
+    For a layernorm layer, the following parameters are pruned:
+        - weight: (num_features)
+        - bias: (num_features)
+
+    prune_out_channels/prune_in_channels: prune both out & in channels of a layer
+        - weight = weight[keep_idxs]
+        - bias = bias[keep_idxs]
+    """
     TARGET_MODULES = ops.TORCH_LAYERNORM
 
     def __init__(self, metrcis=None, pruning_dim=-1):
@@ -261,6 +341,19 @@ class LayernormPruner(BasePruningFunc):
         return layer.normalized_shape[self.pruning_dim]
 
 class GroupNormPruner(BasePruningFunc):
+    """
+    Pruner for GroupNorm layers.
+
+    For a groupnorm layer, the following parameters are pruned:
+        - weight: (num_features)
+        - bias: (num_features)
+        - num_channels: number of features
+    
+    prune_out_channels/prune_in_channels: prune both out & in channels of a layer
+        - weight = weight[keep_idxs]
+        - bias = bias[keep_idxs]
+        - num_channels = len(keep_idxs)
+    """
     def prune_out_channels(self, layer: nn.PReLU, idxs: list) -> nn.Module:
         keep_idxs = list(set(range(layer.num_channels)) - set(idxs))
         keep_idxs.sort()
@@ -285,6 +378,19 @@ class GroupNormPruner(BasePruningFunc):
         return layer.num_groups
 
 class InstanceNormPruner(BasePruningFunc):
+    """
+    Pruner for InstanceNorm layers.
+    
+    For a instancenorm layer, the following parameters are pruned:
+        - weight: (num_features)
+        - bias: (num_features)
+        - num_features: number of features
+    
+    prune_out_channels/prune_in_channels: prune both out & in channels of a layer
+        - weight = weight[keep_idxs]
+        - bias = bias[keep_idxs]
+        - num_features = len(keep_idxs)
+    """
     def prune_out_channels(self, layer: nn.Module, idxs: Sequence[int]) -> nn.Module:
         keep_idxs = list(set(range(layer.num_features)) - set(idxs))
         keep_idxs.sort()
@@ -304,6 +410,17 @@ class InstanceNormPruner(BasePruningFunc):
 
 
 class PReLUPruner(BasePruningFunc):
+    """
+    Pruner for PReLU layers.
+
+    For a prelu layer, the following parameters are pruned:
+        - weight: (num_parameters) or (1)
+        - num_parameters: number of features
+
+    prune_out_channels/prune_in_channels: prune both out & in channels of a layer
+        - weight = weight[keep_idxs] if num_parameters > 1 else weight
+        - num_parameters = len(keep_idxs) if num_parameters > 1 else 1
+    """
     TARGET_MODULES = ops.TORCH_PRELU
 
     def prune_out_channels(self, layer: nn.PReLU, idxs: list) -> nn.Module:
@@ -330,6 +447,17 @@ class PReLUPruner(BasePruningFunc):
         return self.get_out_channels(layer=layer)
 
 class EmbeddingPruner(BasePruningFunc):
+    """
+    Pruner for Embedding layers.
+
+    For a embedding layer, the following parameters are pruned:
+        - weight: (num_embeddings, embedding_dim)
+        - embedding_dim: number of features
+    
+    prune_out_channels/prune_in_channels: prune both out & in channels of a layer
+        - weight = weight[keep_idxs, :]
+        - embedding_dim = len(keep_idxs)
+    """
     TARGET_MODULES = ops.TORCH_EMBED
 
     def prune_out_channels(self, layer: nn.Embedding, idxs: list) -> nn.Module:
@@ -352,6 +480,27 @@ class EmbeddingPruner(BasePruningFunc):
         return self.get_out_channels(layer=layer)
 
 class LSTMPruner(BasePruningFunc):
+    """
+    Pruner for LSTM layers.
+    
+    For a LSTM layer, the following parameters are pruned (for a non-bidirectional LSTM):
+        - weight_ih_l0: (4*hidden_size, input_size)
+        - weight_hh_l0: (4*hidden_size, hidden_size)
+        - bias_ih_l0: (4*hidden_size)
+        - bias_hh_l0: (4*hidden_size)
+        - hidden_size: number of features
+    
+    prune_out_channels: prune out channels of a layer
+        - weight_hh_l0 = weight_hh_l0[keep_idxs, :]
+        - weight_ih_l0 = weight_ih_l0[:, keep_idxs]
+        - bias_hh_l0 = bias_hh_l0[keep_idxs]
+        - bias_ih_l0 = bias_ih_l0[keep_idxs]
+        - hidden_size = len(keep_idxs)
+    
+    prune_in_channels: prune in channels of a layer
+        - weight_ih_l0 = weight_ih_l0[:, keep_idxs]
+        - input_size = len(keep_idxs)
+    """
     TARGET_MODULES = ops.TORCH_LSTM
 
     def prune_out_channels(self, layer: nn.LSTM, idxs: list) -> nn.Module:
@@ -401,6 +550,15 @@ class LSTMPruner(BasePruningFunc):
     
 
 class ParameterPruner(BasePruningFunc):
+    """
+    Pruner for Parameter layers.
+
+    For a parameter layer, the following parameters are pruned:
+        - nn.Parameter: (Any shape)
+    
+    prune_out_channels/prune_in_channels: prune both out & in channels of a layer
+        - parameter = torch.index_select(parameter, pruning_dim, torch.LongTensor(keep_idxs).to(parameter.device))
+    """
     TARGET_MODULES = ops.TORCH_PARAMETER
     def __init__(self, pruning_dim=-1):
         super().__init__(pruning_dim=pruning_dim)
@@ -421,6 +579,32 @@ class ParameterPruner(BasePruningFunc):
 
 
 class MultiheadAttentionPruner(BasePruningFunc):
+    """
+    Pruner for Torchvision MultiheadAttention layers. This is not recommened since all parameters are coupled in a single module. 
+    For a better practice for attention layer, please refer to [examples/transformers](https://github.com/VainF/Torch-Pruning/tree/master/examples/transformers)
+    
+    For a MultiheadAttention layer, the following parameters are pruned:
+        - in_proj_weight: (3*embed_dim, embed_dim)
+        - in_proj_bias: (3*embed_dim)
+        - out_proj_weight: (embed_dim, embed_dim)
+        - out_proj_bias: (embed_dim)
+        - q_proj_weight: (embed_dim, embed_dim)
+        - k_proj_weight: (embed_dim, embed_dim)
+        - v_proj_weight: (embed_dim, embed_dim)
+        - bias_k: (1, 1, embed_dim)
+        - bias_v: (1, 1, embed_dim)
+        - embed_dim: number of features
+
+    prune_out_channels/prune_in_channels: prune both out & in channels of a layer
+        in_proj_weight = in_proj_weight[keep_idxs_3x_repeated, :]
+        in_proj_weight = in_proj_weight[:, keep_idxs]
+        in_proj_bias = in_proj_bias[keep_idxs_3x_repeated]
+        out_proj_weight = out_proj_weight[keep_idxs, :]
+        out_proj_weight = out_proj_weight[:, keep_idxs]
+        bias_k = bias_k[keep_idxs, :]
+        bias_v = bias_v[keep_idxs, :]
+        embed_dim = len(keep_idxs)
+    """
     TARGET_MODULES = ops.TORCH_MHA
 
     def check(self, layer, idxs, to_output):

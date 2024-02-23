@@ -83,5 +83,8 @@ def main():
     print("MACs: %.4f G => %.4f G"%(base_macs/1e9, pruned_macs/1e9))
     print("Params: %.4f M => %.4f M"%(base_params/1e6, pruned_params/1e6))
 
+    # Save the pruned model
+    torch.save(model, "pruned_%s.pth"%args.model)
+
 if __name__=='__main__':
     main()
