@@ -240,21 +240,6 @@ class MetaPruner:
             for group in pruning_method():
                 group.prune()
 
-    def manual_prune(self, layer, pruning_fn, pruning_ratios_or_idxs):
-        if isinstance(pruning_ratios_or_idxs, float):
-            if self.DG.is_out_channel_pruning_fn(pruning_fn):
-                prunable_channels = self.DG.get_out_channels(layer)
-            else:
-                prunable_channels = self.DG.get_in_channels(layer)
-            full_group = self.DG.get_pruning_group(layer, pruning_fn, list(range(prunable_channels)))
-            imp = self.estimate_importance(full_group)
-            imp_argsort = torch.argsort(imp)
-            n_pruned = int(prunable_channels * (1 - pruning_ratios_or_idxs))
-            pruning_idxs = imp_argsort[:n_pruned]
- 
-        group = self.DG.get_pruning_group(layer, pruning_fn, pruning_idxs)
-        group.prune()
-
     def estimate_importance(self, group) -> torch.Tensor:
         return self.importance(group)
 
