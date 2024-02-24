@@ -47,6 +47,10 @@ class Importance(abc.ABC):
     def __call__(self, group: Group) -> torch.Tensor: 
         raise NotImplementedError
     
+    def zero_grad(self):
+        # clean the accumulated gradients if necessary, only for OBD so far
+        pass
+    
 class GroupNormImportance(Importance):
     """ A general implementation of magnitude importance. By default, it calculates the group L2-norm for each channel/dim.
         It supports several variants like:
