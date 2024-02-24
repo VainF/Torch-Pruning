@@ -10,7 +10,6 @@ run
 text.txt
 run*
 baselines
-*.txt
 ours.sh
 benchmarks/draw
 tests/*.png
@@ -31,3 +30,7 @@ pretrained
 data
 examples/yolov7/yolov7
 .pytest_cache
+output
+wandb
+
+benchmark
