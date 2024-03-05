@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import typing, warnings
 
+from torch_pruning.pruner.importance import OBDCImportance
+
 from .scheduler import linear_scheduler
 from ..import function
 from ... import ops, dependency
@@ -226,6 +228,8 @@ class MetaPruner:
         else:
             for group in pruning_method():
                 group.prune()
+                # print("gg")
+            # exit(0)
 
     def estimate_importance(self, group, ch_groups=1) -> torch.Tensor:
         return self.importance(group, ch_groups=ch_groups)
@@ -330,7 +334,6 @@ class MetaPruner:
         if self.current_step > self.iterative_steps:
             warnings.warn("Pruning exceed the maximum iterative steps, no pruning will be performed.")
             return
-        
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_pruning_ratio(group): # check pruning ratio
                 ##################################
@@ -397,6 +400,9 @@ class MetaPruner:
 
                 if len(pruning_idxs)==0: continue
                 pruning_idxs = torch.unique( torch.cat(pruning_idxs, 0) ).tolist()
+                if isinstance(self.importance, OBDCImportance):
+                    self.importance.adjust_fisher(group, pruning_idxs)
+
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs)
                 
@@ -525,6 +531,8 @@ class MetaPruner:
             
             if len(pruning_indices)==0: continue
             pruning_indices = torch.unique(torch.cat(pruning_indices, 0)).tolist()
+            if isinstance(self.importance, OBDCImportance):
+                    self.importance.adjust_fisher(group, pruning_indices)
             # create pruning group
             group = self.DG.get_pruning_group(
                 module, pruning_fn, pruning_indices)

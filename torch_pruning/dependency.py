@@ -177,6 +177,9 @@ class Group(object):
                     self._DG.module2node[pruned_parameter] = self._DG.module2node.pop(old_parameter)
                     self._DG.module2node[pruned_parameter].module = pruned_parameter           
                 else: # prune nn.Module
+                    # print("dep: ", dep)
+                    # print("idxs: ", idxs)
+                    # print("dep(idxs): ", dep(idxs))
                     dep(idxs)
         
         if record_history:
