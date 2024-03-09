@@ -35,6 +35,7 @@ class MetaPruner:
             * prune_num_heads (bool): remove entire heads in multi-head attention. Default: False.
             * prune_head_dims (bool): remove head dimensions in multi-head attention. Default: True.
             * head_pruning_ratio (float): head pruning ratio. Default: 0.0.
+            * head_pruning_ratio_dict (Dict[nn.Module, float]): layer-specific head pruning ratio. Default: None.
             * customized_pruners (dict): a dict containing module-pruner pairs. Default: None.
             * unwrapped_parameters (dict): a dict containing unwrapped parameters & pruning dims. Default: None.
             * root_module_types (list): types of prunable modules. Default: [nn.Conv2d, nn.Linear, nn.LSTM].
@@ -231,8 +232,23 @@ class MetaPruner:
                 # print("gg")
             # exit(0)
 
-    def estimate_importance(self, group, ch_groups=1) -> torch.Tensor:
-        return self.importance(group, ch_groups=ch_groups)
+    def manual_prune(self, layer, pruning_fn, pruning_ratios_or_idxs):
+        if isinstance(pruning_ratios_or_idxs, float):
+            if self.DG.is_out_channel_pruning_fn(pruning_fn):
+                prunable_channels = self.DG.get_out_channels(layer)
+            else:
+                prunable_channels = self.DG.get_in_channels(layer)
+            full_group = self.DG.get_pruning_group(layer, pruning_fn, list(range(prunable_channels)))
+            imp = self.estimate_importance(full_group)
+            imp_argsort = torch.argsort(imp)
+            n_pruned = int(prunable_channels * (1 - pruning_ratios_or_idxs))
+            pruning_idxs = imp_argsort[:n_pruned]
+ 
+        group = self.DG.get_pruning_group(layer, pruning_fn, pruning_idxs)
+        group.prune()
+
+    def estimate_importance(self, group) -> torch.Tensor:
+        return self.importance(group)
 
     def pruning_history(self) -> typing.List[typing.Tuple[str, bool, typing.Union[list, tuple]]]:
         return self.DG.pruning_history()
@@ -250,6 +266,9 @@ class MetaPruner:
 
     def reset(self) -> None:
         self.current_step = 0
+
+    def update_regularizer(self) -> None:
+        pass
 
     def regularize(self, model, loss) -> typing.Any:
         """ Model regularizor for sparse training
@@ -343,7 +362,7 @@ class MetaPruner:
                 module = group[0][0].target.module
                 pruning_fn = group[0][0].handler
                 ch_groups = self._get_channel_groups(group) 
-                imp = self.estimate_importance(group, ch_groups=ch_groups)
+                imp = self.estimate_importance(group)
                 if imp is None: continue
 
                 ##################################
@@ -428,14 +447,15 @@ class MetaPruner:
             if self._check_pruning_ratio(group):    
                 group = self._downstream_node_as_root_if_attention(group) # use a downstream node as the root node for attention layers
                 ch_groups = self._get_channel_groups(group)
-                imp = self.estimate_importance(group, ch_groups=ch_groups) # raw importance score
+                imp = self.estimate_importance(group) # raw importance score
                 group_size = len(imp) // ch_groups
                 if imp is None: continue
                 if ch_groups > 1:
-                    # average importance across groups. For example:
-                    # imp = [1, 2, 3, 4, 5, 6] with ch_groups=2
-                    # We have two groups [1,2,3] and [4,5,6]
-                    # the average importance is [(1+4)/2, (2+5)/2, (3+6)/2] = [2.5, 3.5, 4.5]
+                    # Corresponding elements of each group will be removed together.
+                    # So we average importance across groups here. For example:
+                    # imp = [1, 2, 3, 4, 5, 6] with ch_groups=2.
+                    # We have two groups [1,2,3] and [4,5,6].
+                    # The average importance should be [(1+4)/2, (2+5)/2, (3+6)/2] = [2.5, 3.5, 4.5]
                     dim_imp = imp.view(ch_groups, -1).mean(dim=0) 
                 else:
                     # no grouping
@@ -502,7 +522,7 @@ class MetaPruner:
                             n_pruned_per_group = self._round_to(n_pruned_per_group, group_size, self.round_to)
                         _is_attn, _ = self._is_attn_group(group)
                         if not _is_attn or self.prune_head_dims==True:
-                            raw_imp = self.estimate_importance(group, ch_groups=ch_groups) # re-compute importance
+                            raw_imp = self.estimate_importance(group) # re-compute importance
                             for chg in range(ch_groups): # determine pruning indices for each channel group independently
                                 sub_group_imp = raw_imp[chg*group_size: (chg+1)*group_size]
                                 sub_imp_argsort = torch.argsort(sub_group_imp)

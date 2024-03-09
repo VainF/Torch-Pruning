@@ -9,7 +9,7 @@ from . import _helpers, utils, ops
 __all__ = ["Dependency", "Group", "DependencyGraph"]
 
 INDEX_MAPPING_PLACEHOLDER = None
-MAX_RECURSION_DEPTH = 100
+MAX_RECURSION_DEPTH = 500
 
 class Node(object):
     """ Node of DepGraph
@@ -421,12 +421,19 @@ class DependencyGraph(object):
         pruning_fn: typing.Callable,
         idxs: typing.Sequence[int],
     ) -> Group:
-        """Get the pruning group of pruning_fn.
-        Args:
-            module (nn.Module): the to-be-pruned module/layer.
-            pruning_fn (Callable): the pruning function.
-            idxs (list or tuple): the indices of channels/dimensions.
-            grouped_idxs (bool): whether the indices are grouped. If True, idxs is a list of list, e.g., [[0,1,2], [3,4,5]], where each sublist is a group.
+        """
+        Get the pruning group for a given module.
+
+            Args:
+                module (nn.Module): The module to be pruned.
+                pruning_fn (Callable): The pruning function.
+                idxs (list or tuple): The indices of channels/dimensions.
+
+            Returns:
+                Group: The pruning group containing the dependencies and indices.
+
+            Raises:
+                ValueError: If the module is not in the dependency graph.
         """
         if module not in self.module2node:
             raise ValueError(
@@ -500,6 +507,22 @@ class DependencyGraph(object):
         return merged_group
 
     def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
+        """
+            Get all pruning groups for the given module. Groups are generated on the module typs specified in root_module_types.
+
+            Args:
+                ignored_layers (list): List of layers to be ignored during pruning.
+                root_module_types (tuple): Tuple of root module types to consider for pruning.
+
+            Yields:
+                list: A pruning group containing dependencies and their corresponding pruning handlers.
+
+            Example:
+            ```python
+            for group in DG.get_all_groups(ignored_layers=[layer1, layer2], root_module_types=[nn.Conv2d]):
+                print(group)
+            ```
+        """
         visited_layers = []
         ignored_layers = ignored_layers+self.IGNORED_LAYERS_IN_TRACING
 
@@ -847,7 +870,8 @@ class DependencyGraph(object):
 
         
         for (param, dim) in self.unwrapped_parameters:
-            module2node[param].pruning_dim = dim
+            if param in module2node:
+                module2node[param].pruning_dim = dim
         return module2node
 
     def update_index_mapping(self):
@@ -866,10 +890,10 @@ class DependencyGraph(object):
 
     def _init_shape_information(self):
         for module, node in self.module2node.items():
-            
+
             if node.type == ops.OPTYPE.SPLIT:
                 grad_fn = node.grad_fn
-    
+
                 if hasattr(grad_fn, '_saved_self_sizes') or hasattr(grad_fn, '_saved_split_sizes'):
                     MAX_LEGAL_DIM = 100
                     

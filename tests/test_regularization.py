@@ -56,16 +56,19 @@ def test_pruner():
                     grad_dict[p] = p.grad.clone()
                 else:
                     grad_dict[p] = None
+            pruner.update_regularizor()
             pruner.regularize(model)
             for name, p in model.named_parameters():
                 if p.grad is not None and grad_dict[p] is not None:
                     print(name, (grad_dict[p] - p.grad).abs().sum())
                 else:
                     print(name, "has no grad")
-            pruner.step()
+            for g in pruner.step(interactive=True):
+                g.prune()
             if isinstance(imp, tp.importance.OBDCImportance):
                 imp._rm_hooks(model)
                 imp._clear_buffer()
+
     
 if __name__ == "__main__":
     test_pruner()
