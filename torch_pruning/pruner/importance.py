@@ -309,7 +309,7 @@ class LAMPImportance(GroupNormImportance):
         super().__init__(p=p, group_reduction=group_reduction, normalizer=normalizer, bias=bias)
 
 
-class FPGMImportance(MagnitudeImportance):
+class FPGMImportance(GroupNormImportance):
     """Filter Pruning via Geometric Median for Deep Convolutional Neural Networks Acceleration,
     http://openaccess.thecvf.com/content_CVPR_2019/papers/He_Filter_Pruning_via_Geometric_Median_for_Deep_Convolutional_Neural_Networks_CVPR_2019_paper.pdf
     """
@@ -533,7 +533,7 @@ class GroupTaylorImportance(GroupNormImportance):
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
-class OBDCImportance(MagnitudeImportance):
+class OBDCImportance(GroupNormImportance):
     """EigenDamage: Structured Pruning in the Kronecker-Factored Eigenbasis:
        http://proceedings.mlr.press/v97/wang19g/wang19g.pdf
     """
