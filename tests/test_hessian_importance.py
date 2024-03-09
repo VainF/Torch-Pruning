@@ -2,7 +2,7 @@ import torch
 from torchvision.models import resnet18
 import torch_pruning as tp
 
-def test_hessian():
+def test_OBD():
     model = resnet18(pretrained=True)
 
     # Importance criteria
@@ -52,4 +52,4 @@ def test_hessian():
         # ...
 
 if __name__=="__main__":
-    test_hessian()
+    test_OBD()

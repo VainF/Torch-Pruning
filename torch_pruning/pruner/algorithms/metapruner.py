@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import typing, warnings
 
+from torch_pruning.pruner.importance import OBDCImportance
+
 from .scheduler import linear_scheduler
 from ..import function
 from ... import ops, dependency
@@ -239,6 +241,8 @@ class MetaPruner:
         else:
             for group in pruning_method():
                 group.prune()
+                # print("gg")
+            # exit(0)
 
     def estimate_importance(self, group) -> torch.Tensor:
         return self.importance(group)
@@ -413,6 +417,9 @@ class MetaPruner:
 
                 if len(pruning_idxs)==0: continue
                 pruning_idxs = torch.unique( torch.cat(pruning_idxs, 0) ).tolist()
+                if isinstance(self.importance, OBDCImportance):
+                    self.importance.adjust_fisher(group, pruning_idxs)
+
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs)
                 
@@ -542,6 +549,8 @@ class MetaPruner:
             
             if len(pruning_indices)==0: continue
             pruning_indices = torch.unique(torch.cat(pruning_indices, 0)).tolist()
+            if isinstance(self.importance, OBDCImportance):
+                    self.importance.adjust_fisher(group, pruning_indices)
             # create pruning group
             group = self.DG.get_pruning_group(
                 module, pruning_fn, pruning_indices)

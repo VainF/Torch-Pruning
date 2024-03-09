@@ -50,8 +50,8 @@ def validate_model(model, val_loader):
 
 # Importance criteria
 imp_dict = {
-    'Group Hessian': tp.importance.OBDImportance(group_reduction='mean'),
-    'Single-layer Hessian': tp.importance.OBDImportance(group_reduction='first'),
+    'Group OBD': tp.importance.OBDImportance(group_reduction='mean'),
+    'Single-layer OBD': tp.importance.OBDImportance(group_reduction='first'),
 
     'Group Taylor': tp.importance.TaylorImportance(group_reduction='mean'),
     'Single-layer Taylor': tp.importance.TaylorImportance(group_reduction='first'),    

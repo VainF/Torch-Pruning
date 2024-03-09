@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument('--taylor_batchs', default=10, type=int, help='number of batchs for taylor criterion')
     parser.add_argument('--pruning_ratio', default=0.5, type=float, help='prune ratio')
     parser.add_argument('--bottleneck', default=False, action='store_true', help='bottleneck or uniform')
-    parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l2', 'l1', 'hessian'])
+    parser.add_argument('--pruning_type', default='l1', type=str, help='pruning type', choices=['random', 'taylor', 'l2', 'l1', 'OBD'])
     parser.add_argument('--test_accuracy', default=False, action='store_true', help='test accuracy')
     parser.add_argument('--global_pruning', default=False, action='store_true', help='global pruning')
     parser.add_argument('--prune_num_heads', default=False, action='store_true', help='global pruning')
@@ -111,11 +111,11 @@ def main():
         imp = tp.importance.GroupNormImportance(p=2)
     elif args.pruning_type == 'l1':
         imp = tp.importance.GroupNormImportance(p=1)
-    elif args.pruning_type == 'hessian':
+    elif args.pruning_type == 'OBD':
         imp = tp.importance.GroupOBDImportance()
     else: raise NotImplementedError
 
-    if args.pruning_type in ['taylor', 'hessian'] or args.test_accuracy:
+    if args.pruning_type in ['taylor', 'OBD'] or args.test_accuracy:
         train_loader, val_loader = prepare_imagenet(args.data_path, train_batch_size=args.train_batch_size, val_batch_size=args.val_batch_size, use_imagenet_mean_std=args.use_imagenet_mean_std)
 
     # Load the model

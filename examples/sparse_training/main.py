@@ -18,6 +18,7 @@ parser.add_argument("--mode", type=str, required=True, choices=["pretrain", "pru
 parser.add_argument("--model", type=str, required=True)
 parser.add_argument("--verbose", action="store_true", default=False)
 parser.add_argument("--dataset", type=str, default="cifar100", choices=['cifar10', 'cifar100', 'modelnet40'])
+parser.add_argument('--dataroot', default='data', help='path to your datasets')
 parser.add_argument("--batch-size", type=int, default=128)
 parser.add_argument("--total-epochs", type=int, default=100)
 parser.add_argument("--lr-decay-milestones", default="60,80", type=str, help="milestones for learning rate decay")
@@ -25,6 +26,7 @@ parser.add_argument("--lr-decay-gamma", default=0.1, type=float)
 parser.add_argument("--lr", default=0.01, type=float, help="learning rate")
 parser.add_argument("--restore", type=str, default=None)
 parser.add_argument('--output-dir', default='run', help='path where to save')
+parser.add_argument("--finetune", action="store_true", default=False, help='whether finetune or not')
 
 # For pruning
 parser.add_argument("--method", type=str, default=None)
@@ -46,17 +48,34 @@ parser.add_argument("--iterative-steps", default=400, type=int)
 
 args = parser.parse_args()
 
-def progressive_pruning(pruner, model, speed_up, example_inputs):
+def progressive_pruning(pruner, model, speed_up, example_inputs, train_loader=None):
     model.eval()
     base_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
     current_speed_up = 1
     while current_speed_up < speed_up:
-        pruner.step(interactive=False)
+        if args.method == "obdc":
+            model.zero_grad()
+            imp=pruner.importance
+            imp._prepare_model(model, pruner)
+            for k, (imgs, lbls) in enumerate(train_loader):
+                if k>=10: break
+                imgs = imgs.to(args.device)
+                lbls = lbls.to(args.device)
+                output = model(imgs)
+                sampled_y = torch.multinomial(torch.nn.functional.softmax(output.cpu().data, dim=1),
+                                                  1).squeeze().to(args.device)
+                loss_sample = F.cross_entropy(output, sampled_y)
+                loss_sample.backward()
+                imp.step()
+            pruner.step()
+            imp._rm_hooks(model)
+            imp._clear_buffer()
+        else:
+            pruner.step()
         pruned_ops, _ = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
         current_speed_up = float(base_ops) / pruned_ops
         if pruner.current_step == pruner.iterative_steps:
             break
-        #print(current_speed_up)
     return current_speed_up
 
 def eval(model, test_loader, device=None):
@@ -169,9 +188,18 @@ def get_pruner(model, example_inputs):
     elif args.method == "l1":
         imp = tp.importance.MagnitudeImportance(p=1)
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
+    elif args.method == "l2":
+        imp = tp.importance.MagnitudeImportance(p=2)
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
+    elif args.method == "fpgm":
+        imp = tp.importance.FPGMImportance(p=2)
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
+    elif args.method == "obdc":
+        imp = tp.importance.OBDCImportance(group_reduction='mean', num_classes=args.num_classes)
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "lamp":
         imp = tp.importance.LAMPImportance(p=2)
-        pruner_entry = partial(tp.pruner.BNScalePruner, global_pruning=args.global_pruning)
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "slim":
         args.sparsity_learning = True
         imp = tp.importance.BNScaleImportance()
@@ -242,7 +270,7 @@ def main():
     # Model & Dataset
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     num_classes, train_dst, val_dst, input_size = registry.get_dataset(
-        args.dataset, data_root="data"
+        args.dataset, data_root=args.dataroot
     )
     args.num_classes = num_classes
     model = registry.get_model(args.model, num_classes=num_classes, pretrained=True, target_dataset=args.dataset)
@@ -315,7 +343,7 @@ def main():
         ori_ops, ori_size = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
         ori_acc, ori_val_loss = eval(model, test_loader, device=args.device)
         args.logger.info("Pruning...")
-        progressive_pruning(pruner, model, speed_up=args.speed_up, example_inputs=example_inputs)
+        progressive_pruning(pruner, model, speed_up=args.speed_up, example_inputs=example_inputs, train_loader=train_loader)
         del pruner # remove reference
         args.logger.info(model)
         pruned_ops, pruned_size = tp.utils.count_ops_and_params(model, example_inputs=example_inputs)
@@ -340,17 +368,18 @@ def main():
         )
         
         # 2. Finetuning
-        args.logger.info("Finetuning...")
-        train_model(
-            model,
-            epochs=args.total_epochs,
-            lr=args.lr,
-            lr_decay_milestones=args.lr_decay_milestones,
-            train_loader=train_loader,
-            test_loader=test_loader,
-            device=args.device,
-            save_state_dict_only=False,
-        )
+        if args.finetune:
+            args.logger.info("Finetuning...")
+            train_model(
+                model,
+                epochs=args.total_epochs,
+                lr=args.lr,
+                lr_decay_milestones=args.lr_decay_milestones,
+                train_loader=train_loader,
+                test_loader=test_loader,
+                device=args.device,
+                save_state_dict_only=False,
+            )
     elif args.mode == "test":
         model.eval()
         ops, params = tp.utils.count_ops_and_params(

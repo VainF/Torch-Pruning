@@ -7,8 +7,8 @@ params_record, loss_record, acc_record = torch.load('record.pth')
 plt.style.use('bmh')
 
 color_dict = {
-    'Group Hessian': "C0",
-    'Single-layer Hessian': "C0",
+    'Group OBD': "C0",
+    'Single-layer OBD': "C0",
 
     'Random': "C1",
 
