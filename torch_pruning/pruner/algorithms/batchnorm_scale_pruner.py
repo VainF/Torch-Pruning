@@ -140,6 +140,7 @@ class BNScalePruner(MetaPruner):
             for m in model.modules():
                 if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)) and m.affine==True and m not in self.ignored_layer_outputs:
                     if m.weight.grad is None: continue
+                    if m in self.ignored_layer_outputs: continue
                     m.weight.grad.data.add_(reg*torch.sign(m.weight.data))
         else:
             for group in self._groups:
@@ -152,6 +153,7 @@ class BNScalePruner(MetaPruner):
                     layer = dep.layer
                     if isinstance(layer, nn.modules.batchnorm._BatchNorm) and layer.affine==True and layer not in self.ignored_layer_outputs:
                         if layer.weight.grad is None: continue
+                        if m in self.ignored_layer_outputs: continue
                         root_idxs = group[i].root_idxs
                         _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
                         layer.weight.grad.data.add_(_gamma * layer.weight.data) # Group Lasso https://tibshirani.su.domains/ftp/sparse-grlasso.pdf

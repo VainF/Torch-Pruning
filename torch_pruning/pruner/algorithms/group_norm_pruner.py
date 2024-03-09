@@ -150,6 +150,7 @@ class GroupNormPruner(MetaPruner):
                     function.prune_linear_out_channels,
                 ]:
                     if layer.weight.grad is None: continue
+                    if layer in self.ignored_layer_outputs: continue
 
                     root_idxs = group[i].root_idxs
                     _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
@@ -168,9 +169,11 @@ class GroupNormPruner(MetaPruner):
                     function.prune_linear_in_channels,
                 ]:
                     if layer.weight.grad is None: continue
-                    gn = imp
-                    if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexMapping):
-                        gn = imp.repeat_interleave(w.shape[1]//imp.shape[0])
+                    if layer in self.ignored_layer_inputs: continue
+                    
+                    #gn = imp
+                    #if hasattr(dep.target, 'index_transform') and isinstance(dep.target.index_transform, _FlattenIndexMapping):
+                    #    gn = imp.repeat_interleave(w.shape[1]//imp.shape[0])
                     
                     # regularize input channels
                     if prune_fn==function.prune_conv_in_channels and layer.groups>1:
@@ -188,7 +191,7 @@ class GroupNormPruner(MetaPruner):
                     # regularize BN
                     if layer.affine is not None:
                         if layer.weight.grad is None: continue
-
+                        if layer in self.ignored_layer_outputs: continue
                         root_idxs = group[i].root_idxs
                         _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
 

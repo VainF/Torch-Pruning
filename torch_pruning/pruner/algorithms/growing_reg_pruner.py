@@ -165,7 +165,7 @@ class GrowingRegPruner(MetaPruner):
 
                 if isinstance(layer, nn.modules.batchnorm._BatchNorm) and layer.affine == True and layer not in self.ignored_layer_outputs:
                     if layer.weight.grad is None: continue
-
+                    if layer in self.ignored_layer_outputs: continue
                     root_idxs = group[k].root_idxs
                     _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
                     
@@ -175,7 +175,7 @@ class GrowingRegPruner(MetaPruner):
                 elif isinstance(layer, (nn.modules.conv._ConvNd, nn.Linear)):
                     if pruning_fn in [function.prune_conv_out_channels, function.prune_linear_out_channels] and layer not in self.ignored_layer_outputs:
                         if layer.weight.grad is None: continue
-
+                        if layer in self.ignored_layer_outputs: continue
                         root_idxs = group[k].root_idxs
                         _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
 
@@ -189,6 +189,7 @@ class GrowingRegPruner(MetaPruner):
                             layer.bias.grad.data[idxs] += g
                     elif pruning_fn in [function.prune_conv_in_channels, function.prune_linear_in_channels]:
                         if layer.weight.grad is None: continue
+                        if layer in self.ignored_layer_outputs: continue
                         root_idxs = group[k].root_idxs
                         _gamma = torch.index_select(gamma, 0, torch.tensor(root_idxs, device=gamma.device))
 

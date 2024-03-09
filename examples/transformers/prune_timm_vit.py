@@ -106,13 +106,13 @@ def main():
     if args.pruning_type == 'random':
         imp = tp.importance.RandomImportance()
     elif args.pruning_type == 'taylor':
-        imp = tp.importance.GroupTaylorImportance()
+        imp = tp.importance.TaylorImportance()
     elif args.pruning_type == 'l2':
         imp = tp.importance.GroupNormImportance(p=2)
     elif args.pruning_type == 'l1':
         imp = tp.importance.GroupNormImportance(p=1)
     elif args.pruning_type == 'OBD':
-        imp = tp.importance.GroupOBDImportance()
+        imp = tp.importance.OBDImportance()
     else: raise NotImplementedError
 
     if args.pruning_type in ['taylor', 'OBD'] or args.test_accuracy:
@@ -154,9 +154,9 @@ def main():
         round_to=2
     )
 
-    if isinstance(imp, (tp.importance.GroupTaylorImportance, tp.importance.GroupOBDImportance)):
+    if isinstance(imp, (tp.importance.TaylorImportance, tp.importance.OBDImportance)):
         model.zero_grad()
-        if isinstance(imp, tp.importance.GroupOBDImportance):
+        if isinstance(imp, tp.importance.OBDImportance):
             imp.zero_grad()
         print("Accumulating gradients for pruning...")
         for k, (imgs, lbls) in enumerate(train_loader):
@@ -164,13 +164,13 @@ def main():
             imgs = imgs.to(device)
             lbls = lbls.to(device)
             output = model(imgs)
-            if isinstance(imp, tp.importance.GroupOBDImportance):
+            if isinstance(imp, tp.importance.OBDImportance):
                 loss = torch.nn.functional.cross_entropy(output, lbls, reduction='none')
                 for l in loss:
                     model.zero_grad()
                     l.backward(retain_graph=True)
                     imp.accumulate_grad(model)
-            elif isinstance(imp, tp.importance.GroupTaylorImportance):
+            elif isinstance(imp, tp.importance.TaylorImportance):
                 loss = torch.nn.functional.cross_entropy(output, lbls)
                 loss.backward()
                 

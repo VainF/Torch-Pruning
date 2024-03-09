@@ -62,7 +62,7 @@ Pruning results for ImageNet-21K-ft-1K (Timm):
 
 ### Which pruner should be used for ViT pruning?
 
-In short, `tp.importance.GroupTaylorImportance` + `tp.pruner.MetaPruner` is a good choice for ViT pruning.
+In short, `tp.importance.TaylorImportance` + `tp.pruner.MetaPruner` is a good choice for ViT pruning.
 
 * Prune a Vision Transformer (ImageNet-1K) from HF Transformers without fine-tuning.
 <div align="center">

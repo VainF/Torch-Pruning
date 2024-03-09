@@ -18,8 +18,8 @@ __all__ = [
 
     # Basic Group Importance
     "GroupNormImportance",
-    "GroupTaylorImportance",
-    "GroupOBDImportance",
+    "TaylorImportance",
+    "OBDImportance",
 
     # Other Importance
     "BNScaleImportance",
@@ -56,7 +56,8 @@ class Importance(abc.ABC):
         # clean the accumulated gradients if necessary, only for OBD so far
         pass
     
-class GroupNormImportance(Importance):
+
+class MagnitudeImportance(Importance):
     """ A general implementation of magnitude importance. By default, it calculates the group L2-norm for each channel/dim.
         It supports several variants like:
             - Standard L1-norm of the first layer in a group: MagnitudeImportance(p=1, normalizer=None, group_reduction="first")
@@ -263,7 +264,7 @@ class GroupNormImportance(Importance):
         return group_imp
 
 
-class BNScaleImportance(GroupNormImportance):
+class BNScaleImportance(MagnitudeImportance):
     """Learning Efficient Convolutional Networks through Network Slimming, 
     https://arxiv.org/abs/1708.06519
 
@@ -287,7 +288,7 @@ class BNScaleImportance(GroupNormImportance):
         super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer, bias=False, target_types=(nn.modules.batchnorm._BatchNorm,))
 
 
-class LAMPImportance(GroupNormImportance):
+class LAMPImportance(MagnitudeImportance):
     """Layer-adaptive Sparsity for the Magnitude-based Pruning,
     https://arxiv.org/abs/2010.07611
 
@@ -311,7 +312,7 @@ class LAMPImportance(GroupNormImportance):
         super().__init__(p=p, group_reduction=group_reduction, normalizer=normalizer, bias=bias)
 
 
-class FPGMImportance(GroupNormImportance):
+class FPGMImportance(MagnitudeImportance):
     """Filter Pruning via Geometric Median for Deep Convolutional Neural Networks Acceleration,
     http://openaccess.thecvf.com/content_CVPR_2019/papers/He_Filter_Pruning_via_Geometric_Median_for_Deep_Convolutional_Neural_Networks_CVPR_2019_paper.pdf
     """
@@ -402,7 +403,7 @@ class RandomImportance(Importance):
         return torch.rand(len(idxs))
 
 
-class GroupTaylorImportance(GroupNormImportance):
+class TaylorImportance(MagnitudeImportance):
     """ Grouped first-order taylor expansion of the loss function.
         https://openaccess.thecvf.com/content_CVPR_2019/papers/Molchanov_Importance_Estimation_for_Neural_Network_Pruning_CVPR_2019_paper.pdf
 
@@ -417,7 +418,7 @@ class GroupTaylorImportance(GroupNormImportance):
                 loss = loss_fn(model(inputs), labels)
                 loss.backward() # compute gradients
                 group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
-                scorer = GroupTaylorImportance()    
+                scorer = TaylorImportance()    
                 imp_score = scorer(group)    
                 #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
                 min_score = imp_score.min() 
@@ -535,7 +536,7 @@ class GroupTaylorImportance(GroupNormImportance):
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
-class OBDCImportance(GroupNormImportance):
+class OBDCImportance(MagnitudeImportance):
     """EigenDamage: Structured Pruning in the Kronecker-Factored Eigenbasis:
        http://proceedings.mlr.press/v97/wang19g/wang19g.pdf
     """
@@ -654,7 +655,8 @@ class OBDCImportance(GroupNormImportance):
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
-class GroupOBDImportance(GroupNormImportance):
+
+class OBDImportance(MagnitudeImportance):
     """Grouped Optimal Brain Damage:
        https://proceedings.neurips.cc/paper/1989/hash/6c9882bbac1c7093bd25041881277658-Abstract.html
 
@@ -666,7 +668,7 @@ class GroupOBDImportance(GroupNormImportance):
             ```python
                 inputs, labels = ...
                 DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
-                scorer = GroupOBDImportance()   
+                scorer = OBDImportance()   
                 scorer.zero_grad() # clean the acuumulated gradients if necessary
                 loss = loss_fn(model(inputs), labels, reduction='none') # compute loss for each sample
                 for l in loss:
@@ -812,12 +814,7 @@ class GroupOBDImportance(GroupNormImportance):
 
 
 # Aliases
-class MagnitudeImportance(GroupNormImportance):
+class GroupNormImportance(MagnitudeImportance):
     pass
 
-class TaylorImportance(GroupTaylorImportance):
-    pass
-
-class OBDImportance(GroupOBDImportance):
-    pass
 

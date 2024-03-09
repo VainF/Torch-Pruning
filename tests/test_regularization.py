@@ -44,6 +44,7 @@ def test_pruner():
         )
         
         for i in range(iterative_steps):
+            model.zero_grad()
             if isinstance(imp, tp.importance.OBDCImportance):
                 imp._prepare_model(model, pruner)
                 model(example_inputs).sum().backward()
