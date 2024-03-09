@@ -18,10 +18,16 @@ def test_pruner():
         # [tp.importance.GroupNormImportance, tp.pruner.GroupNormPruner],
         # [tp.importance.BNScaleImportance, tp.pruner.BNScalePruner],
         # [tp.importance.GroupNormImportance, tp.pruner.GrowingRegPruner],
+<<<<<<< HEAD
         # [tp.importance.MagnitudeImportance, tp.pruner.GroupNormPruner],
         # [tp.importance.LAMPImportance, tp.pruner.GroupNormPruner],
         [tp.importance.OBDCImportance, tp.pruner.GroupNormPruner],
         # [tp.importance.FPGMImportance, tp.pruner.GroupNormPruner],
+=======
+        # [tp.importance.LAMPImportance(p=2), tp.pruner.MagnitudePruner],
+        [tp.importance.FPGMImportance(p=2), tp.pruner.MagnitudePruner],
+        # [tp.importance.OBDCImportance(group_reduction='mean', num_classes=1000), tp.pruner.MagnitudePruner],
+>>>>>>> 0efe76721926945e1ab1a50b228a0f7171e2b645
     ]:
         if imp_cls == tp.importance.OBDCImportance:
             imp = imp_cls(num_classes=1000)
