@@ -75,15 +75,23 @@ class MagnitudeImportance(Importance):
         self.target_types = target_types
         self.bias = bias
 
-    def _lamp(self, imp): # Layer-adaptive Sparsity for the Magnitude-based Pruning
-        argsort_idx = torch.argsort(imp, dim=0, descending=True).tolist()
-        sorted_imp = imp[argsort_idx]
-        cumsum_imp = torch.cumsum(sorted_imp, dim=0)
-        sorted_imp = sorted_imp / cumsum_imp
-        inversed_idx = torch.arange(len(sorted_imp))[
-            argsort_idx
-        ].tolist()  # [0, 1, 2, 3, ..., ]
-        return sorted_imp[inversed_idx]
+    def _lamp(self, scores): # Layer-adaptive Sparsity for the Magnitude-based Pruning
+        """
+        Normalizing scheme for LAMP.
+        """
+        # sort scores in an ascending order
+        sorted_scores,sorted_idx = scores.view(-1).sort(descending=False)
+        # compute cumulative sum
+        scores_cumsum_temp = sorted_scores.cumsum(dim=0)
+        scores_cumsum = torch.zeros(scores_cumsum_temp.shape,device=scores.device)
+        scores_cumsum[1:] = scores_cumsum_temp[:len(scores_cumsum_temp)-1]
+        # normalize by cumulative sum
+        sorted_scores /= (scores.sum() - scores_cumsum)
+        # tidy up and output
+        new_scores = torch.zeros(scores_cumsum.shape,device=scores.device)
+        new_scores[sorted_idx] = sorted_scores
+        
+        return new_scores.view(scores.shape)
     
     def _normalize(self, group_importance, normalizer):
         if normalizer is None:

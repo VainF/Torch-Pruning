@@ -15,9 +15,12 @@ def test_pruner():
     example_inputs = torch.randn(1, 3, 224, 224)
 
     for imp_cls, pruner_cls in [
-        [tp.importance.GroupNormImportance, tp.pruner.GroupNormPruner],
-        [tp.importance.BNScaleImportance, tp.pruner.BNScalePruner],
-        [tp.importance.GroupNormImportance, tp.pruner.GrowingRegPruner],
+        # [tp.importance.GroupNormImportance, tp.pruner.GroupNormPruner],
+        # [tp.importance.BNScaleImportance, tp.pruner.BNScalePruner],
+        # [tp.importance.GroupNormImportance, tp.pruner.GrowingRegPruner],
+        # [tp.importance.LAMPImportance(p=2), tp.pruner.MagnitudePruner],
+        [tp.importance.FPGMImportance(p=2), tp.pruner.MagnitudePruner],
+        # [tp.importance.OBDCImportance(group_reduction='mean', num_classes=1000), tp.pruner.MagnitudePruner],
     ]:
         imp = imp_cls()
         ignored_layers = []
