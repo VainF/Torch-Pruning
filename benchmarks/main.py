@@ -200,7 +200,7 @@ def get_pruner(model, example_inputs):
         pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "lamp":
         imp = tp.importance.LAMPImportance(p=2)
-        pruner_entry = partial(tp.pruner.BNScalePruner, global_pruning=args.global_pruning)
+        pruner_entry = partial(tp.pruner.MagnitudePruner, global_pruning=args.global_pruning)
     elif args.method == "slim":
         args.sparsity_learning = True
         imp = tp.importance.BNScaleImportance()

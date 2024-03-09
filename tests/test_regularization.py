@@ -15,11 +15,18 @@ def test_pruner():
     example_inputs = torch.randn(1, 3, 224, 224)
 
     for imp_cls, pruner_cls in [
-        [tp.importance.GroupNormImportance, tp.pruner.GroupNormPruner],
-        [tp.importance.BNScaleImportance, tp.pruner.BNScalePruner],
-        [tp.importance.GroupNormImportance, tp.pruner.GrowingRegPruner],
+        # [tp.importance.GroupNormImportance, tp.pruner.GroupNormPruner],
+        # [tp.importance.BNScaleImportance, tp.pruner.BNScalePruner],
+        # [tp.importance.GroupNormImportance, tp.pruner.GrowingRegPruner],
+        # [tp.importance.MagnitudeImportance, tp.pruner.GroupNormPruner],
+        # [tp.importance.LAMPImportance, tp.pruner.GroupNormPruner],
+        [tp.importance.OBDCImportance, tp.pruner.GroupNormPruner],
+        # [tp.importance.FPGMImportance, tp.pruner.GroupNormPruner],
     ]:
-        imp = imp_cls()
+        if imp_cls == tp.importance.OBDCImportance:
+            imp = imp_cls(num_classes=1000)
+        else:
+            imp = imp_cls()
         ignored_layers = []
         # DO NOT prune the final classifier!
         for m in model.modules():
@@ -37,7 +44,12 @@ def test_pruner():
         )
         
         for i in range(iterative_steps):
-            model(example_inputs).sum().backward()
+            if isinstance(imp, tp.importance.OBDCImportance):
+                imp._prepare_model(model, pruner)
+                model(example_inputs).sum().backward()
+                imp.step()
+            else:
+                model(example_inputs).sum().backward()
             grad_dict = {}
             for p in model.parameters():
                 if p.grad is not None:
@@ -51,6 +63,9 @@ def test_pruner():
                 else:
                     print(name, "has no grad")
             pruner.step()
+            if isinstance(imp, tp.importance.OBDCImportance):
+                imp._rm_hooks(model)
+                imp._clear_buffer()
     
 if __name__ == "__main__":
     test_pruner()
