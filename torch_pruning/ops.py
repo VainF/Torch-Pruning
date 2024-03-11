@@ -135,7 +135,7 @@ class SplitPruner(DummyPruner):
         offsets = [0]
         for i in range(len(new_split_sizes)):
             offsets.append(offsets[i] + new_split_sizes[i])
-        self.offsets = offsets
+        layer.offsets = offsets
 
     prune_in_channels = prune_out_channels
         
