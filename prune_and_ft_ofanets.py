@@ -13,7 +13,7 @@ from timm.scheduler import create_scheduler
 from timm.utils import ModelEma
 from timm.loss import LabelSmoothingCrossEntropy
     
-OFA_HOME = "/home/lmy/projects/my-once-for-all"
+OFA_HOME = os.environ["OFA_HOME"]
 sys.path.append(OFA_HOME)
 
 from ofa.imagenet_classification.networks import MobileNetV3Large
