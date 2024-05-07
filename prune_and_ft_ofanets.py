@@ -7,6 +7,7 @@ import yaml
 
 import torch
 import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel
 
 from timm.optim import create_optimizer
 from timm.scheduler import create_scheduler
