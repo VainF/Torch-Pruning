@@ -269,12 +269,18 @@ def main():
     
     if args.eval:
         top1_eval_acc = validate(
-            model=model, train_loader=train_loader, val_loader=val_loader, args=args, mixup_fn=mixup_fn)
+           val_loader, model, None, 0, args)
 
         if args.rank == 0:
             logger.info(
                 f"[Eval mode] evaluation top-1 accuracy {top1_eval_acc} (%)")
         return 
+
+    top1_eval_acc = validate(
+           val_loader, model, None, 0, args)
+    if args.rank == 0:
+        logger.info(
+            f"[Pruned] evaluation top-1 accuracy {top1_eval_acc} (%)")
     
     for epoch in range(start_epoch, num_epochs):
         if args.distributed:
@@ -292,7 +298,7 @@ def main():
             lr_scheduler.step(epoch + 1)
 
         top1_eval_acc = validate(
-            model=model, train_loader=train_loader, val_loader=val_loader, args=args, mixup_fn=mixup_fn)
+            val_loader, model, None, epoch, args)
 
         if args.rank == 0:
             logger.info(

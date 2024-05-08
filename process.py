@@ -60,16 +60,6 @@ def accuracy(output, target, topk=(1,)):
         return res
 
 
-def validate(model, train_loader, val_loader, args, mixup_fn):
-    with torch.no_grad():
-        logger.info("start batch-norm layer calibration...")
-        bn_cal(model, train_loader, args, num_batches=64 *
-               (256//args.batch_size), mixup_fn=mixup_fn)
-        logger.info("finish batch-norm layer calibration...")
-    acc1_val, _, _ = validate(val_loader, model, None, 0, None, args, None, )
-    return round(acc1_val, 2)
-
-
 def update_meter(meter, loss, acc1, acc5, size, batch_time, world_size):
 
     barrier()
@@ -208,7 +198,7 @@ def train_one_epoch(train_loader, model, criterion, optimizer, lr_scheduler, epo
         return meters['loss'].avg
 
 
-def validate_single(data_loader, model, criterion, epoch, args):
+def validate(data_loader, model, criterion, epoch, args):
     meters = {
         'loss': AverageMeter(),
         'top1': AverageMeter(),
@@ -228,12 +218,17 @@ def validate_single(data_loader, model, criterion, epoch, args):
             start_time = time.time()
 
             outputs = model(inputs)
-            loss = criterion(outputs, targets)
+            loss = None
+            if criterion:
+                loss = criterion(outputs, targets)
 
             acc1, acc5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-            print(acc1)
-            update_meter(meters, loss, acc1, acc5, inputs.size(
-                0), time.time() - start_time, args.world_size)
+            if criterion:
+                update_meter(meters, loss, acc1, acc5, inputs.size(
+                    0), time.time() - start_time, args.world_size)
+            else:
+                meters["top1"].update(acc1.item(), inputs.size(0))
+                meters["top5"].update(acc5.item(), inputs.size(0))
 
     return meters['top1'].avg, meters['top5'].avg, meters['loss'].avg
 
