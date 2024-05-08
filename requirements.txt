@@ -2,4 +2,3 @@ torch>=1.0
 numpy
 loguru
 timm
-munch

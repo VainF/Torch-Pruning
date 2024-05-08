@@ -109,9 +109,8 @@ def parse_args():
     # Eval
     arg_parser.add_argument("--eval", action='store_true', default=False)
     
-    
     args = arg_parser.parse_args()
-    return cfgs
+    return args
 
 
 def main():
