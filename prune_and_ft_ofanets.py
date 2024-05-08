@@ -202,6 +202,8 @@ def main():
     args.min_lr = scaled_linear_min_lr
     args.warmup_lr = scaled_linear_warmup_lr
     
+    start_epoch = 0
+    
     # model EMA
     model.cuda()
     
