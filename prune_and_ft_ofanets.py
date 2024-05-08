@@ -307,11 +307,11 @@ def main():
             perf_scoreboard.update(v_top1, v_top5, epoch)
             is_best = perf_scoreboard.is_best(epoch)
 
-            save_checkpoint(epoch, 'supernet', model, {
+            save_checkpoint(epoch, model, {
                 'top1': v_top1, 'top5': v_top5}, is_best, args.name, output_dir, optimizer=optimizer, model_ema=model_ema)
 
             if epoch % 10 == 0:
-                save_checkpoint(epoch, 'supernet', model, {
+                save_checkpoint(epoch, model, {
                     'top1': v_top1, 'top5': v_top5}, False, args.name + f'_{epoch}epochs_', output_dir, optimizer=optimizer, model_ema=model_ema)
 
     if args.rank == 0: 
