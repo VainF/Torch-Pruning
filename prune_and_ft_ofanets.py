@@ -25,6 +25,7 @@ from ft_utils import ProgressMonitor, PerformanceScoreboard
 from ddp_utils import (fix_random_seed, init_distributed_training, init_logger,
     setup_print, load_data_dist)
 from loss_ops import SoftTargetCrossEntropyNoneSoftmax
+from checkpoint import save_checkpoint, load_checkpoint
 
 
 def load_models(net, model_path=None):
