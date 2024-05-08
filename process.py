@@ -64,7 +64,7 @@ def validate(model, train_loader, val_loader, args, mixup_fn):
     with torch.no_grad():
         logger.info("start batch-norm layer calibration...")
         bn_cal(model, train_loader, args, num_batches=64 *
-               (256//args.dataloader.batch_size), mixup_fn=mixup_fn)
+               (256//args.batch_size), mixup_fn=mixup_fn)
         logger.info("finish batch-norm layer calibration...")
     acc1_val, _, _ = validate(val_loader, model, None, 0, None, args, None, )
     return round(acc1_val, 2)
@@ -107,15 +107,15 @@ def compute_dist_loss(labels, outputs, criterion, teacher_outputs=None, distill_
             return criterion(outputs, labels)
 
 
-def train_one_epoch(train_loader, model, criterion, optimizer, lr_scheduler, epoch, monitors, args, distillation_loss, teacher_model,
+def train_one_epoch(train_loader, model, criterion, optimizer, lr_scheduler, epoch, pymonitor, args, distillation_loss, teacher_model,
                     mixup_fn, model_ema, record_one_epoch=False, hard_distillation=False, force_random=False):
-    meters = [{
+    meters = {
         'loss': AverageMeter(),
         'batch_time': AverageMeter()
-    } for _ in range(4)]
+    }
 
     total_sample = len(train_loader.sampler)
-    batch_size = args.dataloader.batch_size
+    batch_size = args.batch_size
 
     steps_per_epoch = math.ceil(total_sample / batch_size)
     steps_per_epoch = torch.tensor(steps_per_epoch).to(args.device)
@@ -138,8 +138,7 @@ def train_one_epoch(train_loader, model, criterion, optimizer, lr_scheduler, epo
         else:
             teacher_model.eval()
 
-    model_without_ddp.set_regularization_mode(head_drop_prob=0, module_drop_prob=0)  # according to NASVit
-    biggest_outputs, teacher_outputs = None, None
+    teacher_outputs = None
     multi_teachers = isinstance(teacher_model, list)
 
     for batch_idx, (original_inputs, original_targets) in enumerate(train_loader):
@@ -174,7 +173,7 @@ def train_one_epoch(train_loader, model, criterion, optimizer, lr_scheduler, epo
             raise NotImplementedError
 
         loss.backward()
-        update_meter(meters[idx], loss, None, None, inputs.size(
+        update_meter(meters, loss, None, None, inputs.size(
             0), time.time() - start_time, args.world_size)
 
         # adaptive_clip_grad(model.parameters(), 0.1, norm_type=2.0)
@@ -184,7 +183,7 @@ def train_one_epoch(train_loader, model, criterion, optimizer, lr_scheduler, epo
 
         if lr_scheduler is not None:
             lr_scheduler.step_update(
-                num_updates=num_updates, metric=meters[-1]['loss'].avg)
+                num_updates=num_updates, metric=meters['loss'].avg)
 
         torch.cuda.synchronize()
 
@@ -192,36 +191,30 @@ def train_one_epoch(train_loader, model, criterion, optimizer, lr_scheduler, epo
             model_ema.update(model)
 
         if args.rank == 0 and (batch_idx + 1) % args.print_freq == 0:
-            for m in monitors:
-                for idx, mode in enumerate(modes):
-                    m.update(epoch, batch_idx + 1, steps_per_epoch, "Mode " + mode + ' Training', {
-                        'Loss': meters[idx]['loss'],
-                        'BatchTime': meters[idx]['batch_time'],
-                        'LR': optimizer.param_groups[0]['lr'],
-                        'GPU memory': round(torch.cuda.max_memory_allocated() / (1024.0 * 1024.0))
-                    })
+            pymonitor.update(epoch, batch_idx + 1, steps_per_epoch, 'Training', {
+                'Loss': meters['loss'],
+                'BatchTime': meters['batch_time'],
+                'LR': optimizer.param_groups[0]['lr'],
+                'GPU memory': round(torch.cuda.max_memory_allocated() / (1024.0 * 1024.0))
+            })
             logger.info(
                 "--------------------------------------------------------------------------------------------------------------")
-    if args.rank == 0:
-        for idx, mode in enumerate(modes):
-            logger.info('==> Mode [%s] Loss: %.3f',
-                        mode, meters[idx]['loss'].avg)
     if hasattr(optimizer, 'sync_lookahead'):
         optimizer.sync_lookahead()
 
-    if 'top1' in meters[-1].keys():
-        return meters[-1]['top1'].avg, meters[-1]['top5'].avg, meters[-1]['loss'].avg
+    if 'top1' in meters.keys():
+        return meters['top1'].avg, meters['top5'].avg, meters['loss'].avg
     else:
-        return meters[-1]['loss'].avg
+        return meters['loss'].avg
 
 
-def validate_single(data_loader, model, criterion, epoch, monitors, args):
-    meters = [{
+def validate_single(data_loader, model, criterion, epoch, args):
+    meters = {
         'loss': AverageMeter(),
         'top1': AverageMeter(),
         'top5': AverageMeter(),
         'batch_time': AverageMeter()
-    } for _ in range(1)]
+    }
 
     total_sample = len(data_loader.sampler)
     batch_size = data_loader.batch_size
@@ -239,10 +232,10 @@ def validate_single(data_loader, model, criterion, epoch, monitors, args):
 
             acc1, acc5 = accuracy(outputs.data, targets.data, topk=(1, 5))
             print(acc1)
-            update_meter(meters[0], loss, acc1, acc5, inputs.size(
+            update_meter(meters, loss, acc1, acc5, inputs.size(
                 0), time.time() - start_time, args.world_size)
 
-    return meters[-1]['top1'].avg, meters[-1]['top5'].avg, meters[-1]['loss'].avg
+    return meters['top1'].avg, meters['top5'].avg, meters['loss'].avg
 
 
 class PerformanceScoreboard:

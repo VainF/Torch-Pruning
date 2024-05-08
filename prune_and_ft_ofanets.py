@@ -177,6 +177,7 @@ def main():
     
     output_dir = args.output_dir
     
+    pymonitor = None
     if args.rank == 0:
         os.makedirs(output_dir, exist_ok=True)
 
@@ -262,7 +263,7 @@ def main():
         logger.info('Total epoch: %d, Start epoch %d, Val cycle: %d',
                     num_epochs, start_epoch, args.val_cycle)
     
-    perf_scoreboard = PerformanceScoreboard(num_best_scores)
+    perf_scoreboard = PerformanceScoreboard(args.num_best_scores)
 
     v_top1, v_top5, v_loss = 0, 0, 0
     
@@ -283,7 +284,7 @@ def main():
             logger.info('>>>>>>>> Epoch %3d' % epoch)
 
         train_loss = train_one_epoch(
-            train_loader, model, criterion, optimizer, lr_scheduler, epoch, monitors, args,
+            train_loader, model, criterion, optimizer, lr_scheduler, epoch, pymonitor, args,
             teacher_model=teacher_model, distillation_loss=distillation_loss,
             mixup_fn=mixup_fn, model_ema=model_ema)
 
