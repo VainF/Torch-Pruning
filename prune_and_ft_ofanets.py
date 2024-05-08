@@ -174,7 +174,7 @@ def main():
     output_dir = args.output_dir
     
     if args.rank == 0:
-        os.mkdir(output_dir, parents=True, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
 
         log_dir = init_logger(
             args.name, output_dir)
