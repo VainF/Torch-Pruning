@@ -191,7 +191,7 @@ def train_one_epoch(train_loader, model, criterion, optimizer, lr_scheduler, epo
         if model_ema is not None:
             model_ema.update(model)
 
-        if args.rank == 0 and (batch_idx + 1) % args.log.print_freq == 0:
+        if args.rank == 0 and (batch_idx + 1) % args.print_freq == 0:
             for m in monitors:
                 for idx, mode in enumerate(modes):
                     m.update(epoch, batch_idx + 1, steps_per_epoch, "Mode " + mode + ' Training', {
