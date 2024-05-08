@@ -3,8 +3,7 @@ import os
 import sys
 
 from loguru import logger
-import munch
-import yaml
+import json
 
 import torch
 import torch.distributed as dist
@@ -112,7 +111,6 @@ def parse_args():
     
     
     args = arg_parser.parse_args()
-    cfgs = munch.munchify(args)
     return cfgs
 
 
@@ -181,8 +179,8 @@ def main():
         log_dir = init_logger(
             args.name, output_dir)
 
-        with open(f"{args.output_dir}/args.yaml", "w") as yaml_file:  # dump experiment config
-             yaml.safe_dump(args, yaml_file)
+        with open(f"{args.output_dir}/args.json", "w") as args_file:  # dump experiment config
+            json.dump(vars(args), args_file, indent=4)
 
         pymonitor = ProgressMonitor(logger)
 
