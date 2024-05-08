@@ -13,6 +13,7 @@ from timm.optim import create_optimizer
 from timm.scheduler import create_scheduler
 from timm.utils import ModelEma
 from timm.loss import LabelSmoothingCrossEntropy
+from timm.data import Mixup
     
 OFA_HOME = os.environ["OFA_HOME"]
 sys.path.append(OFA_HOME)
