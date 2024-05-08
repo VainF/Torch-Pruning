@@ -112,8 +112,8 @@ def parse_args():
     
     
     args = arg_parser.parse_args()
-    args = munch.munchify(args)
-    return args
+    cfgs = munch.munchify(args)
+    return cfgs
 
 
 def main():
