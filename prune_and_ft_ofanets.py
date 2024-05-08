@@ -107,6 +107,10 @@ def parse_args():
     arg_parser.add_argument("--epochs", type=int, default=30)
     arg_parser.add_argument("--val_cycle", type=int, default=50)
     
+    # Log
+    arg_parser.add_argument("--num_best_scores", type=int, default=3)
+    arg_parser.add_argument("--print_freq", type=int, default=20)
+    
     # Eval
     arg_parser.add_argument("--eval", action='store_true', default=False)
     
@@ -258,7 +262,7 @@ def main():
         logger.info('Total epoch: %d, Start epoch %d, Val cycle: %d',
                     num_epochs, start_epoch, args.val_cycle)
     
-    perf_scoreboard = PerformanceScoreboard(args.log.num_best_scores)
+    perf_scoreboard = PerformanceScoreboard(num_best_scores)
 
     v_top1, v_top5, v_loss = 0, 0, 0
     
