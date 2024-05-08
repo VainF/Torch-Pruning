@@ -3,6 +3,7 @@ import os
 import sys
 
 from loguru import logger
+import munch
 import yaml
 
 import torch
@@ -111,6 +112,7 @@ def parse_args():
     
     
     args = arg_parser.parse_args()
+    args = munch.munchify(args)
     return args
 
 
