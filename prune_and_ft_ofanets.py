@@ -179,7 +179,7 @@ def main():
         log_dir = init_logger(
             args.name, output_dir)
 
-        with open(args.output_dir / "args.yaml", "w") as yaml_file:  # dump experiment config
+        with open(f"{args.output_dir}/args.yaml", "w") as yaml_file:  # dump experiment config
              yaml.safe_dump(args, yaml_file)
 
         pymonitor = ProgressMonitor(logger)
