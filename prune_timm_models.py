@@ -67,6 +67,7 @@ def main():
     fix_random_seed(seed=0)
     
     output_dir = f"{args.output_dir}/{args.exp_name}"
+    os.makedirs(output_dir, exist_ok=True)
     
     # 1. Importance criterion
     imp = tp.importance.GroupTaylorImportance() # or GroupNormImportance(p=2), GroupHessianImportance(), etc.
