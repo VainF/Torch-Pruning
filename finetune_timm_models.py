@@ -9,6 +9,7 @@ import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel
 
+import timm
 from timm import create_model
 from timm.optim import create_optimizer
 from timm.scheduler import create_scheduler
