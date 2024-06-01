@@ -58,8 +58,12 @@ def save_checkpoint(epoch,
                         verbose=False,
                         do_constant_folding=False,
                         training=t.onnx.TrainingMode.PRESERVE)
-    traced_model = t.jit.trace(model, (export_data,))
-    t.jit.save(traced_model, ptfilepath)
+    try:
+        traced_model = t.jit.trace(model, (export_data,))
+        t.jit.save(traced_model, ptfilepath)
+    except:
+        logger.warning("Torch tracing failed")
+        pass
 
     msg = 'Saving checkpoint to:\n'
     msg += '             Current: %s\n' % filepath
