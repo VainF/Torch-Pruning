@@ -1,12 +1,21 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
-from loguru import logger
 import os
+
+from loguru import logger
 from timm.utils import get_state_dict
 import torch as t
 
 
-def save_checkpoint(epoch, model, extras=None, is_best=None, name=None, output_dir='.', optimizer=None, model_ema=None):
+def save_checkpoint(epoch,
+                    model,
+                    extras=None,
+                    is_best=None,
+                    name=None,
+                    output_dir='.',
+                    optimizer=None,
+                    model_ema=None,
+                    onnxir_level=13):
     """Save a pyTorch training checkpoint
     Args:
         epoch: current epoch number
@@ -27,6 +36,8 @@ def save_checkpoint(epoch, model, extras=None, is_best=None, name=None, output_d
 
     filename = 'checkpoint.pth.tar' if name is None else name + '_checkpoint.pth.tar'
     filepath = os.path.join(output_dir, filename)
+    onnxfilepath = os.path.join(output_dir, "checkpoint.onnx" if name is None else name + "_checkpoint.onnx")
+    ptfilepath = os.path.join(output_dir, "checkpoint.pt" if name is None else name + "_checkpoint.pt")
     filename_best = 'best.pth.tar' if name is None else name + '_best.pth.tar'
     filepath_best = os.path.join(output_dir, filename_best)
 
@@ -37,6 +48,18 @@ def save_checkpoint(epoch, model, extras=None, is_best=None, name=None, output_d
         'extras': extras,
         'model_ema': get_state_dict(model_ema) if model_ema else None,
     }
+    export_data = t.randn((1,3,224,224))
+    t.onnx.export(model,
+                        export_data,
+                        onnxfilepath,
+                        opset_version=onnxir_level,
+                        input_names=['input'],
+                        output_names=['output'],
+                        verbose=False,
+                        do_constant_folding=False,
+                        training=t.onnx.TrainingMode.PRESERVE)
+    traced_model = t.jit.trace(model, (export_data,))
+    t.jit.save(traced_model, ptfilepath)
 
     msg = 'Saving checkpoint to:\n'
     msg += '             Current: %s\n' % filepath
