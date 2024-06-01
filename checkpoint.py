@@ -49,7 +49,11 @@ def save_checkpoint(epoch,
         'extras': extras,
         'model_ema': get_state_dict(model_ema) if model_ema else None,
     }
+    
     export_data = t.randn((1,3,224,224))
+    model = model.module
+    model = model.cpu()
+    model.eval()
     t.onnx.export(model,
                         export_data,
                         onnxfilepath,
