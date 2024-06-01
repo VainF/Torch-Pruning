@@ -15,7 +15,8 @@ def save_checkpoint(epoch,
                     output_dir='.',
                     optimizer=None,
                     model_ema=None,
-                    onnxir_level=13):
+                    onnxir_level=13,
+                    output_torchscript=False):
     """Save a pyTorch training checkpoint
     Args:
         epoch: current epoch number
@@ -58,12 +59,9 @@ def save_checkpoint(epoch,
                         verbose=False,
                         do_constant_folding=False,
                         training=t.onnx.TrainingMode.PRESERVE)
-    try:
+    if output_torchscript:
         traced_model = t.jit.trace(model, (export_data,))
         t.jit.save(traced_model, ptfilepath)
-    except:
-        logger.warning("Torch tracing failed")
-        pass
 
     msg = 'Saving checkpoint to:\n'
     msg += '             Current: %s\n' % filepath
