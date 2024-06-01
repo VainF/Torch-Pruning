@@ -207,7 +207,7 @@ def validate(data_loader, model, criterion, epoch, args):
     }
 
     total_sample = len(data_loader.sampler)
-    batch_size = data_loader.batch_size
+    batch_size = len(data_loader)
     steps_per_epoch = math.ceil(total_sample / batch_size)
     model.eval()
 
