@@ -105,7 +105,7 @@ def train_one_epoch(train_loader, model, criterion, optimizer, lr_scheduler, epo
     }
 
     total_sample = len(train_loader.sampler)
-    batch_size = args.batch_size
+    batch_size = len(train_loader)
 
     steps_per_epoch = math.ceil(total_sample / batch_size)
     steps_per_epoch = torch.tensor(steps_per_epoch).to(args.device)
