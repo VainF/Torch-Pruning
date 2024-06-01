@@ -100,7 +100,7 @@ def main():
     logger.info(f"Base Params: {base_nparams/1e6} M, Pruned Params: {nparams/1e6} M")
     logger.info(model)
 
-    save_checkpoint(None, model, output_dir=output_dir, name="pruned")
+    save_checkpoint(None, model, output_dir=output_dir, name="pruned", output_torchscript=True)
 
     logger.info('Program completed successfully ... exiting ...')
 
