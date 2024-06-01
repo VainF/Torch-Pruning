@@ -100,8 +100,9 @@ def load_data_dist(cfg, searching_set=False):
         train_set, num_replicas=world_size, rank=rank, shuffle=True)
 
     train_loader = torch.utils.data.DataLoader(
-        train_set, batch_size=cfg.batch_size, shuffle=True,
-        num_workers=cfg.workers, pin_memory=False, drop_last=True)
+        train_set, batch_size=cfg.batch_size, shuffle=False,
+        num_workers=cfg.workers, pin_memory=False, drop_last=True,
+        sampler=train_sampler)
 
     test_loader = torch.utils.data.DataLoader(
         datasets.ImageFolder(valdir, transforms.Compose([
@@ -112,7 +113,8 @@ def load_data_dist(cfg, searching_set=False):
             normalize,
         ])),
         batch_size=cfg.batch_size*2, shuffle=False,
-        num_workers=cfg.workers, pin_memory=False, drop_last=False)
+        num_workers=cfg.workers, pin_memory=False, drop_last=False,
+        sampler=val_sampler)
 
     if searching_set:
         val_loader = torch.utils.data.DataLoader(
