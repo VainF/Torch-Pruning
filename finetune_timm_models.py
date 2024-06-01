@@ -45,6 +45,7 @@ def init_dataloader(args):
 
 def parse_args():
     arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("name", type=str)
     # DDP
     arg_parser.add_argument("--local_rank", default=0, type=int)
     
@@ -120,7 +121,9 @@ def parse_args():
 
 def main():
     args = parse_args()
-    
+    model = create_model(
+        args.name,
+        pretrained=False)
     example_inputs = torch.randn(1, 3, 224, 224)
 
     init_distributed_training(args)
