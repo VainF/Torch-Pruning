@@ -93,6 +93,16 @@ def load_data_dist(cfg, searching_set=False):
                 normalize,
             ]))
 
+    val_set = datasets.ImageFolder(
+        valdir,
+        transforms.Compose([
+            transforms.Resize(
+                256, interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            normalize,
+        ]))
+    
     world_size = torch.distributed.get_world_size()
     rank = torch.distributed.get_rank()
 
@@ -107,13 +117,7 @@ def load_data_dist(cfg, searching_set=False):
         sampler=train_sampler)
 
     test_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valdir, transforms.Compose([
-            transforms.Resize(
-                256, interpolation=transforms.InterpolationMode.BICUBIC),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            normalize,
-        ])),
+        val_set,
         batch_size=cfg.batch_size*2, shuffle=False,
         num_workers=cfg.workers, pin_memory=False, drop_last=False,
         sampler=val_sampler)
