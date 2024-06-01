@@ -99,7 +99,7 @@ def load_data_dist(cfg, searching_set=False):
     train_sampler = torch.utils.data.distributed.DistributedSampler(
         train_set, num_replicas=world_size, rank=rank, shuffle=True)
     val_sampler = torch.utils.data.distributed.DistributedSampler(
-        train_set, num_replicas=world_size, rank=rank, shuffle=False)
+        val_set, num_replicas=world_size, rank=rank, shuffle=False)
 
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=cfg.batch_size, shuffle=False,
