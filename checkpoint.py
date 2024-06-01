@@ -35,7 +35,7 @@ def save_checkpoint(epoch, model, extras=None, is_best=None, name=None, output_d
         'state_dict': get_state_dict(model),
         'optimizer': optimizer.state_dict() if optimizer is not None else None,
         'extras': extras,
-        'model_ema': get_state_dict(model_ema)
+        'model_ema': get_state_dict(model_ema) if model_ema else None,
     }
 
     msg = 'Saving checkpoint to:\n'
