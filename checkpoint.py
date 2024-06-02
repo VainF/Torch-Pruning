@@ -52,7 +52,9 @@ def save_checkpoint(epoch,
     
     export_data = t.randn((1,3,224,224))
     model = model.module if hasattr(model, "module") else model
-    model = model.cpu()
+    is_cuda = next(model.parameters()).is_cuda
+    if is_cuda:
+        export_data = export_data.cuda()
     model.eval()
     t.onnx.export(model,
                         export_data,
