@@ -51,7 +51,7 @@ def save_checkpoint(epoch,
     }
     
     export_data = t.randn((1,3,224,224))
-    model = model.module
+    # model = model.module
     model = model.cpu()
     model.eval()
     t.onnx.export(model,
