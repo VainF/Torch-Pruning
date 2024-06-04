@@ -424,7 +424,6 @@ class MetaPruner:
 
                 group = self.DG.get_pruning_group(
                     module, pruning_fn, pruning_idxs)
-                
                 if self.DG.check_pruning_group(group):
                     # Update num heads after pruning
                     if _is_attn and self.prune_num_heads and n_heads_removed>0:

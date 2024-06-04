@@ -47,6 +47,7 @@ def main():
         if hasattr(m, 'num_heads'):
             if hasattr(m, 'qkv'):
                 num_heads[m.qkv] = m.num_heads
+                print("Attention layer: ", m.qkv, m.num_heads)
             elif hasattr(m, 'qkv_proj'):
                 num_heads[m.qkv_proj] = m.num_heads
 
