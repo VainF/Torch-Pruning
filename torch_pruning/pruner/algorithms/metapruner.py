@@ -339,8 +339,9 @@ class MetaPruner:
                 is_attention = True
             if isinstance(_dep.target.module, tuple(self.root_module_types)) and self.DG.is_in_channel_pruning_fn(_dep.handler):
                 downstream_dep = _dep
+                idxs = _idxs
         if is_attention and downstream_dep is not None: # use a downstream node as the root node for attention layers
-            group = self.DG.get_pruning_group(downstream_dep.target.module, downstream_dep.handler, _idxs)
+            group = self.DG.get_pruning_group(downstream_dep.target.module, downstream_dep.handler, idxs)
         return group
 
     def _round_to(self, n_pruned, current_channels, round_to):

@@ -264,15 +264,10 @@ def main():
     parser.add_argument('--model', type=str, help='LLaMA model')
     parser.add_argument('--seed', type=int, default=0, help='Seed for sampling the calibration data.')
     parser.add_argument('--nsamples', type=int, default=128, help='Number of calibration samples.')
-    parser.add_argument('--sparsity_ratio', type=float, default=0, help='Sparsity level')
-    parser.add_argument("--sparsity_type", type=str, choices=["unstructured", "4:8", "2:4"])
-    parser.add_argument("--prune_method", type=str, choices=["magnitude", "wanda", "sparsegpt", 
-                        "ablate_mag_seq", "ablate_wanda_seq", "ablate_mag_iter", "ablate_wanda_iter", "search"])
+    parser.add_argument('--pruning_ratio', type=float, default=0, help='Sparsity level')
     parser.add_argument("--cache_dir", default="./cache", type=str )
-    parser.add_argument('--use_variant', action="store_true", help="whether to use the wanda variant described in the appendix")
     parser.add_argument('--save', type=str, default=None, help='Path to save results.')
     parser.add_argument('--save_model', type=str, default=None, help='Path to save the pruned model.')
-
     parser.add_argument("--eval_zero_shot", action="store_true")
     args = parser.parse_args()
 
@@ -302,15 +297,17 @@ def main():
     for name, m in model.named_modules():
         if name.endswith("self_attn"):
             num_heads[m.q_proj] = model.config.num_attention_heads
-            num_heads[m.k_proj] = model.config.num_attention_heads
-            num_heads[m.v_proj] = model.config.num_attention_heads
-    head_pruning_ratio = 0.5
+            num_heads[m.k_proj] = model.config.num_key_value_heads
+            num_heads[m.v_proj] = model.config.num_key_value_heads
+            
+    head_pruning_ratio = args.pruning_ratio
+    hidden_size_pruning_ratio = args.pruning_ratio
     pruner = tp.pruner.MagnitudePruner(
         model, 
         example_inputs=inputs,
-        importance=tp.importance.MagnitudeImportance(),
+        importance=tp.importance.GroupNormImportance(),
         global_pruning=False,
-        pruning_ratio=0.5,
+        pruning_ratio=hidden_size_pruning_ratio,
         ignored_layers=[model.lm_head],
         num_heads=num_heads,
         prune_num_heads=True,
@@ -320,17 +317,17 @@ def main():
     pruner.step()
 
     # Update model attributes
-
     num_heads = int( (1-head_pruning_ratio) * model.config.num_attention_heads )
+    num_key_value_heads = int( (1-head_pruning_ratio) * model.config.num_key_value_heads )
     model.config.num_attention_heads = num_heads
+    model.config.num_key_value_heads = num_key_value_heads
     for name, m in model.named_modules():
         if name.endswith("self_attn"):
             m.hidden_size = m.q_proj.out_features
             m.num_heads = num_heads
-            m.num_key_value_heads = num_heads
+            m.num_key_value_heads = num_key_value_heads
         elif name.endswith("mlp"):
             model.config.intermediate_size = m.gate_proj.out_features
-
     print("----------------- After Pruning -----------------")
     print(model)
 

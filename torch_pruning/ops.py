@@ -62,6 +62,13 @@ class _ElementWiseOp(nn.Module):
     def __repr__(self):
         return "_ElementWiseOp_{}({})".format(self.id, self._grad_fn)
 
+class _ExpandOp(nn.Module):
+    def __init__(self, id):
+        super(_ExpandOp, self).__init__()
+        self.id = id
+
+    def __repr__(self):
+        return "_ExpandOp_{}()".format(self.id)
 
 ######################################################
 # Dummy Pruners
@@ -89,6 +96,9 @@ class DummyPruner(object):
 
 class UnbindPruner(DummyPruner):
     pass 
+
+class ExpandPruner(DummyPruner):
+    pass
 
 class ConcatPruner(DummyPruner):
     def prune_out_channels(self, layer, idxs):
@@ -188,6 +198,7 @@ class OPTYPE(IntEnum):
     GN = 15  # nn.GroupNorm
     IN = 16  # nn.InstanceNorm
     UNBIND = 17
+    EXPAND = 18
 
 
 def module2type(module):
@@ -226,6 +237,8 @@ def module2type(module):
         return OPTYPE.RESHAPE
     elif isinstance(module, _UnbindOp):
         return OPTYPE.UNBIND
+    elif isinstance(module, _ExpandOp):
+        return OPTYPE.EXPAND
     else:
         return OPTYPE.ELEMENTWISE
 
@@ -263,6 +276,8 @@ def type2class(op_type):
         return _ReshapeOp
     elif OPTYPE == OPTYPE.UNBIND:
         return _UnbindOp
+    elif OPTYPE == OPTYPE.EXPAND:
+        return _ExpandOp
     else:
         return _ElementWiseOp
 
