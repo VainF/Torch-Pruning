@@ -1,0 +1,3 @@
+bash scripts/prft_resnet50_0625small.sh
+bash scripts/prft_resnet50_0750small.sh
+bash scripts/prft_resnet50_0875small.sh
