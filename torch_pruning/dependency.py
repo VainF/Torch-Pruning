@@ -15,20 +15,18 @@ class Node(object):
     """ Node of DepGraph
     """
     def __init__(self, module: nn.Module, grad_fn, name: str = None):
-        # For Computational Graph (Tracing)
         self.inputs = []  # input nodes
         self.outputs = [] # output nodes
         self.module = module # reference to torch.nn.Module
         self.grad_fn = grad_fn # grad_fn of nn.module output
-
         self._name = name # node name
         self.type = ops.module2type(module) # node type (enum), op.OPTYPE
         self.module_class = module.__class__ # class type of the module
 
-        # For Dependency Graph
+        # For Dependency Modeling
         self.dependencies = []  # Adjacency List
-        self.enable_index_mapping = True # whether to enable index mapping
-        self.pruning_dim = -1 # the dimension to be pruned
+        self.enable_index_mapping = True # enable index mapping for torch.cat/split/chunck/...
+        self.pruning_dim = -1 # pruning dimension for the module, whill be set dynamically by the Depdenency
 
     @property
     def name(self):
@@ -43,10 +41,8 @@ class Node(object):
     def add_input(self, node):
         self.inputs.append(node)
 
-
     def add_output(self, node):
         self.outputs.append(node)
-
 
     def __repr__(self):
         return str(self)
@@ -66,17 +62,26 @@ class Node(object):
         fmt += " " * 4 + "DEP:\n"
         for dep in self.dependencies:
             fmt += " " * 8 + "{}\n".format(dep)
-        fmt += "\tEnable_index_mapping={}, pruning_dim={}\n".format(
+        fmt += "\tenable_index_mapping={}, pruning_dim={}\n".format(
             self.enable_index_mapping, self.pruning_dim)
         fmt = "-" * 32 + "\n"
         return fmt
 
 
-class Edge(): # for readability
-    pass
+class Dependency(object):
+    """Layer dependency (Edge of DepGraph).
 
+        For the dependency A -> B, the pruning operation ``trigger(A)`` will trigger the pruning operation ``handler(B)``.
 
-class Dependency(Edge):
+        The object is callable, which will invoke the handler function for pruning.
+
+        Args:
+            trigger (Callable): a pruning function that triggers this dependency
+            handler (Callable): a pruning function that can fix the broken dependency
+            source (Node): the source node pruned by the trigger function
+            target (Node): the target node pruned by the handler function
+            index_mapping (Callable): a callable function for index mapping
+    """
     def __init__(
         self,
         trigger: typing.Callable,
@@ -84,26 +89,23 @@ class Dependency(Edge):
         source: Node,
         target: Node,
     ):
-        """Layer dependency (Edge of DepGraph).
-        Args:
-            trigger (Callable): a pruning function that triggers this dependency
-            handler (Callable): a pruning function that can fix the broken dependency
-            source (Node): the source node pruned by the trigger function
-            target (Node): the target node pruned by the handler function
-            index_mapping (Callable): a callable function for index mapping
-        """
         self.trigger = trigger
         self.handler = handler
         self.source = source
         self.target = target             
+        # index_mapping are used to map the indices of the source node to the target node
+        # There will be two index_mapping functions for each dependency, to handle cascaded concat & split operations.
+        # E.g. split -> concat
+        # We first map the indeces to the splited tensor with index_mapping[0], 
+        # then map the splited tensor to the concatenated tensor with index_mapping[1].
         # Current coordinate system => Standard coordinate system => target coordinate system 
-        #                     index_mapping[0]              index_mapping[1]
+        #                     index_mapping[0]           index_mapping[1]
         self.index_mapping = [INDEX_MAPPING_PLACEHOLDER, INDEX_MAPPING_PLACEHOLDER] # [None, None] by default
 
     def __call__(self, idxs: list):
         self.handler.__self__.pruning_dim = self.target.pruning_dim # set pruning_dim
-        if len(idxs)>0 and isinstance(idxs[0], _helpers._HybridIndex):
-            idxs = _helpers.to_plain_idxs(idxs)
+        if len(idxs)>0 and isinstance(idxs[0], _helpers._HybridIndex): 
+            idxs = _helpers.to_plain_idxs(idxs) # hybrid indices include root indices. We need to remove them and only pass the plain indices to the handler
         result = self.handler(self.target.module, idxs)
         return result
 
@@ -118,10 +120,10 @@ class Dependency(Edge):
             self.target.name,
         )
 
-    def is_triggered_by(self, pruning_fn):
+    def is_triggered_by(self, pruning_fn): # check if the dependency is triggered by a specific pruning function
         return pruning_fn == self.trigger
 
-    def __eq__(self, other):
+    def __eq__(self, other): # check if two dependencies are the same
         return (
             self.source == other.source 
             and self.trigger == other.trigger
@@ -130,11 +132,11 @@ class Dependency(Edge):
         )
     
     @property
-    def layer(self):
+    def layer(self): # alias of the target module
         return self.target.module
 
     @property
-    def pruning_fn(self):
+    def pruning_fn(self): # alias of the handler
         return self.handler
 
     def __hash__(self):
@@ -142,27 +144,41 @@ class Dependency(Edge):
 
 
 class Group(object):
-    """A group that contains dependencies and pruning indices.   
-    Each element is defined as as namedtuple('_helpers.GroupItem'. 
-
+    """Group is the basic unit for pruning. It contains a list of dependencies and their corresponding indices.  
     group := [ (Dep1, Indices1), (Dep2, Indices2), ..., (DepK, IndicesK) ]
-    """
 
+    Example: 
+
+    For a simple network Conv2d(2, 4) -> BN(4) -> Relu, we have:
+    group1 := [ (Conv2d -> BN, [0, 1, 2, 3]), (BN -> Relu, [0, 1, 2, 3]) ]
+    There are 4 prunable elements, i.e., 4 channels in Conv2d.
+
+    The indices do not need to be full and can be a subset of the prunable elements.
+    For instance, if we want to prune the first 2 channels, we have:
+    group2 := [ (Conv2d -> BN, [0, 1]), (BN -> Relu, [0, 1]) ]
+
+    When combined with tp.importance, we can compute the importance of corresponding channels.
+    imp_1 = importance(group1) # len(imp_1)=4
+    imp_2 = importance(group2) # len(imp_2)=2
+    
+    For importance estimation, we should craft a group with full indices just like group1.
+    For pruning, we need to craft a new group with the to-be-pruned indices like group2.
+    """
     def __init__(self):
         self._group = list()
         self._DG = None # the dependency graph that this group belongs to
 
     def prune(self, idxs=None, record_history=True):
-        """Prune all coupled layers in the group
+        """Prune all coupled layers in the group, acording to the specified indices.
         """
         if idxs is not None: # prune the group with user-specified indices
             module = self._group[0].dep.target.module
             pruning_fn = self._group[0].dep.handler
             new_group = self._DG.get_pruning_group(module, pruning_fn, idxs) # create a new group with the specified indices
             new_group.prune()
-        else:
+        else: # prune the group with the pre-defined indices
             for dep, idxs in self._group:
-                if dep.target.type == ops.OPTYPE.PARAMETER: 
+                if dep.target.type == ops.OPTYPE.PARAMETER: # for nn.Parameter, we will craft a new nn.Parameter and have to update all depdencies
                     # prune unwrapped nn.Parameter
                     old_parameter = dep.target.module
                     name = self._DG._param_to_name[old_parameter]
@@ -176,10 +192,10 @@ class Group(object):
                     self._DG._param_to_name[pruned_parameter] = name
                     self._DG.module2node[pruned_parameter] = self._DG.module2node.pop(old_parameter)
                     self._DG.module2node[pruned_parameter].module = pruned_parameter           
-                else:
+                else: # in most cases, we can directly prune the module
                     dep(idxs)
         
-        if record_history:
+        if record_history: # record the pruning history
             root_module, pruning_fn, root_pruning_idx = self[0][0].target.module, self[0][0].trigger, self[0][1]
             root_module_name = self._DG._module2name[root_module]
             self._DG._pruning_history.append([root_module_name, self._DG.is_out_channel_pruning_fn(pruning_fn), root_pruning_idx])
@@ -218,6 +234,8 @@ class Group(object):
         return len(self._group)
 
     def add_and_merge(self, dep, idxs):
+        """Add a new dependency and merge the indices if the dependency already exists.
+        """
         for i, (_dep, _idxs) in enumerate(self._group):
             if _dep.target == dep.target and _dep.handler == dep.handler:
                 visited_idxs = set()
@@ -339,13 +357,15 @@ class DependencyGraph(object):
             for customized_type, customized_pruner in customized_pruners.items():
                 self.register_customized_layer(customized_type, customized_pruner)
         
+        # Ignore layers & nn.Parameter
         if ignored_layers is not None:
             self.IGNORED_LAYERS_IN_TRACING.extend(ignored_layers)
         self.ignored_params = ignored_params
+
         # Ignore all sub-modules of customized layers since they will be handled by the customized pruner
         for layer_type_or_instance in self.CUSTOMIZED_PRUNERS.keys():            
             for m in self.model.modules():
-                # a layer instance or a layer type
+                # check if the module is the target layer or a instance of the layer type
                 if (m==layer_type_or_instance) or (not isinstance(layer_type_or_instance, torch.nn.Module) and isinstance(m, layer_type_or_instance)):
                     for sub_module in m.modules(): 
                         if sub_module != m:
@@ -444,12 +464,14 @@ class DependencyGraph(object):
         if isinstance(idxs, Number):
             idxs = [idxs]
         
+        # Keep the root indices for index mapping. This will be useful for torch.cat/split/chunck/...
         idxs = [ _helpers._HybridIndex(idx=i, root_idx=i) for i in idxs ] # idxs == root_idxs for the root layer
 
+        # Update index mapping before creating the group
         self.update_index_mapping()
+        
+        # the root pruning operation
         group = Group()
-
-        #  the user pruning operation
         root_node = self.module2node[module]
         group.add_dep(
             dep=Dependency(pruning_fn, pruning_fn, source=root_node, target=root_node), 
@@ -457,7 +479,6 @@ class DependencyGraph(object):
         )
 
         visited_node = set()
-
         def _fix_dependency_graph_non_recursive(dep, idxs, *args):
             processing_stack = [(dep, idxs)]
             while len(processing_stack) > 0:
@@ -485,8 +506,9 @@ class DependencyGraph(object):
                             )
 
         _fix_dependency_graph_non_recursive(*group[0])
+        
         # merge pruning ops
-        merged_group = Group()
+        merged_group = Group() # craft a new group for merging
         for dep, idxs in group.items:
             if isinstance(dep.target.module, nn.Parameter): #and dep.target.module in self.ignored_params:
                 skip=False
@@ -498,6 +520,8 @@ class DependencyGraph(object):
                     continue
             merged_group.add_and_merge(dep, idxs)
         merged_group._DG = self
+
+        # create a .root_idxs attribute for each group item to store the root indices
         for i in range(len(merged_group)):
             hybrid_idxs = merged_group[i].idxs
             idxs = _helpers.to_plain_idxs(hybrid_idxs)
@@ -508,7 +532,8 @@ class DependencyGraph(object):
 
     def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
         """
-            Get all pruning groups for the given module. Groups are generated on the module typs specified in root_module_types.
+            Get all pruning groups for the given module. Groups are generated based on root module types.
+            All groups will contain a full indices of the prunable elements or channels.
 
             Args:
                 ignored_layers (list): List of layers to be ignored during pruning.
@@ -540,7 +565,8 @@ class DependencyGraph(object):
 
             if m in visited_layers:
                 continue
-
+            
+            # use output pruning as the root
             layer_channels = pruner.get_out_channels(m)
             group = self.get_pruning_group(
                 m, pruner.prune_out_channels, list(range(layer_channels)))
@@ -706,13 +732,14 @@ class DependencyGraph(object):
             # This is implictly implemented by assigning
             # prune_out_channels=prune_in_channels in tp.pruner.function.BasePruningFunc
 
+
     def _trace(self, model, example_inputs, forward_fn, output_transform):
-        """ Tracing the model as a graph
+        """ Trace the model as a graph
         """
         model.eval()
         gradfn2module = {}
         visited = {}
-        self._2d_4d = True # only for pytorch<=1.8
+        self._2d_4d = True # for pytorch<=1.8
         def _record_grad_fn(module, inputs, outputs):
             
             if module not in visited:
@@ -740,7 +767,7 @@ class DependencyGraph(object):
             if (isinstance(m, registered_types) and m not in self.IGNORED_LAYERS_IN_TRACING)
         ]
 
-        # Feed forward to record gradient functions of prunable modules
+        # Forward the model and record all modules
         if forward_fn is not None:
             out = forward_fn(model, example_inputs)
         elif isinstance(example_inputs, dict):
@@ -959,7 +986,7 @@ class DependencyGraph(object):
             size = reshape_node.grad_fn._saved_self_sizes
             if (len(size)!=1 and len(size)!=4):
                 return
-        else: # old pytorch versions
+        else: # legacy version
             if not self._2d_4d:
                 return 
 

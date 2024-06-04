@@ -144,6 +144,7 @@ class GroupNormImportance(Importance):
             reduced_imp = torch.zeros_like(group_imp[0])
 
         for i, (imp, root_idxs) in enumerate(zip(group_imp, group_idxs)):
+            imp = imp.to(reduced_imp.device)
             if self.group_reduction == "sum" or self.group_reduction == "mean":
                 reduced_imp.scatter_add_(0, torch.tensor(root_idxs, device=imp.device), imp) # accumulated importance
             elif self.group_reduction == "max": # keep the max importance

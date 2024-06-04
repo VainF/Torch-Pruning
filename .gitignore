@@ -29,3 +29,5 @@ output
 acc.png
 pretrained
 data
+
+cache/
