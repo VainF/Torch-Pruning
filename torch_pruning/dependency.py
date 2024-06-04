@@ -919,7 +919,7 @@ class DependencyGraph(object):
                 self._update_reshape_index_mapping(node)
             if node.type == ops.OPTYPE.UNBIND:
                 self._update_unbind_index_mapping(node)
-            if node.type == ops.OPTYPE.EXPAND:
+            if node.type == ops.OPTYPE.EXPAND and torch.__version__ >= "1.8":
                 self._update_expand_index_mapping(node)
 
     def _init_shape_information(self):
@@ -1194,10 +1194,13 @@ class DependencyGraph(object):
             if out_channels is not None:  # =0 if there is a residual connection to model inputs
                 break
         assert hasattr(node.grad_fn, '_saved_self_sym_sizes'), "New version of PyTorch is required for expand operation."
+        if len(node.grad_fn._saved_self_sym_sizes) != 5:
+            return
+
+        # for Huggingface GQA
         batch, num_key_value_heads, n_rep, slen, head_dim = node.grad_fn._saved_self_sym_sizes
         in_channels = num_key_value_heads * n_rep * head_dim
         if out_channels is None or in_channels is None: return
-        
         repeat = out_channels // in_channels
         addressed_dep = []
         for i, out_node in enumerate(node.outputs):
