@@ -1193,7 +1193,10 @@ class DependencyGraph(object):
                 return
             if out_channels is not None:  # =0 if there is a residual connection to model inputs
                 break
-        assert hasattr(node.grad_fn, '_saved_self_sym_sizes'), "New version of PyTorch is required for expand operation."
+        if not hasattr(node.grad_fn, '_saved_self_sym_sizes'):
+            #warnings.warn("Expand operation detected but the shape information is not available")
+            return 
+
         if len(node.grad_fn._saved_self_sym_sizes) != 5:
             return
 
