@@ -289,6 +289,7 @@ class DependencyGraph(object):
             ops.OPTYPE.ELEMENTWISE: ops.ElementWisePruner(),
             ops.OPTYPE.RESHAPE: ops.ReshapePruner(),
             ops.OPTYPE.UNBIND: ops.UnbindPruner(),
+            ops.OPTYPE.EXPAND: ops.ExpandPruner(),
             ops.OPTYPE.CUSTOMIZED: ops.CustomizedPruner(), # just a placeholder
         }
         self.REGISTERED_PRUNERS = function.PrunerBox.copy()  # shallow copy
@@ -842,6 +843,10 @@ class DependencyGraph(object):
                 elif "unbind" in grad_fn.name().lower():
                     module = ops._UnbindOp(self._op_id)
                     self._op_id+=1
+                elif "expand" in grad_fn.name().lower():
+                    module = ops._ExpandOp(self._op_id)
+                    # print all attributes
+                    self._op_id+=1
                 elif "view" in grad_fn.name().lower() or 'reshape' in grad_fn.name().lower():
                     module = ops._ReshapeOp(self._op_id)
                     self._op_id+=1
@@ -914,6 +919,8 @@ class DependencyGraph(object):
                 self._update_reshape_index_mapping(node)
             if node.type == ops.OPTYPE.UNBIND:
                 self._update_unbind_index_mapping(node)
+            if node.type == ops.OPTYPE.EXPAND:
+                self._update_expand_index_mapping(node)
 
     def _init_shape_information(self):
         for module, node in self.module2node.items():
@@ -949,7 +956,7 @@ class DependencyGraph(object):
                         offsets.append(offsets[-1] + ch)
                     node.module.split_sizes = chs
                     node.module.offsets = offsets
-                                                
+
     def _update_flatten_index_mapping(self, fc_node: Node):
         if fc_node.type != ops.OPTYPE.LINEAR:
             return
@@ -1177,6 +1184,41 @@ class DependencyGraph(object):
                         addressed_dep.append(dep)
                         break
 
+    def _update_expand_index_mapping(self, node: Node):
+        out_channels = None
+        for n in node.outputs:
+            recursive_depth = [0]
+            out_channels = self._infer_in_channels_recursively(n, recursive_depth)
+            if recursive_depth[0] > MAX_RECURSION_DEPTH:
+                return
+            if out_channels is not None:  # =0 if there is a residual connection to model inputs
+                break
+        assert hasattr(node.grad_fn, '_saved_self_sym_sizes'), "New version of PyTorch is required for expand operation."
+        batch, num_key_value_heads, n_rep, slen, head_dim = node.grad_fn._saved_self_sym_sizes
+        in_channels = num_key_value_heads * n_rep * head_dim
+        if out_channels is None or in_channels is None: return
+        
+        repeat = out_channels // in_channels
+        addressed_dep = []
+        for i, out_node in enumerate(node.outputs):
+            for dep in node.dependencies:
+                if any((dep is d) for d in addressed_dep): continue
+                if dep.target == out_node:
+                    if node.enable_index_mapping:
+                        dep.index_mapping[0] = (_helpers._ExpandIndexMapping(repeat=repeat, reverse=False))
+                        addressed_dep.append(dep)
+                        break
+        
+        addressed_dep = []
+        for i, out_node in enumerate(node.outputs):
+            for dep in out_node.dependencies:
+                if dep.target == node:
+                    if any((dep is d) for d in addressed_dep): continue
+                    if node.enable_index_mapping:
+                        dep.index_mapping[0] = (_helpers._ExpandIndexMapping(repeat=repeat, reverse=True))
+                        addressed_dep.append(dep)
+                        break
+        
     def infer_channels_between(self, node_1, node_2):
         if node_1.type == ops.OPTYPE.SPLIT:
             for i, n in enumerate(node_1.outputs):

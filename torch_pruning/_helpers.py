@@ -80,6 +80,21 @@ class _ConcatIndexMapping(object):
             new_idxs = [ _HybridIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
         return new_idxs
 
+class _ExpandIndexMapping(object):
+    def __init__(self, repeat, reverse=False):
+        self.repeat = repeat
+        self.reverse = reverse
+
+    def __call__(self, idxs: _HybridIndex):
+        if self.reverse == True:
+            new_idxs = [ _HybridIndex(idx=i.idx // self.repeat, root_idx=i.root_idx) for i in idxs[::self.repeat]]
+        else:
+            new_idxs = [
+                _HybridIndex(idx = i.idx * self.repeat + j, root_idx=i.root_idx)
+                for i in idxs
+                for j in range(self.repeat)
+            ]
+        return new_idxs
 
 class _SplitIndexMapping(object):
     def __init__(self, offset, reverse=False):
