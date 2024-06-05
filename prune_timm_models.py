@@ -8,6 +8,7 @@ import json
 import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel
+import torchvision
 
 from timm import create_model
 from timm.optim import create_optimizer
@@ -49,6 +50,7 @@ def parse_args():
     arg_parser.add_argument("pr", type=float)
     
     # IO
+    arg_parser.add_argument("--model_zoo", type=str, default="timm")
     arg_parser.add_argument("--name", type=str, default="default")
     arg_parser.add_argument("--output_dir", type=str, default="exp")
     arg_parser.add_argument("--exp_name", type=str, default="test")
@@ -58,9 +60,12 @@ def parse_args():
 
 def main():
     args = parse_args()
-    model = create_model(
-        args.name,
-        pretrained=True)
+    if args.model_zoo == "timm":
+        model = create_model(
+            args.name,
+            pretrained=True)
+    elif args.model_zoo == "torchvision":
+        model = getattr(torchvision.models, args.name)()
     
     example_inputs = torch.randn(1, 3, 224, 224)
 
