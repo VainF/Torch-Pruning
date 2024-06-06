@@ -102,7 +102,7 @@ wget https://github.com/VainF/Torch-Pruning/releases/download/v1.1.4/cifar100_vg
 ```
 or train a new model:
 ```python
-python main.py --mode pretrain --dataset vgg19 --model resnet56 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
+python main.py --mode pretrain --dataset cifar100 --model vgg19 --lr 0.1 --total-epochs 200 --lr-decay-milestones 120,150,180 
 ```
 
 ### 2.2 CIFAR-100 Pruning
