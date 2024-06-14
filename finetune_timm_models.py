@@ -174,19 +174,17 @@ def main():
     optimizer = create_optimizer(args, model)
 
     # ------------- auto resume -------------
-    chkp_file = self.training_config.resume_path if (self.training_config.resume_path is not None and os.path.exists(self.training_config.resume_path)) else os.path.join(output_dir, self.training_config.name + '_checkpoint.pth.tar')
+    chkp_file = args.resume_path if (args.resume_path is not None and os.path.exists(args.resume_path)) else os.path.join(output_dir, args.name + '_checkpoint.pth.tar')
     if os.path.exists(chkp_file):
         print("load checkpoint from", chkp_file)
-        super_model, start_epoch, _ = load_checkpoint(
-            super_model, chkp_file=chkp_file, strict=True, lean=self.training_config.resume_lean, optimizer=optimizer if not self.training_config.eval else None)
-        if self.training_config.model_ema:
-            model_ema.ema = deepcopy(super_model)
-        # Update super weights
-        self.tailor.tir.update_weights(super_model.named_parameters())
+        model, start_epoch, _ = load_checkpoint(
+            model, chkp_file=chkp_file, strict=True, lean=args.resume_lean, optimizer=optimizer if not args.eval else None)
+        if args.model_ema:
+            model_ema.ema = deepcopy(model)
     else:
-        assert not self.training_config.eval
+        assert not args.eval
     
-    num_epochs = self.training_config.epochs
+    num_epochs = args.epochs
     if int(start_epoch) == int(num_epochs):
         # training has finished
         return
