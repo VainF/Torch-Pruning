@@ -178,7 +178,7 @@ def main():
     optimizer = create_optimizer(args, model)
 
     # ------------- auto resume -------------
-    chkp_file = args.resume_path if (args.resume_path is not None and os.path.exists(args.resume_path)) else os.path.join(output_dir, args.name + '_checkpoint.pth.tar')
+    chkp_file = args.resume_path if (args.resume_path is not None and os.path.exists(args.resume_path)) else os.path.join(output_dir, args.exp_name + '_checkpoint.pth.tar')
     if os.path.exists(chkp_file):
         print("load checkpoint from", chkp_file)
         model, start_epoch, _ = load_checkpoint(
