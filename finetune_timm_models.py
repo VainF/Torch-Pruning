@@ -54,6 +54,10 @@ def parse_args():
     arg_parser.add_argument("--output_dir", type=str, default="exp")
     arg_parser.add_argument("--exp_name", type=str, default="test")
     
+    # resemu
+    arg_parser.add_angument("--resume_path", type=str, default=None)
+    arg_parser.add_argument("--resume_lean", action="store_true", default=False)
+    
     # Data loader
     arg_parser.add_argument("--dataset", type=str, default="imagenet")
     arg_parser.add_argument("--path", type=str, default="/datasets/imagenet")
