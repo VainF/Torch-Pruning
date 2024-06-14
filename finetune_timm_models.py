@@ -55,7 +55,7 @@ def parse_args():
     arg_parser.add_argument("--exp_name", type=str, default="test")
     
     # resemu
-    arg_parser.add_angument("--resume_path", type=str, default=None)
+    arg_parser.add_argument("--resume_path", type=str, default=None)
     arg_parser.add_argument("--resume_lean", action="store_true", default=False)
     
     # Data loader
