@@ -1,6 +1,6 @@
 # Prune Large Language Models
 
-This example provides a minimal example of pruning large language models with magnitude-based pruning. We use the `transformers` library to load the model and the `datasets` library to evaluate the model on the `wikitext2` dataset. For more comprehensive examples about Gradient-based pruning or finetuning, please refer to [LLM-Pruner](https://github.com/horseee/LLM-Pruner).
+This example provides a minimal example of pruning large language models with magnitude-based pruning. We use the `transformers` library to load the model and the `datasets` library to evaluate the Perplexity with `Wikitext2`. **For more comprehensive examples of Gradient-based pruning or finetuning, please refer to [LLM-Pruner](https://github.com/horseee/LLM-Pruner)**.
 
 ## 0. Requirements
 
