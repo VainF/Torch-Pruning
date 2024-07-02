@@ -227,10 +227,15 @@ class MetaPruner:
         if interactive: # yield groups for interactive pruning
             return pruning_method() 
         else:
+            pruned = False
             for group in pruning_method():
                 group.prune()
+                pruned = True
                 # print("gg")
             # exit(0)
+            return pruned
+            
+
 
     def manual_prune(self, layer, pruning_fn, pruning_ratios_or_idxs):
         if isinstance(pruning_ratios_or_idxs, float):
