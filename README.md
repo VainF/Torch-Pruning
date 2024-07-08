@@ -33,7 +33,7 @@ For more technical details, please refer to our CVPR'23 paper:
 > *[Learning and Vision Lab](http://lv-nus.org/), National University of Singapore*
   
 ### Update:
-- [x] 2024.07.08 :rocket: [Isomorphic Pruning for Vision Models](https://github.com/VainF/Isomorphic-Pruning), a SOTA method for Vision Transformers and CNNs.
+- [x] 2024.07.08 :rocket: [Isomorphic Pruning for Vision Models](https://github.com/VainF/Isomorphic-Pruning) [[ECCV'24]](https://arxiv.org/abs/2407.04616), a SOTA method for Vision Transformers and CNNs.
 - [x] 2023.12.19 [SlimSAM: 0.1% Data Makes Segment Anything Slim](https://github.com/czg1225/SlimSAM)
 - [x] 2023.09.06 [Pruning & Finetuning Examples for Vision Transformers, Swin Transformers, Bert](examples/transformers/)
 - [x] 2023.07.19 Support LLaMA, LLaMA-2, Vicuna, Baichuan, Bloom in [LLM-Pruner](https://github.com/horseee/LLM-Pruner)
