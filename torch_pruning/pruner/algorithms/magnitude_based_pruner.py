@@ -17,7 +17,8 @@ class MagnitudePruner(MetaPruner):
         * iterative_pruning_ratio_scheduler (Callable): scheduler for iterative pruning. Default: linear_scheduler.
         * ignored_layers (List[nn.Module | typing.Type]): ignored modules. Default: None.
         * round_to (int): round channels to the nearest multiple of round_to. E.g., round_to=8 means channels will be rounded to 8x. Default: None.
-        
+        * isomorphic (bool): enable isomorphic pruning. Default: False. https://arxiv.org/abs/2407.04616
+
         # Adavanced
         * in_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer input. Default: dict().
         * out_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer output. Default: dict().
