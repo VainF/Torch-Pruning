@@ -257,7 +257,7 @@ class Group(object):
         fmt += " " * 10 + "Pruning Group"
         fmt += "\n" + "-" * 32 + "\n"
         for i, (dep, idxs) in enumerate(self._group):
-            fmt += "[{}] {}, #idxs={}\n".format(i, dep, len(idxs))
+            fmt += "[{}] {}, len(idxs)={}\n".format(i, dep, len(idxs))
         fmt += "-" * 32 + "\n"
         return fmt
 
