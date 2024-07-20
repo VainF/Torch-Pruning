@@ -206,7 +206,7 @@ print(f"MACs: {base_macs/1e9} G -> {macs/1e9} G, #Params: {base_nparams/1e6} M -
 MACs: 1.822177768 G -> 0.487202536 G, #Params: 11.689512 M -> 3.05588 M
 ```
 #### Global Pruning
-Global pruning perform importance ranking across all layers, which has the potential to find a better structures. This can be easily achieved by setting ``global_pruning=True`` in the pruner. While this strategy can possibly offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. We provide an alternative algorithm called [Isomorphic Pruning](https://arxiv.org/abs/2407.04616) to alleviate this issue, which can be eanbled with ``isomorphic=True``. For more details, please see our offical [codebase for ViTs and CNNs](https://github.com/VainF/Isomorphic-Pruning).
+Global pruning perform importance ranking across all layers, which has the potential to find a better structures. This can be easily achieved by setting ``global_pruning=True`` in the pruner. While this strategy can possibly offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. We provide an alternative algorithm called [Isomorphic Pruning](https://arxiv.org/abs/2407.04616) to alleviate this issue, which can be eanbled with ``isomorphic=True``. 
 ```python
 pruner = tp.pruner.MetaPruner(
     ...
@@ -215,6 +215,21 @@ pruner = tp.pruner.MetaPruner(
 )
 ```
 
+<div align="center">
+<img src="assets/isomorphic_pruning.png" width="96%">
+</div>
+
+#### Pruning Ratios
+
+default pruning ratio can be set by ``pruning_ratio``. If you want to customize the pruning ratio for some layers or blocks, you can use ``pruning_ratio_dict``. The key of the dict can be a ``nn.Module`` or a tuple of ``nn.Module``. In the second case, all modules in the tuple will share the pruning ratio. This is also the key idea of Isomorphic Pruning mentioned above. 
+```python
+pruner = tp.pruner.MetaPruner(
+    ...
+    pruning_ratio=0.5, # default pruning ratio
+    pruning_ratio_dict = {(model.layer1, model.layer2): 0.4, model.layer3: 0.2}, 
+    # Global pruning will be performed on layer1 and layer2
+)
+```
 
 #### Sparse Training (Optional)
 Some pruners like [BNScalePruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/batchnorm_scale_pruner.py#L45) and [GroupNormPruner](https://github.com/VainF/Torch-Pruning/blob/dd59921365d72acb2857d3d74f75c03e477060fb/torch_pruning/pruner/algorithms/group_norm_pruner.py#L53) support sparse training. This can be easily achieved by inserting ``pruner.update_regularizer()`` and ``pruner.regularize(model)`` in your standard training loops. The pruner will accumulate the regularization gradients to ``.grad``. Sparse training is optional and may be expensive for pruning. 
