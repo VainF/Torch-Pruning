@@ -12,9 +12,10 @@ INDEX_MAPPING_PLACEHOLDER = None
 MAX_RECURSION_DEPTH = 500
 
 class Node(object):
-    """ Node of DepGraph
+    """ Node of DepGraph. 
     """
     def __init__(self, module: nn.Module, grad_fn, name: str = None):
+        # Connections in the computational graph
         self.inputs = []  # input nodes
         self.outputs = [] # output nodes
         self.module = module # reference to torch.nn.Module
@@ -24,7 +25,7 @@ class Node(object):
         self.module_class = module.__class__ # class type of the module
 
         # For Dependency Modeling
-        self.dependencies = []  # Adjacency List
+        self.dependencies = []  # Adjacency List. It contains the dependencies to other nodes.
         self.enable_index_mapping = True # enable index mapping for torch.cat/split/chunck/...
         self.pruning_dim = -1 # pruning dimension for the module, whill be set dynamically by the Depdenency
 
@@ -185,10 +186,12 @@ class Group(object):
                     self._DG._param_to_name.pop(old_parameter)
                     pruned_parameter = dep(idxs)
                     path = name.split('.')
+                    # fetch the the parent module of the parameter
                     module = self._DG.model
                     for p in path[:-1]:
                         module = getattr(module, p)
                     setattr(module, path[-1], pruned_parameter)
+                    # update the dependency graph with the new parameter
                     self._DG._param_to_name[pruned_parameter] = name
                     self._DG.module2node[pruned_parameter] = self._DG.module2node.pop(old_parameter)
                     self._DG.module2node[pruned_parameter].module = pruned_parameter           
@@ -845,7 +848,6 @@ class DependencyGraph(object):
                     self._op_id+=1
                 elif "expand" in grad_fn.name().lower():
                     module = ops._ExpandOp(self._op_id)
-                    # print all attributes
                     self._op_id+=1
                 elif "view" in grad_fn.name().lower() or 'reshape' in grad_fn.name().lower():
                     module = ops._ReshapeOp(self._op_id)
@@ -1079,7 +1081,7 @@ class DependencyGraph(object):
         cat_node.module.offsets = offsets
 
         # no transform if the concat dim is different from the feature dim
-        # TODO: make the messy for loop more efficient
+        # TODO: make the index mapping more flexible
         addressed_dep = []
         for i, in_node in enumerate(cat_node.inputs):
             for dep in cat_node.dependencies:
