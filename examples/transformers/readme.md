@@ -1,5 +1,8 @@
 # Transformers
 
+This example demonstrate the minimal code to prune Transformers, including Vision Transformers (ViT), Swin Transformers, and BERT. If you need a more comprehensive example for pruning and finetuning, please refer to the [codebase for Isomorphic Pruning](https://github.com/VainF/Isomorphic-Pruning), where all scripts are available.
+
+
 ## Pruning ViT-ImageNet-21K-ft-1K from [Timm](https://github.com/huggingface/pytorch-image-models)
 
 ### Data
