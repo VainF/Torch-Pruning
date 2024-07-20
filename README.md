@@ -210,7 +210,7 @@ Global pruning perform importance ranking across all layers, which has the poten
 ```python
 pruner = tp.pruner.MetaPruner(
     ...
-    ismorphic=True, # enable isomorphic pruning to improve global ranking
+    isomorphic=True, # enable isomorphic pruning to improve global ranking
     global_pruning=True, # global pruning
 )
 ```
@@ -221,7 +221,7 @@ pruner = tp.pruner.MetaPruner(
 
 #### Pruning Ratios
 
-default pruning ratio can be set by ``pruning_ratio``. If you want to customize the pruning ratio for some layers or blocks, you can use ``pruning_ratio_dict``. The key of the dict can be a ``nn.Module`` or a tuple of ``nn.Module``. In the second case, all modules in the tuple will share the pruning ratio. This is also the key idea of Isomorphic Pruning mentioned above. 
+default pruning ratio can be set by ``pruning_ratio``. If you want to customize the pruning ratio for some layers or blocks, you can use ``pruning_ratio_dict``. The key of the dict can be an ``nn.Module`` or a tuple of ``nn.Module``. In the second case, all modules in the tuple will form a ``scope`` and share the pruning ratio. Global ranking will be perfomed in this scoe. This is also the score idea of Isomorphic Pruning mentioned above. 
 ```python
 pruner = tp.pruner.MetaPruner(
     ...
