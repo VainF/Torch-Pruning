@@ -27,7 +27,8 @@ class MetaPruner:
             * iterative_pruning_ratio_scheduler (Callable): scheduler for iterative pruning. Default: linear_scheduler.
             * ignored_layers (List[nn.Module | typing.Type]): ignored modules. Default: None.
             * round_to (int): round channels to the nearest multiple of round_to. E.g., round_to=8 means channels will be rounded to 8x. Default: None.
-            
+            * isomorphic (bool): enable isomorphic pruning. Default: False. https://arxiv.org/abs/2407.04616
+
             # Adavanced
             * in_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer input. Default: dict().
             * out_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer output. Default: dict().
@@ -62,6 +63,7 @@ class MetaPruner:
         iterative_pruning_ratio_scheduler: typing.Callable = linear_scheduler, # scheduler for iterative pruning.
         ignored_layers: typing.List[nn.Module] = None, # ignored layers
         round_to: int = None,  # round channels to the nearest multiple of round_to
+        isomorphic: bool = False, # enable isomorphic pruning (ECCV 2024, https://arxiv.org/abs/2407.04616) if global_pruning=True. 
 
         # Advanced
         in_channel_groups: typing.Dict[nn.Module, int] = dict(), # The number of channel groups for layer input
@@ -96,6 +98,7 @@ class MetaPruner:
         self.pruning_ratio_dict = pruning_ratio_dict if pruning_ratio_dict is not None else {}
         self.max_pruning_ratio = max_pruning_ratio
         self.global_pruning = global_pruning
+        self.isomorphic = isomorphic
         
         if len(channel_groups) > 0:
             warnings.warn("channel_groups is deprecated. Please use in_channel_groups and out_channel_groups instead.")
@@ -218,7 +221,7 @@ class MetaPruner:
                         break # only count heads once
             self.initial_total_channels = initial_total_channels
             self.initial_total_heads = initial_total_heads
-
+        self._scope_initial_channels = {} # initial channels for different scope. It will be used by isomorphic pruning
 
     def step(self, interactive=False)-> typing.Union[typing.Generator, None]:
         self.current_step += 1
@@ -439,10 +442,21 @@ class MetaPruner:
             return
         
         ##############################################
-        # 1. Pre-compute importance for each group
+        # Initialize ranking scopes
+        # Will perform indepenedent importance ranking & pruning within each scope
+        # This feature is useful for implementing new ranking strategies such as isomorphic pruning (ECCV 2024): https://arxiv.org/abs/2407.04616
+        # There are two default scopes: GLOBAL_SCOPE and MHA_SCOPE
+        #   - GLOBAL_SCOPE: for simple global pruning
+        #   - MHA_SCOPE: for multi-head attention pruning
+        # if customized scopes are provided, the default GLOBAL_SCOPE will be disabled.
+        ############################################## 
+        GLOBAL_SCOPE = "GLOBAL"
+        MHA_SCOPE = "MHA"
+        ranking_scope = {GLOBAL_SCOPE: [], MHA_SCOPE: {}} # MHA_SCOPE will be a dict, as we need to index the group later
+        
         ##############################################
-        global_importance = []
-        global_head_importance = {} # for attn head pruning
+        # 1. Pre-compute importance for each group
+        ############################################## 
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_pruning_ratio(group):    
                 group = self._downstream_node_as_root_if_attention(group) # use a downstream node as the root node for attention layers
@@ -460,8 +474,9 @@ class MetaPruner:
                 else:
                     # no grouping
                     dim_imp = imp
-                global_importance.append((group, ch_groups, group_size, dim_imp))
-                
+
+                ranking_scope[GLOBAL_SCOPE].append((group, ch_groups, group_size, dim_imp))
+
                 # pre-compute head importance for attn heads
                 _is_attn, qkv_layers = self._is_attn_group(group)
                 if _is_attn and self.prune_num_heads and self.get_target_head_pruning_ratio(qkv_layers[0])>0:
@@ -471,90 +486,112 @@ class MetaPruner:
                     # Note: head1 = [1, 2, 3], head2 = [4, 5, 6]
                     # the average importance is [(1+2+3)/3, (4+5+6)/3] = [2, 5]
                     head_imp = imp.view(ch_groups, -1).mean(1) # average importance by head.
-                    global_head_importance[group] = (qkv_layers, head_imp)
-
-        if len(global_importance) == 0 and len(global_head_importance)==0:
+                    ranking_scope[MHA_SCOPE][group] = (qkv_layers, head_imp)
+                
+                # create isomorphic scopes for isomorphic pruning, which clusters groups with the same structure
+                if self.isomorphic:
+                    tag = "" # we transform the graph structure into a string tag for easy comparison
+                    for dep, _ in group: # if isomorphic, the source and target modules should have the same **layer type** and **pruning function**
+                        tag_source = "%s_%s"%(type(dep.source.module), "out" if self.DG.is_out_channel_pruning_fn(dep.handler) else "in")
+                        tag_target = "%s_%s"%(type(dep.target.module), "out" if self.DG.is_out_channel_pruning_fn(dep.handler) else "in")
+                        tag += "%s_%s"%(tag_source, tag_target)
+                    if tag not in ranking_scope:
+                        # New isomorphic group
+                        ranking_scope[tag] = []
+                    ranking_scope[tag].append((group, ch_groups, group_size, dim_imp))
+                
+        if len(ranking_scope[GLOBAL_SCOPE]) == 0 and len(ranking_scope[MHA_SCOPE])==0:
             return
         
         ##############################################
-        # 2. Thresholding by concatenating all importance scores
+        # 2. Thresholding by concatenating all importance scores within each scope
         ##############################################
-        
-        # Find the threshold for global pruning
-        if len(global_importance)>0:
-            concat_imp = torch.cat([local_imp[-1] for local_imp in global_importance], dim=0)
-            target_pruning_ratio = self.per_step_pruning_ratio[self.current_step]
-            n_pruned = len(concat_imp) - int(
-                self.initial_total_channels *
-                (1 - target_pruning_ratio)
-            )
-            if n_pruned>0:
-                topk_imp, _ = torch.topk(concat_imp, k=n_pruned, largest=False)
-                thres = topk_imp[-1]
+        if len(ranking_scope)>2: # if customized ranking scopes exist, we will ignore the default GLOBAL_SCOPE
+            enabled_scope_names = [ k for k in ranking_scope.keys() if k not in [GLOBAL_SCOPE, MHA_SCOPE] ]
+        else:
+            enabled_scope_names = [ GLOBAL_SCOPE ]
 
-        # Find the threshold for head pruning
-        if len(global_head_importance)>0:
-            concat_head_imp = torch.cat([local_imp[-1] for local_imp in global_head_importance.values()], dim=0)
-            target_head_pruning_ratio = self.per_step_head_pruning_ratio[self.current_step]
-            n_heads_removed = len(concat_head_imp) - int(
-                self.initial_total_heads *
-                (1 - target_head_pruning_ratio)
-            )
-            if n_heads_removed>0:
-                topk_head_imp, _ = torch.topk(concat_head_imp, k=n_heads_removed, largest=False)
-                head_thres = topk_head_imp[-1]
-        
-        ##############################################
-        # 3. Prune
-        ##############################################
-        for group, ch_groups, group_size, imp in global_importance:
-            module = group[0].dep.target.module
-            pruning_fn = group[0].dep.handler
-            get_channel_fn = self.DG.get_out_channels if self.DG.is_out_channel_pruning_fn(pruning_fn) else self.DG.get_in_channels
+        for group_type, scope_name in enumerate(enabled_scope_names):
+            importance_scores = ranking_scope[scope_name]
             
-            # Prune feature dims/channels
-            pruning_indices = []
-            if len(global_importance)>0 and n_pruned>0:
-                if ch_groups > 1: # re-compute importance for each channel group if channel grouping is enabled
-                    n_pruned_per_group = len((imp <= thres).nonzero().view(-1))
-                    if n_pruned_per_group>0:
-                        if self.round_to:
-                            n_pruned_per_group = self._round_to(n_pruned_per_group, group_size, self.round_to)
-                        _is_attn, _ = self._is_attn_group(group)
-                        if not _is_attn or self.prune_head_dims==True:
-                            raw_imp = self.estimate_importance(group) # re-compute importance
-                            for chg in range(ch_groups): # determine pruning indices for each channel group independently
-                                sub_group_imp = raw_imp[chg*group_size: (chg+1)*group_size]
-                                sub_imp_argsort = torch.argsort(sub_group_imp)
-                                sub_pruning_idxs = sub_imp_argsort[:n_pruned_per_group]+chg*group_size
-                                pruning_indices.append(sub_pruning_idxs)
-                else:
-                    _pruning_indices = (imp <= thres).nonzero().view(-1)
-                    imp_argsort = torch.argsort(imp)
-                    if len(_pruning_indices)>0 and self.round_to: 
-                        n_pruned = len(_pruning_indices)
-                        current_channels = get_channel_fn(module)
-                        n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
-                        _pruning_indices = imp_argsort[:n_pruned]
-                    pruning_indices.append(_pruning_indices)
-                        
-            # Prune heads
-            if len(global_head_importance)>0 and n_heads_removed>0:
-                if group in global_head_importance:
-                    qkv_layers, head_imp = global_head_importance[group]
-                    head_pruning_indices = (head_imp <= head_thres).nonzero().view(-1)
-                    if len(head_pruning_indices)>0:
-                        for head_id in head_pruning_indices:
-                            pruning_indices.append( torch.arange(head_id*group_size, (head_id+1)*group_size, device=head_imp.device) )
-                    for qkv_layer in qkv_layers:
-                        self.num_heads[qkv_layer] -= len(head_pruning_indices) # update num heads after pruning
+            # Find the threshold for global pruning
+            if len(importance_scores)>0:
+                concat_imp = torch.cat([local_imp[-1] for local_imp in importance_scores], dim=0)
+                target_pruning_ratio = self.per_step_pruning_ratio[self.current_step]
+                if scope_name not in self._scope_initial_channels:
+                    self._scope_initial_channels[scope_name] = len(concat_imp)
+
+                n_pruned = len(concat_imp) - int(
+                    self._scope_initial_channels[scope_name] *
+                    (1 - target_pruning_ratio)
+                )
+                if n_pruned>0:
+                    topk_imp, _ = torch.topk(concat_imp, k=n_pruned, largest=False)
+                    thres = topk_imp[-1]
+
+            # Find the threshold for head pruning
+            if len(ranking_scope[MHA_SCOPE])>0:
+                concat_head_imp = torch.cat([local_imp[-1] for local_imp in ranking_scope[MHA_SCOPE].values()], dim=0)
+                target_head_pruning_ratio = self.per_step_head_pruning_ratio[self.current_step]
+                n_heads_removed = len(concat_head_imp) - int(
+                    self.initial_total_heads *
+                    (1 - target_head_pruning_ratio)
+                )
+                if n_heads_removed>0:
+                    topk_head_imp, _ = torch.topk(concat_head_imp, k=n_heads_removed, largest=False)
+                    head_thres = topk_head_imp[-1]
             
-            if len(pruning_indices)==0: continue
-            pruning_indices = torch.unique(torch.cat(pruning_indices, 0)).tolist()
-            if isinstance(self.importance, OBDCImportance):
-                    self.importance.adjust_fisher(group, pruning_indices)
-            # create pruning group
-            group = self.DG.get_pruning_group(
-                module, pruning_fn, pruning_indices)
-            if self.DG.check_pruning_group(group):
-                yield group 
+            ##############################################
+            # 3. Prune
+            ##############################################
+            for group, ch_groups, group_size, imp in importance_scores:
+                module = group[0].dep.target.module
+                pruning_fn = group[0].dep.handler
+                get_channel_fn = self.DG.get_out_channels if self.DG.is_out_channel_pruning_fn(pruning_fn) else self.DG.get_in_channels
+                
+                # Prune feature dims/channels
+                pruning_indices = []
+                if len(importance_scores)>0 and n_pruned>0:
+                    if ch_groups > 1: # re-compute importance for each channel group if channel grouping is enabled
+                        n_pruned_per_group = len((imp <= thres).nonzero().view(-1))
+                        if n_pruned_per_group>0:
+                            if self.round_to:
+                                n_pruned_per_group = self._round_to(n_pruned_per_group, group_size, self.round_to)
+                            _is_attn, _ = self._is_attn_group(group)
+                            if not _is_attn or self.prune_head_dims==True:
+                                raw_imp = self.estimate_importance(group) # re-compute importance
+                                for chg in range(ch_groups): # determine pruning indices for each channel group independently
+                                    sub_group_imp = raw_imp[chg*group_size: (chg+1)*group_size]
+                                    sub_imp_argsort = torch.argsort(sub_group_imp)
+                                    sub_pruning_idxs = sub_imp_argsort[:n_pruned_per_group]+chg*group_size
+                                    pruning_indices.append(sub_pruning_idxs)
+                    else:
+                        _pruning_indices = (imp <= thres).nonzero().view(-1)
+                        imp_argsort = torch.argsort(imp)
+                        if len(_pruning_indices)>0 and self.round_to: 
+                            n_pruned = len(_pruning_indices)
+                            current_channels = get_channel_fn(module)
+                            n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
+                            _pruning_indices = imp_argsort[:n_pruned]
+                        pruning_indices.append(_pruning_indices)
+                            
+                # Prune heads
+                if len(ranking_scope[MHA_SCOPE])>0 and n_heads_removed>0:
+                    if group in ranking_scope[MHA_SCOPE]:
+                        qkv_layers, head_imp = ranking_scope[MHA_SCOPE][group]
+                        head_pruning_indices = (head_imp <= head_thres).nonzero().view(-1)
+                        if len(head_pruning_indices)>0:
+                            for head_id in head_pruning_indices:
+                                pruning_indices.append( torch.arange(head_id*group_size, (head_id+1)*group_size, device=head_imp.device) )
+                        for qkv_layer in qkv_layers:
+                            self.num_heads[qkv_layer] -= len(head_pruning_indices) # update num heads after pruning
+                
+                if len(pruning_indices)==0: continue
+                pruning_indices = torch.unique(torch.cat(pruning_indices, 0)).tolist()
+                if isinstance(self.importance, OBDCImportance):
+                        self.importance.adjust_fisher(group, pruning_indices)
+                # create pruning group
+                group = self.DG.get_pruning_group(
+                    module, pruning_fn, pruning_indices)
+                if self.DG.check_pruning_group(group):
+                    yield group 

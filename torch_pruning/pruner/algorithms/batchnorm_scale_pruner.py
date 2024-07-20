@@ -27,7 +27,8 @@ class BNScalePruner(MetaPruner):
             * iterative_pruning_ratio_scheduler (Callable): scheduler for iterative pruning. Default: linear_scheduler.
             * ignored_layers (List[nn.Module | typing.Type]): ignored modules. Default: None.
             * round_to (int): round channels to the nearest multiple of round_to. E.g., round_to=8 means channels will be rounded to 8x. Default: None.
-            
+            * isomorphic (bool): enable isomorphic pruning. Default: False. https://arxiv.org/abs/2407.04616
+
             # Adavanced
             * in_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer input. Default: dict().
             * out_channel_groups (Dict[nn.Module, int]): The number of channel groups for layer output. Default: dict().
@@ -65,6 +66,7 @@ class BNScalePruner(MetaPruner):
         iterative_pruning_ratio_scheduler: typing.Callable = linear_scheduler, # scheduler for iterative pruning.
         ignored_layers: typing.List[nn.Module] = None, # ignored layers
         round_to: int = None,  # round channels to the nearest multiple of round_to
+        isomorphic: bool = False, # enable isomorphic pruning (ECCV 2024, https://arxiv.org/abs/2407.04616) if global_pruning=True. 
 
         # Advanced
         in_channel_groups: typing.Dict[nn.Module, int] = dict(), # The number of channel groups for layer input

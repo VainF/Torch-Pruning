@@ -248,11 +248,10 @@ print('transformers', version('transformers'))
 print('accelerate', version('accelerate'))
 print('# of gpus: ', torch.cuda.device_count())
 
-def get_llm(model_name, cache_dir="./cache"):
+def get_llm(model_name):
     model = AutoModelForCausalLM.from_pretrained(
         model_name, 
         torch_dtype=torch.float16, 
-        cache_dir=cache_dir, 
         device_map="auto"
     )
 
@@ -265,7 +264,6 @@ def main():
     parser.add_argument('--seed', type=int, default=0, help='Seed for sampling the calibration data.')
     parser.add_argument('--nsamples', type=int, default=128, help='Number of calibration samples.')
     parser.add_argument('--pruning_ratio', type=float, default=0, help='Sparsity level')
-    parser.add_argument("--cache_dir", default="./cache", type=str )
     parser.add_argument('--save', type=str, default=None, help='Path to save results.')
     parser.add_argument('--save_model', type=str, default=None, help='Path to save the pruned model.')
     parser.add_argument("--eval_zero_shot", action="store_true")
@@ -277,7 +275,7 @@ def main():
 
     model_name = args.model.split("/")[-1]
     print(f"loading llm model {args.model}")
-    model = get_llm(args.model, args.cache_dir)       
+    model = get_llm(args.model)       
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False)
     device = torch.device("cuda:0")
