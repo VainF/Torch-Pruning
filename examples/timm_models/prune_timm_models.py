@@ -39,9 +39,10 @@ def main():
     num_heads = {}
 
     for m in model.modules():
-        if hasattr(m, 'head'): #isinstance(m, nn.Linear) and m.out_features == model.num_classes:
-            ignored_layers.append(model.head)
-            print("Ignore classifier layer: ", m.head)
+        #if hasattr(m, 'head'): #isinstance(m, nn.Linear) and m.out_features == model.num_classes:
+        if isinstance(m, nn.Linear) and m.out_features == model.num_classes:
+            ignored_layers.append(m)
+            print("Ignore classifier layer: ", m)
        
         # Attention layers
         if hasattr(m, 'num_heads'):
