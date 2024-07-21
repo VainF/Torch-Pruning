@@ -225,6 +225,7 @@ The default pruning ratio can be set by ``pruning_ratio``. If you want to custom
 ```python
 pruner = tp.pruner.MetaPruner(
     ...
+    global_pruning=True,
     pruning_ratio=0.5, # default pruning ratio
     pruning_ratio_dict = {(model.layer1, model.layer2): 0.4, model.layer3: 0.2}, 
     # Global pruning will be performed on layer1 and layer2
