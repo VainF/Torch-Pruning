@@ -180,19 +180,24 @@ class MetaPruner:
                     scope = [modules] # only one model, do local pruning for this module
 
                 scope_name = f"_User_Defined_Scope_{user_defined_scope_id}"
+                local_pruning_scope_postfix = 0
                 for m in scope:
-                    if isinstance(m, nn.Module):
-                        self._layer_to_scope[m] = (scope_name, scope) # assign all layers to this scope
-                    
                     for submodule in m.modules():
                         prunable_types = tuple([ops.type2class(
                             prunable_type) for prunable_type in self.DG.REGISTERED_PRUNERS.keys()])
                         if isinstance(submodule, prunable_types):
+                            if isinstance(submodule, nn.Module):
+                                if not self.global_pruning:
+                                    self._layer_to_scope[submodule] = (scope_name+f"_{local_pruning_scope_postfix}", scope)
+                                    local_pruning_scope_postfix+=1 # assign each layer to a unique scope if local pruning
+                                else:
+                                    self._layer_to_scope[submodule] = (scope_name, scope) # assign all layers to this scope
+
                             self.pruning_ratio_dict[submodule] = self.iterative_pruning_ratio_scheduler(
                                 ratio, self.iterative_steps
                             )
                 user_defined_scope_id+=1
-            
+
         # Head pruning ratio
         self.head_pruning_ratio_dict = {}
         if head_pruning_ratio_dict is not None:
@@ -395,6 +400,8 @@ class MetaPruner:
         ##############################################
         # 1. Pre-compute importance for each group and assign them to different scopes
         ############################################## 
+
+        
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_pruning_ratio(group):    
                 
@@ -430,19 +437,18 @@ class MetaPruner:
                 # Scope 1: User-defined scope (Priority 1)
                 is_user_defined_scope = False
                 for dep, _ in group:
-
                     for module, pruning_fn in zip([dep.source.module, dep.target.module], [dep.trigger, dep.handler]):
                         if module in self._layer_to_scope and self.DG.is_out_channel_pruning_fn(pruning_fn):
                             scope_name, scope = self._layer_to_scope[module]
                             if len(scope)>0:
-                                layer = scope[0]
-                                pruning_ratio = self.get_target_pruning_ratio(layer, step=self.current_step)
+                                pruning_ratio = self.get_target_pruning_ratio(module, step=self.current_step)
                                 record = (group, ch_groups, group_size, pruning_ratio, dim_imp)
                                 if scope_name not in ranking_scope:
                                     ranking_scope[scope_name] = []
                                 ranking_scope[scope_name].append(record)
                                 is_user_defined_scope = True
-                                break
+                        if is_user_defined_scope: break
+                    if is_user_defined_scope: break
                 if is_user_defined_scope:   
                     continue
                 
@@ -485,16 +491,16 @@ class MetaPruner:
                 topk_head_imp, _ = torch.topk(concat_head_imp, k=n_heads_removed, largest=False)
                 head_thres = topk_head_imp[-1]
 
-        # Handle other scopes for width pruning.
         width_pruning_scope_names = [ k for k in ranking_scope.keys() if k!=ATTN_HEAD_SCOPE]
-
-        #if self.verbose:
-        #    for name in width_pruning_scope_names: # truncate the name if lenth exceeds 10
-        #        print(f"Ranking Scope: {name[:50]} Scope Size={len(ranking_scope[name])}")
-
+        for name in width_pruning_scope_names: # truncate the name if lenth exceeds 10
+            print(f"Ranking Scope: {name[:50]} Scope Size={len(ranking_scope[name])}")
+            if len(ranking_scope[name])>0:
+                for i in range(len(ranking_scope[name])):
+                    print(ranking_scope[name][i][0], ranking_scope[name][i][-2])
+        # Handle other scopes for width pruning.
+        
         for scope_id, scope_name in enumerate(width_pruning_scope_names):
             records = ranking_scope[scope_name] # records[i] -> (group, ch_groups, group_size, pruning_ratio, dim_imp)_i
-
             # Find the threshold for pruning
             if len(records)>0:
                 concat_imp = torch.cat([local_imp[-1] for local_imp in records], dim=0) # concatenate importance scores in this scope
@@ -506,61 +512,70 @@ class MetaPruner:
                     self._scope_initial_channels[scope_name] *
                     (1 - target_pruning_ratio)
                 )
+                
                 if n_pruned>0:
                     topk_imp, _ = torch.topk(concat_imp, k=n_pruned, largest=False)
                     thres = topk_imp[-1]
 
-            ##############################################
-            # 3. Prune
-            ##############################################
-            for group, ch_groups, group_size, target_pruning_ratio, imp in records:
-                module = group[0].dep.target.module
-                pruning_fn = group[0].dep.handler
-                get_channel_fn = self.DG.get_out_channels if self.DG.is_out_channel_pruning_fn(pruning_fn) else self.DG.get_in_channels
+                    print(scope_name, "pruned:", n_pruned, self._scope_initial_channels[scope_name], len(concat_imp))
                 
-                # Prune feature dims/channels
-                pruning_indices = []
-                if len(records)>0 and n_pruned>0:
-                    if ch_groups > 1: # re-compute importance for each channel group if channel grouping is enabled
-                        n_pruned_per_group = len((imp <= thres).nonzero().view(-1))
-                        if n_pruned_per_group>0:
-                            if self.round_to:
-                                n_pruned_per_group = self._round_to(n_pruned_per_group, group_size, self.round_to)
-                            _is_attn, _ = self._is_attn_group(group)
-                            if not _is_attn or self.prune_head_dims==True:
-                                raw_imp = self.estimate_importance(group) # re-compute importance
-                                for chg in range(ch_groups): # determine pruning indices for each channel group independently
-                                    sub_group_imp = raw_imp[chg*group_size: (chg+1)*group_size]
-                                    sub_imp_argsort = torch.argsort(sub_group_imp)
-                                    sub_pruning_idxs = sub_imp_argsort[:n_pruned_per_group]+chg*group_size
-                                    pruning_indices.append(sub_pruning_idxs)
-                    else:
-                        _pruning_indices = (imp <= thres).nonzero().view(-1)
-                        imp_argsort = torch.argsort(imp)
-                        if len(_pruning_indices)>0 and self.round_to: 
-                            n_pruned = len(_pruning_indices)
-                            current_channels = get_channel_fn(module)
-                            n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
-                            _pruning_indices = imp_argsort[:n_pruned]
-                        pruning_indices.append(_pruning_indices)
-                            
-                # Prune heads
-                if len(ranking_scope[ATTN_HEAD_SCOPE])>0 and n_heads_removed>0:
-                    if group in ranking_scope[ATTN_HEAD_SCOPE]:
-                        qkv_layers, head_imp = ranking_scope[ATTN_HEAD_SCOPE][group]
-                        head_pruning_indices = (head_imp <= head_thres).nonzero().view(-1)
-                        if len(head_pruning_indices)>0:
-                            for head_id in head_pruning_indices:
-                                pruning_indices.append( torch.arange(head_id*group_size, (head_id+1)*group_size, device=head_imp.device) )
-                        for qkv_layer in qkv_layers:
-                            self.num_heads[qkv_layer] -= len(head_pruning_indices) # update num heads after pruning
-                
-                if len(pruning_indices)==0: continue
-                pruning_indices = torch.unique(torch.cat(pruning_indices, 0)).tolist()
-                if isinstance(self.importance, OBDCImportance):
-                        self.importance.adjust_fisher(group, pruning_indices)
-                # create pruning group
-                group = self.DG.get_pruning_group(
-                    module, pruning_fn, pruning_indices)
-                if self.DG.check_pruning_group(group):
-                    yield group 
+                    ##############################################
+                    # 3. Prune
+                    ##############################################
+                    for group, ch_groups, group_size, target_pruning_ratio, imp in records:
+                        module = group[0].dep.target.module
+                        pruning_fn = group[0].dep.handler
+                        get_channel_fn = self.DG.get_out_channels if self.DG.is_out_channel_pruning_fn(pruning_fn) else self.DG.get_in_channels
+                        
+                        # Prune feature dims/channels
+                        pruning_indices = []
+                        if len(records)>0 and n_pruned>0:
+                            if ch_groups > 1: # re-compute importance for each channel group if grouping is enabled
+                                n_pruned_per_group = len((imp <= thres).nonzero().view(-1)) # if grouping is enabled, the imp tensor is the average importance of each group.
+                                if n_pruned_per_group>0:
+                                    if self.round_to:
+                                        n_pruned_per_group = self._round_to(n_pruned_per_group, group_size, self.round_to)
+                                    _is_attn, _ = self._is_attn_group(group)
+                                    if not _is_attn or self.prune_head_dims==True:
+                                        raw_imp = self.estimate_importance(group) # re-compute importance
+                                        for chg in range(ch_groups): # determine pruning indices for each channel group independently
+                                            sub_group_imp = raw_imp[chg*group_size: (chg+1)*group_size]
+                                            sub_imp_argsort = torch.argsort(sub_group_imp)
+                                            sub_pruning_idxs = sub_imp_argsort[:n_pruned_per_group]+chg*group_size
+                                            pruning_indices.append(sub_pruning_idxs)
+                            else: # standard pruning
+                                _pruning_indices = (imp <= thres).nonzero().view(-1)
+                                #if len(_pruning_indices)>n_pruned: 
+                                    # sort the selected scores and only take the top n_pruned indices
+                                #    selected_scores = imp[_pruning_indices]
+                                #    imp_argsort = torch.argsort(selected_scores)
+                                #    _pruning_indices = _pruning_indices[imp_argsort[:n_pruned]]
+                                imp_argsort = torch.argsort(imp)
+                                if len(_pruning_indices)>0 and self.round_to: 
+                                    n_pruned = len(_pruning_indices)
+                                    current_channels = get_channel_fn(module)
+                                    n_pruned = self._round_to(n_pruned, current_channels, self.round_to)
+                                    _pruning_indices = imp_argsort[:n_pruned]
+                                pruning_indices.append(_pruning_indices)
+                        
+                        # Prune heads
+                        if len(ranking_scope[ATTN_HEAD_SCOPE])>0 and n_heads_removed>0:
+                            if group in ranking_scope[ATTN_HEAD_SCOPE]:
+                                qkv_layers, head_imp = ranking_scope[ATTN_HEAD_SCOPE][group]
+                                head_pruning_indices = (head_imp <= head_thres).nonzero().view(-1)
+                                if len(head_pruning_indices)>0:
+                                    for head_id in head_pruning_indices:
+                                        pruning_indices.append( torch.arange(head_id*group_size, (head_id+1)*group_size, device=head_imp.device) )
+                                for qkv_layer in qkv_layers:
+                                    self.num_heads[qkv_layer] -= len(head_pruning_indices) # update num heads after pruning
+                        
+                        if len(pruning_indices)==0: continue
+                        pruning_indices = torch.unique(torch.cat(pruning_indices, 0)).tolist()
+                        
+                        if isinstance(self.importance, OBDCImportance):
+                            self.importance.adjust_fisher(group, pruning_indices)
+                        # create pruning group
+                        group = self.DG.get_pruning_group(
+                            module, pruning_fn, pruning_indices)
+                        if self.DG.check_pruning_group(group):
+                            yield group # yield the group for interactive pruning
