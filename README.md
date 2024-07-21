@@ -78,7 +78,7 @@ Torch-Pruning is compatible with both PyTorch 1.x and 2.x versions. However, PyT
 ```bash
 pip install torch-pruning 
 ```
-For edtiable installation:
+For editable installation:
 ```bash
 git clone https://github.com/VainF/Torch-Pruning.git
 cd Torch-Pruning && pip install -e .
@@ -90,7 +90,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### How It Works
 
-Structural pruning removes a ``Group`` of parameters distributed accross different layers. Parameters in each group will be coupled due the dependency between layers and thus must be removed simultaneously to maintain the structural integrity of the model. Torch-Pruning implements a mechanism called ``DependencyGraph`` to automatically identify dependencies and collect groups for pruning. 
+Structural pruning removes a ``Group`` of parameters distributed across different layers. Parameters in each group will be coupled due the dependency between layers and thus must be removed simultaneously to maintain the structural integrity of the model. Torch-Pruning implements a mechanism called ``DependencyGraph`` to automatically identify dependencies and collect groups for pruning. 
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
@@ -120,7 +120,7 @@ if DG.check_pruning_group(group): # avoid over-pruning, i.e., channels=0.
     
 # 4. Save & Load
 model.zero_grad() # clear gradients to avoid a large file size
-torch.save(model, 'model.pth') # !! no .state_dict for saveing
+torch.save(model, 'model.pth') # !! no .state_dict for saving
 model = torch.load('model.pth') # load the pruned model
 ```
 The above example shows the basic pruning pipeline using DepGraph. The target layer `model.conv1` is coupled with multiple layers, necessitating their simultaneous removal in structural pruning. We can print the group to take a look at the internal dependencies. In the subsequent outputs, "A => B" indicates that pruning operation "A" triggers pruning operation "B." The first group[0] refers to the root of pruning. For more details about grouping, please refer to [Wiki - DepGraph & Group](https://github.com/VainF/Torch-Pruning/wiki/3.-DepGraph-&-Group).
@@ -157,7 +157,7 @@ There might be many groups in a model. We can use ``DG.get_all_groups(ignored_la
 
 ```python
 for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[nn.Conv2d, nn.Linear]):
-    # handle groups in sequential order
+    # Handle groups in sequential order
     idxs = [2,4,6] # your pruning indices
     group.prune(idxs=idxs)
     print(group)
@@ -206,7 +206,7 @@ print(f"MACs: {base_macs/1e9} G -> {macs/1e9} G, #Params: {base_nparams/1e6} M -
 MACs: 1.822177768 G -> 0.487202536 G, #Params: 11.689512 M -> 3.05588 M
 ```
 #### Global Pruning and Isomorphic Pruning
-Global pruning performs importance ranking across all layers, which has the potential to find better structures. This can be easily achieved by setting ``global_pruning=True`` in the pruner. While this strategy can possibly offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. We provide an alternative algorithm called [Isomorphic Pruning](https://arxiv.org/abs/2407.04616) to alleviate this issue, which can be eanbled with ``isomorphic=True``. 
+Global pruning performs importance ranking across all layers, which has the potential to find better structures. This can be easily achieved by setting ``global_pruning=True`` in the pruner. While this strategy can possibly offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. We provide an alternative algorithm called [Isomorphic Pruning](https://arxiv.org/abs/2407.04616) to alleviate this issue, which can be enabled with ``isomorphic=True``. 
 ```python
 pruner = tp.pruner.MetaPruner(
     ...
@@ -221,7 +221,7 @@ pruner = tp.pruner.MetaPruner(
 
 #### Pruning Ratios
 
-The default pruning ratio can be set by ``pruning_ratio``. If you want to customize the pruning ratio for some layers or blocks, you can use ``pruning_ratio_dict``. The key of the dict can be an ``nn.Module`` or a tuple of ``nn.Module``. In the second case, all modules in the tuple will form a ``scope`` and share the pruning ratio. Global ranking will be perfomed in this scope. This is also the core idea of [Isomorphic Pruning](https://arxiv.org/abs/2407.04616).
+The default pruning ratio can be set by ``pruning_ratio``. If you want to customize the pruning ratio for some layers or blocks, you can use ``pruning_ratio_dict``. The key of the dict can be an ``nn.Module`` or a tuple of ``nn.Module``. In the second case, all modules in the tuple will form a ``scope`` and share the pruning ratio. Global ranking will be performed in this scope. This is also the core idea of [Isomorphic Pruning](https://arxiv.org/abs/2407.04616).
 ```python
 pruner = tp.pruner.MetaPruner(
     ...
@@ -273,7 +273,7 @@ It is easy to implement Soft Pruning leveraging ``interactive=True``, which zero
 
 #### Group-level Pruning
 
-With DepGraph, it is easy to design some "group-level" importance score to estimate the importance of a whole group rather than a single layer. This feature can be also used to sparsify coupled layers, making all the to-be-pruned parameters consistently sparse. In Torch-pruning, all pruners work at the group level. Check the following results to see how grouping improves the performance of pruning.
+With DepGraph, it is easy to design some "group-level" importance scores to estimate the importance of a whole group rather than a single layer. This feature can be also used to sparsify coupled layers, making all the to-be-pruned parameters consistently sparse. In Torch-pruning, all pruners work at the group level. Check the following results to see how grouping improves the performance of pruning.
 
 <div align="center">
 <img src="assets/group_sparsity.png" width="80%">
@@ -293,7 +293,7 @@ With DepGraph, it is easy to design some "group-level" importance score to estim
 
 #### Modify static attributes or forward functions
 
-In some implementation, model forwarding might rely on some static attributes. For example in [``convformer_s18``](https://github.com/huggingface/pytorch-image-models/blob/054c763fcaa7d241564439ae05fbe919ed85e614/timm/models/metaformer.py#L107) of timm, we have ``self.shape`` which will be changed after pruning. These attributes should be updated manually since it is impossible for TP to know the purpose of these attributes. 
+In some implementations, model forwarding might rely on some static attributes. For example in [``convformer_s18``](https://github.com/huggingface/pytorch-image-models/blob/054c763fcaa7d241564439ae05fbe919ed85e614/timm/models/metaformer.py#L107) of timm, we have ``self.shape`` which will be changed after pruning. These attributes should be updated manually since it is impossible for TP to know the purpose of these attributes. 
 
 ```python
 class Scale(nn.Module):
