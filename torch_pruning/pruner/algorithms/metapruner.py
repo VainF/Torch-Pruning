@@ -492,11 +492,11 @@ class MetaPruner:
                 head_thres = topk_head_imp[-1]
 
         width_pruning_scope_names = [ k for k in ranking_scope.keys() if k!=ATTN_HEAD_SCOPE]
-        for name in width_pruning_scope_names: # truncate the name if lenth exceeds 10
-            print(f"Ranking Scope: {name[:50]} Scope Size={len(ranking_scope[name])}")
-            if len(ranking_scope[name])>0:
-                for i in range(len(ranking_scope[name])):
-                    print(ranking_scope[name][i][0], ranking_scope[name][i][-2])
+        #for name in width_pruning_scope_names: # truncate the name if lenth exceeds 10
+        #    print(f"Ranking Scope: {name[:50]} Scope Size={len(ranking_scope[name])}")
+        #    if len(ranking_scope[name])>0:
+        #        for i in range(len(ranking_scope[name])):
+        #            print(ranking_scope[name][i][0], ranking_scope[name][i][-2])
         # Handle other scopes for width pruning.
         
         for scope_id, scope_name in enumerate(width_pruning_scope_names):
@@ -517,7 +517,7 @@ class MetaPruner:
                     topk_imp, _ = torch.topk(concat_imp, k=n_pruned, largest=False)
                     thres = topk_imp[-1]
 
-                    print(scope_name, "pruned:", n_pruned, self._scope_initial_channels[scope_name], len(concat_imp))
+                    #print(scope_name, "pruned:", n_pruned, self._scope_initial_channels[scope_name], len(concat_imp))
                 
                     ##############################################
                     # 3. Prune
