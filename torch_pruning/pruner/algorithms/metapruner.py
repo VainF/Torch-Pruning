@@ -517,10 +517,8 @@ class MetaPruner:
                     topk_imp, _ = torch.topk(concat_imp, k=n_pruned, largest=False)
                     thres = topk_imp[-1]
 
-                    #print(scope_name, "pruned:", n_pruned, self._scope_initial_channels[scope_name], len(concat_imp))
-                
                     ##############################################
-                    # 3. Prune
+                    # 3. Pruning in each scope
                     ##############################################
                     for group, ch_groups, group_size, target_pruning_ratio, imp in records:
                         module = group[0].dep.target.module
@@ -531,7 +529,7 @@ class MetaPruner:
                         pruning_indices = []
                         if len(records)>0 and n_pruned>0:
                             if ch_groups > 1: # re-compute importance for each channel group if grouping is enabled
-                                n_pruned_per_group = len((imp <= thres).nonzero().view(-1)) # if grouping is enabled, the imp tensor is the average importance of each group.
+                                n_pruned_per_group = n_pruned #len((imp <= thres).nonzero().view(-1)) # if grouping is enabled, the imp tensor is the average importance of each group.
                                 if n_pruned_per_group>0:
                                     if self.round_to:
                                         n_pruned_per_group = self._round_to(n_pruned_per_group, group_size, self.round_to)
@@ -545,11 +543,11 @@ class MetaPruner:
                                             pruning_indices.append(sub_pruning_idxs)
                             else: # standard pruning
                                 _pruning_indices = (imp <= thres).nonzero().view(-1)
-                                #if len(_pruning_indices)>n_pruned: 
+                                if len(_pruning_indices)>n_pruned: 
                                     # sort the selected scores and only take the top n_pruned indices
-                                #    selected_scores = imp[_pruning_indices]
-                                #    imp_argsort = torch.argsort(selected_scores)
-                                #    _pruning_indices = _pruning_indices[imp_argsort[:n_pruned]]
+                                    selected_scores = imp[_pruning_indices]
+                                    imp_argsort = torch.argsort(selected_scores)
+                                    _pruning_indices = _pruning_indices[imp_argsort[:n_pruned]]
                                 imp_argsort = torch.argsort(imp)
                                 if len(_pruning_indices)>0 and self.round_to: 
                                     n_pruned = len(_pruning_indices)
