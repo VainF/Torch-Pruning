@@ -121,7 +121,7 @@ class GroupNormPruner(MetaPruner):
         self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
         self.cnt = 0
 
-    def update_regularizor(self):
+    def update_regularizer(self):
         self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
 
     @torch.no_grad()
