@@ -1,4 +1,4 @@
-<br>
+
 <div align="center">
 <img src="https://user-images.githubusercontent.com/18592211/232830417-0b21a874-516e-4420-8984-4de414a35085.png" width="400px"></img>
 <h2></h2>
@@ -48,7 +48,7 @@ For more technical details, please refer to our CVPR'23 paper:
 Please do not hesitate to open an [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.   
 Or Join our Discord or WeChat group for a chat:
   * Discord: [link](https://discord.gg/Pvd6hbYXRs)
-  * WeChat Group [Group-2](https://github.com/user-attachments/assets/be847b8b-9688-4787-9e89-3aa8b423071f), [Group-1 (500/500, FULL)](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3).
+  * WeChat Group [Group-2](https://github.com/user-attachments/assets/c976d7f6-42a0-412a-bb8d-3b7bf68235b7), [Group-1 (500/500, FULL)](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3).
 
 ## Table of Contents
 - [Installation](#installation)
@@ -166,7 +166,7 @@ for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[
 
 ### High-level Pruners
 
-To prune an entire model, we developed several high-level pruners in this repository to facilitate effortless pruning. By specifying the desired channel pruning ratio, the pruner will scan all prunable groups, estimate the importance, perform pruning, and fine-tune it using your own training code. For detailed information on this process, please refer to [this tutorial](https://github.com/VainF/Torch-Pruning/blob/master/examples/notebook/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), which shows how to implement a [Network Slimming (ICCV 2017)](https://arxiv.org/abs/1708.06519) pruner from scratch. Additionally, a more practical example is available in [reproduce/main.py](reproduce/main.py).
+With DepGraph, we developed several high-level pruners in this repository to facilitate effortless pruning. By specifying the desired channel pruning ratio, the pruner will scan all prunable groups, estimate weight importance, perform pruning, and fine-tune the remaining weights using your training code. For detailed information on this process, please refer to [this tutorial](https://github.com/VainF/Torch-Pruning/blob/master/examples/notebook/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), which shows how to implement a [Network Slimming (ICCV 2017)](https://arxiv.org/abs/1708.06519) pruner from scratch. Additionally, a more practical example is available in [reproduce/main.py](reproduce/main.py).
 
 ```python
 import torch
@@ -207,7 +207,8 @@ print(f"MACs: {base_macs/1e9} G -> {macs/1e9} G, #Params: {base_nparams/1e6} M -
 MACs: 1.822177768 G -> 0.487202536 G, #Params: 11.689512 M -> 3.05588 M
 ```
 #### Global Pruning and Isomorphic Pruning
-Global pruning performs importance ranking across all layers, which has the potential to find better structures. This can be easily achieved by setting ``global_pruning=True`` in the pruner. While this strategy can possibly offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. We provide an alternative algorithm called [Isomorphic Pruning](https://arxiv.org/abs/2407.04616) to alleviate this issue, which can be enabled with ``isomorphic=True``. 
+Global pruning performs importance ranking across all layers, which has the potential to find better structures. This can be easily achieved by setting ``global_pruning=True`` in the pruner. While this strategy can possibly offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. We provide an alternative algorithm called [Isomorphic Pruning](https://arxiv.org/abs/2407.04616) to alleviate this issue, which can be enabled with ``isomorphic=True``. Comprehensive examples for ViT & ConvNext pruning are available in [this project](https://github.com/VainF/Isomorphic-Pruning).
+
 ```python
 pruner = tp.pruner.MetaPruner(
     ...
