@@ -31,7 +31,7 @@ For more technical details, please refer to our CVPR'23 paper:
 > [**DepGraph: Towards Any Structural Pruning**](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)   
 > *[Gongfan Fang](https://fangggf.github.io/), [Xinyin Ma](https://horseee.github.io/), [Mingli Song](https://person.zju.edu.cn/en/msong), [Michael Bi Mi](https://dblp.org/pid/317/0937.html), [Xinchao Wang](https://sites.google.com/site/sitexinchaowang/)*    
 > *[Learning and Vision Lab](http://lv-nus.org/), National University of Singapore*
-  
+
 ### Update:
 - :rocket: 2024.07.20  Add [**Isomorphic Pruning**](https://arxiv.org/abs/2407.04616). A SOTA method for Vision Transformers and Modern CNNs.
 
@@ -48,7 +48,7 @@ For more technical details, please refer to our CVPR'23 paper:
 Please do not hesitate to open an [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.   
 Or Join our Discord or WeChat group for a chat:
   * Discord: [link](https://discord.gg/Pvd6hbYXRs)
-  * WeChat Group [Group-2](https://github.com/user-attachments/assets/c976d7f6-42a0-412a-bb8d-3b7bf68235b7), [Group-1 (500/500, FULL)](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3).
+  * WeChat Group [Group-2](https://github.com/user-attachments/assets/4072cc1e-63d7-4f33-b003-1e8da516f421), [Group-1 (500/500, FULL)](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3).
 
 ## Table of Contents
 - [Installation](#installation)
