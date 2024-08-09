@@ -575,7 +575,7 @@ class MetaPruner:
                                         pruning_indices.append( torch.arange(head_id*group_size, (head_id+1)*group_size, device=head_imp.device) )
                                 for qkv_layer in qkv_layers:
                                     self.num_heads[qkv_layer] -= len(head_pruning_indices) # update num heads after pruning
-                        
+                                    self.out_channel_groups[qkv_layer] = self.num_heads[qkv_layer] # update out_channel_groups
                         if len(pruning_indices)==0: continue
                         pruning_indices = torch.unique(torch.cat(pruning_indices, 0)).tolist()
                         
