@@ -300,7 +300,7 @@ class MetaPruner:
         pass
 
     def regularize(self, model, loss) -> typing.Any:
-        """ Model regularizor for sparse training
+        """ Model regularizer for sparse training
         """
         pass
 
