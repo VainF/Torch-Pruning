@@ -206,8 +206,8 @@ print(f"MACs: {base_macs/1e9} G -> {macs/1e9} G, #Params: {base_nparams/1e6} M -
 ```
 # Note: In TP, pruning ratio means channel pruning ratio.
 #       Since both in & out channels will be removed by p%,
-#       the actual parameter pruning ratio will be around 1-(1-p%)^2.
-#       In this example, 0.48 ~= 1.82 * (1-0.5)^2 = 0.46.
+#       the corresponding parameter pruning ratio will be roughly 1-(1-p%)^2.
+#       In this example, 3.06 ~= 11.69 * (1-0.5)^2 = 2.92
 MACs: 1.822177768 G -> 0.487202536 G, #Params: 11.689512 M -> 3.05588 M
 ```
 #### Global Pruning and Isomorphic Pruning
