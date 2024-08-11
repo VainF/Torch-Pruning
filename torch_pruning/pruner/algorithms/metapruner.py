@@ -434,7 +434,7 @@ class MetaPruner:
                     ranking_scope[ATTN_HEAD_SCOPE][group] = (qkv_layers, head_imp)
                 
 
-                # Scope 1: User-defined scope (Priority 1)
+                # Scope 1: User-defined scope, such as layer-wise pruning_ratios
                 is_user_defined_scope = False
                 for dep, _ in group:
                     for module, pruning_fn in zip([dep.source.module, dep.target.module], [dep.trigger, dep.handler]):
@@ -453,7 +453,7 @@ class MetaPruner:
                     continue
                 
                 record = (group, ch_groups, group_size, self.per_step_pruning_ratio[self.current_step], dim_imp) # otherwise, use the default pruning ratio
-                # Scope 3: Isomorphic Pruning (Priority 3)
+                # Scope 2: Isomorphic Pruning 
                 if self.isomorphic:
                     scope_name = "Isomorphic_" # we transform the graph structure into a string tag for easy comparison
                     for dep, _ in group: # if isomorphic, the source and target modules should have the same **layer type** and **pruning function**
@@ -465,10 +465,10 @@ class MetaPruner:
                         ranking_scope[scope_name] = []
                     ranking_scope[scope_name].append(record)
 
-                elif self.global_pruning: # Scope 4: global pruning
+                elif self.global_pruning: # Scope 3: use the default scope for global pruning
                     ranking_scope[DEFAULT_SCOPE].append(record)
         
-                else: # Scope 5: local pruning
+                else: # Scope 4: always create a new scope if local pruning
                     module_name = self.DG._module2name[group[0][0].source.module]
                     ranking_scope[module_name] = [ record ]
 
