@@ -439,7 +439,7 @@ Latency test on ResNet-50, Batch Size=64.
 > *Xinyin Ma, Gongfan Fang, and Xinchao Wang*   
 > CVPR 2024
 
-> **0.1% Data Makes Segment Anything Slim** [[Project]](https://github.com/czg1225/SlimSAM) [[Arxiv]](https://arxiv.org/abs/2312.05284)    
+> **SlimSAM: 0.1% Data Makes Segment Anything Slim** [[Project]](https://github.com/czg1225/SlimSAM) [[Arxiv]](https://arxiv.org/abs/2312.05284)    
 > *Zigeng Chen, Gongfan Fang, Xinyin Ma, Xinchao Wang*   
 > Preprint 2023
 
