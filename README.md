@@ -47,7 +47,7 @@ For more technical details, please refer to our CVPR'23 paper:
 ### **Contact Us:**
 Please do not hesitate to open an [issue](https://github.com/VainF/Torch-Pruning/issues) if you encounter any problems with the library or the paper.   
 Or Join our WeChat group for a chat:
-  * WeChat Group [Group-2](https://github.com/user-attachments/assets/2e5bb0ad-f6eb-4ac6-aabc-a7add073a8da), [Group-1 (500/500, FULL)](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3).
+  * WeChat Group [Group-2](https://github.com/user-attachments/assets/7c53a5c2-5c1e-47fc-9bb6-cde98ce5d070), [Group-1 (500/500, FULL)](https://github.com/VainF/Torch-Pruning/assets/18592211/35d66130-eb03-4dcb-ad75-8df784460ad3).
 
 
 ## Table of Contents
