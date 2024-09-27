@@ -33,7 +33,8 @@ For more technical details, please refer to our CVPR'23 paper:
 > *[Learning and Vision Lab](http://lv-nus.org/), National University of Singapore*
 
 ### Update:
-- :rocket: 2024.07.20  Add [**Isomorphic Pruning (ECCV'24)**](https://arxiv.org/abs/2407.04616). A SOTA method for Vision Transformers and Modern CNNs.
+- 🔥 2024.09.27  Check our latest work, [**MaskLLM (NeurIPS 24 Spotlight)**](https://vainf.github.io/maskllm-project-page/), for learnable semi-structure sparsity of LLMs.
+- 🚀 2024.07.20  Add [**Isomorphic Pruning (ECCV'24)**](https://arxiv.org/abs/2407.04616). A SOTA method for Vision Transformers and Modern CNNs.
 
 ### **Features:**
 - :zap: High-level Pruners: [MetaPruner](torch_pruning/pruner/algorithms/metapruner.py), [MagnitudePruner](https://arxiv.org/abs/1608.08710), [BNScalePruner](https://arxiv.org/abs/1708.06519), [GroupNormPruner](https://arxiv.org/abs/2301.12900), [GrowingRegPruner](https://arxiv.org/abs/2012.09243), RandomPruner, etc. A paper list is available [here](https://github.com/VainF/Torch-Pruning/wiki/0.-Paper-List).
