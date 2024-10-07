@@ -11,6 +11,8 @@ import math
 import numpy as np
 from collections import OrderedDict
 from ..utils.compute_mat_grad import ComputeMatGrad
+import random
+import warnings
 
 __all__ = [
     # Base Class
@@ -142,9 +144,13 @@ class GroupNormImportance(Importance):
             reduced_imp = torch.ones_like(group_imp[0]) * -99999
         else:
             reduced_imp = torch.zeros_like(group_imp[0])
-
+        
+        n_imp = 0
         for i, (imp, root_idxs) in enumerate(zip(group_imp, group_idxs)):
             imp = imp.to(reduced_imp.device)
+            if any([r is None for r in root_idxs]):
+                #warnings.warn("Root idxs contain None values. Skipping this layer...")
+                continue
             if self.group_reduction == "sum" or self.group_reduction == "mean":
                 reduced_imp.scatter_add_(0, torch.tensor(root_idxs, device=imp.device), imp) # accumulated importance
             elif self.group_reduction == "max": # keep the max importance
@@ -165,9 +171,10 @@ class GroupNormImportance(Importance):
                 reduced_imp = torch.stack(group_imp, dim=0) # no reduction
             else:
                 raise NotImplementedError
-        
+            n_imp += 1
+
         if self.group_reduction == "mean":
-            reduced_imp /= len(group_imp)
+            reduced_imp /= n_imp
         return reduced_imp
     
     @torch.no_grad()
@@ -397,7 +404,9 @@ class RandomImportance(Importance):
     @torch.no_grad()
     def __call__(self, group, **kwargs):
         _, idxs = group[0]
-        return torch.rand(len(idxs))
+        score = list(range(len(idxs)))
+        random.shuffle(score)
+        return torch.tensor(score, dtype=torch.float32)
 
 
 class GroupTaylorImportance(GroupNormImportance):
@@ -817,3 +826,62 @@ class TaylorImportance(GroupTaylorImportance):
 
 class HessianImportance(GroupHessianImportance):
     pass
+
+from contextlib import contextmanager
+
+class ActivationImportance(GroupNormImportance):
+
+    @contextmanager
+    def compute_importance(self, model):
+        
+        @torch.no_grad()
+        def _compute_importance_hook(module, input, output):
+
+            if isinstance(module, nn.Linear):
+                dim = input[0].shape[-1]
+                module._importance = input[0].abs().view(-1, dim).sum(0)
+            elif isinstance(module, nn.Conv2d):
+                dim = input[0].shape[1]
+                module._importance = input[0].abs().mean((0, 2, 3))
+            return 
+        
+        hooks = []
+        for m in model.modules():
+            if isinstance(m, tuple(self.target_types)):
+                hooks.append(m.register_forward_hook(_compute_importance_hook))
+        
+        yield
+
+        for h in hooks:
+            h.remove()
+
+    @torch.no_grad()
+    def __call__(self, group):
+        group_imp = []
+        group_idxs = []
+        for i, (dep, idxs) in enumerate(group):
+            idxs.sort()
+            layer = dep.target.module
+            prune_fn = dep.handler
+            root_idxs = group[i].root_idxs
+
+            if not isinstance(layer, tuple(self.target_types)):
+                continue
+            
+            # Conv/Linear Output
+            if prune_fn in [
+                function.prune_conv_in_channels,
+                function.prune_linear_in_channels,
+            ]:
+                if not hasattr(layer, "_importance"):
+                    warnings.warn("Layer {} does not have _importance attribute.".format(layer))
+                    continue
+                local_imp = layer._importance[idxs]
+                group_imp.append(local_imp)
+                group_idxs.append(root_idxs)
+
+        if len(group_imp) == 0: # skip groups without parameterized layers
+            return None
+        group_imp = self._reduce(group_imp, group_idxs)
+        group_imp = self._normalize(group_imp, self.normalizer)
+        return group_imp

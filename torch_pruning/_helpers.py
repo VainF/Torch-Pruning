@@ -80,20 +80,20 @@ class _ConcatIndexMapping(object):
             new_idxs = [ _HybridIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
         return new_idxs
 
-class _ExpandIndexMapping(object):
-    def __init__(self, repeat, reverse=False):
+class _GQAIndexMapping(object):
+    def __init__(self, repeat, head_dim, reverse=False):
         self.repeat = repeat
         self.reverse = reverse
+        self.head_dim = head_dim
 
     def __call__(self, idxs: _HybridIndex):
-        if self.reverse == True:
-            new_idxs = [ _HybridIndex(idx=i.idx // self.repeat, root_idx=i.root_idx) for i in idxs[::self.repeat]]
+        head_dim = self.head_dim
+        repeat = self.repeat
+        if self.reverse == True: 
+            new_idxs = [ _HybridIndex(idx=( i.idx - i.idx // (head_dim * repeat) * head_dim * (repeat - 1) - i.idx//head_dim%repeat * head_dim ), root_idx=None) for i in idxs ]
         else:
-            new_idxs = [
-                _HybridIndex(idx = i.idx * self.repeat + j, root_idx=i.root_idx)
-                for i in idxs
-                for j in range(self.repeat)
-            ]
+            new_idxs = []
+           
         return new_idxs
 
 class _SplitIndexMapping(object):
