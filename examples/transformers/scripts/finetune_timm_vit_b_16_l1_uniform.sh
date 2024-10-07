@@ -1,6 +1,6 @@
 torchrun --nproc_per_node=8 finetune.py \
     --model "output/pruned/vit_base_patch16_224_pruned_l1_uniform.pth" \
-    --epochs 3000 \
+    --epochs 300 \
     --batch-size 256 \
     --opt adamw \
     --lr 0.00015 \

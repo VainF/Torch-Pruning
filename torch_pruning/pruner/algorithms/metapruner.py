@@ -443,8 +443,7 @@ class MetaPruner:
                     head_imp = imp.view(num_heads, -1).mean(1).cpu() # average importance by head.
                     ranking_scope[ATTN_HEAD_SCOPE][group] = (qkv_layers, head_imp)
                     
-                
-                # Scope 1: User-defined pruning ratios
+                # Scope 1: User-defined scope, such as layer-wise pruning_ratios
                 is_user_defined_scope = False
                 for dep, _ in group:
                     for module, pruning_fn in zip([dep.source.module, dep.target.module], [dep.trigger, dep.handler]):
@@ -463,9 +462,7 @@ class MetaPruner:
                 if is_user_defined_scope:   
                     continue
                 
-                # otherwise, use the default pruning ratio
-                record = (group, ch_groups, group_size, self.per_step_pruning_ratio[self.current_step], dim_imp) 
-                
+                record = (group, ch_groups, group_size, self.per_step_pruning_ratio[self.current_step], dim_imp) # otherwise, use the default pruning ratio
                 # Scope 2: Isomorphic Pruning 
                 if self.isomorphic:
                     scope_name = "Isomorphic_" # we transform the graph structure into a string tag for easy comparison
