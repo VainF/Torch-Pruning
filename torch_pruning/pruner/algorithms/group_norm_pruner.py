@@ -97,6 +97,7 @@ class GroupNormPruner(MetaPruner):
             iterative_pruning_ratio_scheduler=iterative_pruning_ratio_scheduler,
             ignored_layers=ignored_layers,
             round_to=round_to,
+            isomorphic=isomorphic,
             
             in_channel_groups=in_channel_groups,
             out_channel_groups=out_channel_groups,
