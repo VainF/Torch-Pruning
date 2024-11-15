@@ -37,21 +37,7 @@ def main():
     test_output = model(example_inputs)
     ignored_layers = []
     num_heads = {}
-
-    for m in model.modules():
-        #if hasattr(m, 'head'): #isinstance(m, nn.Linear) and m.out_features == model.num_classes:
-        if isinstance(m, nn.Linear) and m.out_features == model.num_classes:
-            ignored_layers.append(m)
-            print("Ignore classifier layer: ", m)
-       
-        # Attention layers
-        if hasattr(m, 'num_heads'):
-            if hasattr(m, 'qkv'):
-                num_heads[m.qkv] = m.num_heads
-                print("Attention layer: ", m.qkv, m.num_heads)
-            elif hasattr(m, 'qkv_proj'):
-                num_heads[m.qkv_proj] = m.num_heads
-
+    pruning_ratio_dict = {}
     print("========Before pruning========")
     print(model)
     base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
@@ -62,6 +48,7 @@ def main():
                     importance=imp, # importance criterion for parameter selection
                     iterative_steps=1, # the number of iterations to achieve target pruning ratio
                     pruning_ratio=args.pruning_ratio, # target pruning ratio
+                    pruning_ratio_dict=pruning_ratio_dict,
                     num_heads=num_heads,
                     ignored_layers=ignored_layers,
                 )

@@ -173,7 +173,8 @@ def main():
             elif isinstance(imp, tp.importance.GroupTaylorImportance):
                 loss = torch.nn.functional.cross_entropy(output, lbls)
                 loss.backward()
-                
+
+
     for i, g in enumerate(pruner.step(interactive=True)):
         g.prune()
 

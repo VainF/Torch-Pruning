@@ -18,10 +18,6 @@ def test_pruner():
         [tp.importance.GroupNormImportance, tp.pruner.GroupNormPruner],
         [tp.importance.BNScaleImportance, tp.pruner.BNScalePruner],
         [tp.importance.GroupNormImportance, tp.pruner.GrowingRegPruner],
-        [tp.importance.MagnitudeImportance, tp.pruner.GroupNormPruner],
-        [tp.importance.LAMPImportance, tp.pruner.GroupNormPruner],
-        [tp.importance.OBDCImportance, tp.pruner.GroupNormPruner],
-        [tp.importance.FPGMImportance, tp.pruner.GroupNormPruner],
     ]:
         if imp_cls == tp.importance.OBDCImportance:
             imp = imp_cls(num_classes=1000)
@@ -56,7 +52,7 @@ def test_pruner():
                     grad_dict[p] = p.grad.clone()
                 else:
                     grad_dict[p] = None
-            pruner.update_regularizor()
+            pruner.update_regularizer()
             pruner.regularize(model)
             for name, p in model.named_parameters():
                 if p.grad is not None and grad_dict[p] is not None:

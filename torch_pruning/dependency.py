@@ -499,6 +499,7 @@ class DependencyGraph(object):
 
                         if len(new_indices) == 0:
                             continue
+                        
                         if (new_dep.target in visited_node) and group.has_pruning_op(
                             new_dep, new_indices
                         ):
@@ -1199,33 +1200,32 @@ class DependencyGraph(object):
             #warnings.warn("Expand operation detected but the shape information is not available")
             return 
 
-        if len(node.grad_fn._saved_self_sym_sizes) != 5:
-            return
+        # for Huggingface GQA only, will support more expand operations in the future
+        if len(node.grad_fn._saved_self_sym_sizes) == 5:
+            batch, num_key_value_heads, n_rep, slen, head_dim = node.grad_fn._saved_self_sym_sizes
+            in_channels = num_key_value_heads * n_rep * head_dim
+            if out_channels is None or in_channels is None: return
+            repeat = out_channels // in_channels
+            addressed_dep = []
 
-        # for Huggingface GQA
-        batch, num_key_value_heads, n_rep, slen, head_dim = node.grad_fn._saved_self_sym_sizes
-        in_channels = num_key_value_heads * n_rep * head_dim
-        if out_channels is None or in_channels is None: return
-        repeat = out_channels // in_channels
-        addressed_dep = []
-        for i, out_node in enumerate(node.outputs):
-            for dep in node.dependencies:
-                if any((dep is d) for d in addressed_dep): continue
-                if dep.target == out_node:
-                    if node.enable_index_mapping:
-                        dep.index_mapping[0] = (_helpers._ExpandIndexMapping(repeat=repeat, reverse=False))
-                        addressed_dep.append(dep)
-                        break
-        
-        addressed_dep = []
-        for i, out_node in enumerate(node.outputs):
-            for dep in out_node.dependencies:
-                if dep.target == node:
+            for i, in_node in enumerate(node.inputs):
+                for dep in node.dependencies:
                     if any((dep is d) for d in addressed_dep): continue
-                    if node.enable_index_mapping:
-                        dep.index_mapping[0] = (_helpers._ExpandIndexMapping(repeat=repeat, reverse=True))
-                        addressed_dep.append(dep)
-                        break
+                    if dep.target == in_node:
+                        if node.enable_index_mapping:
+                            dep.index_mapping[0] = (_helpers._GQAIndexMapping(repeat=repeat, reverse=True, head_dim=head_dim))
+                            addressed_dep.append(dep)
+                            break
+            
+            addressed_dep = []
+            for i, in_node in enumerate(node.inputs):
+                for dep in in_node.dependencies:
+                    if dep.target == node:
+                        if any((dep is d) for d in addressed_dep): continue
+                        if node.enable_index_mapping:
+                            dep.index_mapping[0] = (_helpers._GQAIndexMapping(repeat=repeat, reverse=False, head_dim=head_dim))
+                            addressed_dep.append(dep)
+                            break
         
     def infer_channels_between(self, node_1, node_2):
         if node_1.type == ops.OPTYPE.SPLIT:

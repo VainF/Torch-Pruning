@@ -96,6 +96,7 @@ class GrowingRegPruner(MetaPruner):
             iterative_pruning_ratio_scheduler=iterative_pruning_ratio_scheduler,
             ignored_layers=ignored_layers,
             round_to=round_to,
+            isomorphic=isomorphic,
             
             in_channel_groups=in_channel_groups,
             out_channel_groups=out_channel_groups,
@@ -134,7 +135,7 @@ class GrowingRegPruner(MetaPruner):
             reg = reg + self.delta_reg * standarized_imp.to(reg.device)
             self.group_reg[group] = reg
 
-    def update_regularizor(self):
+    def update_regularizer(self):
         # Update the group list after pruning
         self._groups = list(self.DG.get_all_groups(root_module_types=self.root_module_types, ignored_layers=self.ignored_layers))
         group_reg = {}

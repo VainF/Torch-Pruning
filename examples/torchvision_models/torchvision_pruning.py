@@ -226,7 +226,7 @@ if __name__ == "__main__":
         # pruner.step()
       
         if isinstance(pruner, (tp.pruner.BNScalePruner, tp.pruner.GroupNormPruner, tp.pruner.GrowingRegPruner)):
-            pruner.update_regularizor() # if the model has been pruned, we need to update the regularizor
+            pruner.update_regularizer() # if the model has been pruned, we need to update the regularizer
             pruner.regularize(model)
 
         if isinstance(
