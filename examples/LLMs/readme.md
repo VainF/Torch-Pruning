@@ -345,3 +345,108 @@ wikitext perplexity 92795.3984375
 ```
 
 </details>
+
+### microsoft/Phi-3-mini-4k-instruct
+
+```bash
+python prune_llm.py --model Qwen/Qwen2-7B --pruning_ratio 0.5
+```
+
+
+<details>
+<summary>Output:</summary>
+
+```
+----------------- Before Pruning -----------------
+----------------- Before Pruning -----------------
+Qwen2ForCausalLM(
+  (model): Qwen2Model(
+    (embed_tokens): Embedding(152064, 3584)
+    (layers): ModuleList(
+      (0-27): 28 x Qwen2DecoderLayer(
+        (self_attn): Qwen2SdpaAttention(
+          (q_proj): Linear(in_features=3584, out_features=3584, bias=True)
+          (k_proj): Linear(in_features=3584, out_features=512, bias=True)
+          (v_proj): Linear(in_features=3584, out_features=512, bias=True)
+          (o_proj): Linear(in_features=3584, out_features=3584, bias=False)
+          (rotary_emb): Qwen2RotaryEmbedding()
+        )
+        (mlp): Qwen2MLP(
+          (gate_proj): Linear(in_features=3584, out_features=18944, bias=False)
+          (up_proj): Linear(in_features=3584, out_features=18944, bias=False)
+          (down_proj): Linear(in_features=18944, out_features=3584, bias=False)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): Qwen2RMSNorm((3584,), eps=1e-06)
+        (post_attention_layernorm): Qwen2RMSNorm((3584,), eps=1e-06)
+      )
+    )
+    (norm): Qwen2RMSNorm((3584,), eps=1e-06)
+    (rotary_emb): Qwen2RotaryEmbedding()
+  )
+  (lm_head): Linear(in_features=3584, out_features=152064, bias=False)
+)
+----------------- After Pruning -----------------
+Qwen2ForCausalLM(
+  (model): Qwen2Model(
+    (embed_tokens): Embedding(152064, 1792)
+    (layers): ModuleList(
+      (0-27): 28 x Qwen2DecoderLayer(
+        (self_attn): Qwen2SdpaAttention(
+          (q_proj): Linear(in_features=1792, out_features=2048, bias=True)
+          (k_proj): Linear(in_features=1792, out_features=512, bias=True)
+          (v_proj): Linear(in_features=1792, out_features=512, bias=True)
+          (o_proj): Linear(in_features=2048, out_features=1792, bias=False)
+          (rotary_emb): Qwen2RotaryEmbedding()
+        )
+        (mlp): Qwen2MLP(
+          (gate_proj): Linear(in_features=1792, out_features=9472, bias=False)
+          (up_proj): Linear(in_features=1792, out_features=9472, bias=False)
+          (down_proj): Linear(in_features=9472, out_features=1792, bias=False)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): Qwen2RMSNorm((1792,), eps=1e-06)
+        (post_attention_layernorm): Qwen2RMSNorm((1792,), eps=1e-06)
+      )
+    )
+    (norm): Qwen2RMSNorm((1792,), eps=1e-06)
+    (rotary_emb): Qwen2RotaryEmbedding()
+  )
+  (lm_head): Linear(in_features=1792, out_features=152064, bias=False)
+)
+Qwen2Config {
+  "_attn_implementation_autoset": true,
+  "_name_or_path": "Qwen/Qwen2-7B",
+  "architectures": [
+    "Qwen2ForCausalLM"
+  ],
+  "attention_dropout": 0.0,
+  "bos_token_id": 151643,
+  "eos_token_id": 151643,
+  "hidden_act": "silu",
+  "hidden_size": 1792,
+  "initializer_range": 0.02,
+  "intermediate_size": 18944,
+  "max_position_embeddings": 131072,
+  "max_window_layers": 28,
+  "model_type": "qwen2",
+  "num_attention_heads": 16,
+  "num_hidden_layers": 28,
+  "num_key_value_heads": 4,
+  "rms_norm_eps": 1e-06,
+  "rope_scaling": null,
+  "rope_theta": 1000000.0,
+  "sliding_window": null,
+  "tie_word_embeddings": false,
+  "torch_dtype": "float16",
+  "transformers_version": "4.46.2",
+  "use_cache": true,
+  "use_sliding_window": false,
+  "vocab_size": 152064
+}
+
+num_params 2227887872
+```
+
+</details>
+

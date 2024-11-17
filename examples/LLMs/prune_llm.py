@@ -247,14 +247,15 @@ print('transformers', version('transformers'))
 print('accelerate', version('accelerate'))
 print('# of gpus: ', torch.cuda.device_count())
 
-def get_llm(model_name):
+def get_llm(model_name, max_seq_len=None):
     model = AutoModelForCausalLM.from_pretrained(
         model_name, 
         torch_dtype=torch.float16, 
         device_map="auto"
     )
 
-    model.seqlen = model.config.max_position_embeddings 
+    model.seqlen = max(max_seq_len, model.config.max_position_embeddings) if max_seq_len is not None else model.config.max_position_embeddings
+     # avoid OOM, feel free to change this
     return model
 
 def main():
@@ -266,6 +267,7 @@ def main():
     parser.add_argument('--save', type=str, default=None, help='Path to save results.')
     parser.add_argument('--save_model', type=str, default=None, help='Path to save the pruned model.')
     parser.add_argument("--eval_zero_shot", action="store_true")
+    parser.add_argument("--max_seq_len", type=int, default=None)
     args = parser.parse_args()
 
     # Setting seeds for reproducibility
@@ -274,7 +276,7 @@ def main():
 
     model_name = args.model.split("/")[-1]
     print(f"loading llm model {args.model}")
-    model = get_llm(args.model)       
+    model = get_llm(args.model, max_seq_len=args.max_seq_len)       
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False)
     device = torch.device("cuda:0")
@@ -322,7 +324,8 @@ def main():
         prune_num_heads=True,
         prune_head_dims=False, # we do not prune head dims so that we don't need to prune the ROPE
         head_pruning_ratio=head_pruning_ratio,
-        out_channel_groups=out_channel_groups
+        out_channel_groups=out_channel_groups,
+        round_to=4,
     )
 
 
@@ -367,6 +370,10 @@ def main():
     print(model)
     print(model.config)
 
+
+    del pruner
+    torch.cuda.empty_cache()
+    model.eval()
     num_params = sum(p.numel() for p in model.parameters())
     print(f"num_params {num_params}")
     ppl_test = eval_ppl(args, model, tokenizer, device)
