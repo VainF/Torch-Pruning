@@ -358,7 +358,6 @@ python prune_llm.py --model Qwen/Qwen2-7B --pruning_ratio 0.5
 
 ```
 ----------------- Before Pruning -----------------
------------------ Before Pruning -----------------
 Qwen2ForCausalLM(
   (model): Qwen2Model(
     (embed_tokens): Embedding(152064, 3584)
