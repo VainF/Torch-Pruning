@@ -254,7 +254,7 @@ def get_llm(model_name, max_seq_len=None):
         device_map="auto"
     )
 
-    model.seqlen = max(max_seq_len, model.config.max_position_embeddings) if max_seq_len is not None else model.config.max_position_embeddings
+    model.seqlen = min(max_seq_len, model.config.max_position_embeddings) if max_seq_len is not None else model.config.max_position_embeddings
      # avoid OOM, feel free to change this
     return model
 
@@ -339,7 +339,7 @@ def main():
     #print(group)
     
     for g in pruner.step(interactive=True):
-        print(g)
+        #print(g)
         g.prune()
 
     # Update model attributes    

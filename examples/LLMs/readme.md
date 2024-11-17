@@ -19,6 +19,130 @@ pip install transformers datasets
 
 ## 1. Pruning
 
+### Basic Usage
+  
+```bash
+python prune_llm.py --model MODEL_CARD --pruning_ratio PRUNING_RATIO--max_seq_len MAX_SEQ_LEN --save_model SAVE_HF_MODEL
+```
+
+if max_seq_len is not provided, the script will use the maximum sequence length of the model.
+
+
+### Llama-3.1 2B
+
+```bash
+python prune_llm.py --model meta-llama/Llama-3.1-8B --pruning_ratio 0.5 --max_seq_len 4096 
+```
+<details>
+<summary>Output:</summary>
+
+```
+----------------- Before Pruning -----------------
+LlamaForCausalLM(
+  (model): LlamaModel(
+    (embed_tokens): Embedding(128256, 4096)
+    (layers): ModuleList(
+      (0-31): 32 x LlamaDecoderLayer(
+        (self_attn): LlamaSdpaAttention(
+          (q_proj): Linear(in_features=4096, out_features=4096, bias=False)
+          (k_proj): Linear(in_features=4096, out_features=1024, bias=False)
+          (v_proj): Linear(in_features=4096, out_features=1024, bias=False)
+          (o_proj): Linear(in_features=4096, out_features=4096, bias=False)
+          (rotary_emb): LlamaRotaryEmbedding()
+        )
+        (mlp): LlamaMLP(
+          (gate_proj): Linear(in_features=4096, out_features=14336, bias=False)
+          (up_proj): Linear(in_features=4096, out_features=14336, bias=False)
+          (down_proj): Linear(in_features=14336, out_features=4096, bias=False)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): LlamaRMSNorm((4096,), eps=1e-05)
+        (post_attention_layernorm): LlamaRMSNorm((4096,), eps=1e-05)
+      )
+    )
+    (norm): LlamaRMSNorm((4096,), eps=1e-05)
+    (rotary_emb): LlamaRotaryEmbedding()
+  )
+  (lm_head): Linear(in_features=4096, out_features=128256, bias=False)
+)
+----------------- After Pruning -----------------
+LlamaForCausalLM(
+  (model): LlamaModel(
+    (embed_tokens): Embedding(128256, 2048)
+    (layers): ModuleList(
+      (0-31): 32 x LlamaDecoderLayer(
+        (self_attn): LlamaSdpaAttention(
+          (q_proj): Linear(in_features=2048, out_features=2048, bias=False)
+          (k_proj): Linear(in_features=2048, out_features=1024, bias=False)
+          (v_proj): Linear(in_features=2048, out_features=1024, bias=False)
+          (o_proj): Linear(in_features=2048, out_features=2048, bias=False)
+          (rotary_emb): LlamaRotaryEmbedding()
+        )
+        (mlp): LlamaMLP(
+          (gate_proj): Linear(in_features=2048, out_features=7168, bias=False)
+          (up_proj): Linear(in_features=2048, out_features=7168, bias=False)
+          (down_proj): Linear(in_features=7168, out_features=2048, bias=False)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): LlamaRMSNorm((2048,), eps=1e-05)
+        (post_attention_layernorm): LlamaRMSNorm((2048,), eps=1e-05)
+      )
+    )
+    (norm): LlamaRMSNorm((2048,), eps=1e-05)
+    (rotary_emb): LlamaRotaryEmbedding()
+  )
+  (lm_head): Linear(in_features=2048, out_features=128256, bias=False)
+)
+LlamaConfig {
+  "_attn_implementation_autoset": true,
+  "_name_or_path": "meta-llama/Llama-3.1-8B",
+  "architectures": [
+    "LlamaForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "bos_token_id": 128000,
+  "eos_token_id": 128001,
+  "head_dim": 128,
+  "hidden_act": "silu",
+  "hidden_size": 2048,
+  "initializer_range": 0.02,
+  "intermediate_size": 14336,
+  "max_position_embeddings": 131072,
+  "mlp_bias": false,
+  "model_type": "llama",
+  "num_attention_heads": 16,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 8,
+  "pretraining_tp": 1,
+  "rms_norm_eps": 1e-05,
+  "rope_scaling": {
+    "factor": 8.0,
+    "high_freq_factor": 4.0,
+    "low_freq_factor": 1.0,
+    "original_max_position_embeddings": 8192,
+    "rope_type": "llama3"
+  },
+  "rope_theta": 500000.0,
+  "tie_word_embeddings": false,
+  "torch_dtype": "float16",
+  "transformers_version": "4.46.2",
+  "use_cache": true,
+  "vocab_size": 128256
+}
+
+num_params 2337409024
+evaluating on wikitext2
+Token indices sequence length is longer than the specified maximum sequence length for this model (2458791 > 131072). Running this sequence through the model will result in indexing errors
+nsamples 70
+sample 0
+sample 50
+wikitext perplexity 215807.609375
+```
+
+</details>
+
+
 ### Llama-3 8B
 
 ```bash
@@ -349,7 +473,7 @@ wikitext perplexity 92795.3984375
 ### Qwen/Qwen2-7B
 
 ```bash
-python prune_llm.py --model Qwen/Qwen2-7B --pruning_ratio 0.5
+python prune_llm.py --model Qwen/Qwen2-7B --pruning_ratio 0.5 --max_seq_len 4096
 ```
 
 
@@ -445,6 +569,12 @@ Qwen2Config {
 }
 
 num_params 2227887872
+evaluating on wikitext2
+Token indices sequence length is longer than the specified maximum sequence length for this model (2541000 > 32768). Running this sequence through the model will result in indexing errors
+nsamples 73
+sample 0
+sample 50
+wikitext perplexity 13779.380859375
 ```
 
 </details>
