@@ -346,7 +346,7 @@ wikitext perplexity 92795.3984375
 
 </details>
 
-### microsoft/Phi-3-mini-4k-instruct
+### Qwen/Qwen2-7B
 
 ```bash
 python prune_llm.py --model Qwen/Qwen2-7B --pruning_ratio 0.5
