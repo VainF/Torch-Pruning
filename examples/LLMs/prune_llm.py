@@ -291,11 +291,22 @@ def main():
     inputs = torch.tensor(tokenizer.encode(text)).unsqueeze(0).to(model.device)
     import torch_pruning as tp 
     num_heads = {}
+    out_channel_groups = {}
+    seperate_qkv = False
     for name, m in model.named_modules():
         if name.endswith("self_attn"):
-            num_heads[m.q_proj] = model.config.num_attention_heads
-            num_heads[m.k_proj] = model.config.num_key_value_heads
-            num_heads[m.v_proj] = model.config.num_key_value_heads
+            if hasattr(m, "q_proj"):
+                seperate_qkv = True
+                num_heads[m.q_proj] = model.config.num_attention_heads
+                num_heads[m.k_proj] = model.config.num_key_value_heads
+                num_heads[m.v_proj] = model.config.num_key_value_heads
+            elif hasattr(m, "qkv_proj"):
+                seperate_qkv = False
+                num_heads[m.qkv_proj] = model.config.num_attention_heads
+        if name.endswith('mlp'):
+            if hasattr(m, "gate_up_proj"):
+                out_channel_groups[m.gate_up_proj] = 2
+    
     _is_gqa = model.config.num_attention_heads != model.config.num_key_value_heads
     head_pruning_ratio = args.pruning_ratio
     hidden_size_pruning_ratio = args.pruning_ratio
@@ -311,19 +322,31 @@ def main():
         prune_num_heads=True,
         prune_head_dims=False, # we do not prune head dims so that we don't need to prune the ROPE
         head_pruning_ratio=head_pruning_ratio,
+        out_channel_groups=out_channel_groups
     )
+
+
     #with torch.no_grad():
     #    with importance.compute_importance(model):
     #        calibration_data = "We recommend at least a 1TB hard drive for 4 channels, more if you plan on using 8MP \/ 4K cameras.\nDahua's Lite Series network video recorders offer excellent performance and high recording quality for IP video surveillance applications. For applications where details are critical for identification, this professional NVR provides a powerful processor with up to 4K resolution. Additionally, the NVR features a mouse shortcut operation menu, remote management and control, center storage, edge storage, and back up storage."
     #        calibration_data = torch.tensor(tokenizer.encode(text)).unsqueeze(0).to(model.device)
     #        _ = model(calibration_data)
-    pruner.step()
+    
+    #group = pruner.DG.get_pruning_group(model.model.layers[31].mlp.gate_up_proj, tp.prune_linear_out_channels, idxs=list(range(16384)))
+    #print(group)
+    
+    for g in pruner.step(interactive=True):
+        print(g)
+        g.prune()
 
     # Update model attributes    
     model.config.hidden_size = model.lm_head.in_features
     for name, m in model.named_modules():
         if name.endswith("self_attn"):
-            m.hidden_size = m.q_proj.out_features
+            if seperate_qkv:
+                m.hidden_size = m.q_proj.out_features
+            else:
+                m.hidden_size = m.qkv_proj.out_features // 3        
             m.num_heads = m.hidden_size // m.head_dim
             model.config.num_attention_heads = m.num_heads
             #m.head_dim = m.q_proj.out_features // m.num_heads
@@ -331,7 +354,13 @@ def main():
                 m.num_key_value_heads = m.num_heads
             m.num_key_value_groups = m.num_heads // m.num_key_value_heads
         elif name.endswith("mlp"):
-            model.config.intermediate_size = m.gate_proj.out_features
+            if hasattr(m, "gate_proj"):
+                m.hidden_size = m.gate_proj.out_features
+            elif hasattr(m, "gate_up_proj"):
+                m.hidden_size = m.gate_up_proj.in_features
+            else:
+                raise ValueError("Unknown mlp layer")
+
     if not _is_gqa:
         model.config.num_key_value_heads = model.config.num_attention_heads
     print("----------------- After Pruning -----------------")

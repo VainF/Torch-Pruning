@@ -151,7 +151,7 @@ def main():
         prune_num_heads=args.prune_num_heads, # reduce num_heads by pruning entire heads (default: False)
         prune_head_dims=not args.prune_num_heads, # reduce head_dim by pruning featrues dims of each head (default: True)
         head_pruning_ratio=0.5, #args.head_pruning_ratio, # remove 50% heads, only works when prune_num_heads=True (default: 0.0)
-        round_to=2
+        round_to=1
     )
 
     if isinstance(imp, (tp.importance.GroupTaylorImportance, tp.importance.GroupHessianImportance)):
@@ -205,6 +205,9 @@ def main():
     if args.test_accuracy:
         print("Base Loss: %.4f, Pruned Loss: %.4f"%(loss_ori, loss_pruned))
         print("Base Accuracy: %.4f, Pruned Accuracy: %.4f"%(acc_ori, acc_pruned))
+
+    latency_mean, latency_std = tp.utils.benchmark.measure_latency(model, example_inputs=torch.randn(16,3,224,224).to(device), repeat=300)
+    print("Latency: %.4f ms, Std: %.4f ms"%(latency_mean, latency_std))
 
     if args.save_as is not None:
         print("Saving the pruned model to %s..."%args.save_as)

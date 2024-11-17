@@ -262,8 +262,8 @@ class MetaPruner:
         else:
             for group in self._prune():
                 group.prune()
-
-    def manual_prune(self, layer, pruning_fn, pruning_ratios_or_idxs):
+    
+    def manual_prune_width(self, layer, pruning_fn, pruning_ratios_or_idxs):
         if isinstance(pruning_ratios_or_idxs, float):
             if self.DG.is_out_channel_pruning_fn(pruning_fn):
                 prunable_channels = self.DG.get_out_channels(layer)
@@ -274,7 +274,7 @@ class MetaPruner:
             imp_argsort = torch.argsort(imp)
             n_pruned = int(prunable_channels * (1 - pruning_ratios_or_idxs))
             pruning_idxs = imp_argsort[:n_pruned]
- 
+
         group = self.DG.get_pruning_group(layer, pruning_fn, pruning_idxs)
         group.prune()
 
@@ -412,6 +412,7 @@ class MetaPruner:
                 # Re-order the group and use a downstream node as the root node for attention layers.
                 # This will not change the group structure, but make index mapping easier for attention layers.
                 _is_atten, qkv_layers = self._is_atten_group(group)
+
                 if _is_atten:
                     group = self._downstream_node_as_root_if_attention(group) 
                     if group is None: continue
@@ -622,3 +623,4 @@ class MetaPruner:
 
                         if self.DG.check_pruning_group(group):
                             yield group # yield the group for interactive pruning
+                        

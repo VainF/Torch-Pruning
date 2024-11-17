@@ -13,7 +13,7 @@ pip install transformers datasets
 ### Llama-3 8B
 
 ```bash
-python prune_llama.py --model meta-llama/Meta-Llama-3-8B --pruning_ratio 0.5
+python prune_llm.py --model meta-llama/Meta-Llama-3-8B --pruning_ratio 0.5
 ```
 
 <details>
@@ -120,7 +120,7 @@ wikitext perplexity 552648.25
 ### Llama-2 7B
 
 ```bash
-python prune_llama.py --model meta-llama/Llama-2-7b-hf --pruning_ratio 0.5
+python prune_llm.py --model meta-llama/Llama-2-7b-hf --pruning_ratio 0.5
 ```
 
 
@@ -224,3 +224,115 @@ wikitext perplexity 8479.0673828125
 </details>
 
 
+### microsoft/Phi-3-mini-4k-instruct
+
+```bash
+python prune_llm.py --model microsoft/Phi-3-mini-4k-instruct --pruning_ratio 0.5
+```
+
+
+<details>
+<summary>Output:</summary>
+
+```
+----------------- Before Pruning -----------------
+Phi3ForCausalLM(
+  (model): Phi3Model(
+    (embed_tokens): Embedding(32064, 3072, padding_idx=32000)
+    (embed_dropout): Dropout(p=0.0, inplace=False)
+    (layers): ModuleList(
+      (0-31): 32 x Phi3DecoderLayer(
+        (self_attn): Phi3Attention(
+          (o_proj): Linear(in_features=3072, out_features=3072, bias=False)
+          (qkv_proj): Linear(in_features=3072, out_features=9216, bias=False)
+          (rotary_emb): Phi3RotaryEmbedding()
+        )
+        (mlp): Phi3MLP(
+          (gate_up_proj): Linear(in_features=3072, out_features=16384, bias=False)
+          (down_proj): Linear(in_features=8192, out_features=3072, bias=False)
+          (activation_fn): SiLU()
+        )
+        (input_layernorm): Phi3RMSNorm()
+        (resid_attn_dropout): Dropout(p=0.0, inplace=False)
+        (resid_mlp_dropout): Dropout(p=0.0, inplace=False)
+        (post_attention_layernorm): Phi3RMSNorm()
+      )
+    )
+    (norm): Phi3RMSNorm()
+  )
+  (lm_head): Linear(in_features=3072, out_features=32064, bias=False)
+)
+----------------- After Pruning -----------------
+Token indices sequence length is longer than the specified maximum sequence length for this model (2824490 > 4096). Running this sequence through the model will result in indexing errors
+Phi3ForCausalLM(
+  (model): Phi3Model(
+    (embed_tokens): Embedding(32064, 1536, padding_idx=32000)
+    (embed_dropout): Dropout(p=0.0, inplace=False)
+    (layers): ModuleList(
+      (0-31): 32 x Phi3DecoderLayer(
+        (self_attn): Phi3Attention(
+          (o_proj): Linear(in_features=1536, out_features=1536, bias=False)
+          (qkv_proj): Linear(in_features=1536, out_features=4608, bias=False)
+          (rotary_emb): Phi3RotaryEmbedding()
+        )
+        (mlp): Phi3MLP(
+          (gate_up_proj): Linear(in_features=1536, out_features=8192, bias=False)
+          (down_proj): Linear(in_features=4096, out_features=1536, bias=False)
+          (activation_fn): SiLU()
+        )
+        (input_layernorm): Phi3RMSNorm()
+        (resid_attn_dropout): Dropout(p=0.0, inplace=False)
+        (resid_mlp_dropout): Dropout(p=0.0, inplace=False)
+        (post_attention_layernorm): Phi3RMSNorm()
+      )
+    )
+    (norm): Phi3RMSNorm()
+  )
+  (lm_head): Linear(in_features=1536, out_features=32064, bias=False)
+)
+Phi3Config {
+  "_name_or_path": "microsoft/Phi-3-mini-4k-instruct",
+  "architectures": [
+    "Phi3ForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "auto_map": {
+    "AutoConfig": "microsoft/Phi-3-mini-4k-instruct--configuration_phi3.Phi3Config",
+    "AutoModelForCausalLM": "microsoft/Phi-3-mini-4k-instruct--modeling_phi3.Phi3ForCausalLM"
+  },
+  "bos_token_id": 1,
+  "embd_pdrop": 0.0,
+  "eos_token_id": 32000,
+  "hidden_act": "silu",
+  "hidden_size": 1536,
+  "initializer_range": 0.02,
+  "intermediate_size": 8192,
+  "max_position_embeddings": 4096,
+  "model_type": "phi3",
+  "num_attention_heads": 16,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 16,
+  "original_max_position_embeddings": 4096,
+  "pad_token_id": 32000,
+  "resid_pdrop": 0.0,
+  "rms_norm_eps": 1e-05,
+  "rope_scaling": null,
+  "rope_theta": 10000.0,
+  "sliding_window": 2047,
+  "tie_word_embeddings": false,
+  "torch_dtype": "float16",
+  "transformers_version": "4.36.2",
+  "use_cache": true,
+  "vocab_size": 32064
+}
+
+num_params 1004570112
+evaluating on wikitext2
+nsamples 83
+sample 0
+sample 50
+wikitext perplexity 92795.3984375
+```
+
+</details>

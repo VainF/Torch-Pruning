@@ -96,6 +96,22 @@ class _GQAIndexMapping(object):
            
         return new_idxs
 
+class _SliceIndexMapping(object):
+    def __init__(self, dim, start, step, end, reverse=False):
+        self.start = start
+        self.step = step
+        self.end = end
+        self.reverse = reverse
+        self.dim = dim
+    
+    def __call__(self, idxs: _HybridIndex):
+        
+        if self.reverse == True:
+            new_idxs = [ _HybridIndex(idx=i.idx * self.step + self.start, root_idx=i.root_idx) for i in idxs]
+        else:
+            new_idxs = [ _HybridIndex(idx=(i.idx - self.start) // self.step, root_idx=i.root_idx) for i in idxs if (i.idx >= self.start and i.idx < self.end and (i.idx-self.start)%self.step==0) ]
+        return new_idxs
+
 class _SplitIndexMapping(object):
     def __init__(self, offset, reverse=False):
         self.offset = offset
