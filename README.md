@@ -33,6 +33,7 @@ For more technical details, please refer to our CVPR'23 paper:
 > *[Learning and Vision Lab](http://lv-nus.org/), National University of Singapore*
 
 ### Update:
+- 🔥 2024.11.17  We are working to add [more LLMs](https://github.com/VainF/Torch-Pruning/tree/master/examples/LLMs), including Llama-3, Llama-2, Phi-3, Qwen-2.  
 - 🔥 2024.09.27  Check our latest work, [**MaskLLM (NeurIPS 24 Spotlight)**](https://github.com/NVlabs/MaskLLM), for learnable semi-structured sparsity of LLMs.
 - 🚀 2024.07.20  Add [**Isomorphic Pruning (ECCV'24)**](https://arxiv.org/abs/2407.04616). A SOTA method for Vision Transformers and Modern CNNs.
 
