@@ -16,6 +16,9 @@ This script has been tested with the following models:
 
 ```bash
 pip install transformers datasets accelerate --upgrade
+
+# if torch-pruning not installed
+pip install torch-pruning --upgrade # >=1.5.0
 ```
 
 ## 1. Pruning
