@@ -35,7 +35,7 @@ Arguments:
 - `MAX_SEQ_LEN`: The maximum sequence length of the model, such as 4096. If not provided, the script will use the maximum sequence length of the model.
 - `SAVE_HF_MODEL`: The path to save the pruned model. If not provided, the pruned model will not be saved. You can load a saved model using `AutoModelForCausalLM.from_pretrained`.
 
-### :rocket: Llama-3.1 2B
+### :rocket: Llama-3.1 8B
 
 ```bash
 python prune_llm.py --model meta-llama/Llama-3.1-8B --pruning_ratio 0.5 --max_seq_len 4096 
