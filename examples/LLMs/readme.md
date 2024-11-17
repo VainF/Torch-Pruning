@@ -4,10 +4,11 @@ This example provides a minimal example of pruning large language models with ma
 
 This script has been tested with the following models:
 
-1. [meta-llama/Meta-Llama-3-8B](https://huggingface.co/meta-llama/Meta-Llama-3-8B)
-2. [meta-llama/Llama-2-7b-hf](https://huggingface.co/meta-llama/Llama-2-7b-hf)
-3. [microsoft/Phi-3-mini-4k-instruct](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct)
-4. [Qwen/Qwen2-7B](https://huggingface.co/Qwen/Qwen2-7B)
+* [meta-llama/Meta-Llama-3.1-8B](https://huggingface.co/meta-llama/Meta-Llama-3.1-8B)
+*  [meta-llama/Meta-Llama-3-8B](https://huggingface.co/meta-llama/Meta-Llama-3-8B)
+*  [meta-llama/Llama-2-7b-hf](https://huggingface.co/meta-llama/Llama-2-7b-hf)
+*  [microsoft/Phi-3-mini-4k-instruct](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct)
+*  [Qwen/Qwen2-7B](https://huggingface.co/Qwen/Qwen2-7B)
 
 
 
