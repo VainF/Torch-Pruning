@@ -294,6 +294,7 @@ class DependencyGraph(object):
             ops.OPTYPE.UNBIND: ops.UnbindPruner(),
             ops.OPTYPE.EXPAND: ops.ExpandPruner(),
             ops.OPTYPE.CUSTOMIZED: ops.CustomizedPruner(), # just a placeholder
+            ops.OPTYPE.SLICE: ops.SlicePruner(),
         }
         self.REGISTERED_PRUNERS = function.PrunerBox.copy()  # shallow copy
         self.REGISTERED_PRUNERS.update(_dummy_pruners) # merge dummy pruners
@@ -511,7 +512,7 @@ class DependencyGraph(object):
                             )
 
         _fix_dependency_graph_non_recursive(*group[0])
-        
+
         # merge pruning ops
         merged_group = Group() # craft a new group for merging
         for dep, idxs in group.items:
@@ -827,6 +828,7 @@ class DependencyGraph(object):
 
             # 1. link grad_fns and modules
             if module is None:  # a new module
+                
                 if not hasattr(grad_fn, "name"):
                     # we treat all unknwon modules as element-wise operations by default,
                     # which does not modify the #dimension/#channel of features.
@@ -852,6 +854,12 @@ class DependencyGraph(object):
                     self._op_id+=1
                 elif "view" in grad_fn.name().lower() or 'reshape' in grad_fn.name().lower():
                     module = ops._ReshapeOp(self._op_id)
+                    self._op_id+=1
+                elif "slice" in grad_fn.name().lower() and "copyslices" not in grad_fn.name().lower():
+                    if hasattr(grad_fn, '_saved_start') and hasattr(grad_fn, '_saved_end') and hasattr(grad_fn, '_saved_step') and hasattr(grad_fn, '_saved_dim'):
+                        module = ops._SliceOp(self._op_id, grad_fn)
+                    else: # for old version of pytorch, we can not handle the slice operation
+                        module = ops._ElementWiseOp(self._op_id, grad_fn.name())
                     self._op_id+=1
                 else:
                     # treate other ops as element-wise ones, like Add, Sub, Div, Mul.
@@ -924,6 +932,32 @@ class DependencyGraph(object):
                 self._update_unbind_index_mapping(node)
             if node.type == ops.OPTYPE.EXPAND and torch.__version__ >= "1.8":
                 self._update_expand_index_mapping(node)
+            if node.type == ops.OPTYPE.SLICE:
+                self._update_slice_index_mapping(node)
+
+
+    def _update_slice_index_mapping(self, slice_node: Node):
+        if slice_node.type != ops.OPTYPE.SLICE:
+            return
+        grad_fn = slice_node.grad_fn
+        if hasattr(grad_fn, '_saved_self_sym_sizes'):
+            if len(grad_fn._saved_self_sym_sizes)==4 and grad_fn._saved_dim != 1:
+                return
+            elif len(grad_fn._saved_self_sym_sizes)==3 and grad_fn._saved_dim != 2:
+                return
+    
+        start, step, end, dim = slice_node.module.start, slice_node.module.step, slice_node.module.end, slice_node.module.dim
+        for node in slice_node.inputs:
+            for dep in slice_node.dependencies:
+                if dep.target == node:
+                    dep.index_mapping[0] = _helpers._SliceIndexMapping(
+                        dim=dim, start=start, end=end, step=step, reverse=True
+                    )
+            for dep in node.dependencies:
+                if dep.target == slice_node:
+                    dep.index_mapping[0] = _helpers._SliceIndexMapping(
+                        dim=dim, start=start, end=end, step=step, reverse=False
+                    )
 
     def _init_shape_information(self):
         for module, node in self.module2node.items():
@@ -1111,10 +1145,18 @@ class DependencyGraph(object):
     def _update_split_index_mapping(self, split_node: Node):
         if split_node.type != ops.OPTYPE.SPLIT:
             return
-        
-        if hasattr(split_node.grad_fn, '_saved_dim') and split_node.grad_fn._saved_dim != 1: # this only works for Pytorch>=1.12
-            return 
-        
+
+        if hasattr(split_node.grad_fn, '_saved_dim'): # this only works for Pytorch>=1.12
+
+            # There a issue in some pytorch version, where the _saved_dim is an uninitialized value like 118745347895359
+            # So we need to check if the _saved_dim is a valid value (<len(_saved_self_sym_sizes) or a nominal value like 20)
+            if hasattr(split_node.grad_fn, '_saved_self_sym_sizes'):
+                if split_node.grad_fn._saved_dim<len(split_node.grad_fn._saved_self_sym_sizes) and split_node.grad_fn._saved_dim != 1:
+                    return
+            else:
+                THRESHOLD = 20
+                if split_node.grad_fn._saved_dim<THRESHOLD and split_node.grad_fn._saved_dim>=0 and split_node.grad_fn._saved_dim != 1:
+                    return 
         offsets = split_node.module.offsets
 
         if offsets is None:

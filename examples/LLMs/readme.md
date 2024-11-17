@@ -1,6 +1,15 @@
-# Prune Large Language Models
+# Pruning Large Language Models
 
 This example provides a minimal example of pruning large language models with magnitude-based pruning. We use the `transformers` library to load the model and the `datasets` library to evaluate the Perplexity with `Wikitext2`. **For more comprehensive examples of Gradient-based pruning or finetuning, please refer to [LLM-Pruner](https://github.com/horseee/LLM-Pruner)**.
+
+This script has been tested with the following models:
+
+1. [meta-llama/Meta-Llama-3-8B](https://huggingface.co/meta-llama/Meta-Llama-3-8B)
+2. [meta-llama/Llama-2-7b-hf](https://huggingface.co/meta-llama/Llama-2-7b-hf)
+3. [microsoft/Phi-3-mini-4k-instruct](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct)
+4. [Qwen/Qwen2-7B](https://huggingface.co/Qwen/Qwen2-7B)
+
+
 
 ## 0. Requirements
 
@@ -13,7 +22,7 @@ pip install transformers datasets
 ### Llama-3 8B
 
 ```bash
-python prune_llama.py --model meta-llama/Meta-Llama-3-8B --pruning_ratio 0.5
+python prune_llm.py --model meta-llama/Meta-Llama-3-8B --pruning_ratio 0.5
 ```
 
 <details>
@@ -120,7 +129,7 @@ wikitext perplexity 552648.25
 ### Llama-2 7B
 
 ```bash
-python prune_llama.py --model meta-llama/Llama-2-7b-hf --pruning_ratio 0.5
+python prune_llm.py --model meta-llama/Llama-2-7b-hf --pruning_ratio 0.5
 ```
 
 
@@ -223,4 +232,220 @@ wikitext perplexity 8479.0673828125
 
 </details>
 
+
+### microsoft/Phi-3-mini-4k-instruct
+
+```bash
+python prune_llm.py --model microsoft/Phi-3-mini-4k-instruct --pruning_ratio 0.5
+```
+
+
+<details>
+<summary>Output:</summary>
+
+```
+----------------- Before Pruning -----------------
+Phi3ForCausalLM(
+  (model): Phi3Model(
+    (embed_tokens): Embedding(32064, 3072, padding_idx=32000)
+    (embed_dropout): Dropout(p=0.0, inplace=False)
+    (layers): ModuleList(
+      (0-31): 32 x Phi3DecoderLayer(
+        (self_attn): Phi3Attention(
+          (o_proj): Linear(in_features=3072, out_features=3072, bias=False)
+          (qkv_proj): Linear(in_features=3072, out_features=9216, bias=False)
+          (rotary_emb): Phi3RotaryEmbedding()
+        )
+        (mlp): Phi3MLP(
+          (gate_up_proj): Linear(in_features=3072, out_features=16384, bias=False)
+          (down_proj): Linear(in_features=8192, out_features=3072, bias=False)
+          (activation_fn): SiLU()
+        )
+        (input_layernorm): Phi3RMSNorm()
+        (resid_attn_dropout): Dropout(p=0.0, inplace=False)
+        (resid_mlp_dropout): Dropout(p=0.0, inplace=False)
+        (post_attention_layernorm): Phi3RMSNorm()
+      )
+    )
+    (norm): Phi3RMSNorm()
+  )
+  (lm_head): Linear(in_features=3072, out_features=32064, bias=False)
+)
+----------------- After Pruning -----------------
+Token indices sequence length is longer than the specified maximum sequence length for this model (2824490 > 4096). Running this sequence through the model will result in indexing errors
+Phi3ForCausalLM(
+  (model): Phi3Model(
+    (embed_tokens): Embedding(32064, 1536, padding_idx=32000)
+    (embed_dropout): Dropout(p=0.0, inplace=False)
+    (layers): ModuleList(
+      (0-31): 32 x Phi3DecoderLayer(
+        (self_attn): Phi3Attention(
+          (o_proj): Linear(in_features=1536, out_features=1536, bias=False)
+          (qkv_proj): Linear(in_features=1536, out_features=4608, bias=False)
+          (rotary_emb): Phi3RotaryEmbedding()
+        )
+        (mlp): Phi3MLP(
+          (gate_up_proj): Linear(in_features=1536, out_features=8192, bias=False)
+          (down_proj): Linear(in_features=4096, out_features=1536, bias=False)
+          (activation_fn): SiLU()
+        )
+        (input_layernorm): Phi3RMSNorm()
+        (resid_attn_dropout): Dropout(p=0.0, inplace=False)
+        (resid_mlp_dropout): Dropout(p=0.0, inplace=False)
+        (post_attention_layernorm): Phi3RMSNorm()
+      )
+    )
+    (norm): Phi3RMSNorm()
+  )
+  (lm_head): Linear(in_features=1536, out_features=32064, bias=False)
+)
+Phi3Config {
+  "_name_or_path": "microsoft/Phi-3-mini-4k-instruct",
+  "architectures": [
+    "Phi3ForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "auto_map": {
+    "AutoConfig": "microsoft/Phi-3-mini-4k-instruct--configuration_phi3.Phi3Config",
+    "AutoModelForCausalLM": "microsoft/Phi-3-mini-4k-instruct--modeling_phi3.Phi3ForCausalLM"
+  },
+  "bos_token_id": 1,
+  "embd_pdrop": 0.0,
+  "eos_token_id": 32000,
+  "hidden_act": "silu",
+  "hidden_size": 1536,
+  "initializer_range": 0.02,
+  "intermediate_size": 8192,
+  "max_position_embeddings": 4096,
+  "model_type": "phi3",
+  "num_attention_heads": 16,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 16,
+  "original_max_position_embeddings": 4096,
+  "pad_token_id": 32000,
+  "resid_pdrop": 0.0,
+  "rms_norm_eps": 1e-05,
+  "rope_scaling": null,
+  "rope_theta": 10000.0,
+  "sliding_window": 2047,
+  "tie_word_embeddings": false,
+  "torch_dtype": "float16",
+  "transformers_version": "4.36.2",
+  "use_cache": true,
+  "vocab_size": 32064
+}
+
+num_params 1004570112
+evaluating on wikitext2
+nsamples 83
+sample 0
+sample 50
+wikitext perplexity 92795.3984375
+```
+
+</details>
+
+### Qwen/Qwen2-7B
+
+```bash
+python prune_llm.py --model Qwen/Qwen2-7B --pruning_ratio 0.5
+```
+
+
+<details>
+<summary>Output:</summary>
+
+```
+----------------- Before Pruning -----------------
+Qwen2ForCausalLM(
+  (model): Qwen2Model(
+    (embed_tokens): Embedding(152064, 3584)
+    (layers): ModuleList(
+      (0-27): 28 x Qwen2DecoderLayer(
+        (self_attn): Qwen2SdpaAttention(
+          (q_proj): Linear(in_features=3584, out_features=3584, bias=True)
+          (k_proj): Linear(in_features=3584, out_features=512, bias=True)
+          (v_proj): Linear(in_features=3584, out_features=512, bias=True)
+          (o_proj): Linear(in_features=3584, out_features=3584, bias=False)
+          (rotary_emb): Qwen2RotaryEmbedding()
+        )
+        (mlp): Qwen2MLP(
+          (gate_proj): Linear(in_features=3584, out_features=18944, bias=False)
+          (up_proj): Linear(in_features=3584, out_features=18944, bias=False)
+          (down_proj): Linear(in_features=18944, out_features=3584, bias=False)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): Qwen2RMSNorm((3584,), eps=1e-06)
+        (post_attention_layernorm): Qwen2RMSNorm((3584,), eps=1e-06)
+      )
+    )
+    (norm): Qwen2RMSNorm((3584,), eps=1e-06)
+    (rotary_emb): Qwen2RotaryEmbedding()
+  )
+  (lm_head): Linear(in_features=3584, out_features=152064, bias=False)
+)
+----------------- After Pruning -----------------
+Qwen2ForCausalLM(
+  (model): Qwen2Model(
+    (embed_tokens): Embedding(152064, 1792)
+    (layers): ModuleList(
+      (0-27): 28 x Qwen2DecoderLayer(
+        (self_attn): Qwen2SdpaAttention(
+          (q_proj): Linear(in_features=1792, out_features=2048, bias=True)
+          (k_proj): Linear(in_features=1792, out_features=512, bias=True)
+          (v_proj): Linear(in_features=1792, out_features=512, bias=True)
+          (o_proj): Linear(in_features=2048, out_features=1792, bias=False)
+          (rotary_emb): Qwen2RotaryEmbedding()
+        )
+        (mlp): Qwen2MLP(
+          (gate_proj): Linear(in_features=1792, out_features=9472, bias=False)
+          (up_proj): Linear(in_features=1792, out_features=9472, bias=False)
+          (down_proj): Linear(in_features=9472, out_features=1792, bias=False)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): Qwen2RMSNorm((1792,), eps=1e-06)
+        (post_attention_layernorm): Qwen2RMSNorm((1792,), eps=1e-06)
+      )
+    )
+    (norm): Qwen2RMSNorm((1792,), eps=1e-06)
+    (rotary_emb): Qwen2RotaryEmbedding()
+  )
+  (lm_head): Linear(in_features=1792, out_features=152064, bias=False)
+)
+Qwen2Config {
+  "_attn_implementation_autoset": true,
+  "_name_or_path": "Qwen/Qwen2-7B",
+  "architectures": [
+    "Qwen2ForCausalLM"
+  ],
+  "attention_dropout": 0.0,
+  "bos_token_id": 151643,
+  "eos_token_id": 151643,
+  "hidden_act": "silu",
+  "hidden_size": 1792,
+  "initializer_range": 0.02,
+  "intermediate_size": 18944,
+  "max_position_embeddings": 131072,
+  "max_window_layers": 28,
+  "model_type": "qwen2",
+  "num_attention_heads": 16,
+  "num_hidden_layers": 28,
+  "num_key_value_heads": 4,
+  "rms_norm_eps": 1e-06,
+  "rope_scaling": null,
+  "rope_theta": 1000000.0,
+  "sliding_window": null,
+  "tie_word_embeddings": false,
+  "torch_dtype": "float16",
+  "transformers_version": "4.46.2",
+  "use_cache": true,
+  "use_sliding_window": false,
+  "vocab_size": 152064
+}
+
+num_params 2227887872
+```
+
+</details>
 

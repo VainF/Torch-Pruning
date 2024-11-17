@@ -181,6 +181,7 @@ class GroupNormImportance(Importance):
     def __call__(self, group: Group):
         group_imp = []
         group_idxs = []
+
         # Iterate over all groups and estimate group importance
         for i, (dep, idxs) in enumerate(group):
             layer = dep.layer

@@ -16,8 +16,6 @@ from torchvision.models.detection.faster_rcnn import (
 )
 from torchvision.models.detection.fcos import fcos_resnet50_fpn
 from torchvision.models.detection.keypoint_rcnn import keypointrcnn_resnet50_fpn
-from torchvision.models.detection.mask_rcnn import maskrcnn_resnet50_fpn_v2
-from torchvision.models.detection.retinanet import retinanet_resnet50_fpn_v2
 from torchvision.models.alexnet import alexnet
 
 from torchvision.models.vision_transformer import (
