@@ -192,6 +192,7 @@ pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse train
     pruning_ratio=0.5, # remove 50% channels, ResNet18 = {64, 128, 256, 512} => ResNet18_Half = {32, 64, 128, 256}
     # pruning_ratio_dict = {model.conv1: 0.2, model.layer2: 0.8}, # customized pruning ratios for layers or blocks
     ignored_layers=ignored_layers,
+    round_to=8, # It's recommended to use an appropriate round_to for acceleration. Please see: https://docs.nvidia.com/deeplearning/performance/dl-performance-convolutional/index.html
 )
 
 # 3. Prune & finetune the model
