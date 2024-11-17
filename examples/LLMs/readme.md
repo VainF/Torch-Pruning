@@ -14,7 +14,7 @@ This script has been tested with the following models:
 ## 0. Requirements
 
 ```bash
-pip install transformers datasets
+pip install transformers datasets accelerate --upgrade
 ```
 
 ## 1. Pruning
@@ -22,13 +22,16 @@ pip install transformers datasets
 ### Basic Usage
   
 ```bash
-python prune_llm.py --model MODEL_CARD --pruning_ratio PRUNING_RATIO--max_seq_len MAX_SEQ_LEN --save_model SAVE_HF_MODEL
+python prune_llm.py --model MODEL_CARD --pruning_ratio PRUNING_RATIO --max_seq_len MAX_SEQ_LEN --save_model SAVE_HF_MODEL
 ```
 
-if max_seq_len is not provided, the script will use the maximum sequence length of the model.
+Arguments:
+- `MODEL_CARD`: The model card of the model to be pruned, such as `meta-llama/Meta-Llama-3-8B`.
+- `PRUNING_RATIO`: The ratio of the model width to be pruned, such as `0.5`. 
+- `MAX_SEQ_LEN`: The maximum sequence length of the model, such as 4096. If not provided, the script will use the maximum sequence length of the model.
+- `SAVE_HF_MODEL`: The path to save the pruned model. If not provided, the pruned model will not be saved. You can load a saved model using `AutoModelForCausalLM.from_pretrained`.
 
-
-### Llama-3.1 2B
+### :rocket: Llama-3.1 2B
 
 ```bash
 python prune_llm.py --model meta-llama/Llama-3.1-8B --pruning_ratio 0.5 --max_seq_len 4096 
@@ -143,7 +146,7 @@ wikitext perplexity 215807.609375
 </details>
 
 
-### Llama-3 8B
+### :rocket: Llama-3 8B
 
 ```bash
 python prune_llm.py --model meta-llama/Meta-Llama-3-8B --pruning_ratio 0.5
@@ -250,7 +253,7 @@ wikitext perplexity 552648.25
 
 
 
-### Llama-2 7B
+### :rocket: Llama-2 7B
 
 ```bash
 python prune_llm.py --model meta-llama/Llama-2-7b-hf --pruning_ratio 0.5
@@ -357,7 +360,7 @@ wikitext perplexity 8479.0673828125
 </details>
 
 
-### microsoft/Phi-3-mini-4k-instruct
+### :rocket: microsoft/Phi-3-mini-4k-instruct
 
 ```bash
 python prune_llm.py --model microsoft/Phi-3-mini-4k-instruct --pruning_ratio 0.5
@@ -470,7 +473,7 @@ wikitext perplexity 92795.3984375
 
 </details>
 
-### Qwen/Qwen2-7B
+### :rocket: Qwen/Qwen2-7B
 
 ```bash
 python prune_llm.py --model Qwen/Qwen2-7B --pruning_ratio 0.5 --max_seq_len 4096
