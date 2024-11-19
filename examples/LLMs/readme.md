@@ -114,7 +114,7 @@ LlamaConfig {
   "hidden_act": "silu",
   "hidden_size": 2048,
   "initializer_range": 0.02,
-  "intermediate_size": 14336,
+  "intermediate_size": 7168,
   "max_position_embeddings": 131072,
   "mlp_bias": false,
   "model_type": "llama",
@@ -216,6 +216,7 @@ LlamaForCausalLM(
   (lm_head): Linear(in_features=2048, out_features=128256, bias=False)
 )
 LlamaConfig {
+  "_attn_implementation_autoset": true,
   "_name_or_path": "meta-llama/Meta-Llama-3-8B",
   "architectures": [
     "LlamaForCausalLM"
@@ -224,6 +225,7 @@ LlamaConfig {
   "attention_dropout": 0.0,
   "bos_token_id": 128000,
   "eos_token_id": 128001,
+  "head_dim": 128,
   "hidden_act": "silu",
   "hidden_size": 2048,
   "initializer_range": 0.02,
@@ -240,7 +242,7 @@ LlamaConfig {
   "rope_theta": 500000.0,
   "tie_word_embeddings": false,
   "torch_dtype": "float16",
-  "transformers_version": "4.44.2",
+  "transformers_version": "4.46.2",
   "use_cache": true,
   "vocab_size": 128256
 }
@@ -431,6 +433,7 @@ Phi3ForCausalLM(
   (lm_head): Linear(in_features=1536, out_features=32064, bias=False)
 )
 Phi3Config {
+  "_attn_implementation_autoset": true,
   "_name_or_path": "microsoft/Phi-3-mini-4k-instruct",
   "architectures": [
     "Phi3ForCausalLM"
@@ -462,7 +465,7 @@ Phi3Config {
   "sliding_window": 2047,
   "tie_word_embeddings": false,
   "torch_dtype": "float16",
-  "transformers_version": "4.36.2",
+  "transformers_version": "4.46.2",
   "use_cache": true,
   "vocab_size": 32064
 }
@@ -556,7 +559,7 @@ Qwen2Config {
   "hidden_act": "silu",
   "hidden_size": 1792,
   "initializer_range": 0.02,
-  "intermediate_size": 18944,
+  "intermediate_size": 9472,
   "max_position_embeddings": 131072,
   "max_window_layers": 28,
   "model_type": "qwen2",

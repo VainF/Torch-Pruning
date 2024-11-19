@@ -251,6 +251,7 @@ def get_llm(model_name, max_seq_len=None):
     model = AutoModelForCausalLM.from_pretrained(
         model_name, 
         torch_dtype=torch.float16, 
+        low_cpu_mem_usage=True, 
         device_map="auto"
     )
 
@@ -358,12 +359,14 @@ def main():
             m.num_key_value_groups = m.num_heads // m.num_key_value_heads
         elif name.endswith("mlp"):
             if hasattr(m, "gate_proj"):
-                m.hidden_size = m.gate_proj.out_features
+                m.hidden_size = m.gate_proj.in_features
+                model.config.intermediate_size = m.gate_proj.out_features
             elif hasattr(m, "gate_up_proj"):
                 m.hidden_size = m.gate_up_proj.in_features
+                model.config.intermediate_size = m.gate_up_proj.out_features
             else:
                 raise ValueError("Unknown mlp layer")
-
+        
     if not _is_gqa:
         model.config.num_key_value_heads = model.config.num_attention_heads
     print("----------------- After Pruning -----------------")
