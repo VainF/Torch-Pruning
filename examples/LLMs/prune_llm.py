@@ -363,7 +363,7 @@ def main():
                 model.config.intermediate_size = m.gate_proj.out_features
             elif hasattr(m, "gate_up_proj"):
                 m.hidden_size = m.gate_up_proj.in_features
-                model.config.intermediate_size = m.gate_up_proj.out_features
+                model.config.intermediate_size = m.gate_up_proj.out_features // 2
             else:
                 raise ValueError("Unknown mlp layer")
         

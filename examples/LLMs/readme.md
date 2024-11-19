@@ -450,7 +450,7 @@ Phi3Config {
   "hidden_act": "silu",
   "hidden_size": 1536,
   "initializer_range": 0.02,
-  "intermediate_size": 8192,
+  "intermediate_size": 4096,
   "max_position_embeddings": 4096,
   "model_type": "phi3",
   "num_attention_heads": 16,
@@ -465,7 +465,7 @@ Phi3Config {
   "sliding_window": 2047,
   "tie_word_embeddings": false,
   "torch_dtype": "float16",
-  "transformers_version": "4.46.2",
+  "transformers_version": "4.46.3",
   "use_cache": true,
   "vocab_size": 32064
 }
