@@ -482,7 +482,7 @@ wikitext perplexity 92795.3984375
 
 ### :rocket: Qwen/Qwen2-7B
 
-The Qwen2-7b model has 28 heads with ``num_key_value_heads=4``. This limits the pruning ratio to be [1/7, 2/7, 3/7, 4/7, 5/7, 6/7] if you want to save and load the pruned model using hugingface transformers, since it HF only supports the same in_features and out_features for the ``q_proj`` and ``o_proj``. 
+The Qwen2-7b model has 28 heads with ``num_key_value_heads=4``. This limits the pruning ratio to be [1/7, 2/7, 3/7, 4/7, 5/7, 6/7] if you want to save and load the pruned model using hugingface transformers, since HF only supports the same in_features and out_features in the ``q_proj`` and ``o_proj``. 
 
 ```bash
 # 3/7 ~ 0.428571428, this script will craft a 2B model
