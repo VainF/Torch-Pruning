@@ -7,6 +7,7 @@ from torch_pruning.pruner.importance import OBDCImportance
 from .scheduler import linear_scheduler
 from ..import function
 from ... import ops, dependency
+import math
 
 class MetaPruner:
     """
@@ -560,13 +561,13 @@ class MetaPruner:
                                 _is_gqa = not all([self.num_heads[qkv_layer]==num_heads for qkv_layer in qkv_layers])
                                 
                                 if not self.global_pruning: # local pruning
-                                    n_heads_removed_per_group = int(self.get_target_head_pruning_ratio(qkv_layers[0]) * len(head_imp))
+                                    n_heads_removed_per_group = math.ceil(self.get_target_head_pruning_ratio(qkv_layers[0]) * len(head_imp))
                                     if not _is_gqa:
                                         head_pruning_indices = torch.topk(head_imp, k=n_heads_removed_per_group, largest=False)[1] # local ranking
                                     else: # chunk the head imp 
                                         num_kv_heads = min([self.num_heads[qkv_layer] for qkv_layer in qkv_layers])
                                         num_heads = max([self.num_heads[qkv_layer] for qkv_layer in qkv_layers])
-                                        n_heads_removed_per_group = n_heads_removed_per_group // num_kv_heads
+                                        n_heads_removed_per_group = math.ceil(n_heads_removed_per_group / num_kv_heads)
                                         head_pruning_indices = []
                                         for kv_head_id in range(num_kv_heads):
                                             head_imp_kv = head_imp[kv_head_id * num_heads//num_kv_heads: (kv_head_id+1) * num_heads//num_kv_heads]
@@ -578,7 +579,7 @@ class MetaPruner:
                                     head_pruning_indices = (head_imp <= head_thres).nonzero().view(-1) # global ranking
                                     if _is_gqa:
                                         num_kv_heads = min([self.num_heads[qkv_layer] for qkv_layer in qkv_layers])
-                                        n_heads_removed_per_group = len(head_pruning_indices) // num_kv_heads
+                                        n_heads_removed_per_group = math.ceil(len(head_pruning_indices) / num_kv_heads)
                                         head_pruning_indices = []
                                         for kv_head_id in range(num_kv_heads):
                                             head_imp_kv = head_imp[kv_head_id * len(head_imp)//num_kv_heads: (kv_head_id+1) * len(head_imp)//num_kv_heads]
