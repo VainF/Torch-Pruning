@@ -82,7 +82,7 @@ Here we provide a quick start for Torch-Pruning. More explained details can be f
 
 ### Why Torch-Pruning?
 
-In structural pruning, the removal of a single parameter may affect multiple layers. For example, pruning an output dimension of a linear layer will require the removal of the corresponding input dimension in the following linear layer as shown in (a). This dependency between layers makes it challenging to prune complicated networks manually. Torch-Pruning addresses this issue by introducing a graph-based algorithm called ``DependencyGraph`` to automatically identify dependencies and collect groups for pruning.
+In structural pruning, the removal of a single parameter may affect multiple layers. For example, pruning an output dimension of a linear layer will require the removal of the corresponding input dimension in the following linear layer as shown in (a). This dependency between layers makes it challenging to prune complicated networks manually. Torch-Pruning addresses this issue by introducing a graph-based algorithm called **[DepGraph](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)** to automatically identify dependencies and collect groups for pruning.
 
 <div align="center">
 <img src="assets/dep.png" width="100%">
