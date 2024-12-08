@@ -9,6 +9,7 @@ This script has been tested with the following models:
 *  [meta-llama/Llama-2-7b-hf](https://huggingface.co/meta-llama/Llama-2-7b-hf)
 *  [microsoft/Phi-3-mini-4k-instruct](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct)
 *  [Qwen/Qwen2-7B](https://huggingface.co/Qwen/Qwen2-7B)
+*  [Qwen/Qwen2.5-7B](https://huggingface.co/Qwen/Qwen2.5-7B)
 
 
 
