@@ -90,8 +90,8 @@ In structural pruning, the removal of a single parameter may affect multiple lay
 
 ### A Minimal Example of DepGraph
  
-
-> **Tip:** Please make sure that AutoGrad is enabled since TP will analyze the model structure with the Pytorch AutoGrad. This means we need to remove ``torch.no_grad()`` or something similar when building the dependency graph.
+> [!IMPORTANT]  
+> Please make sure that AutoGrad is enabled since TP will analyze the model structure with the Pytorch AutoGrad. This means we need to remove ``torch.no_grad()`` or something similar when building the dependency graph.
 
 ```python
 import torch
@@ -196,6 +196,7 @@ print(f"MACs: {base_macs/1e9} G -> {macs/1e9} G, #Params: {base_nparams/1e6} M -
 # ...
 ```
 
+> [!NOTE]  
 > **About the pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by p%, the actual ``parameter_pruning_ratio`` of  will be roughly 1-(1-p%)^2. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which yields a ``parameter_pruning_ratio`` of 1-(1-0.3)^2=0.51 (51% parameters removed).
 
 #### Global Pruning and Isomorphic Pruning
