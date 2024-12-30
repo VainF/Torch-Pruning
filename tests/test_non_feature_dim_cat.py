@@ -49,7 +49,7 @@ def test_pruner():
         if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
             ignored_layers.append(m)
 
-    iterative_steps = 1
+    iterative_steps = 2
     pruner = tp.pruner.MagnitudePruner(
         model,
         example_inputs,
