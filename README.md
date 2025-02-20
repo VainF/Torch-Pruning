@@ -27,7 +27,7 @@ Torch-Pruning (TP) is a framework for structural pruning with the following feat
 For more technical details, please refer to our CVPR'23 paper.
 > [**DepGraph: Towards Any Structural Pruning**](https://openaccess.thecvf.com/content/CVPR2023/html/Fang_DepGraph_Towards_Any_Structural_Pruning_CVPR_2023_paper.html)   
 > *[Gongfan Fang](https://fangggf.github.io/), [Xinyin Ma](https://horseee.github.io/), [Mingli Song](https://person.zju.edu.cn/en/msong), [Michael Bi Mi](https://dblp.org/pid/317/0937.html), [Xinchao Wang](https://sites.google.com/site/sitexinchaowang/)*    
-> *[Learning and Vision Lab](http://lv-nus.org/), National University of Singapore*
+> *[xML Lab](https://sites.google.com/view/xml-nus), National University of Singapore*
 
 
 
