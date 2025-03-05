@@ -251,10 +251,11 @@ def get_llm(model_name, max_seq_len=None):
     model = AutoModelForCausalLM.from_pretrained(
         model_name, 
         torch_dtype=torch.float16, 
+        low_cpu_mem_usage=True, 
         device_map="auto"
     )
 
-    model.seqlen = max(max_seq_len, model.config.max_position_embeddings) if max_seq_len is not None else model.config.max_position_embeddings
+    model.seqlen = min(max_seq_len, model.config.max_position_embeddings) if max_seq_len is not None else model.config.max_position_embeddings
      # avoid OOM, feel free to change this
     return model
 
@@ -339,7 +340,7 @@ def main():
     #print(group)
     
     for g in pruner.step(interactive=True):
-        print(g)
+        #print(g)
         g.prune()
 
     # Update model attributes    
@@ -358,12 +359,14 @@ def main():
             m.num_key_value_groups = m.num_heads // m.num_key_value_heads
         elif name.endswith("mlp"):
             if hasattr(m, "gate_proj"):
-                m.hidden_size = m.gate_proj.out_features
+                m.hidden_size = m.gate_proj.in_features
+                model.config.intermediate_size = m.gate_proj.out_features
             elif hasattr(m, "gate_up_proj"):
                 m.hidden_size = m.gate_up_proj.in_features
+                model.config.intermediate_size = m.gate_up_proj.out_features // 2
             else:
                 raise ValueError("Unknown mlp layer")
-
+        
     if not _is_gqa:
         model.config.num_key_value_heads = model.config.num_attention_heads
     print("----------------- After Pruning -----------------")
