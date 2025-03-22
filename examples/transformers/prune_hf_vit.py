@@ -107,7 +107,7 @@ for m in model.modules():
     if args.bottleneck and isinstance(m, ViTSelfOutput):
         ignored_layers.append(m.dense)
 
-pruner = tp.pruner.MetaPruner(
+pruner = tp.pruner.BasePruner(
                 model, 
                 example_inputs, 
                 global_pruning=args.global_pruning, # If False, a uniform pruning ratio will be assigned to different layers.

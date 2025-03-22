@@ -156,6 +156,9 @@ for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[
 
 ### High-level Pruners
 
+> [!NOTE]  
+> **About the pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by $p\%$, the actual ``parameter_pruning_ratio`` of  will be roughly $1-(1-p\%)^2$. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which yields a ``parameter_pruning_ratio`` of $1-(1-0.3)^2=0.51$ (51% parameters removed).
+
 With DepGraph, we developed several high-level pruners to facilitate effortless pruning. By specifying the desired channel pruning ratio, the pruner will scan all prunable groups, estimate weight importance and perform pruning. You can fine-tune the remaining weights using your own training code. For detailed information on this process, please refer to [this tutorial](https://github.com/VainF/Torch-Pruning/blob/master/examples/notebook/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), which shows how to implement a [Network Slimming (ICCV 2017)](https://arxiv.org/abs/1708.06519) pruner from scratch. Additionally, a more practical example is available in [VainF/Isomorphic-Pruning](https://github.com/VainF/Isomorphic-Pruning) for ViT and ConvNext pruning.
 
 ```python
@@ -167,7 +170,7 @@ model = resnet18(pretrained=True)
 example_inputs = torch.randn(1, 3, 224, 224)
 
 # 1. Importance criterion, here we calculate the L2 Norm of grouped weights as the importance score
-imp = tp.importance.GroupNormImportance(p=2) 
+imp = tp.importance.GroupMagnitudeImportance(p=2) 
 
 # 2. Initialize a pruner with the model and the importance criterion
 ignored_layers = []
@@ -175,7 +178,7 @@ for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m) # DO NOT prune the final classifier!
 
-pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse training is not required.
+pruner = tp.pruner.BasePruner( # We can always choose BasePruner if sparse training is not required.
     model,
     example_inputs,
     importance=imp,
@@ -187,23 +190,52 @@ pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse train
 
 # 3. Prune the model
 base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
+tp.utils.print_tool.before_pruning(model) # or print(model)
 pruner.step()
+tp.utils.print_tool.after_pruning(model) # or print(model), this util will show the difference before and after pruning
 macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
 print(f"MACs: {base_macs/1e9} G -> {macs/1e9} G, #Params: {base_nparams/1e6} M -> {nparams/1e6} M")
+
 
 # 4. finetune the pruned model using your own code.
 # finetune(model)
 # ...
 ```
 
-> [!NOTE]  
-> **About the pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by p%, the actual ``parameter_pruning_ratio`` of  will be roughly 1-(1-p%)^2. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which yields a ``parameter_pruning_ratio`` of 1-(1-0.3)^2=0.51 (51% parameters removed).
+<details>
+  <summary>Output</summary>
+
+```
+ResNet(
+  (conv1): Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False) => (conv1): Conv2d(3, 32, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+  (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True) => (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (relu): ReLU(inplace=True)
+  (maxpool): MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
+...
+     (1): BasicBlock(
+      (conv1): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False) => (conv1): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True) => (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False) => (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True) => (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (avgpool): AdaptiveAvgPool2d(output_size=(1, 1))
+  (fc): Linear(in_features=512, out_features=1000, bias=True) => (fc): Linear(in_features=256, out_features=1000, bias=True)
+)
+
+MACs: 1.822177768 G -> 0.487202536 G, #Params: 11.689512 M -> 3.05588 M
+```
+</details>
+
+
+
 
 #### Global Pruning and Isomorphic Pruning
 Global pruning performs importance ranking on all layers, which has the potential to find better structures. This can be easily achieved by setting ``global_pruning=True`` in the pruner. While this strategy can possibly offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. We provide an alternative algorithm called [Isomorphic Pruning](https://arxiv.org/abs/2407.04616) to alleviate this issue, which can be enabled with ``isomorphic=True``. Comprehensive examples for ViT & ConvNext pruning are available in [this project](https://github.com/VainF/Isomorphic-Pruning).
 
 ```python
-pruner = tp.pruner.MetaPruner(
+pruner = tp.pruner.BasePruner(
     ...
     isomorphic=True, # enable isomorphic pruning to improve global ranking
     global_pruning=True, # global pruning
@@ -218,7 +250,7 @@ pruner = tp.pruner.MetaPruner(
 
 The argument ``pruning_ratio`` detemines the default pruning ratio. If you want to customize the pruning ratio for some layers or blocks, you can use ``pruning_ratio_dict``. The key of the dict can be a single ``nn.Module`` or a tuple of ``nn.Module``. In the second case, all modules in the tuple will form a ``scope`` and share the user-defined pruning ratio and compete to be pruned. 
 ```python
-pruner = tp.pruner.MetaPruner(
+pruner = tp.pruner.BasePruner(
     ...
     global_pruning=True,
     pruning_ratio=0.5, # default pruning ratio

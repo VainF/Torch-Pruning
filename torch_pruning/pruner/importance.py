@@ -19,7 +19,7 @@ __all__ = [
     "Importance",
 
     # Basic Group Importance
-    "GroupNormImportance",
+    "GroupMagnitudeImportance",
     "GroupTaylorImportance",
     "GroupHessianImportance",
 
@@ -55,7 +55,7 @@ class Importance(abc.ABC):
         raise NotImplementedError
 
 
-class GroupNormImportance(Importance):
+class GroupMagnitudeImportance(Importance):
     """ A general implementation of magnitude importance. By default, it calculates the group L2-norm for each channel/dim.
         It supports several variants like:
             - Standard L1-norm of the first layer in a group: MagnitudeImportance(p=1, normalizer=None, group_reduction="first")
@@ -76,7 +76,7 @@ class GroupNormImportance(Importance):
             ```python
                 DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
                 group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
-                scorer = GroupNormImportance()    
+                scorer = GroupMagnitudeImportance()    
                 imp_score = scorer(group)    
                 #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
                 min_score = imp_score.min() 
@@ -269,7 +269,7 @@ class GroupNormImportance(Importance):
         return group_imp
 
 
-class BNScaleImportance(GroupNormImportance):
+class BNScaleImportance(GroupMagnitudeImportance):
     """Learning Efficient Convolutional Networks through Network Slimming, 
     https://arxiv.org/abs/1708.06519
 
@@ -293,7 +293,7 @@ class BNScaleImportance(GroupNormImportance):
         super().__init__(p=1, group_reduction=group_reduction, normalizer=normalizer, bias=False, target_types=(nn.modules.batchnorm._BatchNorm,))
 
 
-class LAMPImportance(GroupNormImportance):
+class LAMPImportance(GroupMagnitudeImportance):
     """Layer-adaptive Sparsity for the Magnitude-based Pruning,
     https://arxiv.org/abs/2010.07611
 
@@ -317,7 +317,7 @@ class LAMPImportance(GroupNormImportance):
         super().__init__(p=p, group_reduction=group_reduction, normalizer=normalizer, bias=bias)
 
 
-class FPGMImportance(GroupNormImportance):
+class FPGMImportance(GroupMagnitudeImportance):
     """Filter Pruning via Geometric Median for Deep Convolutional Neural Networks Acceleration,
     http://openaccess.thecvf.com/content_CVPR_2019/papers/He_Filter_Pruning_via_Geometric_Median_for_Deep_Convolutional_Neural_Networks_CVPR_2019_paper.pdf
     """
@@ -410,7 +410,7 @@ class RandomImportance(Importance):
         return torch.tensor(score, dtype=torch.float32)
 
 
-class GroupTaylorImportance(GroupNormImportance):
+class GroupTaylorImportance(GroupMagnitudeImportance):
     """ Grouped first-order taylor expansion of the loss function.
         https://openaccess.thecvf.com/content_CVPR_2019/papers/Molchanov_Importance_Estimation_for_Neural_Network_Pruning_CVPR_2019_paper.pdf
 
@@ -543,7 +543,7 @@ class GroupTaylorImportance(GroupNormImportance):
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
-class OBDCImportance(GroupNormImportance):
+class OBDCImportance(GroupMagnitudeImportance):
     """EigenDamage: Structured Pruning in the Kronecker-Factored Eigenbasis:
        http://proceedings.mlr.press/v97/wang19g/wang19g.pdf
     """
@@ -661,7 +661,7 @@ class OBDCImportance(GroupNormImportance):
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
-class GroupHessianImportance(GroupNormImportance):
+class GroupHessianImportance(GroupMagnitudeImportance):
     """Grouped Optimal Brain Damage:
        https://proceedings.neurips.cc/paper/1989/hash/6c9882bbac1c7093bd25041881277658-Abstract.html
 
@@ -819,7 +819,7 @@ class GroupHessianImportance(GroupNormImportance):
 
 
 # Aliases
-class MagnitudeImportance(GroupNormImportance):
+class MagnitudeImportance(GroupMagnitudeImportance):
     pass
 
 class TaylorImportance(GroupTaylorImportance):
@@ -830,7 +830,7 @@ class HessianImportance(GroupHessianImportance):
 
 from contextlib import contextmanager
 
-class ActivationImportance(GroupNormImportance):
+class ActivationImportance(GroupMagnitudeImportance):
 
     @contextmanager
     def compute_importance(self, model):

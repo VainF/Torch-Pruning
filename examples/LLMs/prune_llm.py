@@ -313,8 +313,8 @@ def main():
     _is_gqa = model.config.num_attention_heads != model.config.num_key_value_heads
     head_pruning_ratio = args.pruning_ratio
     hidden_size_pruning_ratio = args.pruning_ratio
-    importance = tp.importance.GroupNormImportance(p=2, group_reduction='mean') #tp.importance.ActivationImportance(p=2, target_types=[torch.nn.Linear])
-    pruner = tp.pruner.MetaPruner(
+    importance = tp.importance.GroupMagnitudeImportance(p=2, group_reduction='mean') #tp.importance.ActivationImportance(p=2, target_types=[torch.nn.Linear])
+    pruner = tp.pruner.BasePruner(
         model, 
         example_inputs=inputs,
         importance=importance,

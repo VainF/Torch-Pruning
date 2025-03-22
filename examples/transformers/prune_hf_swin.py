@@ -58,7 +58,7 @@ for m in model.modules():
         num_heads[m.key] = m.num_attention_heads
         num_heads[m.value] = m.num_attention_heads
 
-pruner = tp.pruner.MetaPruner(
+pruner = tp.pruner.BasePruner(
                 model, 
                 example_inputs, 
                 global_pruning=False, # If False, a uniform pruning ratio will be assigned to different layers.

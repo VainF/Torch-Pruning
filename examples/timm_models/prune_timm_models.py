@@ -28,20 +28,35 @@ def main():
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = timm.create_model(args.model, pretrained=args.pretrained, no_jit=True).eval().to(device)
-
-    imp = tp.importance.GroupNormImportance()
-    print("Pruning %s..."%args.model)
-        
+    
+    # Set up the pruner (importance score, num heads, etc.)
+    imp = tp.importance.GroupMagnitudeImportance()
     input_size = model.default_cfg['input_size']
     example_inputs = torch.randn(1, *input_size).to(device)
     test_output = model(example_inputs)
-    ignored_layers = []
+    # In practice, you should add the ouput layer to ignored_layers.
+    ignored_layers = [] 
+    if hasattr(model, 'head'):
+        if isinstance(model.head, nn.Linear):
+            ignored_layers.append(model.head)
+        else:
+            last_linear = None
+            for m in model.head.modules():
+                if isinstance(m, nn.Linear):
+                    last_linear = m
+            if last_linear is not None:
+                ignored_layers.append(last_linear)
+    else:
+        import warnings
+        warnings.warn("Cannot find the output layer in the model. Please add the output layer to ignored_layers.")
+
     num_heads = {}
     pruning_ratio_dict = {}
-    print("========Before pruning========")
-    print(model)
+    for m in model.modules():
+        if isinstance(m, timm.models.vision_transformer.Attention):
+            num_heads[m.qkv] = m.num_heads 
     base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
-    pruner = tp.pruner.MetaPruner(
+    pruner = tp.pruner.BasePruner(
                     model, 
                     example_inputs, 
                     global_pruning=args.global_pruning, # If False, a uniform pruning ratio will be assigned to different layers.
@@ -52,6 +67,9 @@ def main():
                     num_heads=num_heads,
                     ignored_layers=ignored_layers,
                 )
+
+    print("Pruning %s..."%args.model)
+    tp.utils.print_tool.before_pruning(model)
     for g in pruner.step(interactive=True):
         g.prune()
 
@@ -64,9 +82,7 @@ def main():
             elif hasattr(m, 'qkv_proj'):
                 m.num_heads = num_heads[m.qqkv_projkv]
                 m.head_dim = m.qkv_proj.out_features // (3 * m.num_heads)
-
-    print("========After pruning========")
-    print(model)
+    tp.utils.print_tool.after_pruning(model, do_print=True)
     test_output = model(example_inputs)
     pruned_macs, pruned_params = tp.utils.count_ops_and_params(model, example_inputs)
     print("MACs: %.4f G => %.4f G"%(base_macs/1e9, pruned_macs/1e9))
