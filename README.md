@@ -88,7 +88,7 @@ In structural pruning, the removal of a single parameter may affect multiple lay
 <img src="assets/dep.png" width="100%">
 </div>
 
-### A Minimal Example of DepGraph
+### A Minimal Example of DepGraph: The Core Algorithm
  
 > [!IMPORTANT]  
 > Please make sure that AutoGrad is enabled since TP will analyze the model structure with the Pytorch AutoGrad. This means we need to remove ``torch.no_grad()`` or something similar when building the dependency graph.
