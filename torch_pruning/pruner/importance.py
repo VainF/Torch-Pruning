@@ -139,15 +139,15 @@ class GroupMagnitudeImportance(Importance):
     def _reduce(self, group_imp: typing.List[torch.Tensor], group_idxs: typing.List[typing.List[int]]):
         if len(group_imp) == 0: return group_imp
         if self.group_reduction == 'prod':
-            reduced_imp = torch.ones_like(group_imp[0])
+            reduced_imp = torch.ones_like(group_imp[0], dtype=torch.float32)
         elif self.group_reduction == 'max':
-            reduced_imp = torch.ones_like(group_imp[0]) * -99999
+            reduced_imp = torch.ones_like(group_imp[0], dtype=torch.float32) * -99999
         else:
-            reduced_imp = torch.zeros_like(group_imp[0])
+            reduced_imp = torch.zeros_like(group_imp[0], dtype=torch.float32)
         
         n_imp = 0
         for i, (imp, root_idxs) in enumerate(zip(group_imp, group_idxs)):
-            imp = imp.to(reduced_imp.device)
+            imp = imp.to(reduced_imp.device, dtype=reduced_imp.dtype)
             if any([r is None for r in root_idxs]):
                 #warnings.warn("Root idxs contain None values. Skipping this layer...")
                 continue

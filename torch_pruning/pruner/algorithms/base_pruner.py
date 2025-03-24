@@ -431,40 +431,44 @@ class BasePruner:
         ##############################################
         for group in self.DG.get_all_groups(ignored_layers=self.ignored_layers, root_module_types=self.root_module_types):
             if self._check_pruning_ratio(group):
-                # Re-order the group and use a downstream node as the root node for attention layers.
+                # Re-order the nodes in a group and use a downstream node as the root for attention layers.
                 # This will not change the group structure, but make index mapping easier for attention layers.
                 _is_atten, qkv_layers = self._is_atten_group(group)
-
                 if _is_atten:
                     group = self._downstream_node_as_root_if_attention(group)
                     if group is None:
                         continue
+                
                 ch_groups = self._get_channel_groups(group)
                 imp = self.estimate_importance(group)  # raw importance score
                 if imp is None:
                     continue
+                    
                 group_size = len(imp) // ch_groups
                 # layers with dimension grouping, such as GroupConv, GroupNorm, Multi-head attention, etc.
                 if ch_groups > 1:
                     # We average importance across groups here. For example:
-                    # imp = [1, 2, 3, 4, 5, 6] with ch_groups=2.
+                    # w = [1, 2, 3, 4, 5, 6] with groups=2.
                     # We have two groups [1,2,3] and [4,5,6].
-                    # The average importance should be [(1+4)/2, (2+5)/2, (3+6)/2] = [2.5, 3.5, 4.5]
+                    # Those groups should have the same size after pruning,
+                    # With the magnitude importance, we average the importance as [(|1|+|4|)/2, (|2|+|5|)/2, (|3|+|6|)/2] = [2.5, 3.5, 4.5]
+                    # The remaining weights will be [2, 3, 5, 6]
                     dim_imp = imp.view(ch_groups, -1).mean(dim=0).cpu()
                 else:
                     # no grouping
                     dim_imp = imp.cpu()
 
                 # Importance scores for Attention Heads
-                _is_atten, qkv_layers = self._is_atten_group(group)
                 if _is_atten and self.prune_num_heads and self.get_target_head_pruning_ratio(qkv_layers[0]) > 0:
                     # average importance over heads
                     # Example: if we have the importance score:
-                    # imp = [1, 2, 3, 4, 5, 6] with num_heads=2
+                    # w = [1, 2, 3, 4, 5, 6] with num_heads=2
                     # Note: head1 = [1, 2, 3], head2 = [4, 5, 6]
+                    # This is different from grouping. We need to remove the entire head.
                     # the average importance is [(1+2+3)/3, (4+5+6)/3] = [2, 5]
+                    # So, the remaining heads will be [4, 5, 6]
 
-                    # GQA: the number of heads for KV might be different from Q
+                    # GQA: the number of heads for KV might be different from Q (Num_KV<=Num_Q)
                     # get the maximum number of heads
                     num_heads = max([self.num_heads[qkv_layer]
                                     for qkv_layer in qkv_layers])
@@ -553,9 +557,9 @@ class BasePruner:
         width_pruning_scope_names = [
             k for k in ranking_scope.keys() if k != ATTN_HEAD_SCOPE]
         for scope_id, scope_name in enumerate(width_pruning_scope_names):
-            if not self.global_pruning:
-                assert len(
-                    ranking_scope[scope_name]) <= 1, "Internal Error: local pruning should only contain less than one layer per scope."
+            #if not self.global_pruning:
+            #    assert len(
+            #        ranking_scope[scope_name]) <= 1, "Internal Error: local pruning should only contain less than one layer per scope."
 
             # records[i] -> (group, ch_groups, group_size, pruning_ratio, dim_imp)_i
             records = ranking_scope[scope_name]
@@ -603,14 +607,17 @@ class BasePruner:
                                 n_pruned = self._round_to(
                                     n_pruned, current_channels, self.round_to)
                                 _pruning_indices = imp_argsort[:n_pruned]
-                            if ch_groups > 1:  # if channel grouping is enabled, we repeat the pruning indices for each channel group
+                            if ch_groups > 1:  
+                                # if channel grouping is enabled, we repeat the pruning indices for each channel group.
+                                # For example, w=[0,1,2,3,4,5,6,7,8] with groups=3, and the pruning indices are [0].
+                                # We extend the indices as [0, 3, 6] to remove the first element in each group.
                                 for g_id in range(ch_groups):
                                     pruning_indices.append(
                                         _pruning_indices+g_id*group_size)
                             else:
                                 pruning_indices.append(_pruning_indices)
 
-                        # Prune the number of Attention Heads
+                        # Check if this is an Attention that requires head pruning 
                         if len(ranking_scope[ATTN_HEAD_SCOPE]) > 0:
                             if group in ranking_scope[ATTN_HEAD_SCOPE]:
                                 qkv_layers, head_imp = ranking_scope[ATTN_HEAD_SCOPE][group]
@@ -694,7 +701,7 @@ class BasePruner:
                         # create pruning group
                         group = self.DG.get_pruning_group(
                             module, pruning_fn, pruning_indices)
-
+                    
                         if _is_atten:
                             _is_gqa = not all(
                                 [self.num_heads[qkv_layer] == self.num_heads[qkv_layers[0]] for qkv_layer in qkv_layers])
@@ -706,7 +713,7 @@ class BasePruner:
                                 for i in range(len(group)):
                                     dep, idxs = group[i]
                                     if dep.target.module in kv_layers:
-                                        # disable pruning for the kv layers if GQA is enabled
+                                        # disable head pruning for the kv layers if GQA is enabled, since they will be shared by multiple Q heads
                                         group[i] = (dep, [])
 
                         if self.DG.check_pruning_group(group):
