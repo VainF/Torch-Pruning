@@ -288,11 +288,10 @@ def main():
     ##############
     # Pruning
     ##############
-    print("----------------- Before Pruning -----------------")
-    print(model)
+    import torch_pruning as tp 
+    tp.utils.print_tool.before_pruning(model)
     text = "Hello world."
     inputs = torch.tensor(tokenizer.encode(text)).unsqueeze(0).to(model.device)
-    import torch_pruning as tp 
     num_heads = {}
     out_channel_groups = {}
     seperate_qkv = False
@@ -319,6 +318,7 @@ def main():
         example_inputs=inputs,
         importance=importance,
         global_pruning=False,
+        output_transform=lambda x: x.logits,
         pruning_ratio=hidden_size_pruning_ratio,
         ignored_layers=[model.lm_head],
         num_heads=num_heads,
@@ -356,7 +356,10 @@ def main():
             #m.head_dim = m.q_proj.out_features // m.num_heads
             if not _is_gqa:
                 m.num_key_value_heads = m.num_heads
-            m.num_key_value_groups = m.num_heads // m.num_key_value_heads
+                model.config.num_key_value_heads = m.num_heads
+            if hasattr(m, "num_key_value_groups"):
+                m.num_key_value_groups = m.num_heads // model.config.num_key_value_heads
+
         elif name.endswith("mlp"):
             if hasattr(m, "gate_proj"):
                 m.hidden_size = m.gate_proj.in_features
@@ -369,8 +372,7 @@ def main():
         
     if not _is_gqa:
         model.config.num_key_value_heads = model.config.num_attention_heads
-    print("----------------- After Pruning -----------------")
-    print(model)
+    tp.utils.print_tool.after_pruning(model, do_print=True)
     print(model.config)
 
 
