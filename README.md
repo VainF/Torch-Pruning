@@ -46,7 +46,7 @@ Or Join our WeChat group for more discussions: ✉️ [Group-2](https://github.c
 - [Installation](#installation)
 - [Quickstart](#quickstart)
    - [Why Torch-Pruning?](#why-torch-pruning)
-   - [A Minimal Example of DepGraph](#a-minimal-example-of-depgraph)
+   - [How It Works: DepGraph](#how-it-works-depgraph)
    - [High-level Pruners](#high-level-pruners)
      - [Global Pruning and Isomorphic Pruning](#global-pruning-and-isomorphic-pruning)
      - [Pruning Ratios](#pruning-ratios)
@@ -89,7 +89,7 @@ In structural pruning, the removal of a single parameter may affect multiple lay
 <img src="assets/dep.png" width="100%">
 </div>
 
-### A Minimal Example of DepGraph: The Core Algorithm
+### How It Works: DepGraph
  
 > [!IMPORTANT]  
 > Please make sure that AutoGrad is enabled since TP will analyze the model structure with the Pytorch AutoGrad. This means we need to remove ``torch.no_grad()`` or something similar when building the dependency graph.
@@ -116,7 +116,7 @@ model.zero_grad() # clear gradients to avoid a large file size
 torch.save(model, 'model.pth') # !! no .state_dict here since the structure has been changed after pruning
 model = torch.load('model.pth') # load the pruned model
 ```
-The above example shows the basic pruning pipeline using DepGraph. The target layer `model.conv1` is coupled with multiple layers, necessitating their simultaneous removal in structural pruning. We can print the group to take a look at the internal dependencies. In the subsequent outputs, "A => B" indicates that pruning operation "A" triggers pruning operation "B." The first group[0] refers to the root of pruning. For more details about grouping, please refer to [Wiki - DepGraph & Group](https://github.com/VainF/Torch-Pruning/wiki/3.-DepGraph-&-Group).
+The above example shows the core algorithm, DepGraph, that captures the dependencies in structural pruning. The target layer `model.conv1` is coupled with multiple layers, necessitating their simultaneous removal in structural pruning. We can print the group to take a look at the internal dependencies. In the subsequent outputs, "A => B" indicates that pruning operation "A" triggers pruning operation "B." The first group[0] refers to the root of pruning. For more details about grouping, please refer to [Wiki - DepGraph & Group](https://github.com/VainF/Torch-Pruning/wiki/3.-DepGraph-&-Group).
 
 ```python
 print(group.details()) # or print(group)
@@ -158,7 +158,7 @@ for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[
 ### High-level Pruners for Easy Pruning
 
 > [!NOTE]  
-> **About the pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by $p$, the actual ``parameter_pruning_ratio`` of  will be roughly $1-(1-p)^2$. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which leads to the actual parameter pruning ratio of `$1-(1-0.3)^2=0.51$ (51% parameters removed).
+> **The pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by $p$, the actual ``parameter_pruning_ratio`` of  will be roughly $1-(1-p)^2$. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which leads to the actual parameter pruning ratio of `$1-(1-0.3)^2=0.51$ (51% parameters removed).
 
 With DepGraph, we developed several high-level pruners to facilitate effortless pruning. By specifying the desired channel pruning ratio, the pruner will scan all prunable groups, estimate weight importance and perform pruning. You can fine-tune the remaining weights using your own training code. For detailed information on this process, please refer to [this tutorial](https://github.com/VainF/Torch-Pruning/blob/master/examples/notebook/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), which shows how to implement a [Network Slimming (ICCV 2017)](https://arxiv.org/abs/1708.06519) pruner from scratch. Additionally, a more practical example is available in [VainF/Isomorphic-Pruning](https://github.com/VainF/Isomorphic-Pruning) for ViT and ConvNext pruning.
 
