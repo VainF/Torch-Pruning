@@ -44,8 +44,9 @@ Arguments:
 ### :rocket: deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
 
 > [!NOTE]  
-> The Qwen2.5-7B model has 28 heads with ``num_key_value_heads=4``. This limits the pruning ratio to be multiple of 28/4=7 such as [1/7, 2/7, 3/7, 4/7, 5/7, 6/7]. This is a hard constraint if you want to save and load the pruned model using Huggingface Transformers since HF only supports ``in_features==out_features`` in the ``q_proj`` and ``o_proj``. For other models, you need to follow the same rule to enable HF format compatibility. Otherwise, you need to save the model object directly with ``torch.save(model, PATH)``.
+> The Qwen2.5-7B & DeepSeek-R1-Distill-Qwen-7B models have 28 heads with ``num_key_value_heads=4``. This limits the pruning ratio to be multiple of 28/4=7 such as [1/7, 2/7, 3/7, 4/7, 5/7, 6/7]. This is a hard constraint if you want to save and load the pruned model using Huggingface Transformers since HF only supports ``in_features==out_features`` in the ``q_proj`` and ``o_proj``. For other models, you need to follow the same rule to enable HF format compatibility. Otherwise, you need to save the model object directly with ``torch.save(model, PATH)``.
 ```bash
+# 3/7 ~ 0.428571428, this script will craft a 2B model
 python prune_llm.py --model deepseek-ai/DeepSeek-R1-Distill-Qwen-7B --pruning_ratio 0.428571428 --max_seq_len 4096
 ```
 <details>
