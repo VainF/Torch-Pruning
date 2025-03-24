@@ -18,6 +18,32 @@ parser.add_argument('--pretrained', default=False, action='store_true', help='gl
 parser.add_argument('--list_models', default=False, action='store_true', help='list all models in timm')
 args = parser.parse_args()
 
+
+def forward(self, x):
+    """https://github.com/huggingface/pytorch-image-models/blob/054c763fcaa7d241564439ae05fbe919ed85e614/timm/models/vision_transformer.py#L79"""
+    B, N, C = x.shape
+    qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
+    q, k, v = qkv.unbind(0)
+    q, k = self.q_norm(q), self.k_norm(k)
+
+    if self.fused_attn:
+        x = F.scaled_dot_product_attention(
+            q, k, v,
+            dropout_p=self.attn_drop.p,
+        )
+    else:
+        q = q * self.scale
+        attn = q @ k.transpose(-2, -1)
+        attn = attn.softmax(dim=-1)
+        attn = self.attn_drop(attn)
+        x = attn @ v
+
+    x = x.transpose(1, 2).reshape(B, N, -1) # original implementation: x = x.transpose(1, 2).reshape(B, N, C)
+    x = self.proj(x)
+    x = self.proj_drop(x)
+    return x
+
+
 def main():
     timm_models = timm.list_models()
     if args.list_models:
@@ -66,6 +92,7 @@ def main():
                     pruning_ratio_dict=pruning_ratio_dict,
                     num_heads=num_heads,
                     ignored_layers=ignored_layers,
+                    round_to=8,
                 )
 
     print("Pruning %s..."%args.model)
@@ -77,6 +104,7 @@ def main():
         # Attention layers
         if hasattr(m, 'num_heads'):
             if hasattr(m, 'qkv'):
+                m.forward = forward.__get__(m, timm.models.vision_transformer.Attention)
                 m.num_heads = num_heads[m.qkv]
                 m.head_dim = m.qkv.out_features // (3 * m.num_heads)
             elif hasattr(m, 'qkv_proj'):
