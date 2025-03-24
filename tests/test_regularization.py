@@ -15,9 +15,9 @@ def test_pruner():
     example_inputs = torch.randn(1, 3, 224, 224)
 
     for imp_cls, pruner_cls in [
-        [tp.importance.GroupNormImportance, tp.pruner.GroupNormPruner],
+        [tp.importance.GroupMagnitudeImportance, tp.pruner.GroupNormPruner],
         [tp.importance.BNScaleImportance, tp.pruner.BNScalePruner],
-        [tp.importance.GroupNormImportance, tp.pruner.GrowingRegPruner],
+        [tp.importance.GroupMagnitudeImportance, tp.pruner.GrowingRegPruner],
     ]:
         if imp_cls == tp.importance.OBDCImportance:
             imp = imp_cls(num_classes=1000)

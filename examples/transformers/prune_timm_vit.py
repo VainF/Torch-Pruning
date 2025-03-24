@@ -108,9 +108,9 @@ def main():
     elif args.pruning_type == 'taylor':
         imp = tp.importance.GroupTaylorImportance()
     elif args.pruning_type == 'l2':
-        imp = tp.importance.GroupNormImportance(p=2)
+        imp = tp.importance.GroupMagnitudeImportance(p=2)
     elif args.pruning_type == 'l1':
-        imp = tp.importance.GroupNormImportance(p=1)
+        imp = tp.importance.GroupMagnitudeImportance(p=1)
     elif args.pruning_type == 'hessian':
         imp = tp.importance.GroupHessianImportance()
     else: raise NotImplementedError
@@ -125,7 +125,7 @@ def main():
     base_macs, base_params = tp.utils.count_ops_and_params(model, example_inputs)
 
     print("Pruning %s..."%args.model_name)
-    print(model)
+    tp.utils.print_tool.before_pruning(model)
     num_heads = {}
     ignored_layers = [model.head]
     for m in model.modules():
@@ -140,7 +140,7 @@ def main():
         acc_ori, loss_ori = validate_model(model, val_loader, device)
         print("Accuracy: %.4f, Loss: %.4f"%(acc_ori, loss_ori))
 
-    pruner = tp.pruner.MetaPruner(
+    pruner = tp.pruner.BasePruner(
         model, 
         example_inputs, 
         global_pruning=args.global_pruning, # If False, a uniform pruning ratio will be assigned to different layers.
@@ -190,8 +190,7 @@ def main():
             print()
             head_id+=1
 
-    print(model)
-
+    tp.utils.print_tool.after_pruning(model, do_print=True)
     if args.test_accuracy:
         print("Testing accuracy of the pruned model...")
         acc_pruned, loss_pruned = validate_model(model, val_loader, device)

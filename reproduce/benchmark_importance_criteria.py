@@ -92,7 +92,7 @@ for imp_name, imp in imp_dict.items():
             ignored_layers.append(m) # DO NOT prune the final classifier!
     
     iterative_steps = 5
-    pruner = tp.pruner.MetaPruner(
+    pruner = tp.pruner.BasePruner(
         model,
         example_inputs,
         iterative_steps=iterative_steps,

@@ -38,7 +38,7 @@ def test_serialization():
     print(model)
 
     # load the pruned state_dict
-    loaded_state_dict = torch.load('test.pth', map_location='cpu')
+    loaded_state_dict = torch.load('test.pth', map_location='cpu', weights_only=False)
     tp.load_state_dict(model, state_dict=loaded_state_dict)
     print(model)
 

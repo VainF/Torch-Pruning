@@ -43,7 +43,7 @@ Torch-Pruning (TP) 是一个用于结构化剪枝的库，具有以下特点：
 
 
 ### **主要功能：**
-- [x] 高级剪枝器：[MetaPruner](torch_pruning/pruner/algorithms/metapruner.py)、[MagnitudePruner](https://arxiv.org/abs/1608.08710)、[BNScalePruner](https://arxiv.org/abs/1708.06519)、[GroupNormPruner](https://arxiv.org/abs/2301.12900)、[GrowingRegPruner](https://arxiv.org/abs/2012.09243)、RandomPruner等。可以在我们的 [wiki页面](https://github.com/VainF/Torch-Pruning/wiki/0.-Paper-List) 上找到相关论文列表。
+- [x] 高级剪枝器：[BasePruner](torch_pruning/pruner/algorithms/BasePruner.py)、[MagnitudePruner](https://arxiv.org/abs/1608.08710)、[BNScalePruner](https://arxiv.org/abs/1708.06519)、[GroupNormPruner](https://arxiv.org/abs/2301.12900)、[GrowingRegPruner](https://arxiv.org/abs/2012.09243)、RandomPruner等。可以在我们的 [wiki页面](https://github.com/VainF/Torch-Pruning/wiki/0.-Paper-List) 上找到相关论文列表。
 - [x] 自动化结构化剪枝的依赖图
 - [x] [低级剪枝函数](torch_pruning/pruner/function.py)
 - [x] 支持的重要性准则：L-p 范数、Taylor、Random、BNScaling等
@@ -179,7 +179,7 @@ model = resnet18(pretrained=True)
 example_inputs = torch.randn(1, 3, 224, 224)
 
 # 1. Importance criterion
-imp = tp.importance.GroupTaylorImportance() # or GroupNormImportance(p=2), GroupHessianImportance(), etc.
+imp = tp.importance.GroupTaylorImportance() # or GroupMagnitudeImportance(p=2), GroupHessianImportance(), etc.
 
 # 2. Initialize a pruner with the model and the importance criterion
 ignored_layers = []
@@ -187,7 +187,7 @@ for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m) # DO NOT prune the final classifier!
 
-pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse training is not required.
+pruner = tp.pruner.BasePruner( # We can always choose BasePruner if sparse training is not required.
     model,
     example_inputs,
     importance=imp,

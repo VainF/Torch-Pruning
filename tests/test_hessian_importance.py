@@ -15,7 +15,7 @@ def test_hessian():
             ignored_layers.append(m) # DO NOT prune the final classifier!
 
     iterative_steps = 1 # progressive pruning
-    pruner = tp.pruner.MetaPruner(
+    pruner = tp.pruner.BasePruner(
         model,
         example_inputs,
         importance=imp,

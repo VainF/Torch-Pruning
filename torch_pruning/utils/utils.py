@@ -125,3 +125,35 @@ def draw_dependency_graph(DG, save_as, title='Group', figsize=(16, 16), dpi=200,
     fig.tight_layout()
     plt.savefig(save_as, dpi=dpi)
     return fig, ax
+
+class print_tool():
+    _before_pruning = None
+
+    @staticmethod
+    def before_pruning(model):
+        print_tool._before_pruning = str(model)
+
+    @staticmethod
+    def after_pruning(model, do_print=True):
+        if print_tool._before_pruning is None:
+            raise ValueError("Please call print_tool.before_pruning(model) to record the original model.")
+        _after_pruning = str(model)
+        model_str = ""
+        # iterate all lines
+        for line1, line2 in zip(print_tool._before_pruning.split('\n'), _after_pruning.split('\n')):
+            if line1 != line2:
+                line2 = line2.lstrip(' ') # remove the leading spaces
+                model_str+=f"{line1} => {line2}\n"
+            else:
+                model_str+=line1+'\n'
+        if do_print:
+            print(model_str)
+        
+        print_tool._before_pruning = None
+        return model_str
+
+                
+
+    
+
+    
