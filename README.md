@@ -33,6 +33,7 @@ For more technical details, please refer to our CVPR'23 paper.
 
 
 ### Update:
+- 🔥 2025.03.24  Add [DeepSeek-R1-Distill Examples](https://github.com/VainF/Torch-Pruning/tree/master/examples/LLMs).
 - 🔥 2024.11.17  We are working to add more [**examples for LLMs**](https://github.com/VainF/Torch-Pruning/tree/master/examples/LLMs), such as Llama-2/3, Phi-3, Qwen-2/2.5.  
 - 🔥 2024.09.27  Check our latest work, [**MaskLLM (NeurIPS 24 Spotlight)**](https://github.com/NVlabs/MaskLLM), for learnable semi-structured sparsity of LLMs.
 - 🔥 2024.07.20  Add [**Isomorphic Pruning (ECCV'24)**](https://arxiv.org/abs/2407.04616). A SOTA method for Vision Transformers and Modern CNNs.
