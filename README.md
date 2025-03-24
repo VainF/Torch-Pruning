@@ -114,7 +114,7 @@ if DG.check_pruning_group(group): # avoid over-pruning, i.e., channels=0.
 # 4. Save & Load
 model.zero_grad() # clear gradients to avoid a large file size
 torch.save(model, 'model.pth') # !! no .state_dict here since the structure has been changed after pruning
-model = torch.load('model.pth') # load the pruned model
+model = torch.load('model.pth') # load the pruned model. you may need torch.load('model.pth', weights_only=False) for PyTorch 2.6.0+.
 ```
 The above example shows the core algorithm, DepGraph, that captures the dependencies in structural pruning. The target layer `model.conv1` is coupled with multiple layers, necessitating their simultaneous removal in structural pruning. We can print the group to take a look at the internal dependencies. In the subsequent outputs, "A => B" indicates that pruning operation "A" triggers pruning operation "B." The first group[0] refers to the root of pruning. For more details about grouping, please refer to [Wiki - DepGraph & Group](https://github.com/VainF/Torch-Pruning/wiki/3.-DepGraph-&-Group).
 
@@ -347,6 +347,8 @@ The following script saves the whole model object (structure+weights) as a 'mode
 model.zero_grad() # Remove gradients
 torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the pruned model
+# For PyTorch 2.6.0+, you may need weights_only=False to enable model loading
+# model = torch.load('model.pth', weights_only=False)
 ```
                    
 ### Low-level Pruning Functions
