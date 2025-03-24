@@ -9,10 +9,10 @@ This script has been tested with the following models:
 *  [Qwen/Qwen2.5-7B](https://huggingface.co/Qwen/Qwen2.5-7B)
 *  [Qwen/Qwen2-7B](https://huggingface.co/Qwen/Qwen2-7B)
 *  [meta-llama/Llama-3.1-8B](https://huggingface.co/meta-llama/Llama-3.1-8B)
+*  [meta-llama/Llama-3.2-3B](https://huggingface.co/meta-llama/Llama-3.2-3B)
 *  [meta-llama/Meta-Llama-3-8B](https://huggingface.co/meta-llama/Meta-Llama-3-8B)
 *  [meta-llama/Llama-2-7b-hf](https://huggingface.co/meta-llama/Llama-2-7b-hf)
 *  [microsoft/Phi-3-mini-4k-instruct](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct)
-
 
 Other Llama-based models should work as well.
 
@@ -47,7 +47,7 @@ Arguments:
 > The Qwen2.5-7B & DeepSeek-R1-Distill-Qwen-7B models have 28 heads with ``num_key_value_heads=4``. This limits the pruning ratio to be multiple of 28/4=7 such as [1/7, 2/7, 3/7, 4/7, 5/7, 6/7]. This is a hard constraint if you want to save and load the pruned model using Huggingface Transformers since HF only supports ``in_features==out_features`` in the ``q_proj`` and ``o_proj``. For other models, you need to follow the same rule to enable HF format compatibility. Otherwise, you need to save the model object directly with ``torch.save(model, PATH)``.
 ```bash
 # 3/7 ~ 0.428571428, this script will craft a 2B model
-python prune_llm.py --model deepseek-ai/DeepSeek-R1-Distill-Qwen-7B --pruning_ratio 0.428571428 --max_seq_len 4096
+python prune_llm.py --model deepseek-ai/DeepSeek-R1-Distill-Qwen-7B --pruning_ratio 0.428571428 --max_seq_len 4096 # --save_model pruned_model
 ```
 <details>
 <summary>Output:</summary>
@@ -130,7 +130,7 @@ wikitext perplexity 28358.30078125
 
 ```bash
 # 3/7 ~ 0.428571428, this script will craft a 2B model
-python prune_llm.py --model Qwen/Qwen2.5-7B-Instruct --pruning_ratio 0.428571428 --max_seq_len 4096
+python prune_llm.py --model Qwen/Qwen2.5-7B-Instruct --pruning_ratio 0.428571428 --max_seq_len 4096 # --save_model pruned_model
 ```
 
 <details>
@@ -209,7 +209,7 @@ wikitext perplexity 150926.78125
 ### :rocket: Qwen/Qwen2.5-7B
 ```bash
 # 3/7 ~ 0.428571428, this script will craft a 2B model
-python prune_llm.py --model Qwen/Qwen2.5-7B --pruning_ratio 0.428571428 --max_seq_len 4096
+python prune_llm.py --model Qwen/Qwen2.5-7B --pruning_ratio 0.428571428 --max_seq_len 4096 # --save_model pruned_model
 ```
 
 <details>
@@ -291,7 +291,7 @@ wikitext perplexity 307206.03125
 ### :rocket: Llama-3.1 8B
 
 ```bash
-python prune_llm.py --model meta-llama/Llama-3.1-8B --pruning_ratio 0.5 --max_seq_len 4096 
+python prune_llm.py --model meta-llama/Llama-3.1-8B --pruning_ratio 0.5 --max_seq_len 4096 # --save_model pruned_model
 ```
 <details>
 <summary>Output:</summary>
@@ -371,10 +371,99 @@ wikitext perplexity 576501.0
 
 </details>
 
+
+### :rocket: Llama-3.2 3B
+
+```bash
+python prune_llm.py --model meta-llama/Llama-3.2-3B --pruning_ratio 0.5 --max_seq_len 4096 # --save_model pruned_model
+```
+<details>
+<summary>Output:</summary>
+
+```
+LlamaForCausalLM(
+  (model): LlamaModel(
+    (embed_tokens): Embedding(128256, 3072) => (embed_tokens): Embedding(128256, 1536)
+    (layers): ModuleList(
+      (0-27): 28 x LlamaDecoderLayer(
+        (self_attn): LlamaAttention(
+          (q_proj): Linear(in_features=3072, out_features=3072, bias=False) => (q_proj): Linear(in_features=1536, out_features=3072, bias=False)
+          (k_proj): Linear(in_features=3072, out_features=1024, bias=False) => (k_proj): Linear(in_features=1536, out_features=1024, bias=False)
+          (v_proj): Linear(in_features=3072, out_features=1024, bias=False) => (v_proj): Linear(in_features=1536, out_features=1024, bias=False)
+          (o_proj): Linear(in_features=3072, out_features=3072, bias=False) => (o_proj): Linear(in_features=3072, out_features=1536, bias=False)
+        )
+        (mlp): LlamaMLP(
+          (gate_proj): Linear(in_features=3072, out_features=8192, bias=False) => (gate_proj): Linear(in_features=1536, out_features=4096, bias=False)
+          (up_proj): Linear(in_features=3072, out_features=8192, bias=False) => (up_proj): Linear(in_features=1536, out_features=4096, bias=False)
+          (down_proj): Linear(in_features=8192, out_features=3072, bias=False) => (down_proj): Linear(in_features=4096, out_features=1536, bias=False)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): LlamaRMSNorm((3072,), eps=1e-05) => (input_layernorm): LlamaRMSNorm((1536,), eps=1e-05)
+        (post_attention_layernorm): LlamaRMSNorm((3072,), eps=1e-05) => (post_attention_layernorm): LlamaRMSNorm((1536,), eps=1e-05)
+      )
+    )
+    (norm): LlamaRMSNorm((3072,), eps=1e-05) => (norm): LlamaRMSNorm((1536,), eps=1e-05)
+    (rotary_emb): LlamaRotaryEmbedding()
+  )
+  (lm_head): Linear(in_features=3072, out_features=128256, bias=False) => (lm_head): Linear(in_features=1536, out_features=128256, bias=False)
+)
+
+LlamaConfig {
+  "_attn_implementation_autoset": true,
+  "_name_or_path": "meta-llama/Llama-3.2-3B",
+  "architectures": [
+    "LlamaForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "bos_token_id": 128000,
+  "eos_token_id": 128001,
+  "head_dim": 128,
+  "hidden_act": "silu",
+  "hidden_size": 1536,
+  "initializer_range": 0.02,
+  "intermediate_size": 4096,
+  "max_position_embeddings": 131072,
+  "mlp_bias": false,
+  "model_type": "llama",
+  "num_attention_heads": 24,
+  "num_hidden_layers": 28,
+  "num_key_value_heads": 8,
+  "pretraining_tp": 1,
+  "rms_norm_eps": 1e-05,
+  "rope_scaling": {
+    "factor": 32.0,
+    "high_freq_factor": 4.0,
+    "low_freq_factor": 1.0,
+    "original_max_position_embeddings": 8192,
+    "rope_type": "llama3"
+  },
+  "rope_theta": 500000.0,
+  "tie_word_embeddings": true,
+  "torch_dtype": "float16",
+  "transformers_version": "4.48.3",
+  "use_cache": true,
+  "vocab_size": 128256
+}
+
+num_params 1274893824
+evaluating on wikitext2
+Token indices sequence length is longer than the specified maximum sequence length for this model (2458791 > 131072). Running this sequence through the model will result in indexing errors
+nsamples 70
+sample 0
+sample 50
+wikitext perplexity 58421.9375
+```
+
+</details>
+
+
+
+
 ### :rocket: microsoft/Phi-3-mini-4k-instruct
 
 ```bash
-python prune_llm.py --model microsoft/Phi-3-mini-4k-instruct --pruning_ratio 0.5
+python prune_llm.py --model microsoft/Phi-3-mini-4k-instruct --pruning_ratio 0.5 # --save_model pruned_model
 ```
 
 
