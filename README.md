@@ -155,7 +155,7 @@ for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[
     print(group)
 ```
 
-### High-level Pruners for Easy Pruning
+### High-level Pruners
 
 > [!NOTE]  
 > **The pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by $p$, the actual ``parameter_pruning_ratio`` of  will be roughly $1-(1-p)^2$. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which leads to the actual parameter pruning ratio of `$1-(1-0.3)^2=0.51$ (51% parameters removed).
