@@ -88,7 +88,7 @@ In structural pruning, the removal of a single parameter may affect multiple lay
 <img src="assets/dep.png" width="100%">
 </div>
 
-### A Minimal Example of DepGraph
+### A Minimal Example of DepGraph: The Core Algorithm
  
 > [!IMPORTANT]  
 > Please make sure that AutoGrad is enabled since TP will analyze the model structure with the Pytorch AutoGrad. This means we need to remove ``torch.no_grad()`` or something similar when building the dependency graph.
@@ -154,10 +154,10 @@ for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[
     print(group)
 ```
 
-### High-level Pruners
+### High-level Pruners for Easy Pruning
 
 > [!NOTE]  
-> **About the pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by $p\%$, the actual ``parameter_pruning_ratio`` of  will be roughly $1-(1-p\%)^2$. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which yields a ``parameter_pruning_ratio`` of $1-(1-0.3)^2=0.51$ (51% parameters removed).
+> **About the pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by $p$, the actual ``parameter_pruning_ratio`` of  will be roughly $1-(1-p)^2$. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which leads to the actual parameter pruning ratio of `$1-(1-0.3)^2=0.51$ (51% parameters removed).
 
 With DepGraph, we developed several high-level pruners to facilitate effortless pruning. By specifying the desired channel pruning ratio, the pruner will scan all prunable groups, estimate weight importance and perform pruning. You can fine-tune the remaining weights using your own training code. For detailed information on this process, please refer to [this tutorial](https://github.com/VainF/Torch-Pruning/blob/master/examples/notebook/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), which shows how to implement a [Network Slimming (ICCV 2017)](https://arxiv.org/abs/1708.06519) pruner from scratch. Additionally, a more practical example is available in [VainF/Isomorphic-Pruning](https://github.com/VainF/Isomorphic-Pruning) for ViT and ConvNext pruning.
 
@@ -204,7 +204,8 @@ print(f"MACs: {base_macs/1e9} G -> {macs/1e9} G, #Params: {base_nparams/1e6} M -
 
 <details>
   <summary>Output</summary>
-
+  
+The model difference before and after pruning will be highlighted by something like `(conv1): Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False) => (conv1): Conv2d(3, 32, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)`.
 ```
 ResNet(
   (conv1): Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False) => (conv1): Conv2d(3, 32, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
