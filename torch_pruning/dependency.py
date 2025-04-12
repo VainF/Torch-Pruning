@@ -365,7 +365,7 @@ class DependencyGraph(object):
         # Ignore layers & nn.Parameter
         if ignored_layers is not None:
             self.IGNORED_LAYERS_IN_TRACING.extend(ignored_layers)
-        self.ignored_params = ignored_params
+        self.ignored_params = ignored_params if ignored_params is not None else []
 
         # Ignore all sub-modules of customized layers since they will be handled by the customized pruner
         for layer_type_or_instance in self.CUSTOMIZED_PRUNERS.keys():            
