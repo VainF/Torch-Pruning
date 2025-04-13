@@ -210,15 +210,15 @@ def get_pruner(model, example_inputs):
         imp = tp.importance.BNScaleImportance()
         pruner_entry = partial(tp.pruner.BNScalePruner, reg=args.reg, global_pruning=args.global_pruning, group_lasso=True)
     elif args.method == "group_norm":
-        imp = tp.importance.GroupNormImportance(p=2)
+        imp = tp.importance.GroupMagnitudeImportance(p=2)
         pruner_entry = partial(tp.pruner.GroupNormPruner, global_pruning=args.global_pruning)
     elif args.method == "group_sl":
         args.sparsity_learning = True
-        imp = tp.importance.GroupNormImportance(p=2, normalizer='max') # normalized by the maximum score for CIFAR
+        imp = tp.importance.GroupMagnitudeImportance(p=2, normalizer='max') # normalized by the maximum score for CIFAR
         pruner_entry = partial(tp.pruner.GroupNormPruner, reg=args.reg, global_pruning=args.global_pruning)
     elif args.method == "growing_reg":
         args.sparsity_learning = True
-        imp = tp.importance.GroupNormImportance(p=2)
+        imp = tp.importance.GroupMagnitudeImportance(p=2)
         pruner_entry = partial(tp.pruner.GrowingRegPruner, reg=args.reg, delta_reg=args.delta_reg, global_pruning=args.global_pruning)
     else:
         raise NotImplementedError

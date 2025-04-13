@@ -11,7 +11,7 @@
   <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-1.x %20%7C%202.x-673ab7.svg" alt="Tested PyTorch Versions"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-4caf50.svg" alt="License"></a>
   <a href="https://pepy.tech/project/Torch-Pruning"><img src="https://static.pepy.tech/badge/Torch-Pruning?color=2196f3" alt="Downloads"></a>
-  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.5.1-3f51b5.svg" alt="Latest Version"></a>
+  <a href="https://github.com/VainF/Torch-Pruning/releases/latest"><img src="https://img.shields.io/badge/Latest%20Version-1.5.2-3f51b5.svg" alt="Latest Version"></a>
   <a href="https://colab.research.google.com/drive/1TRvELQDNj9PwM-EERWbF3IQOyxZeDepp?usp=sharing">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
@@ -33,6 +33,7 @@ For more technical details, please refer to our CVPR'23 paper.
 
 
 ### Update:
+- 🔥 2025.03.24  Examples for pruning [**DeepSeek-R1-Distill**](https://github.com/VainF/Torch-Pruning/tree/master/examples/LLMs).
 - 🔥 2024.11.17  We are working to add more [**examples for LLMs**](https://github.com/VainF/Torch-Pruning/tree/master/examples/LLMs), such as Llama-2/3, Phi-3, Qwen-2/2.5.  
 - 🔥 2024.09.27  Check our latest work, [**MaskLLM (NeurIPS 24 Spotlight)**](https://github.com/NVlabs/MaskLLM), for learnable semi-structured sparsity of LLMs.
 - 🔥 2024.07.20  Add [**Isomorphic Pruning (ECCV'24)**](https://arxiv.org/abs/2407.04616). A SOTA method for Vision Transformers and Modern CNNs.
@@ -45,7 +46,7 @@ Or Join our WeChat group for more discussions: ✉️ [Group-2](https://github.c
 - [Installation](#installation)
 - [Quickstart](#quickstart)
    - [Why Torch-Pruning?](#why-torch-pruning)
-   - [A Minimal Example of DepGraph](#a-minimal-example-of-depgraph)
+   - [How It Works: DepGraph](#how-it-works-depgraph)
    - [High-level Pruners](#high-level-pruners)
      - [Global Pruning and Isomorphic Pruning](#global-pruning-and-isomorphic-pruning)
      - [Pruning Ratios](#pruning-ratios)
@@ -88,7 +89,7 @@ In structural pruning, the removal of a single parameter may affect multiple lay
 <img src="assets/dep.png" width="100%">
 </div>
 
-### A Minimal Example of DepGraph
+### How It Works: DepGraph
  
 > [!IMPORTANT]  
 > Please make sure that AutoGrad is enabled since TP will analyze the model structure with the Pytorch AutoGrad. This means we need to remove ``torch.no_grad()`` or something similar when building the dependency graph.
@@ -113,9 +114,9 @@ if DG.check_pruning_group(group): # avoid over-pruning, i.e., channels=0.
 # 4. Save & Load
 model.zero_grad() # clear gradients to avoid a large file size
 torch.save(model, 'model.pth') # !! no .state_dict here since the structure has been changed after pruning
-model = torch.load('model.pth') # load the pruned model
+model = torch.load('model.pth') # load the pruned model. you may need torch.load('model.pth', weights_only=False) for PyTorch 2.6.0+.
 ```
-The above example shows the basic pruning pipeline using DepGraph. The target layer `model.conv1` is coupled with multiple layers, necessitating their simultaneous removal in structural pruning. We can print the group to take a look at the internal dependencies. In the subsequent outputs, "A => B" indicates that pruning operation "A" triggers pruning operation "B." The first group[0] refers to the root of pruning. For more details about grouping, please refer to [Wiki - DepGraph & Group](https://github.com/VainF/Torch-Pruning/wiki/3.-DepGraph-&-Group).
+The above example shows the core algorithm, DepGraph, that captures the dependencies in structural pruning. The target layer `model.conv1` is coupled with multiple layers, necessitating their simultaneous removal in structural pruning. We can print the group to take a look at the internal dependencies. In the subsequent outputs, "A => B" indicates that pruning operation "A" triggers pruning operation "B." The first group[0] refers to the root of pruning. For more details about grouping, please refer to [Wiki - DepGraph & Group](https://github.com/VainF/Torch-Pruning/wiki/3.-DepGraph-&-Group).
 
 ```python
 print(group.details()) # or print(group)
@@ -156,6 +157,9 @@ for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[
 
 ### High-level Pruners
 
+> [!NOTE]  
+> **The pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by $p$, the actual ``parameter_pruning_ratio`` of  will be roughly $1-(1-p)^2$. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which leads to the actual parameter pruning ratio of `$1-(1-0.3)^2=0.51$ (51% parameters removed).
+
 With DepGraph, we developed several high-level pruners to facilitate effortless pruning. By specifying the desired channel pruning ratio, the pruner will scan all prunable groups, estimate weight importance and perform pruning. You can fine-tune the remaining weights using your own training code. For detailed information on this process, please refer to [this tutorial](https://github.com/VainF/Torch-Pruning/blob/master/examples/notebook/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), which shows how to implement a [Network Slimming (ICCV 2017)](https://arxiv.org/abs/1708.06519) pruner from scratch. Additionally, a more practical example is available in [VainF/Isomorphic-Pruning](https://github.com/VainF/Isomorphic-Pruning) for ViT and ConvNext pruning.
 
 ```python
@@ -167,7 +171,7 @@ model = resnet18(pretrained=True)
 example_inputs = torch.randn(1, 3, 224, 224)
 
 # 1. Importance criterion, here we calculate the L2 Norm of grouped weights as the importance score
-imp = tp.importance.GroupNormImportance(p=2) 
+imp = tp.importance.GroupMagnitudeImportance(p=2) 
 
 # 2. Initialize a pruner with the model and the importance criterion
 ignored_layers = []
@@ -175,7 +179,7 @@ for m in model.modules():
     if isinstance(m, torch.nn.Linear) and m.out_features == 1000:
         ignored_layers.append(m) # DO NOT prune the final classifier!
 
-pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse training is not required.
+pruner = tp.pruner.BasePruner( # We can always choose BasePruner if sparse training is not required.
     model,
     example_inputs,
     importance=imp,
@@ -187,23 +191,53 @@ pruner = tp.pruner.MetaPruner( # We can always choose MetaPruner if sparse train
 
 # 3. Prune the model
 base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
+tp.utils.print_tool.before_pruning(model) # or print(model)
 pruner.step()
+tp.utils.print_tool.after_pruning(model) # or print(model), this util will show the difference before and after pruning
 macs, nparams = tp.utils.count_ops_and_params(model, example_inputs)
 print(f"MACs: {base_macs/1e9} G -> {macs/1e9} G, #Params: {base_nparams/1e6} M -> {nparams/1e6} M")
+
 
 # 4. finetune the pruned model using your own code.
 # finetune(model)
 # ...
 ```
 
-> [!NOTE]  
-> **About the pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by p%, the actual ``parameter_pruning_ratio`` of  will be roughly 1-(1-p%)^2. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which yields a ``parameter_pruning_ratio`` of 1-(1-0.3)^2=0.51 (51% parameters removed).
+<details>
+  <summary>Output</summary>
+  
+The model difference before and after pruning will be highlighted by something like `(conv1): Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False) => (conv1): Conv2d(3, 32, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)`.
+```
+ResNet(
+  (conv1): Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False) => (conv1): Conv2d(3, 32, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+  (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True) => (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (relu): ReLU(inplace=True)
+  (maxpool): MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
+...
+     (1): BasicBlock(
+      (conv1): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False) => (conv1): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True) => (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace=True)
+      (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False) => (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True) => (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (avgpool): AdaptiveAvgPool2d(output_size=(1, 1))
+  (fc): Linear(in_features=512, out_features=1000, bias=True) => (fc): Linear(in_features=256, out_features=1000, bias=True)
+)
+
+MACs: 1.822177768 G -> 0.487202536 G, #Params: 11.689512 M -> 3.05588 M
+```
+</details>
+
+
+
 
 #### Global Pruning and Isomorphic Pruning
 Global pruning performs importance ranking on all layers, which has the potential to find better structures. This can be easily achieved by setting ``global_pruning=True`` in the pruner. While this strategy can possibly offer performance advantages, it also carries the potential of overly pruning specific layers, resulting in a substantial decline in overall performance. We provide an alternative algorithm called [Isomorphic Pruning](https://arxiv.org/abs/2407.04616) to alleviate this issue, which can be enabled with ``isomorphic=True``. Comprehensive examples for ViT & ConvNext pruning are available in [this project](https://github.com/VainF/Isomorphic-Pruning).
 
 ```python
-pruner = tp.pruner.MetaPruner(
+pruner = tp.pruner.BasePruner(
     ...
     isomorphic=True, # enable isomorphic pruning to improve global ranking
     global_pruning=True, # global pruning
@@ -218,7 +252,7 @@ pruner = tp.pruner.MetaPruner(
 
 The argument ``pruning_ratio`` detemines the default pruning ratio. If you want to customize the pruning ratio for some layers or blocks, you can use ``pruning_ratio_dict``. The key of the dict can be a single ``nn.Module`` or a tuple of ``nn.Module``. In the second case, all modules in the tuple will form a ``scope`` and share the user-defined pruning ratio and compete to be pruned. 
 ```python
-pruner = tp.pruner.MetaPruner(
+pruner = tp.pruner.BasePruner(
     ...
     global_pruning=True,
     pruning_ratio=0.5, # default pruning ratio
@@ -313,6 +347,8 @@ The following script saves the whole model object (structure+weights) as a 'mode
 model.zero_grad() # Remove gradients
 torch.save(model, 'model.pth') # without .state_dict
 model = torch.load('model.pth') # load the pruned model
+# For PyTorch 2.6.0+, you may need weights_only=False to enable model loading
+# model = torch.load('model.pth', weights_only=False)
 ```
                    
 ### Low-level Pruning Functions

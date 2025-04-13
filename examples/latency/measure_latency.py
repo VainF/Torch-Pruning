@@ -78,7 +78,7 @@ def main():
             num_heads[m.qkv] = m.num_heads 
         if args.bottleneck and isinstance(m, timm.models.vision_transformer.Mlp): 
             ignored_layers.append(m.fc2) # only prune the internal layers of FFN & Attention
-    pruner = tp.pruner.MetaPruner(
+    pruner = tp.pruner.BasePruner(
         model, 
         example_inputs, 
         iterative_steps=10,

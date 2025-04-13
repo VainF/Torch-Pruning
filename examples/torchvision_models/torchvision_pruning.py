@@ -187,7 +187,7 @@ if __name__ == "__main__":
         #########################################
         # Build network pruners
         #########################################
-        importance = tp.importance.GroupNormImportance(p=1)
+        importance = tp.importance.GroupMagnitudeImportance(p=1)
         pruner = tp.pruner.GroupNormPruner(
             model,
             example_inputs=example_inputs,

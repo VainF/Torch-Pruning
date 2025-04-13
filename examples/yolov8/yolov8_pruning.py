@@ -326,7 +326,7 @@ def prune(args):
         pruner = tp.pruner.GroupNormPruner(
             model.model,
             example_inputs,
-            importance=tp.importance.GroupNormImportance(),  # L2 norm pruning,
+            importance=tp.importance.GroupMagnitudeImportance(),  # L2 norm pruning,
             iterative_steps=1,
             pruning_ratio=pruning_ratio,
             ignored_layers=ignored_layers,

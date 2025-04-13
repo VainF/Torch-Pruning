@@ -82,7 +82,7 @@ def test_pruner_TransposeConv():
         tp.importance.MagnitudeImportance(p=2),
         tp.importance.LAMPImportance(p=2),
         tp.importance.BNScaleImportance(),
-        tp.importance.GroupNormImportance(p=2),   
+        tp.importance.GroupMagnitudeImportance(p=2),   
     ]:
         for Pruner in [
             tp.pruner.MagnitudePruner,
