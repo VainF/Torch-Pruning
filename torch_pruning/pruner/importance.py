@@ -42,16 +42,16 @@ class Importance(abc.ABC):
 
         Example:
             ```python
-            DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
-            group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
-            scorer = MagnitudeImportance()    
-            imp_score = scorer(group)    
-            #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
-            min_score = imp_score.min() 
-            ``` 
+            DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
+            group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )
+            scorer = MagnitudeImportance()
+            imp_score = scorer(group)
+            #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]
+            min_score = imp_score.min()
+            ```
     """
     @abc.abstractclassmethod
-    def __call__(self, group: Group) -> torch.Tensor: 
+    def __call__(self, group: Group) -> torch.Tensor:
         raise NotImplementedError
 
 
@@ -69,23 +69,23 @@ class GroupMagnitudeImportance(Importance):
             * target_types (list): the target types for importance calculation. Default: [nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm]
 
         Example:
-    
+
             It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
             All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
-            
+
             ```python
-                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
-                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
-                scorer = GroupMagnitudeImportance()    
-                imp_score = scorer(group)    
-                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
-                min_score = imp_score.min() 
-            ``` 
+                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
+                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )
+                scorer = GroupMagnitudeImportance()
+                imp_score = scorer(group)
+                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]
+                min_score = imp_score.min()
+            ```
     """
-    def __init__(self, 
-                 p: int=2, 
-                 group_reduction: str="mean", 
-                 normalizer: str='mean', 
+    def __init__(self,
+                 p: int=2,
+                 group_reduction: str="mean",
+                 normalizer: str='mean',
                  bias=False,
                  target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm, nn.LayerNorm]):
         self.p = p
@@ -109,30 +109,30 @@ class GroupMagnitudeImportance(Importance):
         # tidy up and output
         new_scores = torch.zeros(scores_cumsum.shape,device=scores.device)
         new_scores[sorted_idx] = sorted_scores
-        
+
         return new_scores.view(scores.shape)
-    
+
     def _normalize(self, group_importance, normalizer):
         if normalizer is None:
             return group_importance
         elif isinstance(normalizer, typing.Callable):
             return normalizer(group_importance)
-        elif normalizer == "sum":
-            return group_importance / group_importance.sum()
-        elif normalizer == "standarization":
-            return (group_importance - group_importance.min()) / (group_importance.max() - group_importance.min()+1e-8)
-        elif normalizer == "mean":
-            return group_importance / group_importance.mean()
-        elif normalizer == "max":
-            return group_importance / group_importance.max()
-        elif normalizer == 'gaussian':
-            return (group_importance - group_importance.mean()) / (group_importance.std()+1e-8)
-        elif normalizer.startswith('sentinel'): # normalize the score with the k-th smallest element. e.g. sentinel_0.5 means median normalization
+
+        normalizer_map = {
+            "sum": lambda x: x / x.sum(),
+            "standarization": lambda x: (x - x.min()) / (x.max() - x.min() + 1e-8),
+            "mean": lambda x: x / x.mean(),
+            "max": lambda x: x / x.max(),
+            "gaussian": lambda x: (x - x.mean()) / (x.std() + 1e-8),
+            "lamp": lambda x: self._lamp(x)
+        }
+
+        if normalizer in normalizer_map:
+            return normalizer_map[normalizer](group_importance)
+        elif normalizer.startswith('sentinel'):
             sentinel = float(normalizer.split('_')[1]) * len(group_importance)
             sentinel = torch.argsort(group_importance, dim=0, descending=False)[int(sentinel)]
-            return group_importance / (group_importance[sentinel]+1e-8)
-        elif normalizer=='lamp':
-            return self._lamp(group_importance)
+            return group_importance / (group_importance[sentinel] + 1e-8)
         else:
             raise NotImplementedError
 
@@ -144,7 +144,7 @@ class GroupMagnitudeImportance(Importance):
             reduced_imp = torch.ones_like(group_imp[0], dtype=torch.float32) * -99999
         else:
             reduced_imp = torch.zeros_like(group_imp[0], dtype=torch.float32)
-        
+
         n_imp = 0
         for i, (imp, root_idxs) in enumerate(zip(group_imp, group_idxs)):
             imp = imp.to(reduced_imp.device, dtype=reduced_imp.dtype)
@@ -176,7 +176,7 @@ class GroupMagnitudeImportance(Importance):
         if self.group_reduction == "mean":
             reduced_imp /= n_imp
         return reduced_imp
-    
+
     @torch.no_grad()
     def __call__(self, group: Group):
         group_imp = []
@@ -225,7 +225,7 @@ class GroupMagnitudeImportance(Importance):
                 # repeat importance for group convolutions
                 if prune_fn == function.prune_conv_in_channels and layer.groups != layer.in_channels and layer.groups != 1:
                     local_imp = local_imp.repeat(layer.groups)
-                
+
                 local_imp = local_imp[idxs]
                 group_imp.append(local_imp)
                 group_idxs.append(root_idxs)
@@ -270,22 +270,22 @@ class GroupMagnitudeImportance(Importance):
 
 
 class BNScaleImportance(GroupMagnitudeImportance):
-    """Learning Efficient Convolutional Networks through Network Slimming, 
+    """Learning Efficient Convolutional Networks through Network Slimming,
     https://arxiv.org/abs/1708.06519
 
     Example:
-    
+
         It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
         All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
-        
+
         ```python
-            DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
-            group = DG.get_pruning_group( model.bn1, tp.prune_batchnorm_out_channels, idxs=[2, 6, 9] )    
-            scorer = BNScaleImportance()    
-            imp_score = scorer(group)    
-            #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
-            min_score = imp_score.min() 
-        ``` 
+            DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
+            group = DG.get_pruning_group( model.bn1, tp.prune_batchnorm_out_channels, idxs=[2, 6, 9] )
+            scorer = BNScaleImportance()
+            imp_score = scorer(group)
+            #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]
+            min_score = imp_score.min()
+        ```
 
     """
 
@@ -298,18 +298,18 @@ class LAMPImportance(GroupMagnitudeImportance):
     https://arxiv.org/abs/2010.07611
 
     Example:
-    
+
             It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
             All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
-            
+
             ```python
-                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
-                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
-                scorer = LAMPImportance()    
-                imp_score = scorer(group)    
-                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
-                min_score = imp_score.min() 
-            ``` 
+                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
+                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )
+                scorer = LAMPImportance()
+                imp_score = scorer(group)
+                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]
+                min_score = imp_score.min()
+            ```
     """
 
     def __init__(self, p=2, group_reduction="mean", normalizer='lamp', bias=False):
@@ -389,18 +389,18 @@ class FPGMImportance(GroupMagnitudeImportance):
 class RandomImportance(Importance):
     """ Random importance estimator
     Example:
-    
+
             It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
             All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
-            
+
             ```python
-                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
-                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
-                scorer = RandomImportance()    
-                imp_score = scorer(group)    
-                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
-                min_score = imp_score.min() 
-            ``` 
+                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
+                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )
+                scorer = RandomImportance()
+                imp_score = scorer(group)
+                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]
+                min_score = imp_score.min()
+            ```
     """
     @torch.no_grad()
     def __call__(self, group, **kwargs):
@@ -418,23 +418,23 @@ class GroupTaylorImportance(GroupMagnitudeImportance):
 
             It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
             All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
-            
+
             ```python
                 inputs, labels = ...
-                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
+                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
                 loss = loss_fn(model(inputs), labels)
                 loss.backward() # compute gradients
-                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
-                scorer = GroupTaylorImportance()    
-                imp_score = scorer(group)    
-                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
-                min_score = imp_score.min() 
-            ``` 
+                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )
+                scorer = GroupTaylorImportance()
+                imp_score = scorer(group)
+                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]
+                min_score = imp_score.min()
+            ```
     """
-    def __init__(self, 
-                 group_reduction:str="mean", 
-                 normalizer:str='mean', 
-                 multivariable:bool=False, 
+    def __init__(self,
+                 group_reduction:str="mean",
+                 normalizer:str='mean',
+                 multivariable:bool=False,
                  bias=False,
                  target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm, nn.modules.LayerNorm]):
         self.group_reduction = group_reduction
@@ -455,7 +455,7 @@ class GroupTaylorImportance(GroupMagnitudeImportance):
 
             if not isinstance(layer, tuple(self.target_types)):
                 continue
-            
+
             # Conv/Linear Output
             if prune_fn in [
                 function.prune_conv_out_channels,
@@ -481,7 +481,7 @@ class GroupTaylorImportance(GroupMagnitudeImportance):
                     local_imp = (b * db).abs()
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
-                    
+
             # Conv/Linear Input
             elif prune_fn in [
                 function.prune_conv_in_channels,
@@ -497,7 +497,7 @@ class GroupTaylorImportance(GroupMagnitudeImportance):
                     local_imp = (w * dw).sum(1).abs()
                 else:
                     local_imp = (w * dw).abs().sum(1)
-                
+
                 # repeat importance for group convolutions
                 if prune_fn == function.prune_conv_in_channels and layer.groups != layer.in_channels and layer.groups != 1:
                     local_imp = local_imp.repeat(layer.groups)
@@ -522,7 +522,7 @@ class GroupTaylorImportance(GroupMagnitudeImportance):
                         local_imp = (b * db).abs()
                         group_imp.append(local_imp)
                         group_idxs.append(root_idxs)
-            
+
             # LN
             elif prune_fn == function.prune_layernorm_out_channels:
                 if layer.elementwise_affine:
@@ -547,9 +547,9 @@ class OBDCImportance(GroupMagnitudeImportance):
     """EigenDamage: Structured Pruning in the Kronecker-Factored Eigenbasis:
        http://proceedings.mlr.press/v97/wang19g/wang19g.pdf
     """
-    def __init__(self, 
-                 group_reduction:str="mean", 
-                 normalizer:str='mean', 
+    def __init__(self,
+                 group_reduction:str="mean",
+                 normalizer:str='mean',
                  bias=False,
                  target_types:list=[nn.modules.conv._ConvNd, nn.Linear],
                  num_classes=100):
@@ -565,7 +565,7 @@ class OBDCImportance(GroupMagnitudeImportance):
         self.modules = []
         self.num_classes = num_classes
         self.known_modules = {'Linear', 'Conv2d'}
-    
+
     def step(self):
         with torch.no_grad():
             for m in self.modules:
@@ -593,7 +593,7 @@ class OBDCImportance(GroupMagnitudeImportance):
                     for idx in idxs:
                         indices_to_keep = [i for i in indices_to_keep if not (idx*kernel_size <= i < (idx+1)*kernel_size)]
                     self.Fisher[layer] = torch.index_select(self.Fisher[layer], 1, torch.LongTensor(indices_to_keep).to(self.Fisher[layer].device))
-            
+
 
     def _rm_hooks(self, model):
         for m in self.modules:
@@ -607,7 +607,7 @@ class OBDCImportance(GroupMagnitudeImportance):
         self.DS[module] = grad_output[0].data
 
     def _prepare_model(self, model, pruner):
-        for group in pruner.DG.get_all_groups(ignored_layers=pruner.ignored_layers, root_module_types=pruner.root_module_types): 
+        for group in pruner.DG.get_all_groups(ignored_layers=pruner.ignored_layers, root_module_types=pruner.root_module_types):
             group = pruner._downstream_node_as_root_if_attention(group)
             for i, (dep, idxs) in enumerate(group):
                 layer = dep.target.module
@@ -623,7 +623,7 @@ class OBDCImportance(GroupMagnitudeImportance):
         self.Fisher = {}
         self.modules = []
         self.steps = 0
-    
+
     @torch.no_grad()
     def __call__(self, group):
         group_imp = []
@@ -648,7 +648,7 @@ class OBDCImportance(GroupMagnitudeImportance):
                     local_imp = (w ** 2 * F_diag).sum(1)
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
-                
+
                 if self.bias and layer.bias is not None and layer.bias.grad is not None:
                     b = layer.bias.data[idxs]
                     local_imp = (b ** 2 * F_diag).sum(1)
@@ -669,26 +669,26 @@ class GroupHessianImportance(GroupMagnitudeImportance):
 
             It accepts a group as inputs, and return a 1-D tensor with the same length as the number of channels.
             All groups must be pruned simultaneously and thus their importance should be accumulated across channel groups.
-            
+
             ```python
                 inputs, labels = ...
-                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224)) 
-                scorer = GroupHessianImportance()   
+                DG = tp.DependencyGraph().build_dependency(model, example_inputs=torch.randn(1,3,224,224))
+                scorer = GroupHessianImportance()
                 scorer.zero_grad() # clean the acuumulated gradients if necessary
                 loss = loss_fn(model(inputs), labels, reduction='none') # compute loss for each sample
                 for l in loss:
                     model.zero_grad() # clean the model gradients
                     l.backward(retain_graph=True) # compute gradients for each sample
                     scorer.accumulate_grad(model) # accumulate gradients of each sample
-                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )    
-                imp_score = scorer(group)    
-                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]  
-                min_score = imp_score.min() 
-            ``` 
+                group = DG.get_pruning_group( model.conv1, tp.prune_conv_out_channels, idxs=[2, 6, 9] )
+                imp_score = scorer(group)
+                #imp_score is a 1-D tensor with length 3 for channels [2, 6, 9]
+                min_score = imp_score.min()
+            ```
     """
-    def __init__(self, 
-                 group_reduction:str="mean", 
-                 normalizer:str='mean', 
+    def __init__(self,
+                 group_reduction:str="mean",
+                 normalizer:str='mean',
                  bias=False,
                  target_types:list=[nn.modules.conv._ConvNd, nn.Linear, nn.modules.batchnorm._BatchNorm, nn.modules.LayerNorm]):
         self.group_reduction = group_reduction
@@ -709,12 +709,12 @@ class GroupHessianImportance(GroupMagnitudeImportance):
                     self._accu_grad[param] = param.grad.data.clone().pow(2)
                 else:
                     self._accu_grad[param] += param.grad.data.clone().pow(2)
-                
+
                 if name not in self._counter:
                     self._counter[param] = 1
                 else:
                     self._counter[param] += 1
-    
+
     @torch.no_grad()
     def __call__(self, group):
         group_imp = []
@@ -749,14 +749,14 @@ class GroupHessianImportance(GroupMagnitudeImportance):
                     local_imp = (w**2 * h).sum(1)
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
-                
+
                 if self.bias and layer.bias is not None and layer.bias.grad is not None:
                     b = layer.bias.data[idxs]
                     h = layer.bias.grad.data[idxs]
                     local_imp = (b**2 * h)
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
-                    
+
             # Conv in_channels
             elif prune_fn in [
                 function.prune_conv_in_channels,
@@ -793,7 +793,7 @@ class GroupHessianImportance(GroupMagnitudeImportance):
                         local_imp = (b**2 * h).abs()
                         group_imp.append(local_imp)
                         group_idxs.append(root_idxs)
-            
+
             # LN
             elif prune_fn == function.prune_layernorm_out_channels:
                 if layer.elementwise_affine:
@@ -809,7 +809,7 @@ class GroupHessianImportance(GroupMagnitudeImportance):
                         local_imp = (b**2 * h)
                         group_imp.append(local_imp)
                         group_idxs.append(root_idxs)
-            
+
 
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
@@ -834,7 +834,7 @@ class ActivationImportance(GroupMagnitudeImportance):
 
     @contextmanager
     def compute_importance(self, model):
-        
+
         @torch.no_grad()
         def _compute_importance_hook(module, input, output):
 
@@ -844,13 +844,13 @@ class ActivationImportance(GroupMagnitudeImportance):
             elif isinstance(module, nn.Conv2d):
                 dim = input[0].shape[1]
                 module._importance = input[0].abs().mean((0, 2, 3))
-            return 
-        
+            return
+
         hooks = []
         for m in model.modules():
             if isinstance(m, tuple(self.target_types)):
                 hooks.append(m.register_forward_hook(_compute_importance_hook))
-        
+
         yield
 
         for h in hooks:
@@ -868,7 +868,7 @@ class ActivationImportance(GroupMagnitudeImportance):
 
             if not isinstance(layer, tuple(self.target_types)):
                 continue
-            
+
             # Conv/Linear Output
             if prune_fn in [
                 function.prune_conv_in_channels,
