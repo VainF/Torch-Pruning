@@ -204,8 +204,9 @@ class BatchnormPruner(BasePruningFunc):
         keep_idxs = list(set(range(layer.num_features)) - set(idxs))
         keep_idxs.sort()
         layer.num_features = layer.num_features-len(idxs)
-        layer.running_mean = layer.running_mean.data[keep_idxs]
-        layer.running_var = layer.running_var.data[keep_idxs]
+        if layer.track_running_stats:
+            layer.running_mean = layer.running_mean.data[keep_idxs]
+            layer.running_var = layer.running_var.data[keep_idxs]
 
         if layer.affine:
             layer.weight = self._prune_parameter_and_grad(layer.weight, keep_idxs, 0)
