@@ -296,6 +296,7 @@ class DependencyGraph(object):
             ops.OPTYPE.EXPAND: ops.ExpandPruner(),
             ops.OPTYPE.CUSTOMIZED: ops.CustomizedPruner(), # just a placeholder
             ops.OPTYPE.SLICE: ops.SlicePruner(),
+            ops.OPTYPE.OUTPUT: ops.OutputPruner(),
         }
         self.REGISTERED_PRUNERS = function.PrunerBox.copy()  # shallow copy
         self.REGISTERED_PRUNERS.update(_dummy_pruners) # merge dummy pruners
@@ -513,7 +514,7 @@ class DependencyGraph(object):
                             )
 
         _fix_dependency_graph_non_recursive(*group[0])
-        
+
         # merge pruning ops
         merged_group = Group() # craft a new group for merging
         for dep, idxs in group.items:
@@ -577,7 +578,7 @@ class DependencyGraph(object):
             layer_channels = pruner.get_out_channels(m)
             group = self.get_pruning_group(
                 m, pruner.prune_out_channels, list(range(layer_channels)))
-            
+
             prunable_group = True
             for dep, _ in group:
                 module = dep.target.module
@@ -664,6 +665,17 @@ class DependencyGraph(object):
                     if sub_ch is None:
                         return None
                     ch += sub_ch
+                if out_node.type == ops.OPTYPE.CONCAT:
+                    concat_output_channels = self._infer_in_channels_recursively(out_node, recursive_depth)
+                    sibling_input_channels = []
+                    for in_node in out_node.inputs:
+                        if in_node != node:
+                            s = self._infer_out_channels_recursively(in_node, recursive_depth)
+                            if s is not None:
+                                sibling_input_channels.append(s)
+                    if concat_output_channels is None or len(sibling_input_channels) == 0:
+                        return None
+                    return concat_output_channels - sum(sibling_input_channels)
                 else:
                     recursive_depth[0]+=1
                     ch = self._infer_in_channels_recursively(out_node, recursive_depth)
@@ -797,7 +809,7 @@ class DependencyGraph(object):
         visited = set()
         for o in utils.flatten_as_list(out):
             self._trace_computational_graph(
-                module2node, o.grad_fn, gradfn2module, reused, visited=visited)
+                module2node, o, gradfn2module, reused, visited=visited)
 
         # TODO: Improving ViT pruning
         # This is a corner case for pruning ViT,
@@ -820,8 +832,8 @@ class DependencyGraph(object):
                                     stack.append(ni)
         return module2node
 
-    def _trace_computational_graph(self, module2node, grad_fn_root, gradfn2module, reused, visited=set()):
-
+    def _trace_computational_graph(self, module2node, output, gradfn2module, reused, visited=set()):
+        grad_fn_root = output.grad_fn
         def create_node_if_not_exists(grad_fn):
             module = gradfn2module.get(grad_fn, None)
             if module is not None and module in module2node and module not in reused:
@@ -829,8 +841,10 @@ class DependencyGraph(object):
 
             # 1. link grad_fns and modules
             if module is None:  # a new module
-                
-                if not hasattr(grad_fn, "name"):
+                if grad_fn is grad_fn_root:
+                    module = ops._OutputOp(self._op_id, shape=output.shape)
+                    self._op_id+=1
+                elif not hasattr(grad_fn, "name"):
                     # we treat all unknwon modules as element-wise operations by default,
                     # which does not modify the #dimension/#channel of features.
                     # If you have some customized layers, please register it with DependencyGraph.register_customized_layer
@@ -1059,7 +1073,6 @@ class DependencyGraph(object):
                 return
         
         # Flatten
-        #print(reshape_node.grad_fn._saved_self_sizes, in_channels, out_channels)
         if out_channels > in_channels:
              for in_node in reshape_node.inputs:
                 for dep in reshape_node.dependencies:
@@ -1086,15 +1099,12 @@ class DependencyGraph(object):
                         dep.index_mapping[0] = _helpers._FlattenIndexMapping(
                             stride=in_channels // out_channels, reverse=False
                         )
-        #print(in_channels, out_channels)
-        #print(reshape_node.grad_fn._saved_self_sizes)
-        #print('------')
         
     def _update_concat_index_mapping(self, cat_node: Node):
         if cat_node.type != ops.OPTYPE.CONCAT:
             return
-
-        if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim<MAX_LEGAL_DIM and cat_node.grad_fn._saved_dim != 1: # this only works for Pytorch>=1.12
+            
+        if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim != 1 and cat_node.grad_fn._saved_dim < MAX_LEGAL_DIM:
             return 
 
         if cat_node.module.concat_sizes is not None:
@@ -1105,11 +1115,14 @@ class DependencyGraph(object):
                 chs.append(self.infer_channels_between(n, cat_node))
             cat_node.module.concat_sizes = chs
 
-            
+        out_size = self._infer_in_channels_recursively(cat_node, recursive_depth=[0])
+        if out_size is not None:
+            if out_size != sum(chs):
+                return # the concat was applied on a different dimension than the feature dimension
+
         offsets = [0]
         for ch in chs:
             if ch is None: 
-                #warnings.warn("Fails to trace the concat operation. It may lead to unexpected results.")
                 return
             offsets.append(offsets[-1] + ch)
         cat_node.module.offsets = offsets
@@ -1146,15 +1159,15 @@ class DependencyGraph(object):
             return
 
         if hasattr(split_node.grad_fn, '_saved_dim'): # this only works for Pytorch>=1.12
-
             # There a issue in some pytorch version, where the _saved_dim is an uninitialized value like 118745347895359
             # So we need to check if the _saved_dim is a valid value (<len(_saved_self_sym_sizes) or a nominal value like 20)
             if hasattr(split_node.grad_fn, '_saved_self_sym_sizes'):
-                if split_node.grad_fn._saved_dim<len(split_node.grad_fn._saved_self_sym_sizes) and split_node.grad_fn._saved_dim<MAX_LEGAL_DIM and split_node.grad_fn._saved_dim != 1:
+                if split_node.grad_fn._saved_dim<len(split_node.grad_fn._saved_self_sym_sizes) and split_node.grad_fn._saved_dim != 1:
                     return
             else:
-                if split_node.grad_fn._saved_dim>=0 and split_node.grad_fn._saved_dim<MAX_LEGAL_DIM and split_node.grad_fn._saved_dim != 1:
+                if split_node.grad_fn._saved_dim>=0 and split_node.grad_fn._saved_dim != 1:
                     return 
+
         offsets = split_node.module.offsets
 
         if offsets is None:
@@ -1187,7 +1200,7 @@ class DependencyGraph(object):
         if unbind_node.type != ops.OPTYPE.UNBIND:
             return
 
-        if hasattr(unbind_node.grad_fn, '_saved_dim') and unbind_node.grad_fn._saved_dim<MAX_LEGAL_DIM and (unbind_node.grad_fn._saved_dim )!= 0: # this only works for Pytorch>=1.12
+        if hasattr(unbind_node.grad_fn, '_saved_dim') and (unbind_node.grad_fn._saved_dim )!= 0: # this only works for Pytorch>=1.12
             return 
 
         num_chunks = len(unbind_node.outputs)
@@ -1199,7 +1212,6 @@ class DependencyGraph(object):
         if input_dims is None: return
         unbind_node.module.offsets = [i*input_dims//num_chunks for i in range(num_chunks+1)]
 
-        #print(input_dims, num_chunks)
         offsets = unbind_node.module.offsets
         if offsets is None:
             return

@@ -66,6 +66,15 @@ class _SliceOp(nn.Module):
     def __repr__(self):
         return "_Slice_{}()".format(self.id)
 
+class _OutputOp(nn.Module):
+    def __init__(self, id, shape=None):
+        super(_OutputOp, self).__init__()
+        self.id = id
+        self.shape = list(shape)
+
+    def __repr__(self):
+        return "_OutputOp_{}({})".format(self.id, self.shape if self.shape is not None else "None")
+
 class _ElementWiseOp(nn.Module):
     def __init__(self, id, grad_fn):
         super(_ElementWiseOp, self).__init__()
@@ -111,6 +120,23 @@ class UnbindPruner(DummyPruner):
 
 class ExpandPruner(DummyPruner):
     pass
+
+class OutputPruner(DummyPruner):
+    def prune_out_channels(self, layer, idxs):
+        if layer.shape is None:
+            return
+        layer.shape[1] -= len(idxs)
+    prune_in_channels = prune_out_channels
+
+    def get_in_channels(self, layer):
+        if layer.shape is None:
+            return None
+        elif len(layer.shape) == 1:
+            return layer.shape[0]
+        else:
+            return layer.shape[1]
+    
+    get_out_channels = get_in_channels
 
 class ConcatPruner(DummyPruner):
     def prune_out_channels(self, layer, idxs):
@@ -179,7 +205,6 @@ class SplitPruner(DummyPruner):
     prune_in_channels = prune_out_channels
         
     
-
 class ReshapePruner(DummyPruner):
     pass
 
@@ -229,6 +254,7 @@ class OPTYPE(IntEnum):
     UNBIND = 17
     EXPAND = 18
     SLICE = 19
+    OUTPUT = 20 # output of the model, not a module
 
 
 def module2type(module):
@@ -271,6 +297,8 @@ def module2type(module):
         return OPTYPE.EXPAND
     elif isinstance(module, _SliceOp):
         return OPTYPE.SLICE
+    elif isinstance(module, _OutputOp):
+        return OPTYPE.OUTPUT
     else:
         return OPTYPE.ELEMENTWISE
 
@@ -312,6 +340,8 @@ def type2class(op_type):
         return _ExpandOp
     elif OPTYPE == OPTYPE.SLICE:
         return _SliceOp
+    elif OPTYPE == OPTYPE.OUTPUT:
+        return _OutputOp
     else:
         return _ElementWiseOp
 
