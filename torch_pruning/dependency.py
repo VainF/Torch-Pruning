@@ -10,6 +10,7 @@ __all__ = ["Dependency", "Group", "DependencyGraph"]
 
 INDEX_MAPPING_PLACEHOLDER = None
 MAX_RECURSION_DEPTH = 500
+ABNORMAL_DIM_VALUE=100
 
 class Node(object):
     """ Node of DepGraph. 
@@ -512,7 +513,7 @@ class DependencyGraph(object):
                             )
 
         _fix_dependency_graph_non_recursive(*group[0])
-
+        
         # merge pruning ops
         merged_group = Group() # craft a new group for merging
         for dep, idxs in group.items:
@@ -1095,7 +1096,7 @@ class DependencyGraph(object):
         if cat_node.type != ops.OPTYPE.CONCAT:
             return
 
-        if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim != 1: # this only works for Pytorch>=1.12
+        if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim<ABNORMAL_DIM_VALUE and cat_node.grad_fn._saved_dim != 1: # this only works for Pytorch>=1.12
             return 
 
         if cat_node.module.concat_sizes is not None:
@@ -1151,11 +1152,11 @@ class DependencyGraph(object):
             # There a issue in some pytorch version, where the _saved_dim is an uninitialized value like 118745347895359
             # So we need to check if the _saved_dim is a valid value (<len(_saved_self_sym_sizes) or a nominal value like 20)
             if hasattr(split_node.grad_fn, '_saved_self_sym_sizes'):
-                if split_node.grad_fn._saved_dim<len(split_node.grad_fn._saved_self_sym_sizes) and split_node.grad_fn._saved_dim != 1:
+                if split_node.grad_fn._saved_dim<len(split_node.grad_fn._saved_self_sym_sizes) and split_node.grad_fn._saved_dim<ABNORMAL_DIM_VALUE and split_node.grad_fn._saved_dim != 1:
                     return
             else:
                 THRESHOLD = 20
-                if split_node.grad_fn._saved_dim<THRESHOLD and split_node.grad_fn._saved_dim>=0 and split_node.grad_fn._saved_dim != 1:
+                if split_node.grad_fn._saved_dim<THRESHOLD and split_node.grad_fn._saved_dim>=0 and split_node.grad_fn._saved_dim<ABNORMAL_DIM_VALUE and split_node.grad_fn._saved_dim != 1:
                     return 
         offsets = split_node.module.offsets
 
@@ -1189,7 +1190,7 @@ class DependencyGraph(object):
         if unbind_node.type != ops.OPTYPE.UNBIND:
             return
 
-        if hasattr(unbind_node.grad_fn, '_saved_dim') and unbind_node.grad_fn._saved_dim != 0: # For timm attention
+        if hasattr(unbind_node.grad_fn, '_saved_dim') and unbind_node.grad_fn._saved_dim<ABNORMAL_DIM_VALUE and (unbind_node.grad_fn._saved_dim )!= 0: # this only works for Pytorch>=1.12
             return 
 
         num_chunks = len(unbind_node.outputs)
