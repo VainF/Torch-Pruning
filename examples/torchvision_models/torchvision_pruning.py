@@ -2,7 +2,7 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))))
 
 # torchvision==0.13.1
-
+from torchvision.models.inception import inception_v3
 ###########################################
 # Prunable Models
 ############################################
@@ -53,7 +53,7 @@ from torchvision.models.efficientnet import (
     efficientnet_v2_l,
 )
 from torchvision.models.googlenet import googlenet
-from torchvision.models.inception import inception_v3
+
 from torchvision.models.mnasnet import mnasnet0_5, mnasnet0_75, mnasnet1_0, mnasnet1_3
 from torchvision.models.mobilenetv2 import mobilenet_v2
 from torchvision.models.mobilenetv3 import mobilenet_v3_large, mobilenet_v3_small
@@ -205,9 +205,9 @@ if __name__ == "__main__":
         #########################################
         # Pruning 
         #########################################
-        print("==============Before pruning=================")
+        
         print("Model Name: {}".format(model_name))
-        print(model)
+        tp.utils.print_tool.before_pruning(model)
 
         layer_channel_cfg = {}
         for module in model.modules():
@@ -232,8 +232,7 @@ if __name__ == "__main__":
         ):  # Torchvision relies on the hidden_dim variable for forwarding, so we have to modify this varaible after pruning
             model.hidden_dim = model.conv_proj.out_channels
             print(model.class_token.shape, model.encoder.pos_embedding.shape)
-        print("==============After pruning=================")
-        print(model)
+        tp.utils.print_tool.after_pruning(model)
 
         #########################################
         # Testing 
