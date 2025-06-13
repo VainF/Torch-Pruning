@@ -10,6 +10,7 @@ __all__ = ["Dependency", "Group", "DependencyGraph"]
 
 INDEX_MAPPING_PLACEHOLDER = None
 MAX_RECURSION_DEPTH = 500
+MAX_LEGAL_DIM = 100
 
 class Node(object):
     """ Node of DepGraph. 
@@ -365,7 +366,7 @@ class DependencyGraph(object):
         # Ignore layers & nn.Parameter
         if ignored_layers is not None:
             self.IGNORED_LAYERS_IN_TRACING.extend(ignored_layers)
-        self.ignored_params = ignored_params
+        self.ignored_params = ignored_params if ignored_params is not None else []
 
         # Ignore all sub-modules of customized layers since they will be handled by the customized pruner
         for layer_type_or_instance in self.CUSTOMIZED_PRUNERS.keys():            
@@ -512,7 +513,7 @@ class DependencyGraph(object):
                             )
 
         _fix_dependency_graph_non_recursive(*group[0])
-
+        
         # merge pruning ops
         merged_group = Group() # craft a new group for merging
         for dep, idxs in group.items:
@@ -941,9 +942,9 @@ class DependencyGraph(object):
             return
         grad_fn = slice_node.grad_fn
         if hasattr(grad_fn, '_saved_self_sym_sizes'):
-            if len(grad_fn._saved_self_sym_sizes)==4 and grad_fn._saved_dim != 1:
+            if len(grad_fn._saved_self_sym_sizes)==4 and grad_fn._saved_dim != 1 and grad_fn._saved_dim<MAX_LEGAL_DIM:
                 return
-            elif len(grad_fn._saved_self_sym_sizes)==3 and grad_fn._saved_dim != 2:
+            elif len(grad_fn._saved_self_sym_sizes)==3 and grad_fn._saved_dim != 2 and grad_fn._saved_dim<MAX_LEGAL_DIM:
                 return
     
         start, step, end, dim = slice_node.module.start, slice_node.module.step, slice_node.module.end, slice_node.module.dim
@@ -966,8 +967,6 @@ class DependencyGraph(object):
                 grad_fn = node.grad_fn
 
                 if hasattr(grad_fn, '_saved_self_sizes') or hasattr(grad_fn, '_saved_split_sizes'):
-                    MAX_LEGAL_DIM = 100
-                    
                     if hasattr(grad_fn, '_saved_split_sizes') and hasattr(grad_fn, '_saved_dim') :
                         if grad_fn._saved_dim != 1 and grad_fn._saved_dim < MAX_LEGAL_DIM: # a temp fix for pytorch==1.11, where the _saved_dim is an uninitialized value like 118745347895359
                             continue
@@ -1095,7 +1094,7 @@ class DependencyGraph(object):
         if cat_node.type != ops.OPTYPE.CONCAT:
             return
 
-        if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim != 1: # this only works for Pytorch>=1.12
+        if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim<MAX_LEGAL_DIM and cat_node.grad_fn._saved_dim != 1: # this only works for Pytorch>=1.12
             return 
 
         if cat_node.module.concat_sizes is not None:
@@ -1151,11 +1150,10 @@ class DependencyGraph(object):
             # There a issue in some pytorch version, where the _saved_dim is an uninitialized value like 118745347895359
             # So we need to check if the _saved_dim is a valid value (<len(_saved_self_sym_sizes) or a nominal value like 20)
             if hasattr(split_node.grad_fn, '_saved_self_sym_sizes'):
-                if split_node.grad_fn._saved_dim<len(split_node.grad_fn._saved_self_sym_sizes) and split_node.grad_fn._saved_dim != 1:
+                if split_node.grad_fn._saved_dim<len(split_node.grad_fn._saved_self_sym_sizes) and split_node.grad_fn._saved_dim<MAX_LEGAL_DIM and split_node.grad_fn._saved_dim != 1:
                     return
             else:
-                THRESHOLD = 20
-                if split_node.grad_fn._saved_dim<THRESHOLD and split_node.grad_fn._saved_dim>=0 and split_node.grad_fn._saved_dim != 1:
+                if split_node.grad_fn._saved_dim>=0 and split_node.grad_fn._saved_dim<MAX_LEGAL_DIM and split_node.grad_fn._saved_dim != 1:
                     return 
         offsets = split_node.module.offsets
 
@@ -1189,7 +1187,7 @@ class DependencyGraph(object):
         if unbind_node.type != ops.OPTYPE.UNBIND:
             return
 
-        if hasattr(unbind_node.grad_fn, '_saved_dim') and unbind_node.grad_fn._saved_dim != 0: # For timm attention
+        if hasattr(unbind_node.grad_fn, '_saved_dim') and unbind_node.grad_fn._saved_dim<MAX_LEGAL_DIM and (unbind_node.grad_fn._saved_dim )!= 0: # this only works for Pytorch>=1.12
             return 
 
         num_chunks = len(unbind_node.outputs)

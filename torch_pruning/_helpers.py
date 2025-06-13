@@ -69,7 +69,6 @@ class _ConcatIndexMapping(object):
         self.reverse = reverse
 
     def __call__(self, idxs: _HybridIndex):
-
         if self.reverse == True:
             new_idxs = [
                 _HybridIndex(idx = i.idx - self.offset[0], root_idx=i.root_idx )
