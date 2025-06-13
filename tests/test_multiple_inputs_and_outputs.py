@@ -33,14 +33,15 @@ def test_multi_io():
 
     # get a pruning group according to the dependency graph. idxs is the indices of pruned filters.
     pruning_group = DG.get_pruning_group(
-        model.fc1, tp.prune_linear_out_channels, idxs=[0, 2, 4]
+        model.fc3, tp.prune_linear_in_channels, idxs=[0, 2, 4, 48]
     )
     print(pruning_group)
 
     # execute this group (prune the model)
+    tp.utils.print_tool.before_pruning(model)
     pruning_group.prune()
+    tp.utils.print_tool.after_pruning(model)
 
-    print("The pruned model: \n", model)
     print("Output:")
     for o in model(torch.randn(1, 128), torch.randn(1, 64)):
         print('\t', o.shape)
