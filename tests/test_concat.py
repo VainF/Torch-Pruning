@@ -6,40 +6,48 @@ import torch
 import torch_pruning as tp
 import torch.nn as nn
 
-class Net(nn.Module):
-    def __init__(self, in_dim):
+class MLP(nn.Module):
+    def __init__(self, input_dim, output_layer=True, dims=None, dropout=0):
         super().__init__()
-        self.block1 = nn.Sequential(
-            nn.Conv2d(in_dim, in_dim, 1),
-            nn.BatchNorm2d(in_dim),
-            nn.GELU(),
-            nn.Conv2d(in_dim, in_dim, 1),
-            nn.BatchNorm2d(in_dim)
-        )
-        self.parallel_path = nn.Sequential(
-            nn.Conv2d(in_dim, in_dim, 1),
-            nn.BatchNorm2d(in_dim),
-            nn.GELU(),
-            nn.Conv2d(in_dim, in_dim//2, 1),
-            nn.BatchNorm2d(in_dim//2)
-        )
-        self.block2 = nn.Sequential(
-            nn.Conv2d(in_dim * 2 + in_dim//2, in_dim, 1),
-            nn.BatchNorm2d(in_dim)
-        )
-        
+        if dims is None:
+            dims = []
+        layers = list()
+        for i_dim in dims:
+            layers.append(nn.Linear(input_dim, i_dim))
+            layers.append(nn.BatchNorm1d(i_dim))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(p=dropout))
+            input_dim = i_dim
+        if output_layer:
+            layers.append(nn.Linear(input_dim, 1))
+        self.mlp = nn.Sequential(*layers)
+
     def forward(self, x):
-        x = self.block1(x)
-        x2 = self.parallel_path(x)
-        x = torch.cat([x, x, x2], dim=1)
-        x = self.block2(x)
+        return self.mlp(x)
+
+class widedeep(nn.Module):
+    def __init__(self, input_dim):
+        super(widedeep, self).__init__()
+        self.dims = input_dim
+
+        self.mlp = MLP(self.dims, True, dims=[32,16], dropout=0.2)
+        self.linear = nn.Linear(self.dims, 3)
+        self.lin2 = nn.Linear(4, 1)
+
+    def forward(self, x):
+        x = x.reshape(x.shape[0], -1)
+        mlp_out = self.mlp(x)
+        linear_out = self.linear(x)
+        x = torch.concat([linear_out, mlp_out], dim=-1)
+        x = self.lin2(x)
+        x = torch.sigmoid(x)
         return x
     
 def test_pruner():
-    model = Net(512)
+    model = widedeep(32)
     print(model)
     # Global metrics
-    example_inputs = torch.randn(1, 512, 7, 7)
+    example_inputs = torch.randn(1, 32)
     imp = tp.importance.MagnitudeImportance(p=2)
     ignored_layers = []
 
