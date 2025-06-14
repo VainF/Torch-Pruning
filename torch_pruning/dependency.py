@@ -268,10 +268,15 @@ class Group(object):
         fmt += " " * 10 + "Pruning Group"
         fmt += "\n" + "-" * 32 + "\n"
         for i, (dep, idxs) in enumerate(self._group):
-            if i==0: 
-                fmt += "[{}] {}, idxs ({}) ={}  (Pruning Root)\n".format(i, dep, len(idxs), idxs)
+            # Determine dependency type
+            dep_type = "Intra" if dep.source.module == dep.target.module else "Inter"
+
+            if i==0:
+                fmt += "[{}] {}, idxs ({}) ={}  (Pruning Root) | {}\n".format(
+                    i, dep, len(idxs), idxs, dep_type)
             else:
-                fmt += "[{}] {}, idxs ({}) ={} \n".format(i, dep, len(idxs), idxs)
+                fmt += "[{}] {}, idxs ({}) ={} | {}\n".format(
+                    i, dep, len(idxs), idxs, dep_type)
         fmt += "-" * 32 + "\n"
         return fmt
 
