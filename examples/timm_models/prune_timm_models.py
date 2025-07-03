@@ -9,6 +9,8 @@ import timm
 from timm.models.vision_transformer import Attention
 import torch_pruning as tp
 import argparse
+from typing import Optional, Type
+from timm.models.vision_transformer import maybe_add_mask
 
 parser = argparse.ArgumentParser(description='Prune timm models')
 parser.add_argument('--model', default=None, type=str, help='model name')
@@ -18,9 +20,11 @@ parser.add_argument('--pretrained', default=False, action='store_true', help='gl
 parser.add_argument('--list_models', default=False, action='store_true', help='list all models in timm')
 args = parser.parse_args()
 
-
-def forward(self, x):
-    """https://github.com/huggingface/pytorch-image-models/blob/054c763fcaa7d241564439ae05fbe919ed85e614/timm/models/vision_transformer.py#L79"""
+def forward(
+        self,
+        x: torch.Tensor,
+        attn_mask: Optional[torch.Tensor] = None,
+) -> torch.Tensor:
     B, N, C = x.shape
     qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
     q, k, v = qkv.unbind(0)
@@ -29,20 +33,22 @@ def forward(self, x):
     if self.fused_attn:
         x = F.scaled_dot_product_attention(
             q, k, v,
-            dropout_p=self.attn_drop.p,
+            attn_mask=attn_mask,
+            dropout_p=self.attn_drop.p if self.training else 0.,
         )
     else:
         q = q * self.scale
         attn = q @ k.transpose(-2, -1)
+        attn = maybe_add_mask(attn, attn_mask)
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
         x = attn @ v
 
-    x = x.transpose(1, 2).reshape(B, N, -1) # original implementation: x = x.transpose(1, 2).reshape(B, N, C)
+    x = x.transpose(1, 2).reshape(B, N, -1)
+    x = self.norm(x)
     x = self.proj(x)
     x = self.proj_drop(x)
     return x
-
 
 def main():
     timm_models = timm.list_models()

@@ -91,8 +91,7 @@ class _ExpandOp(nn.Module):
     def __repr__(self):
         return "_ExpandOp_{}()".format(self.id)
 
-######################################################
-# Dummy Pruners
+
 class DummyPruner(object):
     def __call__(self, layer, *args, **kargs):
         return layer

@@ -4,7 +4,7 @@ import typing
 from .base_pruner import BasePruner
 from .scheduler import linear_scheduler
 from .. import function
-from ..._helpers import _FlattenIndexMapping
+from ...dependency.index_mapping import _FlattenIndexMapping
 from ... import ops
 
 class GroupNormPruner(BasePruner):
