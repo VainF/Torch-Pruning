@@ -128,7 +128,7 @@ class OutputPruner(DummyPruner):
     prune_in_channels = prune_out_channels
 
     def get_in_channels(self, layer):
-        if layer.shape is None:
+        if layer.shape is None or len(layer.shape)==0:
             return None
         elif len(layer.shape) == 1:
             return layer.shape[0]
