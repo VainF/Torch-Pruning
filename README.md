@@ -158,7 +158,7 @@ for group in DG.get_all_groups(ignored_layers=[model.conv1], root_module_types=[
 ### High-level Pruners
 
 > [!NOTE]  
-> **The pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by $p$, the actual ``parameter_pruning_ratio`` of  will be roughly $1-(1-p)^2$. To remove 50% of parameters, you may use ``pruning_ratio=0.30`` instead, which leads to the actual parameter pruning ratio of `$1-(1-0.3)^2=0.51$ (51% parameters removed).
+> **The pruning ratio**: In TP, the ``pruning_ratio`` refers to the pruning ratio of channels/dims. Since both in & out dims will be removed by $p$, the actual ``parameter_pruning_ratio`` of  will be roughly $1-(1-p)^2$. To remove 50% of parameters, you may use `pruning_ratio=0.30` instead, which leads to the actual parameter pruning ratio of $1-(1-0.3)^2=0.51$ (51% parameters removed).
 
 With DepGraph, we developed several high-level pruners to facilitate effortless pruning. By specifying the desired channel pruning ratio, the pruner will scan all prunable groups, estimate weight importance and perform pruning. You can fine-tune the remaining weights using your own training code. For detailed information on this process, please refer to [this tutorial](https://github.com/VainF/Torch-Pruning/blob/master/examples/notebook/1%20-%20Customize%20Your%20Own%20Pruners.ipynb), which shows how to implement a [Network Slimming (ICCV 2017)](https://arxiv.org/abs/1708.06519) pruner from scratch. Additionally, a more practical example is available in [VainF/Isomorphic-Pruning](https://github.com/VainF/Isomorphic-Pruning) for ViT and ConvNext pruning.
 
