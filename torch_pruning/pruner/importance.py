@@ -5,7 +5,7 @@ import torch.nn as nn
 import typing
 from . import function
 from ..dependency import Group
-from .._helpers import _FlattenIndexMapping
+from ..dependency.index_mapping import _FlattenIndexMapping
 from .. import ops
 import math
 import numpy as np
