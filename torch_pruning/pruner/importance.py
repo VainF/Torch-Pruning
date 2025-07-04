@@ -405,9 +405,7 @@ class RandomImportance(Importance):
     @torch.no_grad()
     def __call__(self, group, **kwargs):
         _, idxs = group[0]
-        score = list(range(len(idxs)))
-        random.shuffle(score)
-        return torch.tensor(score, dtype=torch.float32)
+        return torch.rand(len(idxs))
 
 
 class GroupTaylorImportance(GroupMagnitudeImportance):
