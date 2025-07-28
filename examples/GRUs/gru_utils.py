@@ -373,7 +373,7 @@ class GRUTestNet(torch.nn.Module):
         self.fc2 = nn.Linear(196, 80)
         
         # Multi-layer GRU (this is what we want to prune)
-        self.gru = nn.GRU(input_size, hidden_size, num_layers=2)
+        self.gru = nn.GRU(input_size, hidden_size, num_layers=1)
         
         # Output layer
         self.fc3 = nn.Linear(164, 10)

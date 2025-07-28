@@ -4,7 +4,6 @@ This work was a precursor to testing GRU pruning in our actual DeepFilterNet mod
 """
 import torch
 import torch.nn as nn
-import torch_pruning as tp
 from gru_utils import (
     replace_prunablegru_with_torchgru,
     replace_torchgru_with_prunablegru,
