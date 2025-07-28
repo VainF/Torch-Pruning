@@ -42,49 +42,15 @@ Workflow:
 import torch_pruning as tp
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 # Import your utility functions
 from gru_utils import (
     replace_prunablegru_with_torchgru,
     replace_torchgru_with_prunablegru,
+    GRUTestNet,
 )
 
-class GRUTestNet(torch.nn.Module):
-    """
-    Simple test network demonstrating GRU pruning workflow.
-    
-    Architecture: Conv layers → FC layers → Multi-layer GRU → Output FC
-    This mimics common architectures where GRU processes encoded features.
-    """
-    def __init__(self, input_size=80, hidden_size=164):
-        super(GRUTestNet, self).__init__()
-        # Feature extraction layers
-        self.conv1 = nn.Conv2d(1, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(256, 196)
-        self.fc2 = nn.Linear(196, 80)
-        
-        # Multi-layer GRU (this is what we want to prune)
-        self.gru = nn.GRU(input_size, hidden_size, num_layers=2)
-        
-        # Output layer
-        self.fc3 = nn.Linear(164, 10)
 
-    def forward(self, x, hx=None):
-        # Feature extraction
-        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        x = x.view(-1, int(x.nelement() / x.shape[0]))
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-
-        # GRU processing (sequence length = 1 for this example)
-        x = self.gru(x, hx=hx)[0]
-
-        # Final classification
-        x = self.fc3(x)
-        return x
 
 
 def demonstrate_gru_pruning_workflow():
@@ -146,7 +112,7 @@ def demonstrate_gru_pruning_workflow():
     # Step 6: Convert back to torch.nn.GRU (removes identity layers)
     print("\n6. Converting back to torch.nn.GRU (removes identity layers)...")
     final_model = replace_prunablegru_with_torchgru(model)
-    
+    pruned_output = final_model(example_inputs)
     # Show the results
     print(f"   Final GRU hidden size: {final_model.gru.hidden_size}")
     print(f"   Hidden size reduction: {model.gru.hidden_size} → {final_model.gru.hidden_size}")
