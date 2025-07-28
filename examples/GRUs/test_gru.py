@@ -47,7 +47,7 @@ class TestPrunableGRUBehavior:
         
     def test_multi_layer_gru_equivalence(self):
         """Test multi layer GRU equivalence."""
-        # get params for single layer GRU
+        # get params for multi-layer GRU
         params = self.gru_params()
         params["num_layers"] = 2  # test multiple layers
         
