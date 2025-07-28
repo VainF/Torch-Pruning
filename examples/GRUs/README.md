@@ -43,7 +43,7 @@ python gru_pruning_example.py
 ## Files
 - `gru_pruning_example.py` - Complete working example
 - `gru_utils.py` - PrunableGRU implementation and utilities
-- `tets_gru.py` - Unit tests of the gru pruning utilities in `gru_utils.py`
+- `test_gru.py` - Unit tests of the gru pruning utilities in `gru_utils.py`
 - `README.md` - This file
 
 ## Limitations
