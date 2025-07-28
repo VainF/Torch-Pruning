@@ -13,19 +13,12 @@ These low-level implementations are opaque to torch-pruning's dependency graph a
 making it impossible for the pruning framework to understand the internal structure 
 and dependencies of the GRU operations.
 
-Problem 2: GRU hidden states create circular dependencies that prevent torch-pruning 
-from modifying hidden dimensions:
+Problem 2: Past GRU hidden states are inputs to model so torch-pruning will not alter its size.
 
-    Hidden State (t-1) → GRU → Hidden State (t) → GRU → Hidden State (t+1)
-         ↑                                              ↓
-         └──────────────── Circular dependency ─────────┘
-
-torch-pruning sees the hidden state as both input AND output, so it refuses to 
-change the hidden dimension to avoid breaking this cycle.
 
 Solution: Create a custom PrunableGRUEqualHiddenSize that:
 1. Implements GRU operations in pure Python/PyTorch (transparent to torch-pruning)
-2. Inserts identity layers (hidden_map) to break circular dependencies:
+2. Inserts identity layers (hidden_map) to break circular dependencies and allow pruning of the hidden state size
 
     hidden_state → GRU → hidden_map (identity) → pruned_hidden_state
 
@@ -57,10 +50,7 @@ def demonstrate_gru_pruning_workflow():
     """
     Complete workflow showing GRU pruning with the identity layer solution.
     
-    This function demonstrates:
-    1. The circular dependency problem
-    2. How our solution works
-    3. End-to-end pruning workflow
+    This function demonstrates and end-to-end GRU pruning workflow
     """
     print("=" * 60)
     print("GRU Pruning Workflow Demonstration")
@@ -69,7 +59,11 @@ def demonstrate_gru_pruning_workflow():
     # Step 1: Create original model with standard torch.nn.GRU
     print("\n1. Creating original model with torch.nn.GRU...")
     model = GRUTestNet()
-    print(f"   Original GRU hidden size: {model.gru.hidden_size}")
+    original_gru_hidden_size = model.gru.hidden_size
+    original_gru_input_size = model.gru.input_size
+    print(f"   Original GRU hidden size: {original_gru_hidden_size}")
+    print(f"   Original GRU input size: {original_gru_input_size}")
+
     
     # Step 2: Prepare inputs for torch-pruning dependency analysis
     print("\n2. Preparing example inputs for dependency graph...")
@@ -94,7 +88,7 @@ def demonstrate_gru_pruning_workflow():
         model,
         input_data,
         importance=imp,
-        pruning_ratio=0.5,  # Remove 50% of parameters
+        pruning_ratio=0.2,  # Remove 20% of input/output channels
         isomorphic=True,
         global_pruning=True,
         root_module_types=(nn.Linear, nn.LayerNorm, nn.Conv2d),
@@ -106,20 +100,19 @@ def demonstrate_gru_pruning_workflow():
     
     # Verify model still works after pruning
     pruned_output = model(example_inputs)
-    print(f"   Pruned model output shape: {pruned_output.shape}")
     print("   ✓ Model still functional after pruning")
     
     # Step 6: Convert back to torch.nn.GRU (removes identity layers)
     print("\n6. Converting back to torch.nn.GRU (removes identity layers)...")
     final_model = replace_prunablegru_with_torchgru(model)
     pruned_output = final_model(example_inputs)
+
     # Show the results
-    print(f"   Final GRU hidden size: {final_model.gru.hidden_size}")
-    print(f"   Hidden size reduction: {model.gru.hidden_size} → {final_model.gru.hidden_size}")
+    print(f"   Hidden size reduction: {original_gru_hidden_size} → {final_model.gru.hidden_size}")
+    print(f"   Hidden size reduction: {original_gru_input_size} → {final_model.gru.input_size}")
     
     # Final verification
     final_output = final_model(example_inputs)
-    print(f"   Final model output shape: {final_output.shape}")
     print("   ✓ Successfully pruned GRU while maintaining functionality!")
     
     print("\n" + "=" * 60)

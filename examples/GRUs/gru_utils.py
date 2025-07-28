@@ -7,7 +7,7 @@ innovation is breaking circular dependencies in recurrent layers by introducing
 identity layers that provide safe pruning points.
 
 Key Components:
-- PrunableGRU: Custom GRU implementation with identity layers for pruning
+- PrunableGRU: Custom GRU implementation composed of exposed, prunable operators and identity layer for pruning
 - Conversion functions between nn.GRU and PrunableGRU
 - Model-wide replacement utilities for seamless integration
 """
@@ -15,6 +15,8 @@ Key Components:
 import torch
 import torch.nn as nn
 import copy
+import torch.nn.functional as F
+
 
 class PrunableGRU(nn.Module):
     """
@@ -145,6 +147,8 @@ class PrunableGRU(nn.Module):
                 h_new = (1 - z) * n + z * h
 
                 if layer_idx > 0:
+                    # this forces that the hidden state size to be the same across all layers
+                    # will reduce pruning flexibility but is required for torch.nn.GRU compatibility when num_layers > 1
                     outputs.append(h_new + 0 * out[t, 0, :].unsqueeze(0))
                 else:
                     outputs.append(h_new)
@@ -350,3 +354,41 @@ def replace_prunablegru_with_torchgru(original_model):
     # Move the copied model to the same device as the original model
     model_copy.to(device)
     return model_copy
+
+class GRUTestNet(torch.nn.Module):
+    """
+    Simple test network demonstrating GRU pruning workflow.
+    
+    Architecture: Conv layers → FC layers → Multi-layer GRU → Output FC
+    This mimics common architectures where GRU processes encoded features.
+    """
+    def __init__(self, input_size=80, hidden_size=164):
+        super(GRUTestNet, self).__init__()
+        # Feature extraction layers
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(256, 196)
+        self.fc2 = nn.Linear(196, 80)
+        
+        # Multi-layer GRU (this is what we want to prune)
+        self.gru = nn.GRU(input_size, hidden_size, num_layers=2)
+        
+        # Output layer
+        self.fc3 = nn.Linear(164, 10)
+
+    def forward(self, x, hx=None):
+        # Feature extraction
+        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
+        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        x = x.view(-1, int(x.nelement() / x.shape[0]))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+
+        # GRU processing (sequence length = 1 for this example)
+        x = self.gru(x, hx=hx)[0]
+
+        # Final classification
+        x = self.fc3(x)
+        return x
