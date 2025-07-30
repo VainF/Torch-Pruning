@@ -1,3 +1,4 @@
+# Copyright © \2025 Analog Devices, Inc.
 """
 Utilities for GRU pruning with torch-pruning library.
 

@@ -1,3 +1,4 @@
+# Copyright © \2025 Analog Devices, Inc.
 """
 This script demonstrates the pruning of GRU modules in a PyTorch model and tests out some of the different building blocks.
 This work was a precursor to testing GRU pruning in our actual DeepFilterNet model.

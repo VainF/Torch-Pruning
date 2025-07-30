@@ -1,3 +1,4 @@
+Copyright © \2025 Analog Devices, Inc.
 # GRU Pruning with Torch-Pruning
 
 This example demonstrates how to prune GRU (Gated Recurrent Unit) layers in PyTorch models using the torch-pruning library. The key challenge addressed here is making GRU layers compatible with torch-pruning through a prunable GRU implementation.
