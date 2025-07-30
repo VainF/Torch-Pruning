@@ -1,3 +1,5 @@
+# Copyright © \2025 Analog Devices, Inc.
+
 """
 GRU Pruning Example for Torch-Pruning
 
