@@ -5,8 +5,8 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open("requirements.txt", "r", encoding="utf-8") as fh:
-    requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+# Dependencies
+requirements = ["torch>=2.0", "numpy"]
 
 setuptools.setup(
     name="torch-pruning",
