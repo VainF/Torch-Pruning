@@ -6,5 +6,5 @@
 * [Diffusion Models](https://github.com/VainF/Diff-Pruning)
 * [Transformers](transformers): ViTs, Bert, Swin, etc.
 * [Isomorphic Pruning (ViTs & ConvNextx)](https://github.com/VainF/Isomorphic-Pruning)
-* Yolo: [yolov5](yolov5), [yolov7](yolov7), [yolov8](yolov8)
+* Yolo: [yolov5](yolov5), [yolov7](yolov7), [yolov8 (Crashed due to repo upgrade)](yolov8)
 * [torchvision models](torchvision_models): FasterRCNN, SSD, ResNe(X)t, DenseNet, RegNet, DeepLab, etc.

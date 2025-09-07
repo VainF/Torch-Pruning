@@ -1,18 +1,21 @@
+"""Base pruner implementation for structural pruning."""
+
+import math
+import typing
+import warnings
+
 import torch
 import torch.nn as nn
-import typing, warnings
 
-from torch_pruning.pruner.importance import OBDCImportance
-
+from ... import dependency, ops
+from .. import function
+from ..importance import OBDCImportance
 from .scheduler import linear_scheduler
-from ..import function
-from ... import ops, dependency
-import math
 
 class BasePruner:
-    """
-    Meta pruner for structural pruning.   
-    It implements the group-level pruning strategy powered by Dependency Graph.  
+    """Meta pruner for structural pruning.
+    
+    This class implements the group-level pruning strategy powered by Dependency Graph.
     See https://arxiv.org/abs/2301.12900 for details.
 
     Args:
@@ -83,6 +86,7 @@ class BasePruner:
         self.model = model
         self.importance = importance
 
+        # Handle deprecated parameters
         if ch_sparsity is not None:
             warnings.warn(
                 "ch_sparsity is deprecated in v1.3.0. Please use pruning_ratio.")
@@ -261,7 +265,16 @@ class BasePruner:
         self.initial_total_channels = initial_total_channels
         self.initial_total_heads = initial_total_heads
 
-    def step(self, interactive=False) -> typing.Union[typing.Generator, None]:
+    def step(self, interactive: bool = False) -> typing.Union[typing.Generator, None]:
+        """Execute one step of pruning.
+        
+        Args:
+            interactive: If True, yields groups for interactive pruning. 
+                        If False, prunes all groups automatically.
+                        
+        Returns:
+            Generator yielding pruning groups if interactive=True, None otherwise.
+        """
         self.current_step += 1
         if interactive:  # yield groups for interactive pruning
             return self._prune()
@@ -269,7 +282,15 @@ class BasePruner:
             for group in self._prune():
                 group.prune()
 
-    def manual_prune_width(self, layer, pruning_fn, pruning_ratios_or_idxs):
+    def manual_prune_width(self, layer: nn.Module, pruning_fn: typing.Callable, 
+                          pruning_ratios_or_idxs: typing.Union[float, typing.List[int]]) -> None:
+        """Manually prune a layer with specified ratios or indices.
+        
+        Args:
+            layer: The layer to prune.
+            pruning_fn: The pruning function to use.
+            pruning_ratios_or_idxs: Either a pruning ratio (float) or list of indices to prune.
+        """
         if isinstance(pruning_ratios_or_idxs, float):
             if self.DG.is_out_channel_pruning_fn(pruning_fn):
                 prunable_channels = self.DG.get_out_channels(layer)
@@ -281,11 +302,21 @@ class BasePruner:
             imp_argsort = torch.argsort(imp)
             n_pruned = int(prunable_channels * (1 - pruning_ratios_or_idxs))
             pruning_idxs = imp_argsort[:n_pruned]
+        else:
+            pruning_idxs = pruning_ratios_or_idxs
 
         group = self.DG.get_pruning_group(layer, pruning_fn, pruning_idxs)
         group.prune()
 
     def estimate_importance(self, group) -> torch.Tensor:
+        """Estimate importance scores for a pruning group.
+        
+        Args:
+            group: The pruning group to estimate importance for.
+            
+        Returns:
+            Importance scores as a tensor.
+        """
         return self.importance(group)
 
     def pruning_history(self) -> typing.List[typing.Tuple[str, bool, typing.Union[list, tuple]]]:

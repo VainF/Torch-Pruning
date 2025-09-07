@@ -1,14 +1,33 @@
-from ..ops import TORCH_CONV, TORCH_BATCHNORM, TORCH_PRELU, TORCH_LINEAR
-from ..ops import module2type
+"""Utility functions for torch-pruning."""
+
 import torch
-from .op_counter import count_ops_and_params
 import torch.nn as nn
+
+from ..ops import TORCH_BATCHNORM, TORCH_CONV, TORCH_LINEAR, TORCH_PRELU, module2type
+from .op_counter import count_ops_and_params
 
 @torch.no_grad()
 def count_params(module):
-    return sum([p.numel() for p in module.parameters()])
+    """Count the total number of parameters in a module.
+    
+    Args:
+        module: PyTorch module to count parameters for.
+        
+    Returns:
+        Total number of parameters.
+    """
+    return sum(p.numel() for p in module.parameters())
+
 
 def flatten_as_list(obj):
+    """Flatten nested structures into a flat list.
+    
+    Args:
+        obj: Object to flatten (Tensor, list, tuple, dict, or other).
+        
+    Returns:
+        Flattened list of objects.
+    """
     if isinstance(obj, torch.Tensor):
         return [obj]
     elif isinstance(obj, (list, tuple)):
@@ -25,13 +44,28 @@ def flatten_as_list(obj):
         return obj
 
 def draw_computational_graph(DG, save_as, title='Computational Graph', figsize=(16, 16), dpi=200, cmap=None):
+    """Draw computational graph visualization.
+    
+    Args:
+        DG: Dependency graph object.
+        save_as: Path to save the figure.
+        title: Title of the plot. Defaults to 'Computational Graph'.
+        figsize: Figure size tuple. Defaults to (16, 16).
+        dpi: Dots per inch. Defaults to 200.
+        cmap: Colormap for the plot. Defaults to None.
+        
+    Returns:
+        Tuple of (figure, axes) objects.
+    """
     import numpy as np
     import matplotlib.pyplot as plt
+    
     plt.style.use('bmh')
     n_nodes = len(DG.module2node)
     module2idx = {m: i for (i, m) in enumerate(DG.module2node.keys())}
     G = np.zeros((n_nodes, n_nodes))
     fill_value = 1
+    
     for module, node in DG.module2node.items():
         for input_node in node.inputs:
             G[module2idx[input_node.module], module2idx[node.module]] = fill_value
@@ -39,11 +73,10 @@ def draw_computational_graph(DG, save_as, title='Computational Graph', figsize=(
         for out_node in node.outputs:
             G[module2idx[out_node.module], module2idx[node.module]] = fill_value
             G[module2idx[node.module], module2idx[out_node.module]] = fill_value
-        pruner = DG.get_pruner_of_module(module)
-    fig, ax = plt.subplots(figsize=(figsize))
+    
+    fig, ax = plt.subplots(figsize=figsize)
     ax.imshow(G, cmap=cmap if cmap is not None else plt.get_cmap('Blues'))
-    # plt.hlines(y=np.arange(0, n_nodes)+0.5, xmin=np.full(n_nodes, 0)-0.5, xmax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
-    # plt.vlines(x=np.arange(0, n_nodes)+0.5, ymin=np.full(n_nodes, 0)-0.5, ymax=np.full(n_nodes, n_nodes)-0.5, color="#444444", linewidth=0.1)
+    
     if title is not None:
         ax.set_title(title)
     fig.tight_layout()
@@ -131,21 +164,43 @@ class print_tool():
 
     @staticmethod
     def before_pruning(model):
+        """Record the model structure before pruning.
+        
+        Args:
+            model: The model to record.
+        """
         print_tool._before_pruning = str(model)
 
     @staticmethod
     def after_pruning(model, do_print=True):
+        """Compare and display model structure after pruning.
+        
+        Args:
+            model: The model after pruning.
+            do_print: Whether to print the comparison. Defaults to True.
+            
+        Returns:
+            String representation of the comparison.
+            
+        Raises:
+            ValueError: If before_pruning was not called first.
+        """
         if print_tool._before_pruning is None:
-            raise ValueError("Please call print_tool.before_pruning(model) to record the original model.")
+            raise ValueError(
+                "Please call PrintTool.before_pruning(model) to record the original model."
+            )
+        
         _after_pruning = str(model)
         model_str = ""
-        # iterate all lines
+        
+        # Iterate all lines and compare
         for line1, line2 in zip(print_tool._before_pruning.split('\n'), _after_pruning.split('\n')):
             if line1 != line2:
-                line2 = line2.lstrip(' ') # remove the leading spaces
-                model_str+=f"{line1} => {line2}\n"
+                line2 = line2.lstrip(' ')  # remove the leading spaces
+                model_str += f"{line1} => {line2}\n"
             else:
-                model_str+=line1+'\n'
+                model_str += line1 + '\n'
+        
         if do_print:
             print(model_str)
         

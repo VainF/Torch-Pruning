@@ -1,12 +1,17 @@
-import sys, os
+"""Test script for the pruner functionality."""
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+import os
+import sys
 
 import torch
-from torchvision.models import resnet50 as entry
-import torch_pruning as tp
-from torch import nn
+import torch.nn as nn
 import torch.nn.functional as F
+from torchvision.models import resnet50 as entry
+
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+import torch_pruning as tp
 
 def test_pruner():
     model = entry()

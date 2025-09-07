@@ -1,15 +1,18 @@
 """Dependency class implementation for modeling layer dependencies."""
+
 import typing
+
+from .. import _helpers
 from . import constants
 from .node import Node
-from .. import _helpers
 
 class Dependency(object):
     """Layer dependency (Edge of DepGraph).
 
-        For the dependency A -> B, the pruning operation ``trigger(A)`` will trigger the pruning operation ``handler(B)``.
+    For the dependency A -> B, the pruning operation ``trigger(A)`` will trigger 
+    the pruning operation ``handler(B)``.
 
-        The object is callable, which will invoke the handler function for pruning.
+    The object is callable, which will invoke the handler function for pruning.
 
         Args:
             trigger (Callable): a pruning function that triggers this dependency
@@ -39,9 +42,18 @@ class Dependency(object):
         self.index_mapping = [constants.INDEX_MAPPING_PLACEHOLDER, constants.INDEX_MAPPING_PLACEHOLDER] # [None, None] by default
 
     def __call__(self, idxs: list):
-        self.handler.__self__.pruning_dim = self.target.pruning_dim # set pruning_dim
-        if len(idxs)>0 and isinstance(idxs[0], _helpers._HybridIndex): 
-            idxs = _helpers.to_plain_idxs(idxs) # hybrid indices include root indices. We need to remove them and only pass the plain indices to the handler
+        """Execute the dependency by calling the handler function.
+        
+        Args:
+            idxs: List of indices to prune.
+            
+        Returns:
+            The result of the handler function.
+        """
+        self.handler.__self__.pruning_dim = self.target.pruning_dim  # set pruning_dim
+        if len(idxs) > 0 and isinstance(idxs[0], _helpers._HybridIndex): 
+            # hybrid indices include root indices. We need to remove them and only pass the plain indices to the handler
+            idxs = _helpers.to_plain_idxs(idxs)
         result = self.handler(self.target.module, idxs)
         return result
 
@@ -56,10 +68,26 @@ class Dependency(object):
             self.target.name,
         )
 
-    def is_triggered_by(self, pruning_fn): # check if the dependency is triggered by a specific pruning function
+    def is_triggered_by(self, pruning_fn):
+        """Check if the dependency is triggered by a specific pruning function.
+        
+        Args:
+            pruning_fn: The pruning function to check.
+            
+        Returns:
+            True if the dependency is triggered by the given function.
+        """
         return pruning_fn == self.trigger
 
-    def __eq__(self, other): # check if two dependencies are the same
+    def __eq__(self, other):
+        """Check if two dependencies are the same.
+        
+        Args:
+            other: Another dependency to compare with.
+            
+        Returns:
+            True if the dependencies are equal.
+        """
         return (
             self.source == other.source 
             and self.trigger == other.trigger
@@ -68,11 +96,13 @@ class Dependency(object):
         )
     
     @property
-    def layer(self): # alias of the target module
+    def layer(self):
+        """Alias of the target module."""
         return self.target.module
 
     @property
-    def pruning_fn(self): # alias of the handler
+    def pruning_fn(self):
+        """Alias of the handler."""
         return self.handler
 
     def __hash__(self):

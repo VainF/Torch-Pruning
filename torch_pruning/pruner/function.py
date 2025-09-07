@@ -1,7 +1,9 @@
+"""Pruning function implementations for different layer types."""
+
 import torch
 import torch.nn as nn
+from abc import ABC, abstractmethod
 from copy import deepcopy
-from abc import ABC, abstractclassmethod
 from typing import Sequence, Tuple
 
 from .. import ops
@@ -60,35 +62,71 @@ class BasePruningFunc(ABC):
     def __init__(self, pruning_dim=1):
         self.pruning_dim = pruning_dim
 
-    @abstractclassmethod
+    @abstractmethod
     def prune_out_channels(self, layer: nn.Module, idxs: Sequence[int]):
+        """Prune output channels of a layer."""
         raise NotImplementedError
 
-    @abstractclassmethod
+    @abstractmethod
     def prune_in_channels(self, layer: nn.Module, idxs: Sequence[int]):
+        """Prune input channels of a layer."""
         raise NotImplementedError
 
-    @abstractclassmethod
+    @abstractmethod
     def get_out_channels(self, layer: nn.Module):
+        """Get the number of output channels of a layer."""
         raise NotImplementedError
 
-    @abstractclassmethod
+    @abstractmethod
     def get_in_channels(self, layer: nn.Module):
+        """Get the number of input channels of a layer."""
         raise NotImplementedError
 
     def check(self, layer, idxs, to_output):
+        """Validate pruning parameters.
+        
+        Args:
+            layer: The layer to be pruned.
+            idxs: List of indices to prune.
+            to_output: Whether pruning output channels.
+            
+        Raises:
+            AssertionError: If validation fails.
+        """
         if self.TARGET_MODULES is not None:
-            assert isinstance(layer, self.TARGET_MODULES), 'Mismatched pruner {} and module {}'.format(
-                self.__str__, layer)
+            if not isinstance(layer, self.TARGET_MODULES):
+                raise AssertionError(
+                    f'Mismatched pruner {self.__class__.__name__} and module {type(layer).__name__}'
+                )
+        
         if to_output:
             prunable_channels = self.get_out_channels(layer)
         else:
             prunable_channels = self.get_in_channels(layer)
+            
         if prunable_channels is not None:
-            assert all(idx < prunable_channels and idx >=
-                       0 for idx in idxs), "All pruning indices should fall into [{}, {})".format(0, prunable_channels)
+            invalid_indices = [idx for idx in idxs if not (0 <= idx < prunable_channels)]
+            if invalid_indices:
+                raise AssertionError(
+                    f"All pruning indices should fall into [0, {prunable_channels}). "
+                    f"Invalid indices: {invalid_indices}"
+                )
 
-    def __call__(self, layer: nn.Module, idxs: Sequence[int], to_output: bool = True, inplace: bool = True, dry_run: bool = False) -> Tuple[nn.Module, int]:
+    def __call__(self, layer: nn.Module, idxs: Sequence[int], to_output: bool = True, 
+                 inplace: bool = True, dry_run: bool = False) -> Tuple[nn.Module, int]:
+        """Prune the layer with given indices.
+        
+        Args:
+            layer: The layer to be pruned.
+            idxs: List of indices to prune.
+            to_output: Whether to prune output channels. Defaults to True.
+            inplace: Whether to modify the layer in place. Defaults to True.
+            dry_run: Whether this is a dry run (not implemented yet). Defaults to False.
+            
+        Returns:
+            The pruned layer.
+        """
+        idxs = list(idxs)  # Convert to list to allow sorting
         idxs.sort()
         self.check(layer, idxs, to_output)
         pruning_fn = self.prune_out_channels if to_output else self.prune_in_channels

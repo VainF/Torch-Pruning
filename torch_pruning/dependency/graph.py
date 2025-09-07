@@ -1,17 +1,19 @@
 """DependencyGraph class for modeling and managing pruning dependencies."""
+
 import typing
 import warnings
+from numbers import Number
+
 import torch
 import torch.nn as nn
-from numbers import Number
-from .. import _helpers, utils, ops
+
+from .. import _helpers, ops, utils
 from ..pruner import function
+from . import index_mapping, shape_infer
 from .constants import MAX_RECURSION_DEPTH, MAX_VALID_DIM
-from .node import Node
 from .dependency import Dependency
 from .group import Group
-from . import shape_infer
-from . import index_mapping
+from .node import Node
 
 class DependencyGraph(object):
 

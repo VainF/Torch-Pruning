@@ -1,5 +1,8 @@
 # YOLOv8 Pruning
 
+> [!NOTE]  
+> This example is crashed due to ultralytics upgrade. 
+
 ## 0. Requirements
 
 ```bash
@@ -7,8 +10,8 @@ pip install -r requirements.txt
 ```
 Tested environment:
 ```
-Pytorch==1.12.1
-Torchvision==0.13.1
+pytorch==2.5.1
+torch-pruning==1.6.1
 ```
 
 ## 1. Pruning

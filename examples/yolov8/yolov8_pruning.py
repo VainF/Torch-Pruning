@@ -337,8 +337,10 @@ def prune(args):
         #output = model.model(example_inputs)
         #(output[0].sum() + sum([o.sum() for o in output[1]])).backward()
         #pruner.regularize(model.model)
-        
+        tp.utils.print_tool.before_pruning(model.model)
         pruner.step()
+        tp.utils.print_tool.after_pruning(model.model, do_print=True)
+
         # pre fine-tuning validation
         pruning_cfg['name'] = f"step_{i}_pre_val"
         pruning_cfg['batch'] = 1

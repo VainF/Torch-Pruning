@@ -1,23 +1,45 @@
+"""Setup script for Torch-Pruning package."""
+
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
+
+with open("requirements.txt", "r", encoding="utf-8") as fh:
+    requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
 
 setuptools.setup(
     name="torch-pruning",
-    version="v1.6.0",
+    version="1.6.1",
     author="Gongfan Fang",
     author_email="gongfan@u.nus.edu",
     description="Towards Any Structural Pruning",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/VainF/Torch-Pruning",
-    packages=setuptools.find_packages(),
+    project_urls={
+        "Bug Reports": "https://github.com/VainF/Torch-Pruning/issues",
+        "Source": "https://github.com/VainF/Torch-Pruning",
+        "Documentation": "https://github.com/VainF/Torch-Pruning/wiki",
+    },
+    packages=setuptools.find_packages(exclude=["tests*", "examples*", "reproduce*"]),
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    install_requires=['torch', 'numpy'],
-    python_requires='>=3.6',
+    install_requires=requirements,
+    python_requires=">=3.7",
+    keywords="pytorch, pruning, neural networks, deep learning, optimization",
+    zip_safe=False,
 )

@@ -128,10 +128,11 @@ def train(hyp, opt, device, tb_writer=None):
         unwrapped_parameters=unwrapped_parameters
     )
     base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
+    tp.utils.print_tool.before_pruning(model)
     pruner.step()
+    tp.utils.print_tool.after_pruning(model, do_print=True)
 
     pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(model, example_inputs)
-    print(model)
     print("Before Pruning: MACs=%f G, #Params=%f G"%(base_macs/1e9, base_nparams/1e9))
     print("After Pruning: MACs=%f G, #Params=%f G"%(pruned_macs/1e9, pruned_nparams/1e9))
     ####################################################################################

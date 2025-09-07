@@ -99,7 +99,7 @@ def run(
 
     ####################################################################################
     import torch_pruning as tp
-    print(model.model)
+    
     for p in model.parameters():
         p.requires_grad_(True)
 
@@ -111,6 +111,7 @@ def run(
     for m in model.model.modules():
         if isinstance(m, Detect):
             ignored_layers.append(m)
+    print("Ignored layers:")
     print(ignored_layers)
 
     iterative_steps = 1 # progressive pruning
@@ -125,12 +126,13 @@ def run(
 
     
     base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
+    tp.utils.print_tool.before_pruning(model)
     for g in pruner.step(interactive=True):
         print(g)
         g.prune()
+    tp.utils.print_tool.after_pruning(model, do_print=True)
 
     pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(model, example_inputs)
-    print(model)
     print("Before Pruning: MACs=%f G, #Params=%f G"%(base_macs/1e9, base_nparams/1e9))
     print("After Pruning: MACs=%f G, #Params=%f G"%(pruned_macs/1e9, pruned_nparams/1e9))
     ####################################################################################

@@ -36,7 +36,6 @@ def detect(save_img=False):
 
     # Load model
     model = attempt_load(weights, map_location=device)  # load FP32 model
-    print(model)
     
     ################################################################################
     # Pruning
@@ -48,6 +47,7 @@ def detect(save_img=False):
     for m in model.modules():
         if isinstance(m, Detect):
             ignored_layers.append(m)
+    print("Ignored layers:")
     print(ignored_layers)
 
     iterative_steps = 1 # progressive pruning
@@ -61,10 +61,11 @@ def detect(save_img=False):
     )
     base_macs, base_nparams = tp.utils.count_ops_and_params(model, example_inputs)
     
-
+    tp.utils.print_tool.before_pruning(model)
     pruner.step()
     pruned_macs, pruned_nparams = tp.utils.count_ops_and_params(model, example_inputs)
-    print(model)
+    tp.utils.print_tool.after_pruning(model, do_print=True)
+
     print("Before Pruning: MACs=%f G, #Params=%f G"%(base_macs/1e9, base_nparams/1e9))
     print("After Pruning: MACs=%f G, #Params=%f G"%(pruned_macs/1e9, pruned_nparams/1e9))
     ####################################################################################
