@@ -273,7 +273,7 @@ for epoch in range(epochs):
         out = model(data)
         loss = F.cross_entropy(out, target)
         loss.backward() # after loss.backward()
-        pruner.regularize(model) # <== for sparse training
+        pruner.regularize(model, loss) # <== for sparse training
         optimizer.step() # before optimizer.step()
 ```
 
