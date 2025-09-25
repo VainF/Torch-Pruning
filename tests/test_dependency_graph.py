@@ -38,5 +38,17 @@ def test_depgraph():
     #for g in groups:
     #    print(g)
 
+def test_depgraph_inpruning():
+    model = resnet18().eval()
+
+    # 1. build dependency graph for resnet18
+    DG = tp.DependencyGraph()
+    DG.build_dependency(model, example_inputs=torch.randn(1,3,224,224))
+
+    for group in DG.get_all_groups(in_pruning=True):
+        idxs = [2,4,6] # my pruning indices
+        group.prune(idxs=idxs)
+    print(model)
+
 if __name__=='__main__':
     test_depgraph()

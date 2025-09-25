@@ -28,5 +28,19 @@ def test_single_channel_output():
     print(all_groups[0])
     assert len(all_groups[0])==3
 
+def test_single_channel_input():
+    model = Model()
+    example_inputs = torch.randn(1, 3, 224, 224)
+    DG = tp.DependencyGraph().build_dependency(model, example_inputs=example_inputs)
+
+    all_groups = list(DG.get_all_groups(in_pruning=True))
+    print(all_groups[0])
+    print(all_groups[1])
+    print(all_groups[2])
+    assert len(all_groups[0])==4
+    assert len(all_groups[1])==4
+    assert len(all_groups[2])==1
+
 if __name__ == "__main__":
     test_single_channel_output()
+    test_single_channel_input()
