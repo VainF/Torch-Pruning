@@ -273,7 +273,7 @@ class DependencyGraph(object):
             merged_group[i].root_idxs = root_idxs
         return merged_group
 
-    def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR)):
+    def get_all_groups(self, ignored_layers=[], root_module_types=(ops.TORCH_CONV, ops.TORCH_LINEAR), in_pruning:bool = False):
         """
             Get all pruning groups for the given module. Groups are generated based on root module types.
             All groups will contain a full indices of the prunable elements or channels.
@@ -281,7 +281,7 @@ class DependencyGraph(object):
             Args:
                 ignored_layers (list): List of layers to be ignored during pruning.
                 root_module_types (tuple): Tuple of root module types to consider for pruning.
-
+                in_pruning (bool): Set to True to use input channels as root instead of output channels (default: False)
             Yields:
                 list: A pruning group containing dependencies and their corresponding pruning handlers.
 
@@ -309,16 +309,18 @@ class DependencyGraph(object):
             if m in visited_layers:
                 continue
             
-            # use output pruning as the root
-            layer_channels = pruner.get_out_channels(m)
-            group = self.get_pruning_group(
-                m, pruner.prune_out_channels, list(range(layer_channels)))
+            if not in_pruning:
+                layer_channels = pruner.get_out_channels(m)
+                group = self.get_pruning_group(m, pruner.prune_out_channels, list(range(layer_channels)))
+            else:
+                layer_channels = pruner.get_in_channels(m)
+                group = self.get_pruning_group(m, pruner.prune_in_channels, list(range(layer_channels)))
 
             prunable_group = True
             for dep, _ in group:
                 module = dep.target.module
                 pruning_fn = dep.handler
-                if self.is_out_channel_pruning_fn(pruning_fn):
+                if (not in_pruning and self.is_out_channel_pruning_fn(pruning_fn)) or (in_pruning and self.is_in_channel_pruning_fn(pruning_fn)):
                     visited_layers.append(module)
                     if module in ignored_layers:
                         prunable_group = False
