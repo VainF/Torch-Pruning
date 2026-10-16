@@ -3,6 +3,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import torch
+import pytest
 from torchvision.models import resnet18 as entry
 import torch_pruning as tp
 from torch import nn
@@ -12,7 +13,7 @@ def test_pruner():
     
     # Global metrics
     example_inputs = torch.randn(1, 3, 224, 224)
-    for normalization in ['mean', 'max', 'gaussian', 'standarization', 'sum']:
+    for normalization in ['mean', 'max', 'gaussian', 'standarization', 'sum', 'standardization']:
         model = entry()
         print(model)
         imp = tp.importance.MagnitudeImportance(p=2, normalizer=normalization)
@@ -51,6 +52,22 @@ def test_pruner():
             # finetune your model here
             # finetune(model)
             # ...
+
+@pytest.mark.parametrize("normalizer", ["standardization", "standarization"])
+@pytest.mark.parametrize("p", [1, 2])
+@pytest.mark.parametrize("weights", [[-1., 2., 4.], [2., 2., 2.], [0., 0., 0.]])
+def test_standardization(normalizer, p, weights):
+    model = nn.Linear(1, 3, bias=False)
+    with torch.no_grad():
+        model.weight.copy_(torch.tensor(weights).reshape(3, 1))
+    graph = tp.DependencyGraph().build_dependency(model, torch.ones(1, 1))
+    group = graph.get_pruning_group(model, tp.prune_linear_out_channels, idxs=[0, 1, 2])
+
+    scores = tp.importance.MagnitudeImportance(p=p, normalizer=normalizer)(group)
+    raw_scores = torch.tensor(weights).abs().pow(p)
+    expected = (raw_scores - raw_scores.min()) / (raw_scores.max() - raw_scores.min() + 1e-8)
+    torch.testing.assert_close(scores, expected)
+
 
 if __name__ == "__main__":
     test_pruner()

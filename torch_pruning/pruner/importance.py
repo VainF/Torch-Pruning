@@ -119,7 +119,7 @@ class GroupMagnitudeImportance(Importance):
             return normalizer(group_importance)
         elif normalizer == "sum":
             return group_importance / group_importance.sum()
-        elif normalizer == "standarization":
+        elif normalizer in ("standardization", "standarization"):
             return (group_importance - group_importance.min()) / (group_importance.max() - group_importance.min()+1e-8)
         elif normalizer == "mean":
             return group_importance / group_importance.mean()
