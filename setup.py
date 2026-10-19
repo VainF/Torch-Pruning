@@ -10,7 +10,7 @@ requirements = ["torch>=2.0", "numpy"]
 
 setuptools.setup(
     name="torch-pruning",
-    version="1.6.1",
+    version="1.6.1+glazkov.1",
     author="Gongfan Fang",
     author_email="gongfan@u.nus.edu",
     description="Towards Any Structural Pruning",
