@@ -7,4 +7,4 @@ INDEX_MAPPING_PLACEHOLDER = None
 MAX_RECURSION_DEPTH = 500
 
 # Maximum legal dimension (used for sanity checking)
-MAX_VALID_DIM = 100
+MAX_VALID_DIM = 1 << 64
