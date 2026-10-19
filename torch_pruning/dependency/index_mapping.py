@@ -228,20 +228,8 @@ def update_concat_index_mapping(graph, cat_node: Node):
     if cat_node.type != ops.OPTYPE.CONCAT:
         return
         
-    if hasattr(cat_node.grad_fn, '_saved_dim'):
-        saved_dim = int(cat_node.grad_fn._saved_dim)
-        # Autograd can expose a negative dim as an unsigned 64-bit integer.
-        # Decode it before the validity check (VainF/Torch-Pruning#532).
-        if (1 << 63) <= saved_dim < (1 << 64):
-            saved_dim -= 1 << 64
-        if saved_dim < 0:
-            metadata = getattr(cat_node.grad_fn, '_input_metadata', ())
-            if metadata:
-                # Cat preserves rank. In particular, -1 is a channel axis for
-                # 2-D Linear outputs, but not for a 4-D attention/RoPE tensor.
-                saved_dim += len(metadata[0].shape)
-        if saved_dim != 1 and saved_dim < constants.MAX_VALID_DIM:
-            return
+    if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim != 1 and cat_node.grad_fn._saved_dim < constants.MAX_VALID_DIM:
+        return 
 
     if cat_node.module.concat_sizes is not None:
         chs = cat_node.module.concat_sizes
