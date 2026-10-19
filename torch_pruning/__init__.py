@@ -11,6 +11,6 @@ from .pruner import *
 from .pruner import importance
 from .serialization import save, load, state_dict, load_state_dict
 
-__version__ = "1.6.1+glazkov.1"
+__version__ = "1.6.0"
 __author__ = "Gongfan Fang"
 __email__ = "gongfan@u.nus.edu"
