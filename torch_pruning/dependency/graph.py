@@ -468,6 +468,8 @@ class DependencyGraph(object):
             out = forward_fn(model, example_inputs)
         elif isinstance(example_inputs, dict):
             out = model(**example_inputs)
+        elif isinstance(example_inputs, torch.Tensor):
+            out = model(example_inputs)
         else:
             try:
                 out = model(*example_inputs)

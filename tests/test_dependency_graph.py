@@ -38,5 +38,34 @@ def test_depgraph():
     #for g in groups:
     #    print(g)
 
-if __name__=='__main__':
+def test_tensor_input_preserves_batch_dimension():
+    inputs = torch.arange(12, dtype=torch.float32).reshape(1, 3, 2, 2)
+    for input_kind in ("tensor", "tuple", "list", "dict", "forward_fn"):
+        model = torch.nn.Sequential(torch.nn.Conv2d(3, 4, 1), torch.nn.ReLU())
+        with torch.no_grad():
+            model[0].weight.copy_(torch.arange(12).reshape(4, 3, 1, 1) / 12)
+            model[0].bias.copy_(torch.arange(4) / 10)
+        example_inputs = {
+            "tensor": inputs,
+            "tuple": (inputs,),
+            "list": [inputs],
+            "dict": {"input": inputs},
+            "forward_fn": {"tensor": inputs},
+        }[input_kind]
+        forward_fn = None
+        if input_kind == "forward_fn":
+            forward_fn = lambda model, x: model(x["tensor"] + 1)
+        expected = model(inputs + 1 if forward_fn else inputs).detach()[:, 2:]
+        graph = tp.DependencyGraph().build_dependency(
+            model, example_inputs=example_inputs, forward_fn=forward_fn
+        )
+        group = graph.get_pruning_group(model[0], tp.prune_conv_out_channels, idxs=[0, 1])
+        assert graph.check_pruning_group(group), input_kind
+        group.prune()
+        actual = model(inputs + 1 if forward_fn else inputs)
+        assert actual.shape == (1, 2, 2, 2)
+        assert torch.allclose(actual, expected)
+
+
+if __name__ == "__main__":
     test_depgraph()
