@@ -22,6 +22,8 @@ def update_index_mapping(graph):
             update_expand_index_mapping(graph, node)
         if node.type == ops.OPTYPE.SLICE:
             update_slice_index_mapping(graph, node)
+        if node.type == ops.OPTYPE.GLU:
+            update_glu_index_mapping(graph, node)
         if node.type == ops.OPTYPE.ELEMENTWISE:
             update_shared_parameter_index_mapping(graph, node)
 
@@ -60,6 +62,27 @@ class _ConcatIndexMapping(object):
             ]
         else:
             new_idxs = [ _helpers._HybridIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
+        return new_idxs
+
+class _GLUIndexMapping(object):
+    """GLU output channel j is computed from input channels j and j + half."""
+    def __init__(self, half, reverse=False):
+        self.half = half
+        self.reverse = reverse
+
+    def __call__(self, idxs: _helpers._HybridIndex):
+        if self.reverse == True: # output -> input
+            new_idxs = []
+            for i in idxs:
+                new_idxs.append(_helpers._HybridIndex(idx=i.idx, root_idx=i.root_idx))
+                new_idxs.append(_helpers._HybridIndex(idx=i.idx + self.half, root_idx=i.root_idx))
+        else: # input -> output
+            new_idxs, seen = [], set()
+            for i in idxs:
+                j = i.idx % self.half
+                if j not in seen:
+                    seen.add(j)
+                    new_idxs.append(_helpers._HybridIndex(idx=j, root_idx=i.root_idx))
         return new_idxs
 
 class _SharedParameterIndexMapping(object):
@@ -441,6 +464,25 @@ def update_expand_index_mapping(graph, node: Node):
                         dep.index_mapping[0] = (_GQAIndexMapping(repeat=repeat, reverse=False, head_dim=head_dim))
                         addressed_dep.append(dep)
                         break
+
+def update_glu_index_mapping(graph, glu_node: Node):
+    """nn.GLU / F.glu along the feature dim: pruning output channel j removes input channels j and j + C/2 (#366)."""
+    if glu_node.type != ops.OPTYPE.GLU:
+        return
+    half = glu_node.module.half # None if the GLU is not applied to the feature dim
+    if half is None:
+        return
+    for input_node in glu_node.inputs:
+        in_channels = shape_infer.infer_out_channels_recursively(graph, input_node, [0])
+        if in_channels is not None and in_channels != 2 * half:
+            return
+    for in_node in glu_node.inputs:
+        for dep in glu_node.dependencies:
+            if dep.target == in_node:
+                dep.index_mapping[0] = _GLUIndexMapping(half=half, reverse=True)
+        for dep in in_node.dependencies:
+            if dep.target == glu_node:
+                dep.index_mapping[0] = _GLUIndexMapping(half=half, reverse=False)
 
 def update_shared_parameter_index_mapping(graph, node: Node):
     """Map the channels of an element-wise op to a 1-D parameter that is shared by several groups of channels,

@@ -28,6 +28,7 @@ class DependencyGraph(object):
             ops.OPTYPE.CUSTOMIZED: ops.CustomizedPruner(), # just a placeholder
             ops.OPTYPE.SLICE: ops.SlicePruner(),
             ops.OPTYPE.OUTPUT: ops.OutputPruner(),
+            ops.OPTYPE.GLU: ops.GLUPruner(),
         }
         self.REGISTERED_PRUNERS = function.PrunerBox.copy()  # shallow copy
         self.REGISTERED_PRUNERS.update(_dummy_pruners) # merge dummy pruners
@@ -598,6 +599,13 @@ class DependencyGraph(object):
                     self._op_id+=1
                 elif "unbind" in grad_fn.name().lower():
                     module = ops._UnbindOp(self._op_id)
+                    self._op_id+=1
+                elif "glubackward" in grad_fn.name().lower():
+                    out_shape = _helpers.grad_fn_output_shape(grad_fn)
+                    dim = _helpers.normalize_saved_dim(getattr(grad_fn, '_saved_dim', None), len(out_shape) if out_shape is not None else None)
+                    module = ops._GLUOp(self._op_id, dim=dim)
+                    if out_shape is not None and dim is not None and shape_infer.acts_on_feature_dim(dim, len(out_shape)):
+                        module.half = out_shape[dim] # the number of output channels
                     self._op_id+=1
                 elif "expand" in grad_fn.name().lower():
                     module = ops._ExpandOp(self._op_id)

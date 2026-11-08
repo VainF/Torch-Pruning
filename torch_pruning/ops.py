@@ -77,6 +77,17 @@ class _OutputOp(nn.Module):
     def __repr__(self):
         return "_OutputOp_{}({})".format(self.id, self.shape if self.shape is not None else "None")
 
+class _GLUOp(nn.Module):
+    """nn.GLU / F.glu: splits its input in two halves a, b along `dim` and returns a * sigmoid(b)."""
+    def __init__(self, id, dim=None):
+        super(_GLUOp, self).__init__()
+        self.id = id
+        self.dim = dim
+        self.half = None # the number of output channels if the GLU is applied to the feature dim, else None
+
+    def __repr__(self):
+        return "_GLUOp_{}(dim={})".format(self.id, self.dim)
+
 class _ElementWiseOp(nn.Module):
     def __init__(self, id, grad_fn):
         super(_ElementWiseOp, self).__init__()
@@ -212,6 +223,21 @@ class ReshapePruner(DummyPruner):
 class ElementWisePruner(DummyPruner):
     pass
 
+class GLUPruner(DummyPruner):
+    """The channels of a GLU along the feature dim: C inputs, C/2 outputs. Pruning indices are output channels."""
+    def prune_out_channels(self, layer, idxs):
+        if layer.half is not None:
+            layer.half -= len(set(idxs))
+        return layer
+
+    prune_in_channels = prune_out_channels
+
+    def get_out_channels(self, layer):
+        return layer.half
+
+    def get_in_channels(self, layer):
+        return None if layer.half is None else 2 * layer.half
+
 class CustomizedPruner(DummyPruner):
     pass
 
@@ -256,6 +282,7 @@ class OPTYPE(IntEnum):
     EXPAND = 18
     SLICE = 19
     OUTPUT = 20 # output of the model, not a module
+    GLU = 21 # nn.GLU / F.glu
 
 
 def module2type(module):
@@ -300,6 +327,8 @@ def module2type(module):
         return OPTYPE.SLICE
     elif isinstance(module, _OutputOp):
         return OPTYPE.OUTPUT
+    elif isinstance(module, _GLUOp):
+        return OPTYPE.GLU
     else:
         return OPTYPE.ELEMENTWISE
 
@@ -343,6 +372,8 @@ def type2class(op_type):
         return _SliceOp
     elif op_type == OPTYPE.OUTPUT:
         return _OutputOp
+    elif op_type == OPTYPE.GLU:
+        return _GLUOp
     else:
         return _ElementWiseOp
 
