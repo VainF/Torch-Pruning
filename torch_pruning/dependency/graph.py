@@ -130,6 +130,8 @@ class DependencyGraph(object):
         
         # Initialize shape information
         shape_infer.init_shape_information(self)
+        # Decouple element-wise ops from inputs broadcast along the channel dim, e.g. a single-channel mask
+        self._remove_channel_broadcast_dependencies()
         # Update index mapping for torch.cat/split/chunck/...
         index_mapping.update_index_mapping(self)
         return self
@@ -400,6 +402,57 @@ class DependencyGraph(object):
                 unwrapped_parameters.append( _helpers.UnwrappedParameters(parameters=p, pruning_dim=pruning_dim) ) # prune the last non-singleton dim by daufault
         return _param_to_name, unwrapped_parameters
     
+    def _is_channel_broadcast(self, node, k):
+        """Whether the k-th input of an element-wise op is broadcast along the channel dim (#510).
+
+        For example, in ``torch.sigmoid(mask_conv(x)) * feat_conv(x)`` the (N, 1, H, W) mask is multiplied
+        with every channel of the (N, C, H, W) features, so the two convs must not share pruning indices.
+        Inputs broadcast along other dims, e.g. the (N, C, 1, 1) scale of a squeeze-and-excitation block or
+        the (D,) weight of a RMSNorm applied to (B, H, N, D) heads, stay coupled. The channel dim is the dim
+        whose size is the channel number of the other inputs (dim 1 first).
+        """
+        in_shape = node.input_shapes[k] if k < len(node.input_shapes) else None
+        out_shape = _helpers.grad_fn_output_shape(node.grad_fn)
+        if in_shape is None or out_shape is None or len(in_shape) > len(out_shape) or tuple(in_shape) == tuple(out_shape):
+            return False
+        ndim = len(out_shape)
+        in_shape = (1,) * (ndim - len(in_shape)) + tuple(in_shape) # broadcasting aligns the trailing dims
+        if not any(in_shape[d] == 1 and out_shape[d] > 1 for d in range(ndim)):
+            return False
+        for j, other in enumerate(node.inputs):
+            if j == k:
+                continue
+            channels = shape_infer.infer_out_channels_recursively(self, other, [0])
+            if channels is None or channels <= 1:
+                continue
+            channel_dims = [d for d in range(1, ndim) if out_shape[d] == channels]
+            if len(channel_dims) == 0:
+                return False
+            channel_dim = 1 if 1 in channel_dims else channel_dims[0]
+            if len(channel_dims) > 1 and channel_dim != 1:
+                return False # ambiguous, e.g. a (N, L, C) tensor with L == C
+            return in_shape[channel_dim] == 1
+        return False
+
+    def _remove_channel_broadcast_dependencies(self):
+        """Remove the dependencies between element-wise ops and their inputs that are broadcast along the channel dim."""
+        for node in list(self.module2node.values()):
+            if node.type != ops.OPTYPE.ELEMENTWISE or len(node.inputs) < 2:
+                continue
+            for k, in_node in enumerate(node.inputs):
+                if in_node is node or not self._is_channel_broadcast(node, k):
+                    continue
+                # the k-th input dependency of node was created for node.inputs[k]
+                dep_in = node.dependencies[k] if k < len(node.dependencies) else None
+                edges = [j for j, n in enumerate(in_node.outputs) if n is node]
+                if dep_in is None or dep_in.target is not in_node or len(edges) != 1:
+                    continue # an ambiguous edge, keep the dependencies
+                dep_out = in_node.dependencies[len(in_node.inputs) + edges[0]]
+                if dep_out.target is not node:
+                    continue
+                node.dependencies = [d for d in node.dependencies if d is not dep_in]
+                in_node.dependencies = [d for d in in_node.dependencies if d is not dep_out]
+
     def _build_dependency(self, module2node):
         """Build the dependency graph."""
         for _, node in module2node.items():
@@ -468,6 +521,10 @@ class DependencyGraph(object):
             out = forward_fn(model, example_inputs)
         elif isinstance(example_inputs, dict):
             out = model(**example_inputs)
+        elif isinstance(example_inputs, torch.Tensor):
+            # model(*x) would unpack the batch dim of x, i.e. a (1, C, H, W) input would be traced
+            # as an unbatched (C, H, W) one, which changes the shapes recorded in the graph
+            out = model(example_inputs)
         else:
             try:
                 out = model(*example_inputs)
@@ -599,8 +656,8 @@ class DependencyGraph(object):
                             if not is_unwrapped_param:
                                 continue
                         input_node = create_node_if_not_exists(f[0])
-                        node.add_input(input_node)
-                        input_node.add_output(node)
+                        node.add_input(input_node, shape=_helpers.grad_fn_output_shape(f[0], f[1]))
+                        input_node.add_output(node, output_nr=f[1]) # f[1]: which output of f[0] feeds this op
                         processing_stack.append(f[0])
             visited.add(grad_fn)
 

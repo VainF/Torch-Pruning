@@ -8,7 +8,9 @@ class Node(object):
     def __init__(self, module: nn.Module, grad_fn, name: str = None):
         # Connections in the computational graph
         self.inputs = []  # input nodes
+        self.input_shapes = [] # self.input_shapes[i]: shape of the tensor received from self.inputs[i], None if unknown
         self.outputs = [] # output nodes
+        self.output_nrs = [] # self.output_nrs[i]: which output of this op (e.g. which chunk of torch.split/unbind) self.outputs[i] consumes, None if unknown
         self.module = module # reference to torch.nn.Module
         self.grad_fn = grad_fn # grad_fn of nn.module output
         self._name = name # node name
@@ -30,11 +32,18 @@ class Node(object):
                 fmt += " ({})".format(str(self.module))
             return fmt
 
-    def add_input(self, node):
+    def add_input(self, node, shape=None):
         self.inputs.append(node)
+        self.input_shapes.append(shape)
 
-    def add_output(self, node):
+    def add_output(self, node, output_nr=None):
         self.outputs.append(node)
+        self.output_nrs.append(output_nr)
+
+    def output_nr(self, i):
+        """The output index of this op consumed by self.outputs[i]. Falls back to i if it was not recorded."""
+        nr = self.output_nrs[i] if i < len(self.output_nrs) else None
+        return i if nr is None else nr
 
     def __repr__(self):
         return str(self)

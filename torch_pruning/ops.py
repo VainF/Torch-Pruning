@@ -1,5 +1,6 @@
 import torch.nn as nn
 from enum import IntEnum
+from ._helpers import normalize_saved_dim
 
 class DummyMHA(nn.Module):
     def __init__(self):
@@ -61,7 +62,8 @@ class _SliceOp(nn.Module):
         self.start = grad_fn._saved_start
         self.end = grad_fn._saved_end
         self.step = grad_fn._saved_step
-        self.dim = grad_fn._saved_dim
+        sizes = getattr(grad_fn, '_saved_self_sym_sizes', None)
+        self.dim = normalize_saved_dim(grad_fn._saved_dim, len(sizes) if sizes is not None else None)
 
     def __repr__(self):
         return "_Slice_{}()".format(self.id)
@@ -331,15 +333,15 @@ def type2class(op_type):
         return TORCH_INSTANCENORM
     elif op_type == OPTYPE.LSTM:
         return TORCH_LSTM
-    elif OPTYPE == OPTYPE.RESHAPE:
+    elif op_type == OPTYPE.RESHAPE:
         return _ReshapeOp
-    elif OPTYPE == OPTYPE.UNBIND:
+    elif op_type == OPTYPE.UNBIND:
         return _UnbindOp
-    elif OPTYPE == OPTYPE.EXPAND:
+    elif op_type == OPTYPE.EXPAND:
         return _ExpandOp
-    elif OPTYPE == OPTYPE.SLICE:
+    elif op_type == OPTYPE.SLICE:
         return _SliceOp
-    elif OPTYPE == OPTYPE.OUTPUT:
+    elif op_type == OPTYPE.OUTPUT:
         return _OutputOp
     else:
         return _ElementWiseOp

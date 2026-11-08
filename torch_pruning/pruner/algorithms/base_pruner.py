@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 
 from ... import dependency, ops
+from ...dependency import index_mapping
 from .. import function
 from ..importance import OBDCImportance
 from .scheduler import linear_scheduler
@@ -745,6 +746,10 @@ class BasePruner:
                                     dep, idxs = group[i]
                                     if dep.target.module in kv_layers:
                                         # disable head pruning for the kv layers if GQA is enabled, since they will be shared by multiple Q heads
+                                        group[i] = (dep, [])
+                                    elif dep.target.type == ops.OPTYPE.PARAMETER and any(
+                                            isinstance(m, index_mapping._SharedParameterIndexMapping) for m in dep.index_mapping):
+                                        # the same for parameters shared by the heads, e.g. the weight of a k_norm
                                         group[i] = (dep, [])
 
                         if self.DG.check_pruning_group(group):

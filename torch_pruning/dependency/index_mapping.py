@@ -22,6 +22,8 @@ def update_index_mapping(graph):
             update_expand_index_mapping(graph, node)
         if node.type == ops.OPTYPE.SLICE:
             update_slice_index_mapping(graph, node)
+        if node.type == ops.OPTYPE.ELEMENTWISE:
+            update_shared_parameter_index_mapping(graph, node)
 
 
 class _FlattenIndexMapping(object):
@@ -59,6 +61,28 @@ class _ConcatIndexMapping(object):
         else:
             new_idxs = [ _helpers._HybridIndex(idx=i.idx + self.offset[0], root_idx=i.root_idx) for i in idxs]
         return new_idxs
+
+class _SharedParameterIndexMapping(object):
+    """A 1-D parameter of size D applied to G groups of channels, e.g. the (head_dim,) weight of a q/k RMSNorm
+    shared by all heads: channel i of the activation uses entry i % D of the parameter."""
+    def __init__(self, size, groups, reverse=False):
+        self.size = size
+        self.groups = groups
+        self.reverse = reverse
+
+    def __call__(self, idxs: _helpers._HybridIndex):
+        if self.reverse == True: # parameter -> activation: entry d is used by channels d, d + D, ..., d + (G-1) * D
+            return [_helpers._HybridIndex(idx=i.idx + g * self.size, root_idx=i.root_idx) for i in idxs for g in range(self.groups)]
+        # activation -> parameter: entry d can be removed only if it is removed from all groups,
+        # e.g. pruning whole heads keeps the weight, pruning the same head dim of every head removes one entry
+        first, groups = {}, {}
+        for i in idxs:
+            if i.idx >= self.size * self.groups: # outside of the channels of this activation, e.g. query channels reaching the keys of a GQA
+                continue
+            d = i.idx % self.size
+            first.setdefault(d, i)
+            groups.setdefault(d, set()).add(i.idx // self.size)
+        return [_helpers._HybridIndex(idx=d, root_idx=first[d].root_idx) for d in first if len(groups[d]) >= self.groups]
 
 class _GQAIndexMapping(object):
     def __init__(self, repeat, head_dim, reverse=False):
@@ -115,9 +139,11 @@ def update_slice_index_mapping(graph, slice_node: Node):
         return
     grad_fn = slice_node.grad_fn
     if hasattr(grad_fn, '_saved_self_sym_sizes'):
-        if len(grad_fn._saved_self_sym_sizes)==4 and grad_fn._saved_dim != 1 and grad_fn._saved_dim<constants.MAX_VALID_DIM:
+        ndim = len(grad_fn._saved_self_sym_sizes)
+        dim = _helpers.normalize_saved_dim(grad_fn._saved_dim, ndim) # e.g. torch.narrow(x, -1, ...)
+        if ndim==4 and dim != 1 and dim<constants.MAX_VALID_DIM:
             return
-        elif len(grad_fn._saved_self_sym_sizes)==3 and grad_fn._saved_dim != 2 and grad_fn._saved_dim<constants.MAX_VALID_DIM:
+        elif ndim==3 and dim != 2 and dim<constants.MAX_VALID_DIM:
             return
 
     start, step, end, dim = slice_node.module.start, slice_node.module.step, slice_node.module.end, slice_node.module.dim
@@ -228,8 +254,10 @@ def update_concat_index_mapping(graph, cat_node: Node):
     if cat_node.type != ops.OPTYPE.CONCAT:
         return
         
-    if hasattr(cat_node.grad_fn, '_saved_dim') and cat_node.grad_fn._saved_dim != 1 and cat_node.grad_fn._saved_dim < constants.MAX_VALID_DIM:
-        return 
+    if hasattr(cat_node.grad_fn, '_saved_dim'):
+        out_shape = _helpers.grad_fn_output_shape(cat_node.grad_fn)
+        if not shape_infer.acts_on_feature_dim(cat_node.grad_fn._saved_dim, len(out_shape) if out_shape is not None else None):
+            return
 
     if cat_node.module.concat_sizes is not None:
         chs = cat_node.module.concat_sizes
@@ -285,7 +313,7 @@ def update_split_index_mapping(graph, split_node: Node):
         # There a issue in some pytorch version, where the _saved_dim is an uninitialized value like 118745347895359
         # So we need to check if the _saved_dim is a valid value (<len(_saved_self_sym_sizes) or a nominal value like 20)
         if hasattr(split_node.grad_fn, '_saved_self_sym_sizes'):
-            if split_node.grad_fn._saved_dim<len(split_node.grad_fn._saved_self_sym_sizes) and split_node.grad_fn._saved_dim != 1:
+            if not shape_infer.acts_on_feature_dim(split_node.grad_fn._saved_dim, len(split_node.grad_fn._saved_self_sym_sizes)):
                 return
         else:
             if split_node.grad_fn._saved_dim>=0 and split_node.grad_fn._saved_dim != 1:
@@ -296,7 +324,8 @@ def update_split_index_mapping(graph, split_node: Node):
     if offsets is None:
         return
     addressed_dep = []
-    for i, out_node in enumerate(split_node.outputs):
+    for k, out_node in enumerate(split_node.outputs):
+        i = split_node.output_nr(k) # the chunk consumed by this output edge
         for dep in split_node.dependencies:
             if any((dep is d) for d in addressed_dep): continue
             if dep.target == out_node:
@@ -308,7 +337,8 @@ def update_split_index_mapping(graph, split_node: Node):
                     break
     
     addressed_dep = []
-    for i, out_node in enumerate(split_node.outputs):
+    for k, out_node in enumerate(split_node.outputs):
+        i = split_node.output_nr(k)
         for dep in out_node.dependencies:
             if dep.target == split_node:
                 if any((dep is d) for d in addressed_dep): continue
@@ -323,10 +353,18 @@ def update_unbind_index_mapping(graph, unbind_node: Node):
     if unbind_node.type != ops.OPTYPE.UNBIND:
         return
 
-    if hasattr(unbind_node.grad_fn, '_saved_dim') and (unbind_node.grad_fn._saved_dim )!= 0: # this only works for Pytorch>=1.12
-        return 
+    out_shape = _helpers.grad_fn_output_shape(unbind_node.grad_fn)
+    if hasattr(unbind_node.grad_fn, '_saved_dim'): # this only works for Pytorch>=1.12
+        ndim = len(out_shape) + 1 if out_shape is not None else None
+        if _helpers.normalize_saved_dim(unbind_node.grad_fn._saved_dim, ndim) != 0:
+            return
 
-    num_chunks = len(unbind_node.outputs)
+    # The number of tensors returned by torch.unbind. len(unbind_node.outputs) counts the downstream ops instead,
+    # which is larger when a tensor is consumed several times, e.g. q by both the pow and the mul of a RMSNorm (#524).
+    num_chunks = _helpers.grad_fn_num_outputs(unbind_node.grad_fn)
+    if num_chunks is None:
+        recorded = [nr for nr in unbind_node.output_nrs if nr is not None]
+        num_chunks = max(recorded) + 1 if recorded else len(unbind_node.outputs)
 
     for input_node in unbind_node.inputs:
         input_dims = shape_infer.infer_out_channels_recursively(graph, input_node, [0])
@@ -339,7 +377,8 @@ def update_unbind_index_mapping(graph, unbind_node: Node):
     if offsets is None:
         return
     addressed_dep = []
-    for i, out_node in enumerate(unbind_node.outputs):
+    for k, out_node in enumerate(unbind_node.outputs):
+        i = unbind_node.output_nr(k) # the chunk consumed by this output edge
         for dep in unbind_node.dependencies:
             if any((dep is d) for d in addressed_dep): continue
             if dep.target == out_node:
@@ -351,7 +390,8 @@ def update_unbind_index_mapping(graph, unbind_node: Node):
                     break
     
     addressed_dep = []
-    for i, out_node in enumerate(unbind_node.outputs):
+    for k, out_node in enumerate(unbind_node.outputs):
+        i = unbind_node.output_nr(k)
         for dep in out_node.dependencies:
             if dep.target == unbind_node:
                 if any((dep is d) for d in addressed_dep): continue
@@ -401,3 +441,33 @@ def update_expand_index_mapping(graph, node: Node):
                         dep.index_mapping[0] = (_GQAIndexMapping(repeat=repeat, reverse=False, head_dim=head_dim))
                         addressed_dep.append(dep)
                         break
+
+def update_shared_parameter_index_mapping(graph, node: Node):
+    """Map the channels of an element-wise op to a 1-D parameter that is shared by several groups of channels,
+    e.g. ``q_norm.weight`` of shape (head_dim,) times queries of shape (B, H, N, head_dim) (#524)."""
+    if len(node.inputs) < 2:
+        return
+    out_shape = _helpers.grad_fn_output_shape(node.grad_fn)
+    for k, param_node in enumerate(node.inputs):
+        if param_node.type != ops.OPTYPE.PARAMETER or param_node.module.dim() != 1:
+            continue
+        # the parameter must be broadcast against the last dim of a tensor with extra feature dims (checked on the traced shapes)
+        in_shape = node.input_shapes[k] if k < len(node.input_shapes) else None
+        if in_shape is None or out_shape is None or len(in_shape) != 1 or len(out_shape) < 4 or out_shape[-1] != in_shape[0]:
+            continue
+        size = param_node.module.shape[0]
+        channels = None
+        for j, other in enumerate(node.inputs):
+            if j != k:
+                channels = shape_infer.infer_out_channels_recursively(graph, other, [0])
+                if channels is not None:
+                    break
+        if channels is None or channels <= size or channels % size != 0:
+            continue
+        groups = channels // size
+        for dep in node.dependencies:
+            if dep.target == param_node:
+                dep.index_mapping[0] = _SharedParameterIndexMapping(size=size, groups=groups, reverse=False)
+        for dep in param_node.dependencies:
+            if dep.target == node:
+                dep.index_mapping[0] = _SharedParameterIndexMapping(size=size, groups=groups, reverse=True)
