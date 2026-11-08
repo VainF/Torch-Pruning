@@ -119,7 +119,7 @@ class GroupMagnitudeImportance(Importance):
             return normalizer(group_importance)
         elif normalizer == "sum":
             return group_importance / group_importance.sum()
-        elif normalizer == "standarization":
+        elif normalizer in ("standardization", "standarization"): # min-max scaling; "standarization" is kept for backward compatibility
             return (group_importance - group_importance.min()) / (group_importance.max() - group_importance.min()+1e-8)
         elif normalizer == "mean":
             return group_importance / group_importance.mean()
@@ -136,15 +136,33 @@ class GroupMagnitudeImportance(Importance):
         else:
             raise NotImplementedError
 
-    def _reduce(self, group_imp: typing.List[torch.Tensor], group_idxs: typing.List[typing.List[int]]):
+    def _reduce(self, group_imp: typing.List[torch.Tensor], group_idxs: typing.List[typing.List[int]], root_idxs: typing.Optional[typing.List[int]] = None):
+        """Reduce the importance of all layers in a group to one score per root index.
+
+        Args:
+            group_imp: importance scores of each layer.
+            group_idxs: the root index of each score in group_imp.
+            root_idxs: indices of the root layer, i.e., group[0].root_idxs. The result is ordered as root_idxs,
+                e.g. 3 scores for DG.get_pruning_group(conv, fn, idxs=[2, 6, 9]). None means 0, 1, ..., n-1.
+        """
         if len(group_imp) == 0: return group_imp
+        size = None
+        if root_idxs is not None and list(root_idxs) != list(range(len(root_idxs))):
+            # scatter to the position of each root index, not to the channel id itself (#371)
+            position = {r: p for p, r in enumerate(root_idxs)}
+            group_idxs = [[position.get(r, None) for r in idxs] for idxs in group_idxs]
+            size = len(root_idxs)
+        def _new_imp(fill):
+            if size is None:
+                return torch.full_like(group_imp[0], fill, dtype=torch.float32)
+            return torch.full((size,), fill, dtype=torch.float32, device=group_imp[0].device)
         if self.group_reduction == 'prod':
-            reduced_imp = torch.ones_like(group_imp[0], dtype=torch.float32)
+            reduced_imp = _new_imp(1)
         elif self.group_reduction == 'max':
-            reduced_imp = torch.ones_like(group_imp[0], dtype=torch.float32) * -99999
+            reduced_imp = _new_imp(-99999)
         else:
-            reduced_imp = torch.zeros_like(group_imp[0], dtype=torch.float32)
-        
+            reduced_imp = _new_imp(0)
+
         n_imp = 0
         for i, (imp, root_idxs) in enumerate(zip(group_imp, group_idxs)):
             imp = imp.to(reduced_imp.device, dtype=reduced_imp.dtype)
@@ -264,7 +282,7 @@ class GroupMagnitudeImportance(Importance):
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
 
-        group_imp = self._reduce(group_imp, group_idxs)
+        group_imp = self._reduce(group_imp, group_idxs, root_idxs=group[0].root_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
@@ -368,9 +386,9 @@ class FPGMImportance(GroupMagnitudeImportance):
 
                 local_imp = w.abs().pow(self.p)
 
-                # repeat importance for group convolutions
+                # repeat importance for group convolutions. local_imp is 2-D here: repeat the rows (#427)
                 if prune_fn == function.prune_conv_in_channels and layer.groups != layer.in_channels and layer.groups != 1:
-                    local_imp = local_imp.repeat(layer.groups)
+                    local_imp = local_imp.repeat(layer.groups, 1)
                 local_imp = local_imp[idxs]
                 similar_matrix = torch.cdist(local_imp.unsqueeze(0), local_imp.unsqueeze(0), p=2).squeeze(0)
                 similar_sum = torch.sum(torch.abs(similar_matrix), dim=0)
@@ -382,7 +400,7 @@ class FPGMImportance(GroupMagnitudeImportance):
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
 
-        group_imp = self._reduce(group_imp, group_idxs)
+        group_imp = self._reduce(group_imp, group_idxs, root_idxs=group[0].root_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
@@ -537,7 +555,7 @@ class GroupTaylorImportance(GroupMagnitudeImportance):
                         group_idxs.append(root_idxs)
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
-        group_imp = self._reduce(group_imp, group_idxs)
+        group_imp = self._reduce(group_imp, group_idxs, root_idxs=group[0].root_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
@@ -606,7 +624,10 @@ class OBDCImportance(GroupMagnitudeImportance):
 
     def _prepare_model(self, model, pruner):
         for group in pruner.DG.get_all_groups(ignored_layers=pruner.ignored_layers, root_module_types=pruner.root_module_types): 
-            group = pruner._downstream_node_as_root_if_attention(group)
+            # use a downstream node as the root for attention groups; other groups are returned as None (#452)
+            attention_group = pruner._downstream_node_as_root_if_attention(group)
+            if attention_group is not None:
+                group = attention_group
             for i, (dep, idxs) in enumerate(group):
                 layer = dep.target.module
                 if isinstance(layer, tuple(self.target_types)) and dep.handler in [
@@ -627,12 +648,14 @@ class OBDCImportance(GroupMagnitudeImportance):
         group_imp = []
         group_idxs = []
         for i, (dep, idxs) in enumerate(group):
-            idxs.sort()
             layer = dep.target.module
             prune_fn = dep.handler
             root_idxs = group[i].root_idxs
             if not isinstance(layer, tuple(self.target_types)) or (isinstance(layer, torch.nn.Linear) and layer.out_features == self.num_classes):
                 continue
+            if layer not in self.Fisher: # not hooked by _prepare_model, e.g. a layer of an ignored group
+                continue
+            # one row per output channel; layers with a bias have an extra last column for the bias
             F_diag = (self.Fisher[layer] / self.steps + self.eps)
             if prune_fn in [
                 function.prune_conv_out_channels,
@@ -643,19 +666,19 @@ class OBDCImportance(GroupMagnitudeImportance):
                         w = layer.weight.data.transpose(1, 0)[idxs].flatten(1)
                     else:
                         w = layer.weight.data[idxs].flatten(1)
-                    local_imp = (w ** 2 * F_diag).sum(1)
+                    local_imp = (w ** 2 * F_diag[idxs, :w.shape[1]]).sum(1)
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
-                
+
                 if self.bias and layer.bias is not None and layer.bias.grad is not None:
                     b = layer.bias.data[idxs]
-                    local_imp = (b ** 2 * F_diag).sum(1)
+                    local_imp = b ** 2 * F_diag[idxs, -1]
                     group_imp.append(local_imp)
                     group_idxs.append(root_idxs)
 
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
-        group_imp = self._reduce(group_imp, group_idxs)
+        group_imp = self._reduce(group_imp, group_idxs, root_idxs=group[0].root_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
@@ -811,7 +834,7 @@ class GroupHessianImportance(GroupMagnitudeImportance):
 
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
-        group_imp = self._reduce(group_imp, group_idxs)
+        group_imp = self._reduce(group_imp, group_idxs, root_idxs=group[0].root_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
 
@@ -881,6 +904,6 @@ class ActivationImportance(GroupMagnitudeImportance):
 
         if len(group_imp) == 0: # skip groups without parameterized layers
             return None
-        group_imp = self._reduce(group_imp, group_idxs)
+        group_imp = self._reduce(group_imp, group_idxs, root_idxs=group[0].root_idxs)
         group_imp = self._normalize(group_imp, self.normalizer)
         return group_imp
