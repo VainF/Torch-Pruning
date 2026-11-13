@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 
 from ... import dependency, ops
+from ...dependency import index_mapping
 from .. import function
 from ..importance import OBDCImportance
 from .scheduler import linear_scheduler
@@ -398,6 +399,16 @@ class BasePruner:
             if module in channel_groups:
                 ch_groups.append(channel_groups[module])
 
+            # A GLU fed by the root layer uses root channels j and j + C/2 for its output channel j,
+            # so the two halves are pruned together like the groups of a group convolution.
+            if dep.target.type == ops.OPTYPE.GLU and dep.target.module.half is not None and any(
+                    isinstance(m, index_mapping._GLUIndexMapping) and not m.reverse for m in dep.index_mapping):
+                root_dep = group[0].dep
+                root_channels = self.DG.get_out_channels(root_dep.target.module) if self.DG.is_out_channel_pruning_fn(
+                    root_dep.handler) else self.DG.get_in_channels(root_dep.target.module)
+                if root_channels == 2 * dep.target.module.half:
+                    ch_groups.append(2)
+
             # if dep.source.type==ops.OPTYPE.UNBIND:
             #    has_unbind = True
             #    unbind_node = dep.source
@@ -745,6 +756,10 @@ class BasePruner:
                                     dep, idxs = group[i]
                                     if dep.target.module in kv_layers:
                                         # disable head pruning for the kv layers if GQA is enabled, since they will be shared by multiple Q heads
+                                        group[i] = (dep, [])
+                                    elif dep.target.type == ops.OPTYPE.PARAMETER and any(
+                                            isinstance(m, index_mapping._SharedParameterIndexMapping) for m in dep.index_mapping):
+                                        # the same for parameters shared by the heads, e.g. the weight of a k_norm
                                         group[i] = (dep, [])
 
                         if self.DG.check_pruning_group(group):

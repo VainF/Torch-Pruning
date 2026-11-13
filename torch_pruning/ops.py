@@ -1,5 +1,6 @@
 import torch.nn as nn
 from enum import IntEnum
+from ._helpers import normalize_saved_dim
 
 class DummyMHA(nn.Module):
     def __init__(self):
@@ -61,7 +62,8 @@ class _SliceOp(nn.Module):
         self.start = grad_fn._saved_start
         self.end = grad_fn._saved_end
         self.step = grad_fn._saved_step
-        self.dim = grad_fn._saved_dim
+        sizes = getattr(grad_fn, '_saved_self_sym_sizes', None)
+        self.dim = normalize_saved_dim(grad_fn._saved_dim, len(sizes) if sizes is not None else None)
 
     def __repr__(self):
         return "_Slice_{}()".format(self.id)
@@ -74,6 +76,17 @@ class _OutputOp(nn.Module):
 
     def __repr__(self):
         return "_OutputOp_{}({})".format(self.id, self.shape if self.shape is not None else "None")
+
+class _GLUOp(nn.Module):
+    """nn.GLU / F.glu: splits its input in two halves a, b along `dim` and returns a * sigmoid(b)."""
+    def __init__(self, id, dim=None):
+        super(_GLUOp, self).__init__()
+        self.id = id
+        self.dim = dim
+        self.half = None # the number of output channels if the GLU is applied to the feature dim, else None
+
+    def __repr__(self):
+        return "_GLUOp_{}(dim={})".format(self.id, self.dim)
 
 class _ElementWiseOp(nn.Module):
     def __init__(self, id, grad_fn):
@@ -210,6 +223,21 @@ class ReshapePruner(DummyPruner):
 class ElementWisePruner(DummyPruner):
     pass
 
+class GLUPruner(DummyPruner):
+    """The channels of a GLU along the feature dim: C inputs, C/2 outputs. Pruning indices are output channels."""
+    def prune_out_channels(self, layer, idxs):
+        if layer.half is not None:
+            layer.half -= len(set(idxs))
+        return layer
+
+    prune_in_channels = prune_out_channels
+
+    def get_out_channels(self, layer):
+        return layer.half
+
+    def get_in_channels(self, layer):
+        return None if layer.half is None else 2 * layer.half
+
 class CustomizedPruner(DummyPruner):
     pass
 
@@ -254,6 +282,7 @@ class OPTYPE(IntEnum):
     EXPAND = 18
     SLICE = 19
     OUTPUT = 20 # output of the model, not a module
+    GLU = 21 # nn.GLU / F.glu
 
 
 def module2type(module):
@@ -298,6 +327,8 @@ def module2type(module):
         return OPTYPE.SLICE
     elif isinstance(module, _OutputOp):
         return OPTYPE.OUTPUT
+    elif isinstance(module, _GLUOp):
+        return OPTYPE.GLU
     else:
         return OPTYPE.ELEMENTWISE
 
@@ -331,16 +362,18 @@ def type2class(op_type):
         return TORCH_INSTANCENORM
     elif op_type == OPTYPE.LSTM:
         return TORCH_LSTM
-    elif OPTYPE == OPTYPE.RESHAPE:
+    elif op_type == OPTYPE.RESHAPE:
         return _ReshapeOp
-    elif OPTYPE == OPTYPE.UNBIND:
+    elif op_type == OPTYPE.UNBIND:
         return _UnbindOp
-    elif OPTYPE == OPTYPE.EXPAND:
+    elif op_type == OPTYPE.EXPAND:
         return _ExpandOp
-    elif OPTYPE == OPTYPE.SLICE:
+    elif op_type == OPTYPE.SLICE:
         return _SliceOp
-    elif OPTYPE == OPTYPE.OUTPUT:
+    elif op_type == OPTYPE.OUTPUT:
         return _OutputOp
+    elif op_type == OPTYPE.GLU:
+        return _GLUOp
     else:
         return _ElementWiseOp
 
